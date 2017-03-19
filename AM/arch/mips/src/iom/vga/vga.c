@@ -1,5 +1,10 @@
 #include "vga.h"
 
+char *vmem = NULL;
+
+void init_vga(){
+	vmem = VMEM_ADDR;
+}
 void draw_pixel(surface *screen,pixel *pixels){
 //draw a pixel(8 bits) on (x,y) pos of surface
 	if(pixels->x > screen->width || pixels->y > screen->height){
@@ -33,7 +38,6 @@ void copy_rect(surface *screen,unsigned x,unsigned y,rect src){
 
 void flip_screen(surface *screen){
 //flip the real screen by a colored surface
-	char *vmem = (void *)VMEM;
 	unsigned int i;
 	for(i = 0; i < (screen->width) * (screen->height); i++){
 		vmem[i] = screen->pixels[i].color;
