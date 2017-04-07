@@ -1,10 +1,9 @@
-#include "vga.h"
-
 char *vmem = NULL;
 
 void init_vga(){
 	vmem = VMEM_ADDR;
 }
+
 void draw_pixel(surface *screen,pixel *pixels){
 //draw a pixel(8 bits) on (x,y) pos of surface
 	if(pixels->x > screen->width || pixels->y > screen->height){

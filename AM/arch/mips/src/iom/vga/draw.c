@@ -1,6 +1,3 @@
-#include "vga.h"
-#include "draw.h"
-
 extern char font8x8_basic[128][8];
 
 void draw_character(surface *screen,character *ch){
