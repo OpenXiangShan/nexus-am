@@ -1,49 +1,43 @@
 #include "asm.h"
+
 .code16
 .globl _start
 _start:
-  cli
+	cli
 
-  xorw    %ax, %ax
-  movw    %ax, %ds
-  movw    %ax, %es
-  movw    %ax, %ss
+	xorw %ax, %ax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %ss
 
-# VGA: 640 x 480 x 32b
-  mov $0x4f01, %ax
-  mov $0x0112, %cx
-  mov $0x4000, %di
-  int $0x10
+	movw $0x2401, %ax
+	int $0x15
 
-  mov $0x4f02, %ax
-  mov $0x4112, %bx
-  int $0x10
+	lgdt gdtdesc
 
-  lgdt    gdtdesc
-  movl    %cr0, %eax
-  orl     $CR0_PE, %eax
-  movl    %eax, %cr0
-
-  ljmp    $GDT_ENTRY(1), $start32
-
+	movl %cr0, %eax
+	orl $0x1, %eax
+	movl %eax, %cr0
+	
+	ljmp $GDT_ENTRY(1), $start32
 .code32
 start32:
-  movw    $GDT_ENTRY(2), %ax
-  movw    %ax, %ds
-  movw    %ax, %es
-  movw    %ax, %ss
+	movw $GDT_ENTRY(2), %ax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %ss
 
-  movl    $0x8000, %esp
-  call    bootmain
+	movl $0x8000, %esp
+
+	call bootmain
 
 # GDT
-.p2align 2
-gdt:
-  SEG_NULLASM
-  SEG_ASM(0xA, 0x0, 0xffffffff)
-  SEG_ASM(0x2, 0x0, 0xffffffff)
+.p2align 2                 # 对齐
+gdt:   
+    	SEG_NULLASM
+	SEG_ASM(0xA, 0x0, 0xffffffff, 0x0)
+	SEG_ASM(0x2, 0x0, 0xffffffff, 0x0)
 
-gdtdesc:
-  .word   (gdtdesc - gdt - 1)
-  .long   gdt
-
+gdtdesc:                           # GDT描述符
+	.word   (gdtdesc - gdt - 1)    # GDT长度，留意地址运算
+	.long   gdt                    # GDT地址
