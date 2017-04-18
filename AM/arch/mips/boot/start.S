@@ -1,5 +1,5 @@
-.globl _reset
-.type _reset, @function
+.globl _start
+.type _start, @function
 
 .globl _qemu
 .type _qemu, @function
@@ -7,7 +7,7 @@
 .globl _bad
 .type _bad, @function
 
-_reset:
+_start:
   li $sp, 0x0001fffc
   jal bootmain
 $L_GOOD:
@@ -16,6 +16,7 @@ $L_GOOD:
 _qemu:
   nop # Make address the same offset
   jal bootmain
+
 $L_LOOP:
   b $L_LOOP
 

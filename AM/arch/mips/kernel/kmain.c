@@ -3,6 +3,7 @@
 #include "device.h"
 
 void enter_user_space(unsigned int);
+extern int main();
 
 void
 kentry(void) {
@@ -24,5 +25,6 @@ kentry(void) {
 
 void
 enter_user_space(unsigned int entry) {
-    while(1);
+	asm volatile("jal main\n\t");
+	while(1);
 }

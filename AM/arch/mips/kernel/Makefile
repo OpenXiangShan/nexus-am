@@ -33,15 +33,13 @@ export CROSS_COMPILE
 
 # ********************
 # Rules of Compilation
-# ********************
+# *******************
 
-kmain:$(OBJECTS)
-	$(LD) $(LDFLAGS) -e kentry -Ttext 0x0 $(OBJECTS) -o kmain
-
+all:$(OBJECTS)
 # Common rule
 $(OBJ_DIR)/%.o: %.[cS]
 	@mkdir -p `dirname $@`
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	-rm -rf $(OBJ_DIR) $(DOT_D) $(OBJECTS) kmain > /dev/null
+	-rm -rf $(OBJ_DIR) $(DOT_D) $(OBJECTS) > /dev/null

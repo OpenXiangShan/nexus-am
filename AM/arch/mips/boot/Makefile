@@ -23,6 +23,7 @@ LDFLAGS =
 
 CSRC = $(shell find -L . -name "*.c")
 SSRC = $(shell find -L . -name "*.S")
+OBJECTS = $(shell find -L . -name "*.o")
 
 export CROSS_COMPILE
 
@@ -32,7 +33,8 @@ export CROSS_COMPILE
 # Rules of Compilation
 # ********************
 
-bootblock.o: $(CSRC) $(SSRC)
+OBJECTS: $(CSRC) $(SSRC)
 	$(CC) $(CFLAGS) -c $(CSRC) $(SSRC)
+
 clean:
 	-rm -f *.o *.d > /dev/null

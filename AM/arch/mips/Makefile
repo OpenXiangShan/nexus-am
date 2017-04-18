@@ -20,11 +20,15 @@ ASFLAGS = -MD -mno-check-zero-division -mips32 -O0 -mno-abicalls
 ASFLAGS += -fno-pic -fno-delayed-branch
 LDFLAGS = 
 
+OBJECTS = $(shell find -L . -name "*.o")
+
 mips-arch:
 	@cd boot; make;
 	@cd kernel; make;
 	@cd ../../build; rm -rf mips; mkdir mips;
-	cat boot/*.o kernel/kmain > ../../build/mips/mips-arch
+
+OBJ:
+	-cp $(OBJECTS) ../../build/mips/
 
 clean:
 	@cd boot; make clean;
