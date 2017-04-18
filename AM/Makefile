@@ -1,14 +1,17 @@
-os.img:
-	@cd arch/x86; make
-	@cd Lib; make
-	@cd src; make
-	cat build/x86/x86-arch src/umain > os.img
+ARCH = x86
 
-play:
-	qemu-system-i386 -serial stdio os.img
+all:
+	@cd arch/$(ARCH); make
+	@cd Lib/$(ARCH); make
+	@cd src/makers/$(ARCH); make
+	-mkdir $(ARCH)_out
+
+x86:
+	cat build/$(ARCH)/$(ARCH)-arch src/test/umain > $(ARCH)_out/os.img
+	qemu-system-i386 -serial stdio $(ARCH)_out/os.img
 
 clean:
-	@cd arch/x86; make clean
-	@cd Lib; make clean
-	@cd src; make clean
-	-rm -f os.img
+	@cd arch/$(ARCH); make clean
+	@cd Lib/$(ARCH); make clean
+	@cd src/makers/$(ARCH); make clean
+	-rm -rf $(ARCH)_out
