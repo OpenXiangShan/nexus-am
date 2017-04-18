@@ -30,7 +30,7 @@ DOT_D = $(SSRC:.S=.d) $(CSRC:.c=.d)
 ASMS = $(CSRC:.c=.S)
 
 umain: ../../../build/$(ARCH)/*.o $(OBJECTS)
-	$(LD) $(LDFLAGS) -T loader.ld -o ../../test/umain ../../../build/$(ARCH)/*.o $(OBJECTS) $(LIBS)
+	$(LD) $(LDFLAGS) -T loader.ld -o ../../test/umain ../../../build/$(ARCH)/boot/start.o ../../../build/$(ARCH)/boot/bootmain.o ../../../build/$(ARCH)/*.o $(OBJECTS) $(LIBS)
 
 clean:
 	rm -rf $(OBJECTS) $(OBJECTS:.o=.d) ../../test/umain obj ../test
