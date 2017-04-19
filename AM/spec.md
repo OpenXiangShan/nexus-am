@@ -4,41 +4,20 @@
 
 * `_Area`代表一段连续的内存。
 
-* ```
-  typedef struct _Area {
-    void *start, *end;
-  } _Area; 
-  ```
-
 * `_Screen`描述系统初始化后的屏幕（后续可通过PCI总线设置显示控制器，则此设置不再有效）。
-
-* ```
-  typedef struct _Screen {
-    int width, height;
-  } _Screen;
-  ```
 
 * 屏幕的像素颜色由32位整数`typedef u32 _Pixel;`确定，从高位到低位是00rrggbb，红绿蓝各8位。
 
-* 按键代码由如下enum指定：
+* 按键代码由`_KEY_XXX`指定，其中`_KEY_NONE = 0`。
 
-* ```
-  enum {
-    _KEY_NONE = 0,
-    _KEY_UP, _KEY_DOWN, _KEY_LEFT, _KEY_RIGHT, ...
-  };
-  ```
+* `_Protect`描述一个被保护的地址空间(`_area`)，以及一个体系结构相关的指针(`ptr`)a。
 
-* `_Protect`描述一个被保护的地址空间：
+## `arch.h`
 
-* ```
-  typedef struct _Protect {
-    _Area area; 
-    void *ptr;
-  } _Protect;
-  ```
+描述体系结构相关的信息，包括：
 
-  ​
+* 整数类型`i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `size_t`, `off_t`的定义。
+* `typedef struct _RegSet {}`代表所有体系结构寄存器。
 
 ## Turing Machine
 

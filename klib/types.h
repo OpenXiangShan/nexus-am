@@ -1,6 +1,8 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+// TODO: this is NOT expected to appear here.
+// types are arch-dependent.
 
 typedef unsigned int   uint32_t;
 typedef          int   int32_t;
