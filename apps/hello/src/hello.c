@@ -1,6 +1,7 @@
 #include <hello.h>
+#include <am.h>
 
 int main() {
   print("Hello World!\n");
-  while (1);
+  _halt(0);
 }

@@ -2,28 +2,32 @@ ARCH = x86-linux
 
 $(shell mkdir -p build/)
 
-all: $(AM_LIB) build/hello
-	@echo "Hi"
-
 # AM library
 AM_PATH = ./am/arch/$(ARCH)
 AM_LIB = ./build/libam-$(ARCH).a
 AM_SRC = $(shell find -L $(AM_PATH) -name "*.c" -o -name "*.cpp" -o -name "*.S")
 AM_OBJ = $(addsuffix .o, $(basename $(AM_SRC)))
 
-CFLAGS += -I ./am/ -I./$(AM_PATH)/include -std=c99
-CXXFLAGS += -I ./am/ -I./$(AM_PATH)/include -std=c++11
+# TODO: managing flags
+CFLAGS += -std=c99 -I ./am/ -I./$(AM_PATH)/include
+CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include
+
+all: $(AM_LIB) build/a
+	@true
 
 $(AM_LIB): $(AM_OBJ)
 	ar rcs $(AM_LIB) $(AM_OBJ)
 
-build/hello:
+# These are temporary.
+# TODO: generic application making
+build/a:
 	gcc $(CFLAGS) -c -o build/hello.o apps/hello/src/hello.c -I./apps/hello/include
 	gcc $(CFLAGS) -c -o build/print.o apps/hello/src/print.c -I./apps/hello/include
 	ar rcs ./build/hello.a build/hello.o build/print.o
 	$(AM_PATH)/img/build ./build/hello.a
+	@echo "====== execute ======"
+	@./build/a.out
 
-# These are temporary
 
 
 # TODO: merge code

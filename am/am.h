@@ -41,7 +41,7 @@ typedef struct _Protect {
 } _Protect;
 
 // =======================================================================
-// Turing Machine: code execution & a heap memory
+// [0] Turing Machine: code execution & a heap memory
 // =======================================================================
 
 void _start();
@@ -51,7 +51,7 @@ void _halt(int code);
 extern _Area _heap;
 
 // =======================================================================
-// IO Extension
+// [1] IO Extension
 // =======================================================================
 
 void _ioe_init();
@@ -66,7 +66,7 @@ extern _Screen _screen;
 // TODO: bus interfaces
 
 // =======================================================================
-// Asynchronous Extension
+// [2] Asynchronous Extension
 // =======================================================================
 
 void _asye_init();
@@ -79,7 +79,7 @@ void _idisable();
 int _istatus();
 
 // =======================================================================
-// Protection Extension
+// [3] Protection Extension
 // =======================================================================
 
 void _pte_init(void*(*palloc)(), void (*pfree)(void*));
@@ -91,7 +91,7 @@ void _switch(_Protect *p);
 _RegSet *_umake(_Area ustack, _Area kstack, void *entry, int argc, char **argv);
 
 // =======================================================================
-// Multi-Processor Extension
+// [4] Multi-Processor Extension
 // =======================================================================
 
 void _mpe_init(void (*entry)());

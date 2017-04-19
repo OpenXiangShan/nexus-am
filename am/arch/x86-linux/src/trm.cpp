@@ -12,11 +12,9 @@ void _putc(char ch) {
   putchar(ch);
 }
 
-void _panic(int code) {
-  if (code != 0) {
-    printf("Panic (%d)\n", code);
-  }
+void _halt(int code) {
   exit(code);
 }
+
 
 }
