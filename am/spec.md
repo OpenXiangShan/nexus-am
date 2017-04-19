@@ -3,21 +3,22 @@
 ## 数据结构
 
 * `_Area`代表一段连续的内存。
-
 * `_Screen`描述系统初始化后的屏幕（后续可通过PCI总线设置显示控制器，则此设置不再有效）。
-
-* 屏幕的像素颜色由32位整数`typedef u32 _Pixel;`确定，从高位到低位是00rrggbb，红绿蓝各8位。
-
+* 屏幕的像素颜色由32位整数`typedef u32 _Pixel;`确定，从高位到低位是`00rrggbb`，红绿蓝各8位。
 * 按键代码由`_KEY_XXX`指定，其中`_KEY_NONE = 0`。
+* `_Protect`描述一个被保护的地址空间(`_area`)，以及一个体系结构相关的指针(`ptr`)。
 
-* `_Protect`描述一个被保护的地址空间(`_area`)，以及一个体系结构相关的指针(`ptr`)a。
+## 体系结构相关代码规范
 
-## `arch.h`
+每个体系结构在`arch/`中包含一个同名目录，例如`mips32-npc`, `mips32-qemu`, `x86-qemu`，第一个词是ISA，第二个词是运行平台。对于每一个体系结构目录（例如`arch/mips32-npc`），包含：
 
-描述体系结构相关的信息，包括：
-
-* 整数类型`i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `size_t`, `off_t`的定义。
-* `typedef struct _RegSet {}`代表所有体系结构寄存器。
+* `README.md`相关说明。
+* `include/`存放相关的头文件。
+* `include/arch.h`描述体系结构相关的信息，包括：
+  * 整数类型`i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `size_t`, `off_t`的定义。
+  * `typedef struct _RegSet {}`代表所有体系结构寄存器。
+* `src/`存放相关的源代码文件。
+* `img/`存放制作镜像必要的文件。执行`img/run.sh binary`能将ELF32可执行文件`binary`烧录成镜像。
 
 ## Turing Machine
 
