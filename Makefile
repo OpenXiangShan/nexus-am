@@ -1,14 +1,20 @@
-ARCH = x86
+ARCH = x86-linux
 
-all:
-	@cd arch/$(ARCH); make
-	@cd Lib/$(ARCH); make
-	-mkdir $(ARCH)_out
+$(shell mkdir -p build/)
 
-x86:
-	@cd src/makers/$(ARCH); make
-	cat build/$(ARCH)/$(ARCH)-arch src/test/umain > $(ARCH)_out/os.img
-	qemu-system-i386 -serial stdio $(ARCH)_out/os.img
+# AM library
+AM_PATH = ./am/arch/$(ARCH)
+AM_LIB = ./build/libam-$(ARCH).a
+AM_SRC = $(shell find -L $(AM_PATH) -name "*.c" -o -name "*.cpp" -o -name "*.S")
+AM_OBJ = $(addsuffix .o, $(basename $(AM_SRC)))
+
+CFLAGS += -I ./am/
+CXXFLAGS += -I ./am/ -I./am/arch/$(ARCH)/include -std=c++11
+
+$(AM_LIB): $(AM_OBJ)
+	ar rcs $(AM_LIB) $(AM_OBJ)
+
+# TODO: merge code
 
 mips:
 	@cd src/makers/$(ARCH); make
