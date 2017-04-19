@@ -1,2 +1,3 @@
-# Abstract-Machine
-We need An Abstract Machine
+# The Abstract Machine
+
+"Abstract" machine for building a complete computer system from scratch.
