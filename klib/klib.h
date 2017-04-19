@@ -1,5 +1,6 @@
-// TODO: merge declarations into a single header.
-// TODO: klib should be compiled into one binary.
+/*
+ * Static runtime library for a system software on AbstractMachine
+ */
 
 #ifndef __KLIB_H__
 #define __KLIB_H__
