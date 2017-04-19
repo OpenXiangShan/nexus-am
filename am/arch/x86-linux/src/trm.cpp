@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <cstdarg>
 
+extern "C" {
+
 void _trm_init() {
 }
 
@@ -17,3 +19,4 @@ void _panic(int code) {
   exit(code);
 }
 
+}

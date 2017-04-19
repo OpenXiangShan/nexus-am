@@ -5,6 +5,7 @@
 #define H 480
 
 #define KEYDOWN_MASK 0x8000
+
 static inline _Pixel pixel(u8 r, u8 g, u8 b) {
   return (r << 16) | (g << 8) | b;
 }
@@ -13,6 +14,8 @@ static inline u8 G(_Pixel p) { return p >> 8; }
 static inline u8 B(_Pixel p) { return p; }
 
 static ALLEGRO_VERTEX vtx[W * H];
+
+extern "C" {
 
 void gui_init() {
   _screen.width = W;
@@ -73,4 +76,6 @@ int _peek_key() {
   update(_KEY_X, ev, k_x, al_key_down(&state, ALLEGRO_KEY_X));
 
   return ev;
+}
+
 }
