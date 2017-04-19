@@ -18,7 +18,7 @@
   * 整数类型`i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `size_t`, `off_t`的定义。
   * `typedef struct _RegSet {}`代表所有体系结构寄存器。
 * `src/`存放相关的源代码文件。
-* `img/`存放制作镜像必要的文件。执行`img/run.sh binary`能将ELF32可执行文件`binary`烧录成镜像。
+* `img/`存放制作镜像必要的文件。执行`img/burn binary`能将ELF32可执行文件`binary`烧录成镜像。
 
 ## Turing Machine
 
