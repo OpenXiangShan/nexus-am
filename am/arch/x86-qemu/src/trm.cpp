@@ -1,10 +1,14 @@
 #include <x86.h>
 #include <am.h>
 
+
 extern "C" {
 
+int main();
+
+_Area _heap;
+
 // jump to main()
-extern int main();
 
 void _start() {
   int ret = main();

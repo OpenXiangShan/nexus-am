@@ -1,6 +1,8 @@
 #include <am.h>
 #include <x86.h>
 
+extern "C" {
+
 struct VBEInfo {
   u16 attributes;
   u8 window_a;
@@ -116,4 +118,8 @@ ulong i386_uptime = 0;
 
 ulong _uptime() {
   return i386_uptime ++;
+}
+
+_Screen _screen;
+
 }

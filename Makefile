@@ -1,4 +1,4 @@
-ARCH = x86-linux
+ARCH = x86-qemu
 
 $(shell mkdir -p build/)
 
@@ -9,8 +9,14 @@ AM_SRC = $(shell find -L $(AM_PATH) -name "*.c" -o -name "*.cpp" -o -name "*.S")
 AM_OBJ = $(addsuffix .o, $(basename $(AM_SRC)))
 
 # TODO: managing flags
-CFLAGS += -std=c99 -I ./am/ -I./$(AM_PATH)/include
-CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include
+CFLAGS += -std=gnu99 -I ./am/ -I./$(AM_PATH)/include -O2
+CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include -O2
+ASFLAGS += -I ./am/ -I./$(AM_PATH)/include
+
+# only for bare-metal
+CFLAGS += -m32 -O2 -MD -Wall -Werror -ggdb -fno-builtin -fno-stack-protector -fno-omit-frame-pointer
+CXXFLAGS += -m32 -O2 -MD -Wall -Werror -ggdb -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -ffreestanding -fno-rtti -fno-exceptions
+ASFLAGS += -m32
 
 all: $(AM_LIB) build/a
 	@true
@@ -24,9 +30,9 @@ build/a:
 	gcc $(CFLAGS) -c -o build/hello.o apps/hello/src/hello.c -I./apps/hello/include
 	gcc $(CFLAGS) -c -o build/print.o apps/hello/src/print.c -I./apps/hello/include
 	ar rcs ./build/hello.a build/hello.o build/print.o
-	$(AM_PATH)/img/build ./build/hello.a
+	$(AM_PATH)/img/build build/a.img $(shell readlink -f ./build/hello.a) $(shell readlink -f $(AM_LIB))
 	@echo "====== execute ======"
-	@./build/a.out
+	@qemu-system-i386 -serial stdio build/a.img
 
 
 
