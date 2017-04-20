@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <vga.h>
+#include <npc.h>
 
 int curr_line = 0;
 int curr_col = 0;
@@ -11,7 +11,7 @@ void npc_putc(char ch)
 		curr_line += 8;
 	}
 	else{
-		draw_character(ch,curr_line,curr_col,0x3c);
+//		draw_character(ch,curr_line,curr_col,0x3c);
 	}
 	if (curr_col + 8 >= SCR_WIDTH) {
 			curr_line += 8; curr_col = 0;
@@ -19,7 +19,7 @@ void npc_putc(char ch)
 			curr_col += 8;
 	}
 	if(curr_line >= SCR_HEIGHT){
-		prepare_buffer();
+//		prepare_buffer();
 		curr_line = 0;
 	}
 }

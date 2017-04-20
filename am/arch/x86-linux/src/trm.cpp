@@ -16,5 +16,6 @@ void _halt(int code) {
   exit(code);
 }
 
+_Area _heap;
 
 }

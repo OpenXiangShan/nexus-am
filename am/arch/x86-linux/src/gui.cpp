@@ -78,4 +78,6 @@ int _peek_key() {
   return ev;
 }
 
+_Screen _screen;
+
 }

@@ -1,5 +1,5 @@
 #include <arch.h>
-#include <vga.h>
+#include <npc.h>
 
 char *pos = (char *)VMEM;
 extern char font8x8_basic[128][8];

@@ -25,7 +25,6 @@
 */
 
 #include <stdarg.h>
-#include <stdio.h>
 
 #define putchar(c) npc_putc(c)
 
