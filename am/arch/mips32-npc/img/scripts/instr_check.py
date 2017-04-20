@@ -1,4 +1,6 @@
-ADD
+import sys
+
+INST = """ADD
 ADDU
 ADDI
 ADDIU
@@ -75,4 +77,13 @@ MFC0
 MTC0
 SYSCALL
 ERET
-NOP
+NOP"""
+
+INST = [i.strip() for i in INST.strip().split('\n')]
+
+for line in sys.stdin:
+    content = line.strip().split('\t')
+    if len(content) >= 3:
+        inst = content[2].upper()
+        if inst not in INST:
+            print "[INSTcheck] '{0}' is invalid.".format(inst)

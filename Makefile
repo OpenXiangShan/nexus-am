@@ -10,7 +10,7 @@ $(shell mkdir -p build/)
 # AM library
 AM_PATH = ./am/arch/$(ARCH)
 AM_LIB = ./build/libam-$(ARCH).a
-AM_SRC = $(shell find -L $(AM_PATH) -name "*.c" -o -name "*.cpp" -o -name "*.S")
+AM_SRC = $(shell find -L $(AM_PATH)/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
 AM_OBJ = $(addsuffix .o, $(basename $(AM_SRC)))
 
 # TODO: managing flags
@@ -20,7 +20,7 @@ CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include -O2 -MD -Wall -Werror -gg
 ASFLAGS += -I ./am/ -I./$(AM_PATH)/include
 
 # mips32-npc
-CFLAGS += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -march=mips32 -D DEPLOY
+CFLAGS += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -D DEPLOY
 
 # x86-qemu
 # CFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer
@@ -42,16 +42,6 @@ build/a:
 	$(AM_PATH)/img/build build/a.out $(shell readlink -f ./build/hello.a) $(shell readlink -f $(AM_LIB))
 	@echo "====== execute ======"
 	@qemu-system-i386 -serial stdio build/a.out
-
-# TODO: merge code
-
-mips:
-	@cd src/makers/$(ARCH); make
-	mips-linux-gnu-objcopy -O binary src/test/umain $(ARCH)_out/umain.bin
-	mips-linux-gnu-objdump -d src/test/umain > $(ARCH)_out/code.txt
-	python python/bin2text.py $(ARCH)_out/umain.bin $(ARCH)_out/ram.txt
-	python python/gen_bram_coe.py $(ARCH)_out/umain.bin $(ARCH)_out/app.coe
-	python python/instr_is_legal.py
 
 clean:
 	rm -rf build/ $(shell find . -name "*.o" -o -name "*.d")

@@ -36,4 +36,4 @@ with open(outPath, 'w') as f:
 	    f.write(';')
     f.write('\n')
 
-print "Process complete!"
+print "{0} -> {1} complete!".format(inPath, outPath)

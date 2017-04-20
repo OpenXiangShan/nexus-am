@@ -1,8 +1,7 @@
 SECTIONS
 {
-    . = 0x00000000;
-    .text : AT(0x00100000) { *(.text) }
+    . = 0x00100000;
+    .text : { *(.text) }
     .data : { *(.data) }
-    .bss : { *(.bss) }
-    stack_top = .;
+    .bss  : { *(.bss) }
 }

@@ -28,4 +28,4 @@ with open(outPath, 'w') as f:
         f.write("@{0:x} {1:s} \n".format(i, contents))
     # for i in range(len(bins)/4,fileSize):
         # f.write("@{0:x} {1:d} \n".format(i, 0))
-print "Process complete!"
+print "{0} -> {1} complete!".format(inPath, outPath)
