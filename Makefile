@@ -1,4 +1,4 @@
-ARCH = mips
+ARCH = x86
 
 all:
 	@cd arch/$(ARCH); make
