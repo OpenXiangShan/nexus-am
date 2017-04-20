@@ -1,5 +1,6 @@
 #include <am.h>
 #include <video.h>
+#include <klib.h>
 
 _Pixel canvas[N][N];
 bool used[N][N];
@@ -65,7 +66,6 @@ void update() {
 int main() {
   _trm_init();
   _ioe_init();
-
 
   ulong last = 0;
 

@@ -5,9 +5,21 @@
 #ifndef __KLIB_H__
 #define __KLIB_H__
 
+#include <am.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // We're expecting:
 //   assert, printf, sprintf
 //   memcpy, memset, strcpy, strlen, itoa, atoi, ...
 //   kalloc, kree
+
+size_t strlen(const char *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

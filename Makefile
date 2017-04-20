@@ -1,6 +1,6 @@
 ifneq ($(MAKECMDGOALS), clean)
 ifeq ($(ARCH), )
-$(error "Usage: make [play|clean] ARCH=[mips32-npc|x86-linux|x86-qemu] APP=[hello,video,...]")
+$(error "Usage: make [play|clean] ARCH=[mips32-npc|x86-linux|x86-qemu] APP=[hello|video|...]")
 endif
 endif
 
@@ -34,15 +34,15 @@ APP_DEP  = $(addsuffix .d, $(basename $(APP_SRC)))
 
 # Klib archive
 KLIB  = ./build/libkern-$(ARCH).a
-KLIB_SRC  = $(shell find -L ./klib/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
-KLIB_OBJ  = $(addsuffix .o, $(basename $(APP_SRC)))
-KLIB_DEP  = $(addsuffix .d, $(basename $(APP_SRC)))
+KLIB_SRC  = $(shell find -L ./klib/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
+KLIB_OBJ  = $(addsuffix .o, $(basename $(KLIB_SRC)))
+KLIB_DEP  = $(addsuffix .d, $(basename $(KLIB_SRC)))
 
 # -----------------------------------------------------------------------------
 
 # Basic compilation flags
-CFLAGS   += -std=gnu99 -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
-CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
+CFLAGS   += -std=gnu99 -I ./am/ -I./$(AM_PATH)/include -I./klib -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
+CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include -I./klib -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
 ASFLAGS  +=            -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -MD
 
 # Arch-dependent compilation flags
@@ -80,6 +80,8 @@ $(KLIB): $(KLIB_OBJ)
 $(APP_LIB): $(APP_OBJ)
 	ar rcs $(APP_LIB) $(APP_OBJ)
 -include $(APP_DEP)
+
+# -----------------------------------------------------------------------------
 
 .PHONY: play clean
 

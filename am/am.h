@@ -86,7 +86,7 @@ void _pte_init(void*(*palloc)(), void (*pfree)(void*));
 void _protect(_Protect *p);
 void _release(_Protect *p);
 void _map(_Protect *p, void *va, void *pa);
-void _ummap(_Protect *p, void *va);
+void _unmap(_Protect *p, void *va);
 void _switch(_Protect *p);
 _RegSet *_umake(_Area ustack, _Area kstack, void *entry, int argc, char **argv);
 
