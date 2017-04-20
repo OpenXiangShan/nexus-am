@@ -16,7 +16,7 @@ extern "C" {
 //   memcpy, memset, strcpy, strlen, itoa, atoi, ...
 //   kalloc, kree
 
-size_t strlen(const char *s);
+int strlen(const char *s);
 
 #ifdef __cplusplus
 }
