@@ -1,7 +1,8 @@
-# ARCH in [mips32-npc, x86-linux, x86-qemu]
-ARCH = mips32-npc
-# APP in [hello, video]
-APP = hello
+ifneq ($(MAKECMDGOALS), clean)
+ifeq ($(ARCH), )
+$(error "Usage: make [play|clean] ARCH=[mips32-npc|x86-linux|x86-qemu] APP=[hello,video,...]")
+endif
+endif
 
 ifeq ($(ARCH), mips32-npc)
 CROSS_COMPILE = mips-linux-gnu-
@@ -43,9 +44,11 @@ CXXFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -ffre
 ASFLAGS  += -m32
 endif
 
-# The final binary (a.out)
-build/a.out: $(AM_LIB) $(APP_LIB)
-	$(AM_PATH)/img/build build/a.out $(shell readlink -f $(APP_LIB)) $(shell readlink -f $(AM_LIB))
+# The final binary
+DEST = build/$(APP)-$(ARCH)
+
+$(DEST): $(AM_LIB) $(APP_LIB)
+	$(AM_PATH)/img/build $(DEST) $(shell readlink -f $(APP_LIB)) $(shell readlink -f $(AM_LIB))
 
 # AM library
 $(AM_LIB): $(AM_OBJ)
@@ -57,16 +60,17 @@ $(APP_LIB): $(APP_OBJ)
 
 .PHONY: play clean
 
-play: $(AM_LIB) build/a.out
+play: $(AM_LIB) $(DEST)
 ifeq ($(ARCH), mips32-npc)
 	@echo "Burn it to FPGA."
 endif
 ifeq ($(ARCH), x86-linux)
-	@./build/a.out
+	@$(DEST)
 endif
 ifeq ($(ARCH), x86-qemu)
-	@qemu-system-i386 -serial stdio build/a.out
+	@qemu-system-i386 -serial stdio $(DEST)
 endif
 
 clean:
 	rm -rf build/ $(shell find . -name "*.o" -o -name "*.d")
+
