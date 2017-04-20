@@ -1,3 +1,0 @@
-#!/bin/bash
-echo $1
-g++ -o $@ -lallegro -lallegro_main -lallegro_primitives

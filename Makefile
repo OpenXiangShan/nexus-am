@@ -1,72 +1,28 @@
-# ARCH in [mips32-npc, x86-linux, x86-qemu]
-ARCH = mips32-npc
-# APP in [hello, video]
-APP = video
+ARCH = mips
 
-ifeq ($(ARCH), mips32-npc)
-CROSS_COMPILE = mips-linux-gnu-
-endif
-AS = $(CROSS_COMPILE)as
-CC = $(CROSS_COMPILE)gcc
-CXX = $(CROSS_COMPILE)g++
-LD = $(CROSS_COMPILE)ld
+all:
+	@cd arch/$(ARCH); make
+	@cd Lib/$(ARCH); make
+	-mkdir $(ARCH)_out
 
-$(shell mkdir -p build/)
+x86:
+	@cd src/makers/$(ARCH); make
+	cat build/$(ARCH)/$(ARCH)-arch src/test/umain > $(ARCH)_out/os.img
+	qemu-system-i386 -serial stdio $(ARCH)_out/os.img
 
-# AM library archive
-AM_PATH = ./am/arch/$(ARCH)
-AM_LIB  = ./build/libam-$(ARCH).a
-AM_SRC  = $(shell find -L $(AM_PATH)/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
-AM_OBJ  = $(addsuffix .o, $(basename $(AM_SRC)))
+debug:
+	qemu-system-i386 -serial stdio -s -S $(ARCH)_out/os.img
 
-# Application archive
-APP_PATH = ./apps/$(APP)
-APP_LIB  = ./build/$(APP)-$(ARCH).a
-APP_SRC  = $(shell find -L $(APP_PATH)/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
-APP_OBJ  = $(addsuffix .o, $(basename $(APP_SRC)))
-
-# Basic compilation flags
-CFLAGS   += -std=gnu99 -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
-CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
-ASFLAGS  +=            -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include
-
-# Arch-dependent compilation flags
-ifeq ($(ARCH), mips32-npc)
-CXX = $(CROSS_COMPILE)g++-5
-CFLAGS   += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32
-CXXFLAGS += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -ffreestanding -fno-rtti -fno-exceptions
-ASFLAGS  += -march=mips32
-endif
-ifeq ($(ARCH), x86-qemu)
-CFLAGS   += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer
-CXXFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -ffreestanding -fno-rtti -fno-exceptions
-ASFLAGS  += -m32
-endif
-
-# The final binary (a.out)
-build/a.out: $(AM_LIB) $(APP_LIB)
-	$(AM_PATH)/img/build build/a.out $(shell readlink -f $(APP_LIB)) $(shell readlink -f $(AM_LIB))
-
-# AM library
-$(AM_LIB): $(AM_OBJ)
-	ar rcs $(AM_LIB) $(AM_OBJ)
-
-# Application
-$(APP_LIB): $(APP_OBJ)
-	ar rcs $(APP_LIB) $(APP_OBJ)
-
-.PHONY: play clean
-
-play: $(AM_LIB) build/a.out
-ifeq ($(ARCH), mips32-npc)
-	@echo "Burn it to FPGA."
-endif
-ifeq ($(ARCH), x86-linux)
-	@./build/a.out
-endif
-ifeq ($(ARCH), x86-qemu)
-	@qemu-system-i386 -serial stdio build/a.out
-endif
+mips:
+	@cd src/makers/$(ARCH); make
+	mips-linux-gnu-objcopy -O binary src/test/umain $(ARCH)_out/umain.bin
+	mips-linux-gnu-objdump -d src/test/umain > $(ARCH)_out/code.txt
+	python python/bin2text.py $(ARCH)_out/umain.bin $(ARCH)_out/ram.txt
+	python python/gen_bram_coe.py $(ARCH)_out/umain.bin $(ARCH)_out/app.coe
+	python python/instr_is_legal.py
 
 clean:
-	rm -rf build/ $(shell find . -name "*.o" -o -name "*.d")
+	@cd arch/$(ARCH); make clean
+	@cd Lib/$(ARCH); make clean
+	@cd src/makers/$(ARCH); make clean
+	-rm -rf $(ARCH)_out
