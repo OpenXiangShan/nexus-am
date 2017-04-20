@@ -1,3 +1,6 @@
 #!/bin/bash
-echo $1
-g++ -o $@ -lallegro -lallegro_main -lallegro_primitives
+
+DEST=$1
+shift
+
+g++ -o "$DEST" -Wl,--start-group $@ -Wl,--end-group -lallegro -lallegro_main -lallegro_primitives
