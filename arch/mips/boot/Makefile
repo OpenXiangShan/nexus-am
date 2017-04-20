@@ -36,9 +36,5 @@ export CROSS_COMPILE
 OBJECTS: $(CSRC) $(SSRC)
 	$(CC) $(CFLAGS) -c $(CSRC) $(SSRC)
 
-cp:
-	mkdir ../../../build/mips/boot
-	cp $(OBJECTS) ../../../build/mips/boot
-
 clean:
 	-rm -f *.o *.d > /dev/null

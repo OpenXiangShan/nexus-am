@@ -41,8 +41,5 @@ $(OBJ_DIR)/%.o: %.[cS]
 	@mkdir -p `dirname $@`
 	$(CC) $(CFLAGS) -c $< -o $@
 
-cp:
-	cp $(OBJECTS) ../../../build/mips
-
 clean:
 	-rm -rf $(OBJ_DIR) $(DOT_D) $(OBJECTS) > /dev/null
