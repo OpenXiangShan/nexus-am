@@ -2,9 +2,9 @@
 
 ## 数据结构
 
-* `_Area`代表一段连续的内存。
+* `_Area`代表一段连续的内存，组成`[start, end)`的左闭右开区间。
 * `_Screen`描述系统初始化后的屏幕（后续可通过PCI总线设置显示控制器，则此设置不再有效）。
-* 屏幕的像素颜色由32位整数`typedef u32 _Pixel;`确定，从高位到低位是`00rrggbb`，红绿蓝各8位。
+* 屏幕的像素颜色由32位整数`typedef u32 _Pixel;`确定，从高位到低位是`00rrggbb`（不论大小端），红绿蓝各8位。
 * 按键代码由`_KEY_XXX`指定，其中`_KEY_NONE = 0`。
 * `_Protect`描述一个被保护的地址空间(`_area`)，以及一个体系结构相关的指针(`ptr`)。
 
@@ -18,7 +18,7 @@
   * 整数类型`i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `size_t`, `off_t`的定义。
   * `typedef struct _RegSet {}`代表所有体系结构寄存器。
 * `src/`存放相关的源代码文件。
-* `img/`存放制作镜像必要的文件。执行`img/burn binary`能将ELF32可执行文件`binary`烧录成镜像。
+* `img/`存放制作镜像必要的文件。执行`img/burn target files`能将`files`对应的文件列表(.a)链接，并烧录成名为`target`的镜像。
 
 ## Turing Machine
 
@@ -26,13 +26,13 @@
 * `void _trm_init();` 初始化Turing Machine。必须在使用任何TRM函数/数据结构前调用（只能调用一次）。
 * `void _putc(char ch);` 调试输出一个字符，输出到最容易观测的地方。对qemu输出到串口，对Linux native输出到本地控制台。
 * `void _halt(int code);` 终止运行并报告返回代码。`code`为0表示正常终止。
-* `extern _Area _heap;` 一段可以完全自由使用的内存。
+* `extern _Area _heap;` 一段可以完全自由使用的内存，作为可分配的堆区。
 
 ## IO Extension
 
 * `void _ioe_init();` 初始化Extension。
-* `ulong _uptime();` 返回系统启动后的毫秒数。
-* `ulong _cycles();` 返回系统启动后的周期数。
+* `ulong _uptime();` 返回系统启动后的毫秒数。溢出后归零。
+* `ulong _cycles();` 返回系统启动后的周期数。溢出后归零。
 * `int _peek_key();` 返回按键。如果没有按键返回`_KEY_NONE`。
 * `void _draw_p(int x, int y, _Pixel p);` 在(`x`, `y`)坐标绘制像素`p`（非立即生效）。
 * `void _draw_f(_Pixel *p);` 绘制W*H个像素的数组，填充整个屏幕（非立即生效）。
@@ -82,6 +82,5 @@ extern int _NR_CPU;
 #endif
 
 #endif
-
 
 ```
