@@ -4,6 +4,8 @@
 int main() {
   _trm_init();
   _ioe_init();
-  print("Hello World!\n");
+  for (int i = 0; i < 10; i ++) {
+    print("Hello World!\n");
+  }
   _halt(0);
 }
