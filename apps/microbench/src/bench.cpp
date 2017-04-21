@@ -1,5 +1,6 @@
 #include <am.h>
 #include <benchmark.h>
+#include <benchlib.h>
 
 // The benchmark list
 
@@ -21,21 +22,21 @@ void bench_prepare(Result *res) {
 }
 
 void bench_done(Result *res) {
-  // get timer, tsc
-  // generate report
+  res->tsc = _cycles() - res->tsc;
+  res->msec = _uptime() - res->msec;
 }
 
 const char *bench_check(Benchmark &bench) {
   if (!bench.enabled) {
     return "not enabled";
   }
-  ulong freesp = (ulong)_heap.end - (ulong)_heap.start;
-  if (freesp < bench.mlim) {
-    return "insufficient memory";
-  }
+//  ulong freesp = (ulong)_heap.end - (ulong)_heap.start;
+//  if (freesp < bench.mlim) {
+//    return "insufficient memory";
+//  }
   
   // insufficient heap
-  return NULL;
+  return nullptr;
 }
 
 bool run_once(Benchmark &bench, Result &res) {
@@ -46,7 +47,7 @@ bool run_once(Benchmark &bench, Result &res) {
   bench_done(&res);      // collect results
 
   const char *msg = bench.validate();
-  if (msg == NULL) { // pass
+  if (msg == nullptr) { // pass
     return true;
   } else { // fail
     return false;
@@ -60,17 +61,18 @@ int main() {
 
   for (auto &bench: benchmarks) {
     const char *msg = bench_check(bench);
-    // printk("[%s] %s: ", bench.name, bench.desc);
-    if (msg != NULL) {
-      // printk("Not executed. %s\n", msg);
+    printk("[%s] %s: ", bench.name, bench.desc);
+    if (msg != nullptr) {
+      printk("Not executed. %s\n", msg);
       continue;
     }
     ulong tsc = 0, msec = 0;
     bool succ = true;
     for (int i = 0; i < REPEAT; i ++) {
-      _putc('0' + i % 10);
       Result res;
-      succ &= run_once(bench, res);
+      bool s = run_once(bench, res);
+      printk(s ? "." : "x");
+      succ &= s;
       tsc += res.tsc;
       msec += res.msec;
     }
@@ -78,16 +80,17 @@ int main() {
     tsc /= REPEAT;
     msec /= REPEAT; // TODO: handle overflow
 
-    if (succ) {
-      _putc('O'); _putc('K');
-    } else {
-      _putc('N'); _putc('O');
-    }
 
-    _putc('\n');
+    if (succ) {
+      printk(" Passed.");
+    } else {
+      printk(" Failed.");
+    }
+    printk("\n    Average: %dK cycles in %d ms\n", tsc, msec);
   }
 
   _halt(0);
+  return 0;
 }
 
 // Library

@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define REPEAT  10
+#define REPEAT  3
 
 // memory usages
 #define MB * 1024 * 1024

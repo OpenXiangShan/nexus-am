@@ -1,6 +1,7 @@
 #include <benchmark.h>
+#include <benchlib.h>
 
-#define N 1000
+#define N 10000
 int data[N];
 
 void bench_qsort_prepare() {
