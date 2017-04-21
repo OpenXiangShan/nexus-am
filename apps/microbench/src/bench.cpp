@@ -3,11 +3,11 @@
 
 // The benchmark list
 
-#define ENTRY(nm, snm, ml, en) \
+#define ENTRY(nm, snm, ml, en, des) \
   { .prepare = bench_##nm##_prepare, \
     .run = bench_##nm##_run, \
     .validate = bench_##nm##_validate, \
-    .name = snm, .mlim = ml, .enabled = en },
+    .name = snm, .desc = des, .mlim = ml, .enabled = en, },
 
 Benchmark benchmarks[] = {
   BENCHMARK_LIST(ENTRY)
@@ -29,6 +29,11 @@ const char *bench_check(Benchmark &bench) {
   if (!bench.enabled) {
     return "not enabled";
   }
+  ulong freesp = (ulong)_heap.end - (ulong)_heap.start;
+  if (freesp < bench.mlim) {
+    return "insufficient memory";
+  }
+  
   // insufficient heap
   return NULL;
 }
@@ -55,8 +60,9 @@ int main() {
 
   for (auto &bench: benchmarks) {
     const char *msg = bench_check(bench);
+    // printk("[%s] %s: ", bench.name, bench.desc);
     if (msg != NULL) {
-      // printf("Not executed. %s", msg);
+      // printk("Not executed. %s\n", msg);
       continue;
     }
     ulong tsc = 0, msec = 0;

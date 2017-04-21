@@ -16,9 +16,9 @@ extern "C" {
 // the list of benchmarks
 //  name
 #define BENCHMARK_LIST(V) \
-  V(   qsort,    "qsort",    64 MB,  true) \
+  V(qsort, "qsort", 64 MB, true, "sorting 100 numbers") \
 
-#define DECL(name, sname, mlim, enabled) \
+#define DECL(name, sname, mlim, enabled, desc) \
   void bench_##name##_prepare(); \
   void bench_##name##_run(); \
   const char* bench_##name##_validate();
@@ -29,7 +29,7 @@ typedef struct Benchmark {
   void (*prepare)();
   void (*run)();
   const char* (*validate)();
-  const char *name;
+  const char *name, *desc;
   ulong mlim;
   int enabled;
 } Benchmark;
