@@ -1,5 +1,4 @@
 #include <benchmark.h>
-#include <benchlib.h>
 
 #define N 100000
 int *data;

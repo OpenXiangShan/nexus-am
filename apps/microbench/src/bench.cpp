@@ -98,8 +98,12 @@ int main() {
 static char *start;
 
 void* bench_alloc(size_t size) {
+  if ((ulong)start % 16 != 0) {
+    start = start + 16 - ((ulong)start % 16);
+  }
   char *old = start;
   start += size;
+  for (char *p = old; p != start; p ++) *p = '\0';
   if (start >= _heap.end) {
     return NULL;
   }

@@ -1,5 +1,4 @@
 #include <benchmark.h>
-#include <benchlib.h>
 
 #define N 12
 #define ANS 14200
