@@ -5,7 +5,7 @@ extern char font8x8_basic[128][8];
 
 void draw_character(char ch, int x, int y, int color) {
 	int i, j;
-	_Pixel c = color;
+	_Pixel c = Getpixel(color);
 	char *p = font8x8_basic[(int)ch];
 	for (i = 0; i < 8; i ++) 
 		for (j = 0; j < 8; j ++) 

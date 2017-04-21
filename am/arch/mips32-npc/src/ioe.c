@@ -6,7 +6,7 @@ int curr_col = 0;
 
 extern void draw_character(char ch, int x, int y, int color);
 
-u32 *vmem = VMEM_ADDR;
+u8 *vmem = VMEM_ADDR;
 void vga_init(){
 	_screen.width = SCR_WIDTH;
 	_screen.height = SCR_HEIGHT;
@@ -39,7 +39,7 @@ void _draw_f(_Pixel *p) {
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-	vmem[x * SCR_WIDTH + y] = p;
+	vmem[x * SCR_WIDTH + y] = Getcolor(p);
 }
 
 void _draw_sync() {

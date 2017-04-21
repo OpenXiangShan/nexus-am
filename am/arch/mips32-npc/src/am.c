@@ -2,14 +2,6 @@
 #include <npc.h>
 
 // TODO: implement these functions.
-static void memory_init(){
-	//not to do
-}
-
-static void serial_init(){
-	//not to do
-}
-
 void _trm_init() {
 	serial_init();
 	memory_init();
