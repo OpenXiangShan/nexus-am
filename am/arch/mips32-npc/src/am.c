@@ -11,20 +11,8 @@ void _ioe_init() {
 	vga_init();
 }
 
-void _halt(int code) {
-	_putc('P');
-	_putc('a');
-	_putc('n');
-	_putc('i');
-	_putc('c');
-	_putc('\n');
-	while(1);
-}
-
-ulong npc_time = 0;
-
-ulong _uptime() {
-  return npc_time ++;
+void _asye_init(){
+	SetCompare(100);
 }
 
 _Area _heap;

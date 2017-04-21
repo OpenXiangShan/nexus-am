@@ -5,15 +5,15 @@ int curr_line = 0;
 int curr_col = 0;
 
 extern void draw_character(char ch, int x, int y, int color);
-
 u8 *vmem = VMEM_ADDR;
+
 void vga_init(){
 	_screen.width = SCR_WIDTH;
 	_screen.height = SCR_HEIGHT;
 }
 
 void _putc(char ch) {
-	//TODO:use uart
+	//TODO:use uart(now use vga)
 	if(ch == '\n'){
 		curr_col = 0;
 		curr_line += 8;
@@ -44,4 +44,8 @@ void _draw_p(int x, int y, _Pixel p) {
 
 void _draw_sync() {
 	//not to do
+}
+
+int _peek_key(){
+	return 0;
 }

@@ -2,20 +2,6 @@
 #include <npc.h>
 #include <arch.h>
 
-u32 GetCount(){
-	u32 tick = 0;
-	asm volatile("mfc0 %0, $9\n\t":"=r"(tick));
-	return tick;
-}
-
-void SetCompare(u32 compare){
-	asm volatile("mtc0 $11, %0\n\t"::"r"(compare));
-}
-
-void _asye_init(){
-	SetCompare(100);
-}
-
 void _listen(_RegSet* (*l)(int ex, _RegSet *regs)){
 }
 
