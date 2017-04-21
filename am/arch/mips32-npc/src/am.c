@@ -29,8 +29,10 @@ void _halt(int code) {
 	while(1);
 }
 
+ulong npc_time = 0;
+
 ulong _uptime() {
-  return 0;
+  return npc_time ++;
 }
 
 _Area _heap;

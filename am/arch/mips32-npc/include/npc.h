@@ -1,7 +1,7 @@
 #ifndef __NPC_H__
 #define __NPC_H__
 
-#define VMEM_ADDR ((char *)0xc0000000)
+#define VMEM_ADDR ((u32 *)0xc0000000)
 #define SCR_WIDTH 640
 #define SCR_HEIGHT 480
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)

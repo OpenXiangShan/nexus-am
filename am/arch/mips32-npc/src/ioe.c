@@ -1,7 +1,7 @@
 #include <am.h>
 #include <npc.h>
 
-char *vmem = VMEM_ADDR;
+u32 *vmem = VMEM_ADDR;
 void vga_init(){
 	_screen.width = SCR_WIDTH;
 	_screen.height = SCR_HEIGHT;
@@ -17,7 +17,7 @@ void _putc(char ch) {
 
 void _draw_f(_Pixel *p) {
 	int i;
-	for(i = 0;i < SCR_SIZE; i++){
+	for(i = 0;i < SCR_SIZE / 4; i++){
 		vmem[i] = Getcolor(p[i]);
 	}
 }
