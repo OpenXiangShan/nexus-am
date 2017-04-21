@@ -4,8 +4,7 @@
 
 _Pixel canvas[N][N];
 bool used[N][N];
-_Pixel fb[1024 * 768];
-
+_Pixel fb[640*480];
 void redraw() {
   int w = _screen.width;
   int h = _screen.height;
