@@ -28,12 +28,12 @@ void bench_done(Result *res) {
 
 const char *bench_check(Benchmark &bench) {
   if (!bench.enabled) {
-    return "not enabled";
+    return "";
   }
-//  ulong freesp = (ulong)_heap.end - (ulong)_heap.start;
-//  if (freesp < bench.mlim) {
-//    return "insufficient memory";
-//  }
+  ulong freesp = (ulong)_heap.end - (ulong)_heap.start;
+  if (freesp < bench.mlim) {
+    return "(insufficient memory)";
+  }
   
   // insufficient heap
   return nullptr;
@@ -63,7 +63,7 @@ int main() {
     const char *msg = bench_check(bench);
     printk("[%s] %s: ", bench.name, bench.desc);
     if (msg != nullptr) {
-      printk("Not executed. %s\n", msg);
+      printk("Ignored %s\n", msg);
       continue;
     }
     ulong tsc = 0, msec = 0;
@@ -98,13 +98,11 @@ int main() {
 static char *start;
 
 void* bench_alloc(size_t size) {
-  ulong rem = ((ulong)start) % size;
-  if (rem != 0) {
-    start = start + size - rem;
-  }
   char *old = start;
-  // TODO: check bound;
   start += size;
+  if (start >= _heap.end) {
+    return NULL;
+  }
   return old;
 }
 

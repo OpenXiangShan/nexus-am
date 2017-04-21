@@ -1,38 +1,6 @@
 #include <am.h>
 #include <benchlib.h>
-
-void kalloc_init();
-
-void klib_init() {
-  kalloc_init();
-}
-
-static char *front;
-
-// TODO: this lets memory leak!
-
-void kalloc_init() {
-  front = _heap.start;
-}
-
-void* kalloc(size_t size) {
-  assert(front);
-  while ((ulong)front % size != 0) front ++;
-  front += size;
-  if (front >= (char*)_heap.end) {
-    printk("Out of memory!\n");
-    _halt(1);
-  }
-  return (void*)(front - size);
-}
-
-void kfree(void *ptr) {
-  assert(0);
-}
-
 #include <stdarg.h>
-
-// TODO: this works only for 32-bit systems.
 
 static char *utoa(uint value, char *buf, int base) {
   static char digits[] = "0123456789abcdef";

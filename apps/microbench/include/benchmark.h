@@ -14,9 +14,9 @@ extern "C" {
 #define KB * 1024
 
 // the list of benchmarks
-//  name
 #define BENCHMARK_LIST(V) \
-  V(qsort, "qsort", 64 MB, true, "sorting 10,000 numbers") \
+  V(qsort, "qsort",  1 MB, true,  "quick sort") \
+  V(queen, "queen",  0 MB, true,  "queen placement problem") \
 
 #define DECL(name, sname, mlim, enabled, desc) \
   void bench_##name##_prepare(); \
