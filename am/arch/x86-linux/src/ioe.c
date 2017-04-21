@@ -13,7 +13,7 @@ ulong _uptime() {
 }
 
 static inline long long rdtsc() {
-  int lo, hi;
+  u32 lo, hi;
   asm volatile ("rdtscp": "=a"(lo), "=d"(hi) : : "%ecx");
   return ((long long)hi << 32) | lo;
 }
@@ -21,7 +21,7 @@ static inline long long rdtsc() {
 static long long init_tsc;
 
 ulong _cycles() {
-  return rdtsc() - init_tsc;
+  return (rdtsc() - init_tsc) >> 10;
 }
 
 void gui_init();

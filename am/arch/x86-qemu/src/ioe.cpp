@@ -110,13 +110,13 @@ int _peek_key() {
   }
 }
 
-static inline long long rdtsc() {
-  int lo, hi;
-  asm volatile ("rdtscp": "=a"(lo), "=d"(hi) : : "%ecx");
-  return ((long long)hi << 32) | lo;
+static inline ulong rdtsc() {
+  u32 lo, hi;
+  asm volatile ("rdtsc": "=a"(lo), "=d"(hi)::);
+  return (hi << (32 - 10)) | (lo >> 10);
 }
 
-static long long init_tsc;
+static ulong init_tsc;
 
 void _ioe_init() {
   vga_init();
@@ -130,7 +130,8 @@ ulong _cycles() {
 }
 
 ulong _uptime() {
-  return i386_uptime;
+  // TODO: this is not precise.
+  return i386_uptime ++;
 }
 
 _Screen _screen;
