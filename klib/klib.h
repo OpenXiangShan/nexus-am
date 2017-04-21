@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 // We're expecting:
-//   assert, printf, sprintf
+//   assert, printk, sprintk
 //   memcpy, memset, strcpy, strlen, itoa, atoi, ...
 //   kalloc, kree
 
