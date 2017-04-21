@@ -1,7 +1,9 @@
 #ifndef __BENCHLIB_H__
 #define __BENCHLIB_H__
 
+#ifndef NULL
 #define NULL ((void*)0)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
