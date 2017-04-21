@@ -1,6 +1,8 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include <unistd.h>
+
 typedef char i8;
 typedef unsigned char u8;
 typedef short int i16;

@@ -12,8 +12,16 @@ ulong _uptime() {
   return seconds * 1000 + (useconds + 500) / 1000;
 }
 
+static inline long long rdtsc() {
+  int lo, hi;
+  asm volatile ("rdtscp": "=a"(lo), "=d"(hi) : : "%ecx");
+  return ((long long)hi << 32) | lo;
+}
+
+static long long init_tsc;
+
 ulong _cycles() {
-  return 0;
+  return rdtsc() - init_tsc;
 }
 
 void gui_init();
@@ -21,5 +29,6 @@ void gui_init();
 void _ioe_init() {
   gui_init();
   gettimeofday(&boot_time, NULL);
+  init_tsc = rdtsc();
 }
 
