@@ -1,7 +1,7 @@
 #include <klib.h>
 
-int strlen(const char *s) {
-  int sz = 0;
+size_t strlen(const char *s) {
+  size_t sz = 0;
   for (; *s; s ++) {
     sz ++;
   }
