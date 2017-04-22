@@ -10,24 +10,20 @@ static int MAP[256] = {
   _KEY_X, // B
   _KEY_UP, // SELECT
   _KEY_DOWN, // START
-  0,
-  0,
+  255,
+  255,
   _KEY_LEFT, 
   _KEY_RIGHT, 
+  255,
 };
 
 extern int key_state[];
-
-#include <stdio.h>
 
 inline byte psg_io_read(word address)
 {
     // Joystick 1
     if (address == 0x4016) {
         if (p++ < 9) {
-          if (key_state[MAP[p]]) {
-            printf("Detected key press: %d\n", p);
-          }
           return key_state[MAP[p]];
         }
     }

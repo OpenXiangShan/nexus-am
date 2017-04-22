@@ -563,7 +563,7 @@ void cpu_run(long cycles)
 {
     while (cycles > 0) {
         op_code = memory_readb(cpu.PC++);
-        if (cpu_op_address_mode[op_code] == NULL) {
+        if (cpu_op_address_mode[op_code] == 0) {
         }
         else {
             cpu_op_address_mode[op_code]();

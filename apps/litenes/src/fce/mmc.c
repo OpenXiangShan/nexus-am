@@ -1,8 +1,8 @@
+#include "common.h"
 #include "mmc.h"
 #include "ppu.h"
-#include <string.h>
 
-#define MMC_MAX_PAGE_COUNT 256
+#define MMC_MAX_PAGE_COUNT 4
 
 byte mmc_prg_pages[MMC_MAX_PAGE_COUNT][0x4000];
 byte mmc_chr_pages[MMC_MAX_PAGE_COUNT][0x2000];

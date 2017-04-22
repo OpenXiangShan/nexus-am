@@ -4,7 +4,8 @@
 #include "ppu.h"
 #include "hal.h"
 #include "nes.h"
-#include <string.h>
+
+_Pixel canvas[W][H];
 
 typedef struct {
     char signature[4];
@@ -37,7 +38,7 @@ int fce_load_rom(char *rom)
     mmc_id = ((fce_rom_header.rom_type & 0xF0) >> 4);
 
     int prg_size = fce_rom_header.prg_block_count * 0x4000;
-    static byte buf[1048576];
+    static byte buf[0x10000];
     romread(rom, buf, prg_size);
 
     if (mmc_id == 0 || mmc_id == 3) {
@@ -89,10 +90,9 @@ void wait_for_frame() {
 
 int key_state[256];
 
-#include <stdio.h>
-
 void fce_run()
 {
+    key_state[0] = 1;
     time = _uptime();
     while(1)
     {
@@ -109,19 +109,11 @@ void fce_run()
           int down = (key & 0x8000);
           int code = key & ~0x8000;
           key_state[code] = down;
-          if (down) {
-            printf("Key down: %d\n", code);
-          } else {
-            printf("Key up: %d\n", code);
-          }
         }
     }
 }
 
 // Rendering
-
-_Pixel canvas[W][H];
-_Pixel fb[640 * 480];
 
 void fce_update_screen()
 {
@@ -134,10 +126,9 @@ void fce_update_screen()
   int pad = (w - h) / 2;
   for (int x = pad; x < w - pad; x ++) {
     for (int y = 0; y < h; y ++) {
-      fb[x + w * y] = canvas[(x - pad) * W / h][y * H / h];
+      _draw_p(x, y, canvas[(x - pad) * W / h][y * H / h]);
     }
   }
-  _draw_f(fb);
   _draw_sync();
 
   for (int i = 0; i < W; i ++)

@@ -4,7 +4,6 @@
 #include "fce.h"
 #include "memory.h"
 #include "hal.h"
-#include <string.h>
 
 byte ppu_sprite_palette[4][4];
 bool ppu_2007_first_read;
