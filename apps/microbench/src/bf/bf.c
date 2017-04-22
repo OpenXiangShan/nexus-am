@@ -27,7 +27,7 @@
 #define CODE            ">>+>>>>>,[>+>>,]>+[--[+<<<-]<[<+>-]<[<[->[<<<+>>>>+<-]<<[>>+>[->]<<[<]" \
                         "<-]>]>>>+<[[-]<[>+<-]<]>[[>>>]+<<<-<[<<[<<<]>>+>[>>>]<-]<<[<<<]>[>>[>>" \
                         ">]<+<<[<<<]>-]]+<<<]+[->>>]>>]>>[.>>>]"
-#define CHECKSUM        0x25c64801   
+#define CHECKSUM        0x46726783
 
 #define OP_END          0
 #define OP_INC_DP       1
@@ -101,10 +101,11 @@ int compile_bf() {
   return SUCCESS;
 }
 
-unsigned short *data, *output;
+unsigned short *data;
+char *output;
 int noutput;
 
-u32 execute_bf() {
+void execute_bf() {
   unsigned int pc = 0, ptr = 0;
   while (PROGRAM[pc].operator != OP_END && ptr < DATA_SIZE) {
     switch (PROGRAM[pc].operator) {
@@ -116,13 +117,11 @@ u32 execute_bf() {
       case OP_IN: data[ptr] = *(input ++); break;
       case OP_JMP_FWD: if(!data[ptr]) { pc = PROGRAM[pc].operand; } break;
       case OP_JMP_BCK: if(data[ptr]) { pc = PROGRAM[pc].operand; } break;
-      default: return FAILURE;
+      default: return;
     }
     pc++;
   }
-  return checksum(output, output + noutput);
 }
-
 
 void bench_bf_prepare() {
   SP = 0;
@@ -140,13 +139,13 @@ void bench_bf_prepare() {
   }
 }
 
-u32 retval;
-
 void bench_bf_run() {
   compile_bf();
-  retval = execute_bf();
+  execute_bf();
 }
 
 const char * bench_bf_validate() {
-  return (noutput == ARR_SIZE && retval == CHECKSUM) ? NULL : "wrong answer";
+  u32 cs = checksum(output, output + noutput);
+  return ((noutput == ARR_SIZE && cs == CHECKSUM) ? \
+            NULL : "wrong answer");
 }

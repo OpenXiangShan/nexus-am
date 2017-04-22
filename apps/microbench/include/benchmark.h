@@ -22,7 +22,7 @@ extern "C" {
   def(   bf,    "bf",  32 KB,  true, "branf**k interpreter") \
 
 // Each benchmark will run REPEAT times
-#define REPEAT  1
+#define REPEAT  3
 
 #define DECL(name, sname, mlim, enabled, desc) \
   void bench_##name##_prepare(); \

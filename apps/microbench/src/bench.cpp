@@ -36,26 +36,17 @@ const char *bench_check(Benchmark &bench) {
   if (freesp < bench.mlim) {
     return "(insufficient memory)";
   }
-  
-  // insufficient heap
   return nullptr;
 }
 
-bool run_once(Benchmark &bench, Result &res) {
-  current = &bench;
-  bench_reset();   // reset malloc state
-  bench.prepare(); // call bechmark's prepare function
-  bench_prepare(&res);   // clean everything, start timer
-  bench.run();     // run it
-  bench_done(&res);      // collect results
-
-  const char *msg = bench.validate();
-  if (msg == nullptr) { // pass
-    return true;
-  } else { // fail
-    return false;
-  }
-
+bool run_once(Benchmark &b, Result &res) {
+  current = &b;
+  bench_reset();       // reset malloc state
+  current->prepare();  // call bechmark's prepare function
+  bench_prepare(&res); // clean everything, start timer
+  current->run();      // run it
+  bench_done(&res);    // collect results
+  return current->validate() == nullptr;
 }
 
 int main() {
@@ -67,28 +58,28 @@ int main() {
     printk("[%s] %s: ", bench.name, bench.desc);
     if (msg != nullptr) {
       printk("Ignored %s\n", msg);
-      continue;
-    }
-    ulong tsc = 0, msec = 0;
-    bool succ = true;
-    for (int i = 0; i < REPEAT; i ++) {
-      Result res;
-      bool s = run_once(bench, res);
-      printk(s ? "*" : "X");
-      succ &= s;
-      tsc += res.tsc;
-      msec += res.msec;
-    }
-
-    tsc /= REPEAT;
-    msec /= REPEAT; // TODO: handle overflow
-
-    if (succ) {
-      printk(" Passed.");
     } else {
-      printk(" Failed.");
+      ulong tsc = 0, msec = 0;
+      bool succ = true;
+      for (int i = 0; i < REPEAT; i ++) {
+        Result res;
+        bool s = run_once(bench, res);
+        printk(s ? "*" : "X");
+        succ &= s;
+        tsc += res.tsc;
+        msec += res.msec;
+      }
+
+      tsc /= REPEAT;
+      msec /= REPEAT; // TODO: handle overflow
+
+      if (succ) {
+        printk(" Passed.");
+      } else {
+        printk(" Failed.");
+      }
+      printk("\n  avg time: %dK cycles in %d ms\n", tsc, msec);
     }
-    printk("\n    Average: %dK cycles in %d ms\n", tsc, msec);
   }
 
   _halt(0);

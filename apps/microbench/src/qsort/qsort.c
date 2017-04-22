@@ -38,5 +38,5 @@ void bench_qsort_run() {
 }
 
 const char * bench_qsort_validate() {
-  return checksum(data, data + N) == CHECKSUM ? NULL : "wrong checksum";
+  return checksum(data, data + N) == CHECKSUM ? NULL : "wrong answer";
 }

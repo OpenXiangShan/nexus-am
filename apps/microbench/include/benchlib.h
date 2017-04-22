@@ -1,4 +1,4 @@
-// TODO: we do not need this if we have klib.
+// TODO: remove this when we have klib.
 
 #ifndef __BENCHLIB_H__
 #define __BENCHLIB_H__

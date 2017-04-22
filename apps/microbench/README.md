@@ -1,7 +1,5 @@
 # MicroBench
 
-A collection of benchmarks for performance test.
+A collection of benchmarks for CPU correctness and performance test.
 
-Relies on `_cycles()` and `_uptime()` of AbstractMachine.
-
-TODO: this should be a set of (configurable) benchmarks.
+Correct stat information requires `_cycles()` and `_uptime()` of AbstractMachine.
