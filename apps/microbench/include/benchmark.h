@@ -19,7 +19,7 @@ extern "C" {
 #define BENCHMARK_LIST(def) \
   def(qsort, "qsort", 640 KB,  true, "quick sort") \
   def(queen, "queen",   0 KB,  true, "queen placement") \
-  def(   bf,    "bf",  32 KB,  true, "branf**k interpreter") \
+  def(   bf,    "bf",  32 KB,  true, "brainf**k interpreter") \
 
 // Each benchmark will run REPEAT times
 #define REPEAT  3
