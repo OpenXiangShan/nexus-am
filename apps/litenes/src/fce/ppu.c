@@ -132,7 +132,6 @@ inline void ppu_ram_write(word address, byte data)
 
 // Rendering
 
-#include <stdio.h>
 void ppu_draw_background_scanline(bool mirror)
 {
     int tile_x;
