@@ -132,6 +132,7 @@ inline void ppu_ram_write(word address, byte data)
 
 // Rendering
 
+#include <stdio.h>
 void ppu_draw_background_scanline(bool mirror)
 {
     int tile_x;
@@ -150,7 +151,7 @@ void ppu_draw_background_scanline(bool mirror)
 
         int x;
         for (x = 0; x < 8; x++) {
-            byte color = ppu_l_h_addition_table[l][h][x];
+            byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
 
             // Color 0 is transparent
             if (color != 0) {
@@ -212,7 +213,9 @@ void ppu_draw_sprite_scanline()
         word palette_address = 0x3F10 + (palette_attribute << 2);
         int x;
         for (x = 0; x < 8; x++) {
-            int color = hflip ? ppu_l_h_addition_flip_table[l][h][x] : ppu_l_h_addition_table[l][h][x];
+            int color = hflip ? 
+                ((((h >> x) & 1) << 1) | ((l >> x) & 1)):
+                ((((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1));
 
             // Color 0 is transparent
             if (color != 0) {
@@ -375,17 +378,6 @@ void ppu_init()
     ppu.PPUSTATUS |= 0xA0;
     ppu.PPUDATA = 0;
     ppu_2007_first_read = true;
-
-    // Initializing low-high byte-pairs for pattern tables
-    int h, l, x;
-    for (h = 0; h < 0x100; h++) {
-        for (l = 0; l < 0x100; l++) {
-            for (x = 0; x < 8; x++) {
-                ppu_l_h_addition_table[l][h][x] = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-                ppu_l_h_addition_flip_table[l][h][x] = (((h >> x) & 1) << 1) | ((l >> x) & 1);
-            }
-        }
-    }
 }
 
 void ppu_sprram_write(byte data)
