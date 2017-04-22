@@ -2,7 +2,12 @@
 #include "video.h"
 
 extern char font8x8_basic[128][8];
-char str[30];
+static inline unsigned int pixel(int color){
+	char r = (color >> 24) & 0xff;
+	char g = (color >> 16) & 0xff;
+	char b = (color >> 8) & 0xff;
+	return (r << 16 | g << 8 | b );
+}
 
 static char inline *reverse(char *s)  
 {  
@@ -49,7 +54,7 @@ static inline void draw_character(char ch, int x, int y, int color) {
 	for (i = 0; i < 8; i ++) 
 		for (j = 0; j < 8; j ++) 
 			if ((p[i] >> j) & 1)
-				_draw_p(y + j, x + i, 0xffffff);
+				_draw_p(y + j, x + i, pixel(color));
 }
 
 static inline void draw_string(const char *str, int x, int y, int color) {
@@ -73,17 +78,17 @@ redraw_screen() {
 	for (it = characters(); it != NULL; it = it->_next) {
 		static char buf[2];
 		buf[0] = it->text + 'A'; buf[1] = 0;
-		draw_string(buf, it->x, it->y, 15);
+		draw_string(buf, it->x, it->y, 0xff000000);
 	}
 
 	/* 绘制命中数、miss数、最后一次按键扫描码和fps */
 	const char *key = itoa(last_key_code());
-	draw_string(key, SCR_HEIGHT - 8, 0, 48);
+	draw_string(key, SCR_HEIGHT - 8, 0, 0x0000ff00);
 	hit = itoa(get_hit());
-	draw_string(hit, 0, SCR_WIDTH - strlen(hit) * 8, 10);
+	draw_string(hit, 0, SCR_WIDTH - strlen(hit) * 8, 0x0000ff00);
 	miss = itoa(get_miss());
-	draw_string(miss, SCR_HEIGHT - 8, SCR_WIDTH - strlen(miss) * 8, 12);
+	draw_string(miss, SCR_HEIGHT - 8, SCR_WIDTH - strlen(miss) * 8, 0x0000ff00);
 	const char *fps = itoa(get_fps());
-	draw_string(fps, 0, 0, 14);
-	draw_string("FPS", 0, 2 * 8, 14);
+	draw_string(fps, 0, 0, 0x00ff0000);
+	draw_string("FPS", 0, strlen(fps) * 8, 0x00ff0000);
 }

@@ -1,7 +1,7 @@
 #include "video.h"
 #include "common.h"
 
-_Pixel fb[640 *480] = {0};
+extern _Pixel fb[1024*768];
 
 void prepare_buffer(){
 	_draw_f(fb);

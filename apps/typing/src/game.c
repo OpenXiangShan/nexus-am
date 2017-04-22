@@ -2,6 +2,7 @@
 #include "time.h"
 
 volatile unsigned int tick = 0;
+_Pixel fb[1024*768] = {0};
 
 static int real_fps;
 void set_fps(int value){
@@ -15,7 +16,6 @@ int get_fps(){
 int main (){
     _trm_init();
     _ioe_init();
-    _asye_init();
     int now = 0;
     int target = 0;
     bool redraw = false;
