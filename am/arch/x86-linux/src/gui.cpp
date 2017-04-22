@@ -1,8 +1,8 @@
 #include <am.h>
 #include "gui.h"
 
-#define W 640
-#define H 480
+#define W 320
+#define H 200
 
 #define KEYDOWN_MASK 0x8000
 

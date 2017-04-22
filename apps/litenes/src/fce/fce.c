@@ -86,6 +86,11 @@ void wait_for_frame() {
   time = cnt;
 }
 
+
+int key_state[256];
+
+#include <stdio.h>
+
 void fce_run()
 {
     time = _uptime();
@@ -98,26 +103,45 @@ void fce_run()
             ppu_run(1);
             cpu_run(1364 / 12); // 1 scanline
         }
+
+        int key = _peek_key();
+        if (key != _KEY_NONE) {
+          int down = (key & 0x8000);
+          int code = key & ~0x8000;
+          key_state[code] = down;
+          if (down) {
+            printf("Key down: %d\n", code);
+          } else {
+            printf("Key up: %d\n", code);
+          }
+        }
     }
 }
 
 // Rendering
 
-_Pixel canvas[W * H];
+_Pixel canvas[W][H];
+_Pixel fb[640 * 480];
 
 void fce_update_screen()
 {
   int idx = ppu_ram_read(0x3F00);
   _Pixel bgc = palette[idx];
 
+  int w = _screen.width;
+  int h = _screen.height;
 
-  for (int i = 0; i < W; i ++)
-    for (int j = 0; j < H; j ++) {
-      _draw_p(i, j, canvas[j * W + i]);
+  int pad = (w - h) / 2;
+  for (int x = pad; x < w - pad; x ++) {
+    for (int y = 0; y < h; y ++) {
+      fb[x + w * y] = canvas[(x - pad) * W / h][y * H / h];
     }
-
+  }
+  _draw_f(fb);
   _draw_sync();
 
-  for (int i = 0; i < W * H; i ++) canvas[i] = bgc;
+  for (int i = 0; i < W; i ++)
+    for (int j = 0; j < H; j ++)
+      canvas[i][j] = bgc;
 }
 

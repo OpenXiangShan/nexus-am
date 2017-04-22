@@ -4,13 +4,31 @@
 static byte prev_write;
 static int p = 10;
 
+static int MAP[256] = {
+  0, // On/Off
+  _KEY_Z, // A
+  _KEY_X, // B
+  _KEY_UP, // SELECT
+  _KEY_DOWN, // START
+  0,
+  0,
+  _KEY_LEFT, 
+  _KEY_RIGHT, 
+};
+
+extern int key_state[];
+
+#include <stdio.h>
+
 inline byte psg_io_read(word address)
 {
     // Joystick 1
     if (address == 0x4016) {
         if (p++ < 9) {
-          return 0;
-            // return nes_key_state(p);
+          if (key_state[MAP[p]]) {
+            printf("Detected key press: %d\n", p);
+          }
+          return key_state[MAP[p]];
         }
     }
     return 0;

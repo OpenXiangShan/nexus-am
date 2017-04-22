@@ -11,11 +11,11 @@ bool ppu_2007_first_read;
 byte ppu_addr_latch;
 
 
-extern _Pixel canvas[];
+extern _Pixel canvas[W][H];
 
 void draw(int x, int y, int idx) {
   if (x >= 0 && x < W && y >= 0 && y < H) {
-    canvas[y * W + x] = palette[idx];
+    canvas[x][y] = palette[idx];
   }
 }
 
