@@ -16,12 +16,8 @@ extern "C" {
 //   memcpy, memset, strcpy, strlen, itoa, atoi, ...
 //   kalloc, kree
 
-<<<<<<< HEAD
-int strlen(const char *s);
-=======
 size_t strlen(const char *s);
 int rand();
->>>>>>> master
 
 #ifdef __cplusplus
 }
