@@ -27,6 +27,7 @@
 #define CODE            ">>+>>>>>,[>+>>,]>+[--[+<<<-]<[<+>-]<[<[->[<<<+>>>>+<-]<<[>>+>[->]<<[<]" \
                         "<-]>]>>>+<[[-]<[>+<-]<]>[[>>>]+<<<-<[<<[<<<]>>+>[>>>]<-]<<[<<<]>[>>[>>" \
                         ">]<+<<[<<<]>-]]+<<<]+[->>>]>>]>>[.>>>]"
+#define CHECKSUM        0x25c64801   
 
 #define OP_END          0
 #define OP_INC_DP       1
@@ -43,7 +44,7 @@
 
 #define PROGRAM_SIZE    4096
 #define STACK_SIZE      512
-#define DATA_SIZE       65535
+#define DATA_SIZE       4096
 
 #define STACK_PUSH(A)   (STACK[SP++] = A)
 #define STACK_POP()     (STACK[--SP])
@@ -100,8 +101,10 @@ int compile_bf() {
   return SUCCESS;
 }
 
-unsigned short *data;
-int execute_bf() {
+unsigned short *data, *output;
+int noutput;
+
+u32 execute_bf() {
   unsigned int pc = 0, ptr = 0;
   while (PROGRAM[pc].operator != OP_END && ptr < DATA_SIZE) {
     switch (PROGRAM[pc].operator) {
@@ -109,7 +112,7 @@ int execute_bf() {
       case OP_DEC_DP: ptr--; break;
       case OP_INC_VAL: data[ptr]++; break;
       case OP_DEC_VAL: data[ptr]--; break;
-      case OP_OUT: _putc(data[ptr]); break; // TODO: check output: data[ptr]
+      case OP_OUT: output[noutput ++] = data[ptr]; break;
       case OP_IN: data[ptr] = *(input ++); break;
       case OP_JMP_FWD: if(!data[ptr]) { pc = PROGRAM[pc].operand; } break;
       case OP_JMP_BCK: if(data[ptr]) { pc = PROGRAM[pc].operand; } break;
@@ -117,7 +120,7 @@ int execute_bf() {
     }
     pc++;
   }
-  return ptr != DATA_SIZE ? SUCCESS : FAILURE;
+  return checksum(output, output + noutput);
 }
 
 
@@ -128,17 +131,22 @@ void bench_bf_prepare() {
   data = bench_alloc(sizeof(data[0]) * DATA_SIZE);
   code = CODE;
   input = bench_alloc(ARR_SIZE + 1);
+  output = bench_alloc(DATA_SIZE);
+  noutput = 0;
+
   srand(1);
   for (int i = 0; i < ARR_SIZE; i ++) {
     input[i] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"[rand() % 62];
   }
 }
 
+u32 retval;
+
 void bench_bf_run() {
   compile_bf();
-  execute_bf();
+  retval = execute_bf();
 }
 
 const char * bench_bf_validate() {
-  return NULL;
+  return (noutput == ARR_SIZE && retval == CHECKSUM) ? NULL : "wrong answer";
 }

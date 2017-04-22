@@ -8,17 +8,21 @@
 extern "C" {
 #endif
 
-#define REPEAT  1
-
-// memory usages
 #define MB * 1024 * 1024
 #define KB * 1024
 
+#define SMALL
+#define LARGE
+
 // the list of benchmarks
-#define BENCHMARK_LIST(V) \
-  V(qsort, "qsort",  1 MB,  true, "quick sort") \
-  V(queen, "queen",  0 MB,  true, "queen placement problem") \
-  V(   bf,    "bf",  1 MB,  true, "branf**k interpreter") \
+//   Name       | Mem   |  Enable |  Desc                          |
+#define BENCHMARK_LIST(def) \
+  def(qsort, "qsort", 640 KB,  true, "quick sort") \
+  def(queen, "queen",   0 KB,  true, "queen placement") \
+  def(   bf,    "bf",  32 KB,  true, "branf**k interpreter") \
+
+// Each benchmark will run REPEAT times
+#define REPEAT  1
 
 #define DECL(name, sname, mlim, enabled, desc) \
   void bench_##name##_prepare(); \
@@ -52,6 +56,9 @@ void bench_reset();
 // random number generator
 void srand(int seed);
 int rand(); // return a random number between 0..32767
+
+// checksum
+u32 checksum(void *start, void *end);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,7 @@
 #include <benchmark.h>
 
 #define N 100000
+#define CHECKSUM 0xf9404918
 int *data;
 
 void bench_qsort_prepare() {
@@ -37,8 +38,5 @@ void bench_qsort_run() {
 }
 
 const char * bench_qsort_validate() {
-  for (int i = 1; i < N; i ++) {
-    if (data[i - 1] > data[i]) return "Order violation";
-  }
-  return NULL;
+  return checksum(data, data + N) == CHECKSUM ? NULL : "wrong checksum";
 }

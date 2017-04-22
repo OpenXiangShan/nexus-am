@@ -1,3 +1,5 @@
+// TODO: we do not need this if we have klib.
+
 #ifndef __BENCHLIB_H__
 #define __BENCHLIB_H__
 
@@ -9,14 +11,8 @@
 extern "C" {
 #endif
 
-void klib_init();
-
 // printk
 void printk(const char *fmt, ...);
-
-// memory allocation
-void* kalloc(size_t);
-void kfree(void*);
 
 #define assert(cond) \
   do { \

@@ -2,6 +2,8 @@
 #include <benchmark.h>
 #include <benchlib.h>
 
+Benchmark *current;
+
 // The benchmark list
 
 #define ENTRY(nm, snm, ml, en, des) \
@@ -40,6 +42,7 @@ const char *bench_check(Benchmark &bench) {
 }
 
 bool run_once(Benchmark &bench, Result &res) {
+  current = &bench;
   bench_reset();   // reset malloc state
   bench.prepare(); // call bechmark's prepare function
   bench_prepare(&res);   // clean everything, start timer
@@ -71,7 +74,7 @@ int main() {
     for (int i = 0; i < REPEAT; i ++) {
       Result res;
       bool s = run_once(bench, res);
-      printk(s ? "." : "x");
+      printk(s ? "*" : "X");
       succ &= s;
       tsc += res.tsc;
       msec += res.msec;
@@ -79,7 +82,6 @@ int main() {
 
     tsc /= REPEAT;
     msec /= REPEAT; // TODO: handle overflow
-
 
     if (succ) {
       printk(" Passed.");
@@ -107,6 +109,8 @@ void* bench_alloc(size_t size) {
   if (start >= _heap.end) {
     return NULL;
   }
+  ulong use = (ulong)start - (ulong)_heap.start;
+  assert(use <= current->mlim);
   return old;
 }
 
@@ -126,4 +130,19 @@ void srand(int _seed) {
 int rand() {
   seed = (seed * 214013L + 2531011L) >> 16;
   return seed & 0x7fff;
+}
+
+// FNV hash
+u32 checksum(void *start, void *end) {
+  const int x = 16777619;
+  int hash = 2166136261;
+  for (char *p = (char*)start; p != (char*)end; p ++) {
+    hash = (hash ^ *p) * x;
+  }
+  hash += hash << 13;
+  hash ^= hash >> 7;
+  hash += hash << 3;
+  hash ^= hash >> 17;
+  hash += hash << 5;
+  return hash;
 }
