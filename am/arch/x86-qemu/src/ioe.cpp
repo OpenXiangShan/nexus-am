@@ -90,7 +90,7 @@ int _peek_key() {
     return upevent(_KEY_NONE);
   } else {
     int code = inb(0x60) & 0xff;
-    //trm::printk("> %d\n", code);
+    //printk("> %d\n", code);
     // TODO: this is ugly.
     switch (code) {
       case 44: return downevent(_KEY_Z);

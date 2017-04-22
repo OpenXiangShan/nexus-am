@@ -6,7 +6,7 @@ static int letter_code[] = {
 	0x2b,0x34,0x33,0x43,0x3b,
 	0x42,0x4b,0x3a,0x31,0x44,
 	0x4d,0x15,0x2d,0x1b,0x2c,
-	0x3c,0x2a,0x1d,0x22,0x35,0x1a
+	0x3c,0x2a,0x1d,0x22,0x35,_KEY_Z
 };
 /* 对应键按下的标志位 */
 static bool letter_pressed[26];
@@ -37,13 +37,13 @@ static volatile int key_code = 0;
 int last_key_code(void) {
 	return key_code;
 }
-
+#define KEYDOWN_MASK 0x8000
 bool
 keyboard_event() {
 	//TODO:listen keyboard,catch scan_code assigning to key_code
 	key_code = _peek_key();
-	if(key_code == _KEY_DOWN){
-		press_key(key_code);
+	if((key_code & KEYDOWN_MASK) != 0){
+		press_key((key_code));
 		return true;
 	}
 	return false;
