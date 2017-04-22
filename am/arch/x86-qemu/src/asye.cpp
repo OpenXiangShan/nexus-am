@@ -156,7 +156,7 @@ static GateDesc idt[NR_IRQ];
 
 void _asye_init() {
   // init IDT
-  for (int i = 0; i < NR_IRQ; i ++) {
+  for (unsigned int i = 0; i < NR_IRQ; i ++) {
     idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
   }
 

@@ -4,7 +4,7 @@ DIR=./am/arch/x86-qemu/img
 DEST=$1
 shift
 
-ld --no-demangle -melf_i386 -Ttext 0x00100000 -o ./build/kernel.o --start-group $@ --end-group
+ld -melf_i386 -Ttext 0x00100000 -o ./build/kernel.o --start-group $@ --end-group
 bash -c "cd $DIR/boot && make"
 cat "$DIR/boot/mbr" ./build/kernel.o > ${DEST}
 

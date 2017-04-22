@@ -7,6 +7,7 @@ typedef unsigned short u16;
 typedef short int i16;
 typedef unsigned char u8;
 typedef char i8;
+typedef u32 size_t;
 
 typedef struct _RegSet {
 	u32 at,

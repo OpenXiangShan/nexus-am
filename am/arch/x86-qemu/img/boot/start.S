@@ -23,7 +23,6 @@ _start:
   movl    %cr0, %eax
   orl     $CR0_PE, %eax
   movl    %eax, %cr0
-
   ljmp    $GDT_ENTRY(1), $start32
 
 .code32

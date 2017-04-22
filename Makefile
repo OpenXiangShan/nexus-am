@@ -63,7 +63,8 @@ endif
 # The final binary
 DEST = build/$(APP)-$(ARCH)
 
-$(DEST): $(AM_LIB) $(KLIB) $(APP_LIB)
+.PHONY: image
+image: $(AM_LIB) $(KLIB) $(APP_LIB)
 	$(AM_PATH)/img/build $(DEST) $(shell readlink -f $(AM_LIB)) $(shell readlink -f $(KLIB)) $(shell readlink -f $(APP_LIB))
 
 # AM library
@@ -85,7 +86,7 @@ $(APP_LIB): $(APP_OBJ)
 
 .PHONY: play clean
 
-play: $(AM_LIB) $(DEST)
+play: $(AM_LIB) image
 ifeq ($(ARCH), mips32-npc)
 	@echo "Burn it to FPGA."
 endif
@@ -96,6 +97,16 @@ ifeq ($(ARCH), x86-qemu)
 	@qemu-system-i386 -serial stdio $(DEST)
 endif
 
+debug: $(AM_LIB) $(DEST)
+ifeq ($(ARCH), mips32-npc)
+	@echo "Debugging"
+endif
+ifeq ($(ARCH), x86-linux)
+	@gdb $(DEST)
+endif
+ifeq ($(ARCH), x86-qemu)
+	@qemu-system-i386 -serial stdio -s -S $(DEST)
+endif
 clean:
 	rm -rf build/ $(shell find . -name "*.o" -o -name "*.d")
 
