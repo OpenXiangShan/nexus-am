@@ -1,5 +1,3 @@
 #define FPS 60
-#define SCREEN_WIDTH 256
-#define SCREEN_HEIGHT 240
-
-void play();
+#define W 256
+#define H 240

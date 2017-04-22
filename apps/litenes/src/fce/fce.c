@@ -103,32 +103,21 @@ void fce_run()
 
 // Rendering
 
+_Pixel canvas[W * H];
+
 void fce_update_screen()
 {
   int idx = ppu_ram_read(0x3F00);
-  
-  for (int i = 0; i < 10; i ++)
-  for (int j = 0; j < 10; j ++)
-    _draw_p(i, j, palette[idx]);
+  _Pixel bgc = palette[idx];
+
+
+  for (int i = 0; i < W; i ++)
+    for (int j = 0; j < H; j ++) {
+      _draw_p(i, j, canvas[j * W + i]);
+    }
 
   _draw_sync();
-/*
-    nes_set_bg_color(idx);
-    
-    if (ppu_shows_sprites())
-        nes_flush_buf(&bbg);
 
-    if (ppu_shows_background())
-        nes_flush_buf(&bg);
-
-    if (ppu_shows_sprites())
-        nes_flush_buf(&fg);
-
-    nes_flip_display();
-
-    pixbuf_clean(bbg);
-    pixbuf_clean(bg);
-    pixbuf_clean(fg);
-*/
+  for (int i = 0; i < W * H; i ++) canvas[i] = bgc;
 }
 

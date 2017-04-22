@@ -11,6 +11,13 @@ bool ppu_2007_first_read;
 byte ppu_addr_latch;
 
 
+extern _Pixel canvas[];
+
+void draw(int x, int y, int idx) {
+  if (x >= 0 && x < W && y >= 0 && y < H) {
+    canvas[y * W + x] = palette[idx];
+  }
+}
 
 // PPUCTRL Functions
 
@@ -56,7 +63,6 @@ inline void ppu_set_sprite_0_hit(bool yesno)                        { common_mod
 inline void ppu_set_in_vblank(bool yesno)                           { common_modify_bitb(&ppu.PPUSTATUS, 7, yesno); }
 
 
-
 // RAM
 
 inline word ppu_get_real_ram_address(word address)
@@ -91,7 +97,6 @@ inline void ppu_ram_write(word address, byte data)
 {
     PPU_RAM[ppu_get_real_ram_address(address)] = data;
 }
-
 
 // 3F01 = 0F (00001111)
 // 3F02 = 2A (00101010)
@@ -165,12 +170,12 @@ void ppu_draw_background_scanline(bool mirror)
                 }
                 palette_attribute &= 3;
 
-                //word palette_address = 0x3F00 + (palette_attribute << 2);
-                //int idx = ppu_ram_read(palette_address + color);
+                word palette_address = 0x3F00 + (palette_attribute << 2);
+                int idx = ppu_ram_read(palette_address + color);
 
                 ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color;
                 
-                //pixbuf_add(bg, (tile_x << 3) + x - ppu.PPUSCROLL_X + (mirror ? 256 : 0), ppu.scanline + 1, idx);
+                draw((tile_x << 3) + x - ppu.PPUSCROLL_X + (mirror ? 256 : 0), ppu.scanline + 1, idx); // bg
             }
         }
     }
@@ -204,8 +209,8 @@ void ppu_draw_sprite_scanline()
         byte l = ppu_ram_read(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
         byte h = ppu_ram_read(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8);
 
-        //byte palette_attribute = PPU_SPRRAM[n + 2] & 0x3;
-        //word palette_address = 0x3F10 + (palette_attribute << 2);
+        byte palette_attribute = PPU_SPRRAM[n + 2] & 0x3;
+        word palette_address = 0x3F10 + (palette_attribute << 2);
         int x;
         for (x = 0; x < 8; x++) {
             int color = hflip ? ppu_l_h_addition_flip_table[l][h][x] : ppu_l_h_addition_table[l][h][x];
@@ -213,13 +218,13 @@ void ppu_draw_sprite_scanline()
             // Color 0 is transparent
             if (color != 0) {
                 int screen_x = sprite_x + x;
-                //int idx = ppu_ram_read(palette_address + color);
+                int idx = ppu_ram_read(palette_address + color);
                 
                 if (PPU_SPRRAM[n + 2] & 0x20) {
-                    //pixbuf_add(bbg, screen_x, sprite_y + y_in_tile + 1, idx);
+                    draw(screen_x, sprite_y + y_in_tile + 1, idx); // bbg
                 }
                 else {
-                    //pixbuf_add(fg, screen_x, sprite_y + y_in_tile + 1, idx);
+                    draw(screen_x, sprite_y + y_in_tile + 1, idx); // fg
                 }
 
                 // Checking sprite 0 hit
@@ -391,7 +396,6 @@ void ppu_sprram_write(byte data)
 
 void ppu_set_background_color(byte color)
 {
-    //nes_set_bg_color(color);
 }
 
 void ppu_set_mirroring(byte mirroring)
