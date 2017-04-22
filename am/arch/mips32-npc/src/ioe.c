@@ -37,7 +37,7 @@ void _putc(char ch) {
 	}
 }
 
-void _draw_f(_Pixel *p) {
+void _draw_f(_Pixel *p) {//npc doesn't support
 	int i;
 	for(i = 0;i < SCR_SIZE; i++){
 	    	fb[i].r = R(p[i]);
