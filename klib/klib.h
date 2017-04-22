@@ -17,6 +17,7 @@ extern "C" {
 //   kalloc, kree
 
 size_t strlen(const char *s);
+int rand();
 
 #ifdef __cplusplus
 }

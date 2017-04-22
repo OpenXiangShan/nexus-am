@@ -97,6 +97,16 @@ ifeq ($(ARCH), x86-qemu)
 	@qemu-system-i386 -serial stdio $(DEST)
 endif
 
+debug: $(AM_LIB) $(DEST)
+ifeq ($(ARCH), mips32-npc)
+	@echo "Debugging"
+endif
+ifeq ($(ARCH), x86-linux)
+	@gdb $(DEST)
+endif
+ifeq ($(ARCH), x86-qemu)
+	@qemu-system-i386 -serial stdio -s -S $(DEST)
+endif
 clean:
 	rm -rf build/ $(shell find . -name "*.o" -o -name "*.d")
 
