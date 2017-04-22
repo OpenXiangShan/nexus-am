@@ -47,9 +47,13 @@ static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x
 // For sprite-0-hit checks
 byte ppu_screen_background[264][248];
 
-// Precalculated tile high and low bytes addition for pattern tables
-byte ppu_l_h_addition_table[256][256][8];
-byte ppu_l_h_addition_flip_table[256][256][8];
+static inline byte ppu_l_h_addition(int h, int l, int x) {
+  return (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
+}
+static inline byte ppu_l_h_addition_flip(int l, int h, int x) {
+  return (((h >> x) & 1) << 1) | ((l >> x) & 1);
+}
+ 
 
 // Draws current screen pixels in ppu_background_pixels & ppu_sprite_pixels and clears them
 void ppu_render_screen();
