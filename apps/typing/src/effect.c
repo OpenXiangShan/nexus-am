@@ -29,7 +29,7 @@ void create_new_letter(){
     }
     
     head->x = 0;
-    head->y = rand() % (SCR_WIDTH / 8 - 2) * 8 + 8;
+    head->y = rand() % (_screen.width / 8 - 2) * 8 + 8;
     head->v = (rand() % 1000)/(2000) + 1;
     head->text = rand() % 26;
     release_key(head->text);
@@ -40,7 +40,7 @@ void update_letter_pos(){
     for(it = head;it != NULL;){
         fly_t next = it->_next;
         it->x += it->v;
-        if (it->x < 0 || it->x + 8 > SCR_HEIGHT){
+        if (it->x < 0 || it->x + 8 > _screen.height){
             if(it->x < 0)
                 hit++;
             else

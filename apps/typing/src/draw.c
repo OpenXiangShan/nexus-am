@@ -60,7 +60,7 @@ static inline void draw_character(char ch, int x, int y, int color) {
 static inline void draw_string(const char *str, int x, int y, int color) {
 	while (*str) {
 		draw_character(*str ++, x, y, color);
-		if (y + 8 >= SCR_WIDTH) {
+		if (y + 8 >= _screen.width) {
 			x += 8; y = 0;
 		} else {
 			y += 8;
@@ -78,17 +78,17 @@ redraw_screen() {
 	for (it = characters(); it != NULL; it = it->_next) {
 		static char buf[2];
 		buf[0] = it->text + 'A'; buf[1] = 0;
-		draw_string(buf, it->x, it->y, 0xff000000);
+		draw_string(buf, it->x, it->y, 0xffffffff);
 	}
 
 	/* 绘制命中数、miss数、最后一次按键扫描码和fps */
 	const char *key = itoa(last_key_code());
-	draw_string(key, SCR_HEIGHT - 8, 0, 0x0000ff00);
+	draw_string(key, _screen.height - 8, 0, 0xffffffff);
 	hit = itoa(get_hit());
-	draw_string(hit, 0, SCR_WIDTH - strlen(hit) * 8, 0x0000ff00);
+	draw_string(hit, 0, _screen.width - strlen(hit) * 8, 0xffffffff);
 	miss = itoa(get_miss());
-	draw_string(miss, SCR_HEIGHT - 8, SCR_WIDTH - strlen(miss) * 8, 0x0000ff00);
+	draw_string(miss, _screen.height - 8, _screen.width - strlen(miss) * 8, 0xffffffff);
 	const char *fps = itoa(get_fps());
-	draw_string(fps, 0, 0, 0x00ff0000);
-	draw_string("FPS", 0, strlen(fps) * 8, 0x00ff0000);
+	draw_string(fps, 0, 0, 0xffffffff);
+	draw_string("FPS", 0, strlen(fps) * 8, 0xffffffff);
 }

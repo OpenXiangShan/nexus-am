@@ -1,10 +1,13 @@
 #include "video.h"
 #include "common.h"
 
-extern _Pixel fb[1024*768];
+//extern _Pixel fb[1024*768];
 
 void prepare_buffer(){
-	_draw_f(fb);
+	int i,j;
+	for(i = 0; i < _screen.width; i++)
+		for(j = 0; j < _screen.height; j++)
+			_draw_p(i,j,0x0);
 }
 
 void display_buffer(){

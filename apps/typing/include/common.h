@@ -11,9 +11,6 @@
 #include <klib.h>
 #include "linklist.h"
 
-#define SCR_WIDTH (_screen.width)
-#define SCR_HEIGHT (_screen.height)
-
 /* 定义fly_t链表 */
 LINKLIST_DEF(fly)
 	int x;

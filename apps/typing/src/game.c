@@ -2,7 +2,7 @@
 #include "time.h"
 
 volatile unsigned int tick = 0;
-_Pixel fb[1024*768] = {0};
+//_Pixel fb[1024*768] = {0};
 
 static int real_fps;
 void set_fps(int value){
@@ -51,7 +51,7 @@ int main (){
                 set_fps(now_fps);
                 num_draw = 0;
             }
-            now += 5000;
+            now +=5000;
         }
         if(redraw){
             num_draw++;
