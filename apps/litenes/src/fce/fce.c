@@ -106,7 +106,7 @@ void fce_run()
 
         int key = _peek_key();
         if (key != _KEY_NONE) {
-          int down = (key & 0x8000);
+          int down = (key & 0x8000) != 0;
           int code = key & ~0x8000;
           key_state[code] = down;
         }
