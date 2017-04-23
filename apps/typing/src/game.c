@@ -1,5 +1,5 @@
 #include "common.h"
-#include "time.h"
+#include "intr.h"
 
 volatile unsigned int tick = 0;
 //_Pixel fb[1024*768] = {0};

@@ -1,4 +1,4 @@
-#include "time.h"
+#include "intr.h"
 #include "common.h"
 
 LINKLIST_IMPL(fly,1000)
