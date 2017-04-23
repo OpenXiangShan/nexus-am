@@ -12,7 +12,8 @@ void _ioe_init() {
 }
 
 void _asye_init(){
-	SetCompare(100);
+	u32 count = GetCount();
+	SetCompare(count + 20000);
 }
 
 _Area _heap;

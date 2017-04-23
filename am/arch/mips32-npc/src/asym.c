@@ -29,21 +29,18 @@ int _istatus(){
 void irq_handle(struct TrapFrame *tf){
 //TODO:handle
 	u32 arg = 0;
-	asm volatile("add %0,$4,$zero\n\t":"=r"(arg));
+	asm volatile("add %0,$k1,$zero\n\t":"=r"(arg));
 	tf = (void *)arg;
 	u32 intr = 0;
-	asm volatile("add %0,$5,$zero\n\t":"=r"(intr));
+	asm volatile("add %0,$k0,$zero\n\t":"=r"(intr));
 	switch(intr){
-		case 0x80://time interrupt
+		case 0x7://time interrupt
 			{
 				u32 count= GetCount();
 				_putc('g');
-				SetCompare(count + 100);
+				SetCompare(count + 20000);
 			}break;
-		default:_halt(0);
+		default:_putc('0' + intr);
 	}
-	asm volatile(
-	"addi $k1,$k1,8 \n\t"
-	"jr $k1         \n\t"
-	"nop		\n\t");
+	asm volatile("nop");
 }
