@@ -1,5 +1,5 @@
-#ifndef time_h
-#define time_h
+#ifndef intr_h
+#define intr_h
 
 void wait_intr();
 void cli();

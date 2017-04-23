@@ -1,4 +1,4 @@
-#include "time.h"
+#include "intr.h"
 #include "common.h"
 
 extern volatile unsigned int tick;
