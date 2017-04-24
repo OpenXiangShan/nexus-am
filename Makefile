@@ -1,3 +1,5 @@
+.DEFAULT_GOAL = image
+
 ifneq ($(MAKECMDGOALS), clean)
 ifeq ($(ARCH), )
 $(error "Usage: make [play|clean] ARCH=[mips32-npc|x86-linux|x86-qemu] APP=[hello|video|...]")
@@ -14,29 +16,29 @@ CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
 
-$(shell mkdir -p build/)
+$(shell mkdir -p build/$(ARCH))
 
 # -----------------------------------------------------------------------------
 
 # AM library archive
 AM_PATH = ./am/arch/$(ARCH)
-AM_LIB  = ./build/libam-$(ARCH).a
+AM_LIB  = ./build/$(ARCH)/libam.a
 AM_SRC  = $(shell find -L $(AM_PATH)/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
-AM_OBJ  = $(addsuffix .o, $(basename $(AM_SRC)))
-AM_DEP  = $(addsuffix .d, $(basename $(AM_SRC)))
+AM_OBJ  = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(AM_SRC))))
+AM_DEP  = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(AM_SRC))))
 
 # Application archive
 APP_PATH = ./apps/$(APP)
-APP_LIB  = ./build/$(APP)-$(ARCH).a
+APP_LIB  = ./build/$(ARCH)/$(APP).a
 APP_SRC  = $(shell find -L $(APP_PATH)/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
-APP_OBJ  = $(addsuffix .o, $(basename $(APP_SRC)))
-APP_DEP  = $(addsuffix .d, $(basename $(APP_SRC)))
+APP_OBJ  = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(APP_SRC))))
+APP_DEP  = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(APP_SRC))))
 
 # Klib archive
-KLIB  = ./build/libkern-$(ARCH).a
+KLIB  = ./build/$(ARCH)/libkern.a
 KLIB_SRC  = $(shell find -L ./klib/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
-KLIB_OBJ  = $(addsuffix .o, $(basename $(KLIB_SRC)))
-KLIB_DEP  = $(addsuffix .d, $(basename $(KLIB_SRC)))
+KLIB_OBJ  = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(KLIB_SRC))))
+KLIB_DEP  = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(KLIB_SRC))))
 
 # -----------------------------------------------------------------------------
 
@@ -57,6 +59,19 @@ CFLAGS   += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer
 CXXFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -ffreestanding -fno-rtti -fno-exceptions
 ASFLAGS  += -m32
 endif
+
+# Compilation patterns
+build/$(ARCH)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+build/$(ARCH)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+build/$(ARCH)/%.o: %.S
+	@mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -c -o $@ $<
 
 # -----------------------------------------------------------------------------
 
