@@ -5,7 +5,6 @@
 #include "hal.h"
 #include "nes.h"
 
-_Pixel canvas[W][H];
 
 typedef struct {
     char signature[4];
@@ -115,10 +114,11 @@ void fce_run()
 
 // Rendering
 
+byte canvas[W][H];
+
 void fce_update_screen()
 {
   int idx = ppu_ram_read(0x3F00);
-  _Pixel bgc = palette[idx];
 
   int w = _screen.width;
   int h = _screen.height;
@@ -126,13 +126,14 @@ void fce_update_screen()
   int pad = (w - h) / 2;
   for (int x = pad; x < w - pad; x ++) {
     for (int y = 0; y < h; y ++) {
-      _draw_p(x, y, canvas[(x - pad) * W / h][y * H / h]);
+      _draw_p(x, y, palette[canvas[(x - pad) * W / h][y * H / h]]);
     }
   }
+
   _draw_sync();
 
   for (int i = 0; i < W; i ++)
     for (int j = 0; j < H; j ++)
-      canvas[i][j] = bgc;
+      canvas[i][j] = idx;
 }
 
