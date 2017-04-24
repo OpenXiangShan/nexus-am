@@ -11,7 +11,7 @@ endif
 ifeq ($(ARCH), mips32-npc)
 CROSS_COMPILE = mips-linux-gnu-
 endif
-AS = $(CROSS_COMPILE)as
+AS = $(CROSS_COMPILE)gcc
 CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
@@ -43,9 +43,9 @@ KLIB_DEP  = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(KLIB_SRC)))
 # -----------------------------------------------------------------------------
 
 # Basic compilation flags
-CFLAGS   += -std=gnu99 -I ./am/ -I./$(AM_PATH)/include -I./klib -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
-CXXFLAGS += -std=c++11 -I ./am/ -I./$(AM_PATH)/include -I./klib -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
-ASFLAGS  +=            -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -MD
+CFLAGS   += -std=gnu99 -I./am/ -I./$(AM_PATH)/include -I./klib -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
+CXXFLAGS += -std=c++11 -I./am/ -I./$(AM_PATH)/include -I./klib -I./$(APP_PATH)/include -O2 -MD -Wall -Werror -ggdb
+ASFLAGS  +=            -I./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -MD
 
 # Arch-dependent compilation flags
 ifeq ($(ARCH), mips32-npc)
