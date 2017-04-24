@@ -2,13 +2,6 @@
 #include <npc.h>
 
 // TODO: implement these functions.
-static void memory_init(){
-	//not to do
-}
-
-static void serial_init(){
-	//not to do
-}
 
 void _trm_init() {
 	serial_init();
@@ -33,6 +26,11 @@ ulong npc_time = 0;
 
 ulong _uptime() {
   return npc_time ++;
+}
+
+ulong npc_cycles = 0;
+ulong _cycles(){
+  return npc_cycles ++;
 }
 
 _Area _heap;

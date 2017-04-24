@@ -15,6 +15,8 @@ static inline _Pixel pixel(u8 r, u8 g, u8 b) {
   return (r << 16) | (g << 8) | b;
 }
 void vga_init();
+void serial_init();
+void memory_init();
 
 #define KEY_CODE_ADDR ((volatile unsigned int *)0xf0000000)
 #define KEY_CODE (*KEY_CODE_ADDR)
