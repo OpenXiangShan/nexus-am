@@ -137,3 +137,26 @@ void fce_update_screen()
       canvas[i][j] = idx;
 }
 
+extern char mario_nes[];
+
+int main() {
+  _trm_init();
+  _ioe_init();
+
+  fce_load_rom(mario_nes);
+  fce_init();
+  fce_run();
+  return 1;
+}
+
+static char *alloc_head;
+
+void *halloc(size_t size) {
+  if (alloc_head == 0) {
+    alloc_head = (char*)_heap.start;
+  }
+  while ((ulong)alloc_head % 16 != 0) alloc_head ++;
+  alloc_head += size;
+  if (alloc_head >= (char*)_heap.end) return 0;
+  return alloc_head - size;
+}
