@@ -11,6 +11,6 @@ static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
 static inline u8 B(_Pixel p) { return p; }
 
-extern _Pixel canvas[N][N];
+//extern _Pixel canvas[N][N];
 
 void redraw();

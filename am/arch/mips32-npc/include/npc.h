@@ -2,8 +2,8 @@
 #define __NPC_H__
 
 #define VMEM_ADDR ((void *)0xc0000000)
-#define SCR_WIDTH 160
-#define SCR_HEIGHT 160
+#define SCR_WIDTH 320
+#define SCR_HEIGHT 240
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
 //outside R G B(outside draw_p)
 static inline u8 R(_Pixel p) { return p >> 16; }

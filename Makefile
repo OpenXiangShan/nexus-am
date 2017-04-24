@@ -48,9 +48,9 @@ ASFLAGS  +=            -I ./am/ -I./$(AM_PATH)/include -I./$(APP_PATH)/include -
 # Arch-dependent compilation flags
 ifeq ($(ARCH), mips32-npc)
 CXX = $(CROSS_COMPILE)g++-5
-CFLAGS   += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division
-CXXFLAGS += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -ffreestanding -fno-rtti -fno-exceptions -mno-check-zero-division
-ASFLAGS  += -march=mips32
+CFLAGS   += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL
+CXXFLAGS += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -ffreestanding -fno-rtti -fno-exceptions -mno-check-zero-division -EL
+ASFLAGS  += -march=mips32 -EL
 endif
 ifeq ($(ARCH), x86-qemu)
 CFLAGS   += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer
