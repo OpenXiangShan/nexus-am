@@ -41,8 +41,8 @@ APP_DEP  = $(call depdest, $(APP_SRC))
 # Klib archive
 KLIB     = ./build/$(ARCH)/libkern.a
 KLIB_SRC = $(call findsrc, ./klib/)
-KLIB_OBJ = $(call objdest, $(APP_SRC))
-KLIB_DEP = $(call depdest, $(APP_SRC))
+KLIB_OBJ = $(call objdest, $(KLIB_SRC))
+KLIB_DEP = $(call depdest, $(KLIB_SRC))
 
 # -----------------------------------------------------------------------------
 

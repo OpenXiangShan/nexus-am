@@ -11,7 +11,7 @@ byte op_code;             // Current instruction code
 int op_value, op_address; // Arguments for current instruction
 int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
 
-unsigned long long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
+unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 
 void (*cpu_op_address_mode[256])();       // Array of address modes
 void (*cpu_op_handler[256])();            // Array of instruction function pointers
@@ -626,7 +626,7 @@ void cpu_interrupt()
     // }
 }
 
-inline unsigned long long cpu_clock()
+inline unsigned long cpu_clock()
 {
     return cpu_cycles;
 }

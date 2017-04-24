@@ -18,9 +18,6 @@ static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
 static inline u8 B(_Pixel p) { return p; }
 
-// Binary Operations
-bool common_bit_set(long long value, byte position);
-
 // Byte Bit Operations
 void common_set_bitb(byte *variable, byte position);
 void common_unset_bitb(byte *variable, byte position);
@@ -55,5 +52,7 @@ static inline int memcmp(const void *dest, const void *src, size_t n) {
   }
   return 0;
 }
+
+static inline bool common_bit_set(ulong value, byte position) { return value & (1L << position); }
 
 #endif

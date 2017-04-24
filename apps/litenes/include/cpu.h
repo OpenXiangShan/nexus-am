@@ -12,7 +12,7 @@ void cpu_interrupt();
 void cpu_run(long cycles);
 
 // CPU cycles that passed since power up
-unsigned long long cpu_clock();
+unsigned long cpu_clock();
 
 typedef enum {
     carry_flag     = 0x01,
