@@ -20,25 +20,29 @@ $(shell mkdir -p build/$(ARCH))
 
 # -----------------------------------------------------------------------------
 
+findsrc = $(shell find -L $(1) -name "*.c" -o -name "*.cpp" -o -name "*.S")
+objdest = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(1))))
+depdest = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(1))))
+
 # AM library archive
 AM_PATH = ./am/arch/$(ARCH)
 AM_LIB  = ./build/$(ARCH)/libam.a
-AM_SRC  = $(shell find -L $(AM_PATH)/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
-AM_OBJ  = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(AM_SRC))))
-AM_DEP  = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(AM_SRC))))
+AM_SRC  = $(call findsrc, $(AM_PATH)/src)
+AM_OBJ  = $(call objdest, $(AM_SRC))
+AM_DEP  = $(call depdest, $(AM_SRC))
 
 # Application archive
 APP_PATH = ./apps/$(APP)
 APP_LIB  = ./build/$(ARCH)/$(APP).a
-APP_SRC  = $(shell find -L $(APP_PATH)/src -name "*.c" -o -name "*.cpp" -o -name "*.S")
-APP_OBJ  = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(APP_SRC))))
-APP_DEP  = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(APP_SRC))))
+APP_SRC  = $(call findsrc, $(APP_PATH)/src)
+APP_OBJ  = $(call objdest, $(APP_SRC))
+APP_DEP  = $(call depdest, $(APP_SRC))
 
 # Klib archive
-KLIB  = ./build/$(ARCH)/libkern.a
-KLIB_SRC  = $(shell find -L ./klib/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
-KLIB_OBJ  = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(KLIB_SRC))))
-KLIB_DEP  = $(addprefix build/$(ARCH)/, $(addsuffix .d, $(basename $(KLIB_SRC))))
+KLIB     = ./build/$(ARCH)/libkern.a
+KLIB_SRC = $(call findsrc, ./klib/)
+KLIB_OBJ = $(call objdest, $(APP_SRC))
+KLIB_DEP = $(call depdest, $(APP_SRC))
 
 # -----------------------------------------------------------------------------
 
