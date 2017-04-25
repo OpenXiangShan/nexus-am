@@ -47,9 +47,9 @@ void _draw_f(_Pixel *p) {//npc doesn't support
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  	fb[x + y * _screen.width].r = R(p);
+  	fb[x + y * _screen.width].r = R(p) >> 2;
   	fb[x + y * _screen.width].g = G(p);
-  	fb[x + y * _screen.width].b = B(p);
+  	fb[x + y * _screen.width].b = B(p) >> 2;
 }
 
 void _draw_sync() {

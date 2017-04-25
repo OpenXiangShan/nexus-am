@@ -34,7 +34,7 @@ void irq_handle(struct TrapFrame *tf){
 	u32 intr = 0;
 	asm volatile("add %0,$k0,$zero\n\t":"=r"(intr));
 	switch(intr){
-		case 0x7://time interrupt
+		case 0x80://time interrupt
 			{
 				u32 count= GetCount();
 				_putc('g');

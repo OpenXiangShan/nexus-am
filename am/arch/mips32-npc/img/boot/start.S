@@ -6,6 +6,7 @@ _start:
   jal main
 
 .globl _qemu
+.type _qemu, @function
 _qemu:
   nop
   jal main

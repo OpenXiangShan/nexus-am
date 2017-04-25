@@ -62,8 +62,7 @@ do_irq:
 #give trapframe pointer to k1
 
 	lw		$k1, 0x4($sp)
-	lw		$ra,ret
-	j		irq_handle
+	jal		irq_handle
 #popa
 
 ret:	lw 		$at, 0x4($sp)
