@@ -118,7 +118,4 @@ void ppu_set_sprite_overflow(bool yesno);
 void ppu_set_sprite_0_hit(bool yesno);
 void ppu_set_in_vblank(bool yesno);
 
-
-
-
 #endif
