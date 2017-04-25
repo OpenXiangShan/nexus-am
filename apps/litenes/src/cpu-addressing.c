@@ -1,6 +1,5 @@
-#include "cpu.h"
-#include "cpu-internal.h"
-#include "memory.h"
+#include <cpu.h>
+#include <memory.h>
 
 // CPU Addressing Modes
 
