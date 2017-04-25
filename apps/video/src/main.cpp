@@ -2,12 +2,9 @@
 #include <video.h>
 #include <klib.h>
 
-//_Pixel canvas[N][N];
-//bool used[N][N];
-//_Pixel fb[1024*768];
-_Pixel **canvas = (_Pixel **)0x100000;
-bool **used = (bool **)0x200000;
-_Pixel *fb = (_Pixel *)0x300000;
+_Pixel canvas[N][N];
+bool used[N][N];
+_Pixel fb[40 * 30];
 
 void redraw() {
   int w = _screen.width;

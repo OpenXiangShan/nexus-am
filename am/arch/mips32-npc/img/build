@@ -13,6 +13,7 @@ KERN=$(readlink -f ./build/kernel.o)
 # generate COE
 mips-linux-gnu-objdump -d $KERN > ./build/code.txt
 mips-linux-gnu-objcopy -O binary $KERN ./build/kernel.bin
+readelf -a $KERN > ./build/kernel.elf
 python $DIR/scripts/bin2text.py ./build/kernel.bin ./build/ram.txt
 python $DIR/scripts/gen_bram_coe.py ./build/kernel.bin ./build/app.coe
 

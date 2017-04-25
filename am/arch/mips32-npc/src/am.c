@@ -1,8 +1,6 @@
 #include <am.h>
 #include <npc.h>
 
-// TODO: implement these functions.
-
 void _trm_init() {
 	serial_init();
 	memory_init();
