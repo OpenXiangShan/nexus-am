@@ -1,8 +1,7 @@
 #include <am.h>
 
 const int FPS = 30;
-const int N = 96;
-const bool scale = true;
+const int N = 32;
 
 static inline _Pixel pixel(u8 r, u8 g, u8 b) {
   return (r << 16) | (g << 8) | b;

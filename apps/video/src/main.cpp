@@ -4,27 +4,17 @@
 
 _Pixel canvas[N][N];
 bool used[N][N];
-_Pixel fb[1024*768];
+
 void redraw() {
   int w = _screen.width;
   int h = _screen.height;
 
-  int pad = (w - h) / 2;
-  if (scale) {
-    for (int x = 0; x < w; x ++) {
-      for (int y = 0; y < h; y ++) {
-        fb[x + w * y] = canvas[x * N / w][y * N / h];
-      }
-    }
-  } else {
-    for (int x = pad; x < w - pad; x ++) {
-      for (int y = 0; y < h; y ++) {
-        fb[x + w * y] = canvas[(x - pad) * N / h][y * N / h];
-      }
+  for (int x = 0; x < w; x ++) {
+    for (int y = 0; y < h; y ++) {
+      _draw_p(x, y, canvas[x * N / w][y * N / h]);
     }
   }
-  _draw_f(fb);
-  _draw_sync();
+   _draw_sync();
 }
 
 static _Pixel p(int tsc) {

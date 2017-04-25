@@ -1,7 +1,7 @@
-#include "memory.h"
-#include "cpu.h"
-#include "ppu.h"
-#include "psg.h"
+#include <memory.h>
+#include <cpu.h>
+#include <ppu.h>
+#include <psg.h>
 
 byte memory_readb(word address)
 {
