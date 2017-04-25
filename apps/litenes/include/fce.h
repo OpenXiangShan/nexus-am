@@ -2,6 +2,13 @@
 #define FCE_H
 
 #include <am.h>
+#include <common.h>
+
+#define FPS 60
+#define W 256
+#define H 240
+
+extern byte canvas[W][H];
 
 int fce_load_rom(char *rom);
 void fce_init();
@@ -75,5 +82,6 @@ static const _Pixel palette[64] = {
   0x111111
 };
 
+extern char rom_mario_nes[];
 
 #endif

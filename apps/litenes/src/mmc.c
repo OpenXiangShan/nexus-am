@@ -1,6 +1,6 @@
-#include "common.h"
-#include "mmc.h"
-#include "ppu.h"
+#include <common.h>
+#include <mmc.h>
+#include <ppu.h>
 
 #define MMC_MAX_PAGE_COUNT 4
 

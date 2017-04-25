@@ -51,8 +51,4 @@ extern byte op_code;             // Current instruction code
 extern int op_value, op_address; // Arguments for current instruction
 extern int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
 
-
-
-
-
 #endif

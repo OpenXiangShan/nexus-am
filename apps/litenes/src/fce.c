@@ -1,10 +1,7 @@
-#include "fce.h"
-#include "cpu.h"
-#include "memory.h"
-#include "ppu.h"
-#include "hal.h"
-#include "nes.h"
-
+#include <fce.h>
+#include <cpu.h>
+#include <memory.h>
+#include <ppu.h>
 
 typedef struct {
     char signature[4];
@@ -137,13 +134,12 @@ void fce_update_screen()
       canvas[i][j] = idx;
 }
 
-extern char mario_nes[];
 
 int main() {
   _trm_init();
   _ioe_init();
 
-  fce_load_rom(mario_nes);
+  fce_load_rom(rom_mario_nes);
   fce_init();
   fce_run();
   return 1;

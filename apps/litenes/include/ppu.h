@@ -3,8 +3,8 @@
 #ifndef PPU_H
 #define PPU_H
 
-byte PPU_SPRRAM[0x100];
-byte PPU_RAM[0x4000];
+extern byte PPU_SPRRAM[0x100];
+extern byte PPU_RAM[0x4000];
 
 void ppu_init();
 void ppu_finish();

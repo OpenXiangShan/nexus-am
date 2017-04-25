@@ -1,11 +1,12 @@
-#include "ppu.h"
-#include "cpu.h"
-#include "fce.h"
-#include "memory.h"
-#include "hal.h"
+#include <ppu.h>
+#include <cpu.h>
+#include <fce.h>
+#include <memory.h>
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
+byte PPU_SPRRAM[0x100];
+byte PPU_RAM[0x4000];
 byte ppu_sprite_palette[4][4];
 bool ppu_2007_first_read;
 byte ppu_addr_latch;
@@ -13,8 +14,6 @@ PPU_STATE ppu;
 byte ppu_latch;
 bool ppu_sprite_hit_occured = false;
 byte ppu_screen_background[264][248];
-
-extern byte canvas[W][H];
 
 void draw(int x, int y, int idx) {
   if (x >= 0 && y >= 0 && x < W && y < H) {

@@ -1,7 +1,6 @@
-#include "cpu.h"
-#include "memory.h"
-#include "ppu.h"
-#include "common.h"
+#include <cpu.h>
+#include <memory.h>
+#include <ppu.h>
 
 CPU_STATE cpu;
 
