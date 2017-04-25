@@ -1,5 +1,4 @@
-#include "psg.h"
-#include "hal.h"
+#include <psg.h>
 
 static byte prev_write;
 static int p = 10;
