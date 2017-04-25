@@ -7,8 +7,8 @@ void memory_init(){
 //10000-17fff for stack(32k)
 //18000-1ffff for heap(32k)
 	//probe a memory for heap
-	_heap.start = (void *)0x18000;
-	_heap.end = (void *)0x1ffff;
+	_heap.start = (void *)HEAP_START;
+	_heap.end = (void *)HEAP_END;
 }
 
 void serial_init(){

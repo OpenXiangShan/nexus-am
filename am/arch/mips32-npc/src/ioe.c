@@ -7,9 +7,9 @@ int curr_col = 0;
 extern void draw_character(char ch, int x, int y, _Pixel p);
 
 struct FBPixel {
-	u8 r : 2;
-	u8 g : 4;
 	u8 b : 2;
+	u8 g : 4;
+	u8 r : 2;
 } *fb;
 
 void vga_init(){
@@ -47,9 +47,9 @@ void _draw_f(_Pixel *p) {//npc doesn't support
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  	fb[x + y * _screen.width].r = R(p);
+  	fb[x + y * _screen.width].r = R(p) >> 2;
   	fb[x + y * _screen.width].g = G(p);
-  	fb[x + y * _screen.width].b = B(p);
+  	fb[x + y * _screen.width].b = B(p) >> 2;
 }
 
 void _draw_sync() {

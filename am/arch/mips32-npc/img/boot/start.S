@@ -4,7 +4,7 @@
 .type _qemu, @function
 
 _start:
-  li $sp, 0x00017ffc
+  li $sp, 0x0000fffc
   jal main
 
 .globl _qemu
