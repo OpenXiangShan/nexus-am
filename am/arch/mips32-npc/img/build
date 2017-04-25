@@ -6,7 +6,7 @@ shift
 
 bash -c "cd $DIR/boot && make"
 
-mips-linux-gnu-ld -T $DIR/loader.ld -e _start -o ./build/kernel.o $DIR/boot/start.o $DIR/../src/trap.o --start-group $@ --end-group
+mips-linux-gnu-ld -T $DIR/loader.ld -e _start -o ./build/kernel.o $DIR/boot/start.o ./build/mips32-npc/am/arch/mips32-npc/src/trap.o --start-group $@ --end-group
 
 KERN=$(readlink -f ./build/kernel.o)
 

@@ -65,7 +65,7 @@ do_irq:
 	jal		irq_handle
 #popa
 
-ret:	lw 		$at, 0x4($sp)
+	lw 		$at, 0x4($sp)
 	lw 		$v0, 0x8($sp)
 	lw 		$v1, 0xc($sp)
 	lw 		$a0, 0x10($sp)
