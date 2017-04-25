@@ -6,9 +6,7 @@
 _start:
   li $sp, 0x0000fffc
   jal main
-  nop
 
 _qemu:
   nop
   jal main
-  nop
