@@ -119,10 +119,8 @@ void* bench_alloc(size_t size) {
   }
   char *old = start;
   start += size;
+  assert(start < _heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  if (start >= _heap.end) {
-    return NULL;
-  }
   ulong use = (ulong)start - (ulong)_heap.start;
   assert(use <= current->mlim);
   return old;
@@ -160,3 +158,19 @@ u32 checksum(void *start, void *end) {
   hash += hash << 5;
   return hash;
 }
+
+
+void *operator new(size_t size) {
+  return bench_alloc(size);
+}
+
+void *operator new[](size_t size) {
+  return bench_alloc(size);
+}
+
+void operator delete(void *ptr) {
+}
+
+void operator delete[](void *ptr) {
+}
+

@@ -2,34 +2,41 @@
 #include "puzzle.h"
 #include "heap.h"
 
-#define N 4
+const int N = 4;
+const int ANS = 428940;
+const int MAXN = 65536;
+
+int PUZZLE[N*N] = {
+  0, 2, 3, 4,
+  9, 6, 7, 8,
+  5, 11, 10, 12,
+  1, 15, 13, 14,
+};
+
+int ans;
 
 extern "C" {
 
 void bench_15pz_prepare() {
-  srand(6667);
 }
 
 void bench_15pz_run() {
-  N_puzzle<N> puzzle;
-  while (!puzzle.solvable()) {
-    puzzle = N_puzzle<N>();
-  }
+  N_puzzle<N> puzzle(PUZZLE);
+  assert(puzzle.solvable());
 
-  auto *heap = new Updatable_heap<N_puzzle<N>, 1024>();
+  auto *heap = new Updatable_heap<N_puzzle<N>, MAXN>();
   heap->push( puzzle, 0 );
 
   int n = 0;
+  ans = -1;
 
-  while( heap->size() != 0 && n != 1000000000 ) {
+  while( heap->size() != 0 && n != MAXN ) {
     N_puzzle<N> top = heap->pop();
     ++n;
 
     if ( top == N_puzzle<N>::solution() ) {
       // We are done
-      printk("path length: %d\n", heap->length(top));
-      printk("maximum heap size: %d\n", heap->maximum_size());
-      printk("vertices: %d\n", n);
+      ans = heap->length(top) * n;
       return;
     }
 
@@ -53,7 +60,7 @@ void bench_15pz_run() {
 
 
 const char * bench_15pz_validate() {
-  return (const char *)NULL;
+  return (ans == ANS) ? (const char*)NULL : "wrong answer";
 }
 
 }

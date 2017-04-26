@@ -5,9 +5,9 @@ template <int N>
 class N_puzzle {
   private:
     bool puzzle_valid;
-    int zero_i, zero_j;
-    int manhattan_distance;
-    int puzzle[N][N];
+    u8 zero_i, zero_j;
+    i8 manhattan_distance;
+    i8 puzzle[N][N];
     int hash_value;
 
     void determine_hash();
