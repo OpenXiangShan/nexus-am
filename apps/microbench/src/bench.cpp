@@ -6,11 +6,15 @@ Benchmark *current;
 
 // The benchmark list
 
-#define ENTRY(nm, snm, ml, en, des) \
-  { .prepare = bench_##nm##_prepare, \
-    .run = bench_##nm##_run, \
-    .validate = bench_##nm##_validate, \
-    .name = snm, .desc = des, .mlim = ml, .enabled = en, },
+#define ENTRY(_name, _sname, _mlim, _ref, _en, _desc) \
+  { .prepare = bench_##_name##_prepare, \
+    .run = bench_##_name##_run, \
+    .validate = bench_##_name##_validate, \
+    .name = _sname, \
+    .desc = _desc, \
+    .mlim = _mlim, \
+    .ref = _ref, \
+    .enabled = _en, },
 
 Benchmark benchmarks[] = {
   BENCHMARK_LIST(ENTRY)
@@ -18,7 +22,7 @@ Benchmark benchmarks[] = {
 
 // Running a benchmark
 void bench_prepare(Result *res) {
-  // try best to flush cache and other resources
+  // TODO: try best to flush cache and other resources
   res->tsc = _cycles();
   res->msec = _uptime();
 }
@@ -39,19 +43,29 @@ const char *bench_check(Benchmark &bench) {
   return nullptr;
 }
 
-bool run_once(Benchmark &b, Result &res) {
+Result run_once(Benchmark &b) {
+  Result res;
   current = &b;
   bench_reset();       // reset malloc state
   current->prepare();  // call bechmark's prepare function
   bench_prepare(&res); // clean everything, start timer
   current->run();      // run it
   bench_done(&res);    // collect results
-  return current->validate() == nullptr;
+  res.msg = current->validate();
+  res.pass = res.msg == nullptr;
+  return res;
+}
+
+ulong score(Benchmark &b, ulong tsc, ulong msec) {
+  return (REF_SCORE / 1000) * b.ref / msec;
 }
 
 int main() {
   _trm_init();
   _ioe_init();
+
+  ulong bench_score = 0;
+  int pass = true;
 
   for (auto &bench: benchmarks) {
     const char *msg = bench_check(bench);
@@ -62,10 +76,9 @@ int main() {
       ulong tsc = 0, msec = 0;
       bool succ = true;
       for (int i = 0; i < REPEAT; i ++) {
-        Result res;
-        bool s = run_once(bench, res);
-        printk(s ? "*" : "X");
-        succ &= s;
+        Result res = run_once(bench);
+        printk(res.pass ? "*" : "X");
+        succ &= res.pass;
         tsc += res.tsc;
         msec += res.msec;
       }
@@ -73,14 +86,23 @@ int main() {
       tsc /= REPEAT;
       msec /= REPEAT; // TODO: handle overflow
 
-      if (succ) {
-        printk(" Passed.");
-      } else {
-        printk(" Failed.");
-      }
-      printk("\n  avg time: %dK cycles in %d ms\n", tsc, msec);
+      if (succ) printk(" Passed.");
+      else printk(" Failed.");
+
+      pass &= succ;
+
+      ulong cur = score(bench, tsc, msec);
+      printk("\n  avg time: %dK cycles in %d ms [%d]\n", tsc, msec, cur);
+
+      bench_score += cur;
     }
   }
+
+  bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
+  
+  printk("==================================================\n");
+  printk("MicroBench %s      %d Marks\n", pass ? "PASS" : "FAIL", bench_score);
+  printk("                     %d Marks (%s)\n", REF_SCORE, REF_CPU);
 
   _halt(0);
   return 0;

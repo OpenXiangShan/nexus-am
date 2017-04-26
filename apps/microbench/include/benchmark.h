@@ -11,23 +11,25 @@ extern "C" {
 #define MB * 1024 * 1024
 #define KB * 1024
 
-#define SMALL
-#define LARGE
+#define REF_CPU    "i5-4250u-vbox"
+#define REF_SCORE  100000
 
 // the list of benchmarks
-//   Name       | Mem   |  Enable |  Desc                          |
+//       Name        |  Mem  |Ref(us)| Enable |  Desc
 #define BENCHMARK_LIST(def) \
-  def(qsort, "qsort", 640 KB,  true, "quick sort") \
-  def(queen, "queen",   0 KB,  true, "queen placement") \
-  def(   bf,    "bf",  32 KB,  true, "brainf**k interpreter") \
+  def(qsort, "qsort", 640 KB, 56000, true, "quick sort") \
+  def(queen, "queen",   0 KB, 11000, true, "queen placement") \
+  def(   bf,    "bf",  32 KB, 36000, true, "brainf**k interpreter") \
+  def(  fib,   "fib", 256 KB, 51000, true, "fibonacci number") \
+  def(sieve, "sieve",   2 MB, 72000, true, "eratosthenes sieve") \
 
 // Each benchmark will run REPEAT times
 #define REPEAT  3
 
-#define DECL(name, sname, mlim, enabled, desc) \
-  void bench_##name##_prepare(); \
-  void bench_##name##_run(); \
-  const char* bench_##name##_validate();
+#define DECL(_name, _sname, _mlim, _ref, _en, _desc) \
+  void bench_##_name##_prepare(); \
+  void bench_##_name##_run(); \
+  const char* bench_##_name##_validate();
 
 BENCHMARK_LIST(DECL)
 
@@ -36,11 +38,13 @@ typedef struct Benchmark {
   void (*run)();
   const char* (*validate)();
   const char *name, *desc;
-  ulong mlim;
+  ulong mlim, ref;
   int enabled;
 } Benchmark;
 
 typedef struct Result {
+  int pass;
+  const char *msg;
   ulong tsc, msec;
   ulong score;
 } Result;
