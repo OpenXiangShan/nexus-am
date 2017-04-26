@@ -22,6 +22,7 @@ extern "C" {
   def(   bf,    "bf",  32 KB, 36000, true, "brainf**k interpreter") \
   def(  fib,   "fib", 256 KB, 51000, true, "fibonacci number") \
   def(sieve, "sieve",   2 MB, 72000, true, "eratosthenes sieve") \
+  def( 15pz,  "15pz",  64 MB, 72000, true, "15 puzzle") \
 
 // Each benchmark will run REPEAT times
 #define REPEAT  3

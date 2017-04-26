@@ -57,6 +57,7 @@ Result run_once(Benchmark &b) {
 }
 
 ulong score(Benchmark &b, ulong tsc, ulong msec) {
+  if (msec == 0) return 0;
   return (REF_SCORE / 1000) * b.ref / msec;
 }
 
