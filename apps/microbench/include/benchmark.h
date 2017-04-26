@@ -14,6 +14,8 @@ extern "C" {
 #define REF_CPU    "i5-4250u-vbox"
 #define REF_SCORE  100000
 
+// TODO: checksum is little-endian
+
 // the list of benchmarks
 //       Name        |  Mem  |Ref(us)| Enable |  Desc
 #define BENCHMARK_LIST(def) \
@@ -26,6 +28,7 @@ extern "C" {
   def(dinic, "dinic",   1 MB, 24000, true, "Dinic's maxflow algorithm") \
   def( lzip,  "lzip",   4 MB, 14000, true, "Lzip compression") \
   def(ssort, "ssort",   4 MB, 11000, true, "Suffix sort") \
+  def(  md5,   "md5",  16 MB, 34000, true, "MD5 digest") \
 
 // Each benchmark will run REPEAT times
 #define REPEAT  3
