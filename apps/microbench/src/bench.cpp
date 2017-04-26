@@ -102,8 +102,8 @@ int main() {
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
   printk("==================================================\n");
-  printk("MicroBench %s      %d Marks\n", pass ? "PASS" : "FAIL", bench_score);
-  printk("                     %d Marks (%s)\n", REF_SCORE, REF_CPU);
+  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", bench_score);
+  printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
 
   _halt(0);
   return 0;

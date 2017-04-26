@@ -24,6 +24,7 @@ extern "C" {
   def(sieve, "sieve",   2 MB, 73000, true, "Eratosthenes sieve") \
   def( 15pz,  "15pz",   8 MB, 11000, true, "A* 15-puzzle search") \
   def(dinic, "dinic",   1 MB, 24000, true, "Dinic's maxflow algorithm") \
+  def( lzip,  "lzip",   4 MB, 14000, true, "Lzip compression") \
 
 // Each benchmark will run REPEAT times
 #define REPEAT  3
