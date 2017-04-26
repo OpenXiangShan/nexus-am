@@ -25,6 +25,7 @@ extern "C" {
   def( 15pz,  "15pz",   8 MB, 11000, true, "A* 15-puzzle search") \
   def(dinic, "dinic",   1 MB, 24000, true, "Dinic's maxflow algorithm") \
   def( lzip,  "lzip",   4 MB, 14000, true, "Lzip compression") \
+  def(ssort, "ssort",   4 MB, 11000, true, "Suffix sort") \
 
 // Each benchmark will run REPEAT times
 #define REPEAT  3
