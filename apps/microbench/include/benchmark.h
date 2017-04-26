@@ -17,12 +17,13 @@ extern "C" {
 // the list of benchmarks
 //       Name        |  Mem  |Ref(us)| Enable |  Desc
 #define BENCHMARK_LIST(def) \
-  def(qsort, "qsort", 640 KB, 56000, true, "quick sort") \
-  def(queen, "queen",   0 KB, 11000, true, "queen placement") \
-  def(   bf,    "bf",  32 KB, 36000, true, "brainf**k interpreter") \
-  def(  fib,   "fib", 256 KB, 51000, true, "fibonacci number") \
-  def(sieve, "sieve",   2 MB, 72000, true, "eratosthenes sieve") \
-  def( 15pz,  "15pz",   8 MB, 12000, true, "15 puzzle") \
+  def(qsort, "qsort", 640 KB, 48000, true, "Quick sort") \
+  def(queen, "queen",   0 KB, 11000, true, "Queen placement") \
+  def(   bf,    "bf",  32 KB, 51000, true, "Brainf**k interpreter") \
+  def(  fib,   "fib", 256 KB, 50000, true, "Fibonacci number") \
+  def(sieve, "sieve",   2 MB, 73000, true, "Eratosthenes sieve") \
+  def( 15pz,  "15pz",   8 MB, 11000, true, "A* 15-puzzle search") \
+  def(dinic, "dinic",   1 MB, 24000, true, "Dinic's maxflow algorithm") \
 
 // Each benchmark will run REPEAT times
 #define REPEAT  3

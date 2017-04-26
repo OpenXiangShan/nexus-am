@@ -6,7 +6,7 @@ const int N = 4;
 const int ANS = 428940;
 const int MAXN = 65536;
 
-int PUZZLE[N*N] = {
+static int PUZZLE[N*N] = {
   0, 2, 3, 4,
   9, 6, 7, 8,
   5, 11, 10, 12,

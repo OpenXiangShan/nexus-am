@@ -1,5 +1,6 @@
 // Author:  Douglas Wilhelm Harder
 // Copyright (c) 2009 by Douglas Wilhelm Harder.  All rights reserved.
+// Url: https://ece.uwaterloo.ca/~dwharder/aads/Algorithms/N_puzzles/
 
 template <int N>
 class N_puzzle {
