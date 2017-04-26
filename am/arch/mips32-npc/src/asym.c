@@ -1,6 +1,9 @@
 #include <am.h>
 #include <npc.h>
 #include <arch.h>
+#define INTERVAL 20000
+#define INTERVAL_MIN 1000  //min interval(cpu use 1000 cycles to deal interrupt)
+#define COUNT_MAX 0xffffffff	//count reg max value
 
 ulong npc_cycles = 0;
 ulong npc_time = 1;
@@ -29,7 +32,12 @@ ulong _cycles(){
 
 void _asye_init(){
   u32 count= GetCount();
-  SetCompare(count + 20000);
+  if(count + INTERVAL > COUNT_MAX){
+    SetCompare(count + INTERVAL - COUNT_MAX);
+  }
+  else{//count overflow
+    SetCompare(count + INTERVAL);
+  }
 }
 
 void _listen(_RegSet* (*l)(int ex, _RegSet *regs)){
@@ -47,35 +55,49 @@ void _idle(){
 }
 
 void _idisable(){
+  int status = 0;
+  asm volatile("mfc0 %0,$12	\n\t":"=r"(status));
+  status = status | 0x2;
+  asm volatile("mtc0 %0,$12	\n\t"::"r"(status));
 }
 
 void _ienable(){
+  int status = 0;
+  asm volatile("mfc0 %0,$12	\n\t":"=r"(status));
+  status = status & 0xfffffffd;
+  asm volatile("mtc0 %0,$12	\n\t"::"r"(status));
 }
 
 int _istatus(){
-	return 0;
+  int status = 0;
+  asm volatile("mfc0 %0,$12	\n\t":"=r"(status));
+  if((status & 0x2) >> 1){
+    return 0;
+  }
+  else{
+    return 1;
+  }
 }
 
 void irq_handle(struct TrapFrame *tf){
-//TODO:handle
+//TODO:handle interrupt
   u32 arg = 0;
-  asm volatile("add %0,$k1,$zero\n\t":"=r"(arg));
-  tf = (void *)arg;
   u32 intr = 0;
+  asm volatile("add %0,$k1,$zero\n\t":"=r"(arg));
   asm volatile("add %0,$k0,$zero\n\t":"=r"(intr));
+  tf = (void *)arg;
   switch(intr){
     case 0x7://time interrupt
     {
       _time_event();
       u32 count= GetCount();
-      if(count + 20000 > 2147483647){
-        SetCompare(count + 20000 - 2147483647);
+      if(count + INTERVAL > COUNT_MAX){
+        SetCompare(count + INTERVAL - COUNT_MAX);
       }
-      else{
-        SetCompare(count + 20000);
+      else{//count overflow
+        SetCompare(count + INTERVAL);
       }
     }break;
-    default:_putc('0' + intr);
+    default:_halt(0);
   }
-  asm volatile("nop");
 }

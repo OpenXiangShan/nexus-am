@@ -25,7 +25,7 @@ Dismiss:
 
 do_irq:
 #pusha
-
+	addiu		$sp,$sp,-124
 	sw 		$at, 0x4($sp)
 	sw 		$v0, 0x8($sp)
 	sw 		$v1, 0xc($sp)
@@ -54,7 +54,7 @@ do_irq:
 	sw 		$k0, 0x68($sp)
 	sw 		$k1, 0x6c($sp)
 	sw 		$gp, 0x70($sp)
-	sw 		$sp, 0x74($sp)
+	sw		$sp, 0x74($sp)
 	sw 		$fp, 0x78($sp)
 	sw 		$ra, 0x7c($sp)
 #k0 for irq code
@@ -93,8 +93,9 @@ do_irq:
 	lw 		$k0, 0x68($sp)
 	lw 		$k1, 0x6c($sp)
 	lw 		$gp, 0x70($sp)
-	lw 		$sp, 0x74($sp)
 	lw 		$fp, 0x78($sp)
 	lw 		$ra, 0x7c($sp)
+	lw 		$sp, 0x74($sp)
+	addiu		$sp,$sp,124
 
 	eret
