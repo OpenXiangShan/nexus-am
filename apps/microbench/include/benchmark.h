@@ -4,12 +4,6 @@
 #include <am.h>
 #include <klib.h>
 
-#define assert(x) (x)
-
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
