@@ -142,10 +142,10 @@ static u8 *str;
 static u8 *digest;
 
 void bench_md5_prepare() {
-  srand(1);
+  bench_srand(1);
   str = bench_alloc(N);
   for (int i = 0; i < N; i ++) {
-    str[i] = rand();
+    str[i] = bench_rand();
   }
   digest = bench_alloc(16);
 }

@@ -2,7 +2,13 @@
 #define __BENCHMARK_H__
 
 #include <am.h>
-#include <benchlib.h>
+#include <klib.h>
+
+#define assert(x) (x)
+
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,8 +71,8 @@ void bench_free(void *ptr);
 void bench_reset();
 
 // random number generator
-void srand(int seed);
-int rand(); // return a random number between 0..32767
+void bench_srand(int seed);
+int bench_rand(); // return a random number between 0..32767
 
 // checksum
 u32 checksum(void *start, void *end);

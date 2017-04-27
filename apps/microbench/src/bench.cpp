@@ -1,6 +1,5 @@
 #include <am.h>
 #include <benchmark.h>
-#include <benchlib.h>
 
 Benchmark *current;
 
@@ -135,11 +134,11 @@ void bench_reset() {
 
 static long seed = 1;
 
-void srand(int _seed) {
+void bench_srand(int _seed) {
   seed = _seed & 0x7fff;
 }
 
-int rand() {
+int bench_rand() {
   seed = (seed * 214013L + 2531011L) >> 16;
   return seed & 0x7fff;
 }

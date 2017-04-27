@@ -104,17 +104,17 @@ static Dinic *G;
 static int ans;
 
 void bench_dinic_prepare() {
-  srand(1);
+  bench_srand(1);
   int s = 2 * N, t = 2 * N + 1;
   G = new Dinic(2 * N + 2);
   for (int i = 0; i < N; i ++)
     for (int j = 0; j < N; j ++) {
-      G->AddEdge(i, N + j, rand() % 10);
+      G->AddEdge(i, N + j, bench_rand() % 10);
     }
 
   for (int i = 0; i < N; i ++) {
-    G->AddEdge(s, i, rand() % 1000);
-    G->AddEdge(N + i, t, rand() % 1000);
+    G->AddEdge(s, i, bench_rand() % 1000);
+    G->AddEdge(N + i, t, bench_rand() % 1000);
   }
 }
 

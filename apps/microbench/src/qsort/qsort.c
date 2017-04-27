@@ -5,11 +5,11 @@
 int *data;
 
 void bench_qsort_prepare() {
-  srand(1);
+  bench_srand(1);
 
   data = bench_alloc(N * sizeof(int));
   for (int i = 0; i < N; i ++) {
-    data[i] = (rand() << 16) | rand();
+    data[i] = (bench_rand() << 16) | rand();
   }
 }
 

@@ -2,9 +2,7 @@
 #define QLZ_HEADER
 
 #include <am.h>
-
-// TODO: remove this when klib is added.
-#include <string.h>
+#include <klib.h>
 
 // Fast data compression library
 // Copyright (C) 2006-2011 Lasse Mikkel Reinhold

@@ -92,12 +92,12 @@ extern "C" {
 static int *s, *sa;
 
 void bench_ssort_prepare() {
-  srand(1);
+  bench_srand(1);
   s = new int [N + 10];
   sa = new int [N + 10];
 
   for (int i = 0; i < N; i ++) {
-    s[i] = rand() % 26;
+    s[i] = bench_rand() % 26;
   }
 }
 

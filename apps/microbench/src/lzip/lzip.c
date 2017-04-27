@@ -10,12 +10,12 @@ static char *compress;
 static int len;
 
 void bench_lzip_prepare() {
-  srand(1);
+  bench_srand(1);
   state = bench_alloc(sizeof(qlz_state_compress));
   blk = bench_alloc(SIZE);
   compress = bench_alloc(SIZE + 400);
   for (int i = 0; i < SIZE; i ++) {
-    blk[i] = 'a' + rand() % 26;
+    blk[i] = 'a' + bench_rand() % 26;
   }
 }
 
