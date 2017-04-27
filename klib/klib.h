@@ -20,8 +20,12 @@ size_t strlen(const char *s);
 char* strcpy(char *dst,const char *src);
 void* memset(void* v,int c,size_t n);
 void* memcpy(void* dst,const void*src,size_t n);
-int printk(const char *format, ...);
-int sprintk(char *out, const char *format, ...);
+int atoi(const char* nptr);
+char* itoa(int value,char* string,int radix);
+
+void assert (int expression);
+int printk(char *fmt, ...);
+int sprintk(char *out, const char *fmt, ...);
 int rand();
 
 #ifdef __cplusplus
