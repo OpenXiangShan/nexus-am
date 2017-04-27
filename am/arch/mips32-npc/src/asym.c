@@ -27,7 +27,7 @@ void _time_event(){
 }
 
 ulong _cycles(){
-  return 0;
+  return GetCount() / 1000;
 }
 
 void _asye_init(){

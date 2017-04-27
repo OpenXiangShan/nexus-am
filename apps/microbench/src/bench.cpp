@@ -52,6 +52,7 @@ bool run_once(Benchmark &b, Result &res) {
 int main() {
   _trm_init();
   _ioe_init();
+  _asye_init();
 
   for (auto &bench: benchmarks) {
     const char *msg = bench_check(bench);
