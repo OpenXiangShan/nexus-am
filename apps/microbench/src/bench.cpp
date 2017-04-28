@@ -119,8 +119,7 @@ void* bench_alloc(size_t size) {
   start += size;
   assert(_heap.start <= start && start < _heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  ulong use = (ulong)start - (ulong)heap_start;
-  assert(use <= current->mlim);
+  assert((ulong)start - (ulong)heap_start <= current->mlim);
   return old;
 }
 
