@@ -146,8 +146,8 @@ i32 bench_rand() {
 
 // FNV hash
 u32 checksum(void *start, void *end) {
-  const int x = 16777619;
-  int hash = 2166136261;
+  const i32 x = 16777619;
+  i32 hash = 2166136261;
   for (char *p = (char*)start; p != (char*)end; p ++) {
     hash = (hash ^ *p) * x;
   }
