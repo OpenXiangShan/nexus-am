@@ -12,12 +12,12 @@ void printch(char ch);
 void printdec(int dec);
 void printstr(char* str);
 
-int printk(char *fmt, ...){
+int printk(const char *fmt, ...){
 	int vargint=0;
 	char* vargpch=0;
 	char vargch=0;
 	
-	char* pfmt=0;
+	const char* pfmt=0;
 	va_list vp;
 
 	va_start(vp,fmt);

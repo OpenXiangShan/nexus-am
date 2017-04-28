@@ -24,7 +24,7 @@ int atoi(const char* nptr);
 char* itoa(int value,char* string,int radix);
 
 void assert (int expression);
-int printk(char *fmt, ...);
+int printk(const char *fmt, ...);
 int sprintk(char *out, const char *fmt, ...);
 int rand();
 

@@ -9,7 +9,7 @@ void bench_qsort_prepare() {
 
   data = bench_alloc(N * sizeof(int));
   for (int i = 0; i < N; i ++) {
-    data[i] = (bench_rand() << 16) | rand();
+    data[i] = (bench_rand() << 16) | bench_rand();
   }
 }
 
