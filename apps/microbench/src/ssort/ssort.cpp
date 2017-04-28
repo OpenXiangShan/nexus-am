@@ -14,24 +14,23 @@ inline bool leq(int a1, int a2, int a3,   int b1, int b2, int b3) {
 // stably sort a[0..n-1] to b[0..n-1] with keys in 0..K from r
 static void radixPass(int* a, int* b, int* r, int n, int K) 
 { // count occurrences
-  int* c = new int[K + 1];                          // counter array
+  int* c = (int*)bench_alloc(sizeof(int)*(K+1));
   for (int i = 0;  i <= K;  i++) c[i] = 0;         // reset counters
   for (int i = 0;  i < n;  i++) c[r[a[i]]]++;    // count occurences
   for (int i = 0, sum = 0;  i <= K;  i++) { // exclusive prefix sums
      int t = c[i];  c[i] = sum;  sum += t;
   }
   for (int i = 0;  i < n;  i++) b[c[r[a[i]]]++] = a[i];      // sort
-  delete [] c;
 }
 
 // find the suffix array SA of s[0..n-1] in {1..K}^n
 // require s[n]=s[n+1]=s[n+2]=0, n>=2
 void suffixArray(int* s, int* SA, int n, int K) {
   int n0=(n+2)/3, n1=(n+1)/3, n2=n/3, n02=n0+n2; 
-  int* s12  = new int[n02 + 3];  s12[n02]= s12[n02+1]= s12[n02+2]=0; 
-  int* SA12 = new int[n02 + 3]; SA12[n02]=SA12[n02+1]=SA12[n02+2]=0;
-  int* s0   = new int[n0];
-  int* SA0  = new int[n0];
+  int* s12  = (int*)bench_alloc(sizeof(int)*(n02+3));  s12[n02]= s12[n02+1]= s12[n02+2]=0; 
+  int* SA12 = (int*)bench_alloc(sizeof(int)*(n02+3)); SA12[n02]=SA12[n02+1]=SA12[n02+2]=0;
+  int* s0   = (int*)bench_alloc(sizeof(int)*n0);
+  int* SA0  = (int*)bench_alloc(sizeof(int)*n0);
  
   // generate positions of mod 1 and mod  2 suffixes
   // the "+(n0-n1)" adds a dummy mod 1 suffix if n%3 == 1
@@ -84,7 +83,6 @@ void suffixArray(int* s, int* SA, int n, int K) {
       }
     }  
   } 
-  delete [] s12; delete [] SA12; delete [] SA0; delete [] s0; 
 }
 
 extern "C" {
@@ -93,8 +91,8 @@ static int *s, *sa;
 
 void bench_ssort_prepare() {
   bench_srand(1);
-  s = new int [N + 10];
-  sa = new int [N + 10];
+  s = (int*)bench_alloc(sizeof(int)*(N+10));
+  sa = (int*)bench_alloc(sizeof(int)*(N+10));
 
   for (int i = 0; i < N; i ++) {
     s[i] = bench_rand() % 26;

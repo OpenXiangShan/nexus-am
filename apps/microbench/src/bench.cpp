@@ -3,7 +3,7 @@
 #include <limits.h>
 
 Benchmark *current;
-static char *start, *heap_start;
+static char *start;
 
 // The benchmark list
 
@@ -64,7 +64,6 @@ ulong score(Benchmark &b, ulong tsc, ulong msec) {
 
 int main() {
   _trm_init();
-  heap_start = (char*)_heap.start;
   _ioe_init();
 
   ulong bench_score = 0;
@@ -119,7 +118,7 @@ void* bench_alloc(size_t size) {
   start += size;
   assert(_heap.start <= start && start < _heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  assert((ulong)start - (ulong)heap_start <= current->mlim);
+  assert((ulong)start - (ulong)_heap.start <= current->mlim);
   return old;
 }
 
@@ -127,7 +126,7 @@ void bench_free(void *ptr) {
 }
 
 void bench_reset() {
-  start = (char*)heap_start;
+  start = (char*)_heap.start;
 }
 
 static i32 seed = 1;
@@ -154,28 +153,5 @@ u32 checksum(void *start, void *end) {
   hash ^= hash >> 17;
   hash += hash << 5;
   return hash;
-}
-
-
-void *operator new(size_t size) {
-  if (start == NULL) {
-    heap_start += size;
-    return heap_start - size;
-  }
-  return bench_alloc(size);
-}
-
-void *operator new[](size_t size) {
-  if (start == NULL) {
-    heap_start += size;
-    return heap_start - size;
-  }
-  return bench_alloc(size);
-}
-
-void operator delete(void *ptr) {
-}
-
-void operator delete[](void *ptr) {
 }
 

@@ -30,7 +30,7 @@ struct Dinic {
   bool vis[N*2 + 2];
   int d[N*2 + 2], cur[N*2 + 2], queue[N*2 + 2];
 
-  Dinic(int n) {
+  void init(int n) {
     this->n = n;
     for (int i = 0; i < n; i ++) {
       head[i] = -1;
@@ -106,7 +106,8 @@ static int ans;
 void bench_dinic_prepare() {
   bench_srand(1);
   int s = 2 * N, t = 2 * N + 1;
-  G = new Dinic(2 * N + 2);
+  G = (Dinic*)bench_alloc(sizeof(Dinic));
+  G->init(2 * N + 2);
   for (int i = 0; i < N; i ++)
     for (int j = 0; j < N; j ++) {
       G->AddEdge(i, N + j, bench_rand() % 10);

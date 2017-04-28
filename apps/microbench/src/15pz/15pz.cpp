@@ -24,7 +24,8 @@ void bench_15pz_run() {
   N_puzzle<N> puzzle(PUZZLE);
   assert(puzzle.solvable());
 
-  auto *heap = new Updatable_heap<N_puzzle<N>, MAXN>();
+  auto *heap = (Updatable_heap<N_puzzle<N>,MAXN> *) bench_alloc(sizeof(Updatable_heap<N_puzzle<N>, MAXN>));
+  heap->init();
   heap->push( puzzle, 0 );
 
   int n = 0;
