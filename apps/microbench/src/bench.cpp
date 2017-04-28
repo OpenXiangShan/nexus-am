@@ -1,5 +1,6 @@
 #include <am.h>
 #include <benchmark.h>
+#include <limits.h>
 
 Benchmark *current;
 static char *start, *heap_start;
@@ -75,18 +76,15 @@ int main() {
     if (msg != nullptr) {
       printk("Ignored %s\n", msg);
     } else {
-      ulong tsc = 0, msec = 0;
+      ulong tsc = ULONG_MAX, msec = ULONG_MAX;
       bool succ = true;
       for (int i = 0; i < REPEAT; i ++) {
         Result res = run_once(bench);
         printk(res.pass ? "*" : "X");
         succ &= res.pass;
-        tsc += res.tsc;
-        msec += res.msec;
+        if (res.tsc < tsc) tsc = res.tsc;
+        if (res.msec < msec) msec = res.msec;
       }
-
-      tsc /= REPEAT;
-      msec /= REPEAT; // TODO: handle overflow
 
       if (succ) printk(" Passed.");
       else printk(" Failed.");
@@ -94,7 +92,7 @@ int main() {
       pass &= succ;
 
       ulong cur = score(bench, tsc, msec);
-      printk("\n  avg time: %dK cycles in %d ms [%d]\n", tsc, msec, cur);
+      printk("\n  min time: %dK cycles in %d ms [%d]\n", tsc, msec, cur);
 
       bench_score += cur;
     }
