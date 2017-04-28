@@ -56,7 +56,7 @@ manhattan_distance( 0 ) {
 
   for ( int i = 0; i < N; ++i ) {
     for ( int j = 0; j < N; ++j ) {
-      int k = rand() % (N*N - n);
+      int k = bench_rand() % (N*N - n);
       puzzle[i][j] = array[k];
 
       if ( array[k] == 0 ) {
