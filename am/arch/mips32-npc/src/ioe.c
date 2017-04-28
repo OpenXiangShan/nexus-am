@@ -4,12 +4,6 @@
 int curr_line = 0;
 int curr_col = 0;
 extern char font8x8_basic[128][8];
-
-/*struct FBPixel {
-  u8 b : 2;
-  u8 g : 4;
-  u8 r : 2;
-} *fb;*/
 u8 *fb;
 
 void draw_character(char ch, int x, int y, _Pixel p) {
@@ -57,20 +51,14 @@ void _putc(char ch) {
   }
 }
 
-void _draw_f(_Pixel *p) {//npc doesn't support
+void _draw_f(_Pixel *p) {
   int i;
   for(i = 0;i < SCR_SIZE; i++){
-    /*fb[i].r = R(p[i]);
-    fb[i].g = G(p[i]);
-    fb[i].b = B(p[i]);*/
     fb[i] = R(p[i]) << 8 | G(p[i]) << 4 | B(p[i]);
   }
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  /*fb[x + y * _screen.width].r = R(p) >> 2;
-  fb[x + y * _screen.width].g = G(p);
-  fb[x + y * _screen.width].b = B(p) >> 2;*/
   fb[x + y * _screen.width] = R(p) << 8 | G(p) << 4 | B(p);
 }
 
