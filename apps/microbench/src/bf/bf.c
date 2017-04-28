@@ -133,9 +133,9 @@ void bench_bf_prepare() {
   output = bench_alloc(DATA_SIZE);
   noutput = 0;
 
-  srand(1);
+  bench_srand(1);
   for (int i = 0; i < ARR_SIZE; i ++) {
-    input[i] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"[rand() % 62];
+    input[i] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"[bench_rand() % 62];
   }
 }
 

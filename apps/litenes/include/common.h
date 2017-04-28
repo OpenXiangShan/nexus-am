@@ -55,6 +55,4 @@ static inline int memcmp(const void *dest, const void *src, size_t n) {
 
 static inline bool common_bit_set(ulong value, byte position) { return value & (1L << position); }
 
-void *halloc(size_t);
-
 #endif
