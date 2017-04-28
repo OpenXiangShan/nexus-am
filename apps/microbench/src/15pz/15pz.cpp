@@ -3,7 +3,6 @@
 #include "heap.h"
 
 const int N = 4;
-const int ANS = 428940;
 const int MAXN = 65536;
 
 static int PUZZLE[N*N] = {
@@ -61,7 +60,7 @@ void bench_15pz_run() {
 
 
 const char * bench_15pz_validate() {
-  return (ans == ANS) ? (const char*)NULL : "wrong answer";
+  return ((u32)ans == current->checksum) ? (const char*)NULL : "wrong answer";
 }
 
 }

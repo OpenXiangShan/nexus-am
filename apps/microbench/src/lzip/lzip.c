@@ -2,7 +2,6 @@
 #include <benchmark.h>
 
 #define SIZE (1<<20)
-#define CHECKSUM 0xcf252bed
 
 static qlz_state_compress *state;
 static char *blk;
@@ -24,7 +23,7 @@ void bench_lzip_run() {
 }
 
 const char* bench_lzip_validate() {
-  return (checksum(compress, compress + len) == CHECKSUM) ? 
+  return (checksum(compress, compress + len) == current->checksum) ? 
     NULL :
     "wrong answer";
 }

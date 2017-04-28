@@ -3,7 +3,6 @@
 #include <benchmark.h>
 
 const int N = 100000;
-const ulong CHECKSUM = 0xb8dc305c;
 
 inline bool leq(int a1, int a2,   int b1, int b2) { // lexic. order for pairs
   return(a1 < b1 || (a1 == b1 && a2 <= b2)); 
@@ -105,7 +104,7 @@ void bench_ssort_run() {
 
 const char *bench_ssort_validate() {
   //printk("%x\n", checksum(sa, sa + N));
-  return (checksum(sa, sa + N) == CHECKSUM) ?
+  return (checksum(sa, sa + N) == current->checksum) ?
     (const char *)NULL : "wrong answer";
 }
 

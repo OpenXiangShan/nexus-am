@@ -2,7 +2,6 @@
 
 #define N 128
 #define M (N * N + N * 2) * 2
-#define ANS 42425
 
 const int INF = 0x3f3f3f;
 
@@ -123,7 +122,7 @@ void bench_dinic_run() {
   ans = G->Maxflow(2 * N, 2 * N + 1);
 }
 const char* bench_dinic_validate() {
-  return (ans == ANS) ? (const char*)NULL : "wrong answer";
+  return ((u32)ans == current->checksum) ? (const char*)NULL : "wrong answer";
 }
 }
 

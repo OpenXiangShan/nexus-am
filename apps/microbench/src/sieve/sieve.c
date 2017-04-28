@@ -1,7 +1,6 @@
 #include <benchmark.h>
 
 #define N 10000000
-#define ANS 664579
 
 static int ans;
 static u32 *primes;
@@ -38,5 +37,5 @@ void bench_sieve_run() {
 }
 
 const char * bench_sieve_validate() {
-  return ans == ANS ? NULL : "wrong answer";
+  return ans == current->checksum ? NULL : "wrong answer";
 }

@@ -7,7 +7,7 @@ static char *start;
 
 // The benchmark list
 
-#define ENTRY(_name, _sname, _mlim, _ref, _en, _desc) \
+#define ENTRY(_name, _sname, _mlim, _ref, _en, _cs, _desc) \
   { .prepare = bench_##_name##_prepare, \
     .run = bench_##_name##_run, \
     .validate = bench_##_name##_validate, \
@@ -15,7 +15,8 @@ static char *start;
     .desc = _desc, \
     .mlim = _mlim, \
     .ref = _ref, \
-    .enabled = _en, },
+    .enabled = _en, \
+    .checksum = _cs, },
 
 Benchmark benchmarks[] = {
   BENCHMARK_LIST(ENTRY)
@@ -144,8 +145,13 @@ i32 bench_rand() {
 u32 checksum(void *start, void *end) {
   const i32 x = 16777619;
   i32 hash = 2166136261;
-  for (char *p = (char*)start; p != (char*)end; p ++) {
-    hash = (hash ^ *p) * x;
+  for (char *p = (char*)start; p + 4 < (char*)end; p += 4) {
+    i32 h1 = hash, h2 = hash;
+    for (int i = 0; i < 4; i ++) {
+      h1 = (h1 ^ p[i]) * x;
+      h2 = (h2 ^ p[3 - i]) * x;
+    }
+    hash = h1 ^ h2;
   }
   hash += hash << 13;
   hash ^= hash >> 7;

@@ -6,7 +6,6 @@
 #include <benchmark.h>
 
 #define N 10000000
-#define CHECKSUM 0x3655306b
 
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
 const u32 k[64] = {
@@ -155,6 +154,6 @@ void bench_md5_run() {
 }
 
 const char *bench_md5_validate() {
-  return (checksum(digest, digest + 16) == CHECKSUM) ?
+  return (checksum(digest, digest + 16) == current->checksum) ?
     NULL : "wrong answer";
 }
