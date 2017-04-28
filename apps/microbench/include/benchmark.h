@@ -65,8 +65,8 @@ void bench_free(void *ptr);
 void bench_reset();
 
 // random number generator
-void bench_srand(int seed);
-int bench_rand(); // return a random number between 0..32767
+void bench_srand(i32 seed);
+i32 bench_rand(); // return a random number between 0..32767
 
 // checksum
 u32 checksum(void *start, void *end);

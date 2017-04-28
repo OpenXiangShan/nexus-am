@@ -20,7 +20,7 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
-  exit(code);
+  _exit(code);
 }
 
 _Area _heap;

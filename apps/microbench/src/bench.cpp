@@ -2,6 +2,7 @@
 #include <benchmark.h>
 
 Benchmark *current;
+static char *start, *heap_start;
 
 // The benchmark list
 
@@ -62,6 +63,7 @@ ulong score(Benchmark &b, ulong tsc, ulong msec) {
 
 int main() {
   _trm_init();
+  heap_start = (char*)_heap.start;
   _ioe_init();
 
   ulong bench_score = 0;
@@ -110,7 +112,6 @@ int main() {
 
 // Library
 
-static char *start;
 
 void* bench_alloc(size_t size) {
   if ((ulong)start % 16 != 0) {
@@ -118,9 +119,9 @@ void* bench_alloc(size_t size) {
   }
   char *old = start;
   start += size;
-  assert(start < _heap.end);
+  assert(_heap.start <= start && start < _heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  ulong use = (ulong)start - (ulong)_heap.start;
+  ulong use = (ulong)start - (ulong)heap_start;
   assert(use <= current->mlim);
   return old;
 }
@@ -129,17 +130,17 @@ void bench_free(void *ptr) {
 }
 
 void bench_reset() {
-  start = (char*)_heap.start;
+  start = (char*)heap_start;
 }
 
-static long seed = 1;
+static i32 seed = 1;
 
-void bench_srand(int _seed) {
+void bench_srand(i32 _seed) {
   seed = _seed & 0x7fff;
 }
 
-int bench_rand() {
-  seed = (seed * 214013L + 2531011L) >> 16;
+i32 bench_rand() {
+  seed = (seed * (i32)214013L + (i32)2531011L) >> 16;
   return seed & 0x7fff;
 }
 
@@ -160,10 +161,18 @@ u32 checksum(void *start, void *end) {
 
 
 void *operator new(size_t size) {
+  if (start == NULL) {
+    heap_start += size;
+    return heap_start - size;
+  }
   return bench_alloc(size);
 }
 
 void *operator new[](size_t size) {
+  if (start == NULL) {
+    heap_start += size;
+    return heap_start - size;
+  }
   return bench_alloc(size);
 }
 
