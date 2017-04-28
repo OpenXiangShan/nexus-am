@@ -25,7 +25,7 @@ char* itoa(int value,char* string,int radix);
 
 void assert (int expression);
 int printk(char *fmt, ...);
-int sprintk(char *out, const char *fmt, ...);
+int sprintk(char *out, char *fmt, ...);
 int rand();
 
 #ifdef __cplusplus
