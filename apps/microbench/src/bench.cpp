@@ -1,16 +1,21 @@
 #include <am.h>
 #include <benchmark.h>
-#include <benchlib.h>
+#include <limits.h>
 
 Benchmark *current;
+static char *start, *heap_start;
 
 // The benchmark list
 
-#define ENTRY(nm, snm, ml, en, des) \
-  { .prepare = bench_##nm##_prepare, \
-    .run = bench_##nm##_run, \
-    .validate = bench_##nm##_validate, \
-    .name = snm, .desc = des, .mlim = ml, .enabled = en, },
+#define ENTRY(_name, _sname, _mlim, _ref, _en, _desc) \
+  { .prepare = bench_##_name##_prepare, \
+    .run = bench_##_name##_run, \
+    .validate = bench_##_name##_validate, \
+    .name = _sname, \
+    .desc = _desc, \
+    .mlim = _mlim, \
+    .ref = _ref, \
+    .enabled = _en, },
 
 Benchmark benchmarks[] = {
   BENCHMARK_LIST(ENTRY)
@@ -18,7 +23,7 @@ Benchmark benchmarks[] = {
 
 // Running a benchmark
 void bench_prepare(Result *res) {
-  // try best to flush cache and other resources
+  // TODO: try best to flush cache and other resources
   res->tsc = _cycles();
   res->msec = _uptime();
 }
@@ -39,20 +44,32 @@ const char *bench_check(Benchmark &bench) {
   return nullptr;
 }
 
-bool run_once(Benchmark &b, Result &res) {
+Result run_once(Benchmark &b) {
+  Result res;
   current = &b;
   bench_reset();       // reset malloc state
   current->prepare();  // call bechmark's prepare function
   bench_prepare(&res); // clean everything, start timer
   current->run();      // run it
   bench_done(&res);    // collect results
-  return current->validate() == nullptr;
+  res.msg = current->validate();
+  res.pass = res.msg == nullptr;
+  return res;
+}
+
+ulong score(Benchmark &b, ulong tsc, ulong msec) {
+  if (msec == 0) return 0;
+  return (REF_SCORE / 1000) * b.ref / msec;
 }
 
 int main() {
   _trm_init();
+  heap_start = (char*)_heap.start;
   _ioe_init();
   _asye_init();
+
+  ulong bench_score = 0;
+  int pass = true;
 
   for (auto &bench: benchmarks) {
     const char *msg = bench_check(bench);
@@ -60,28 +77,33 @@ int main() {
     if (msg != nullptr) {
       printk("Ignored %s\n", msg);
     } else {
-      ulong tsc = 0, msec = 0;
+      ulong tsc = ULONG_MAX, msec = ULONG_MAX;
       bool succ = true;
       for (int i = 0; i < REPEAT; i ++) {
-        Result res;
-        bool s = run_once(bench, res);
-        printk(s ? "*" : "X");
-        succ &= s;
-        tsc += res.tsc;
-        msec += res.msec;
+        Result res = run_once(bench);
+        printk(res.pass ? "*" : "X");
+        succ &= res.pass;
+        if (res.tsc < tsc) tsc = res.tsc;
+        if (res.msec < msec) msec = res.msec;
       }
 
-      tsc /= REPEAT;
-      msec /= REPEAT; // TODO: handle overflow
+      if (succ) printk(" Passed.");
+      else printk(" Failed.");
 
-      if (succ) {
-        printk(" Passed.");
-      } else {
-        printk(" Failed.");
-      }
-      printk("\n  avg time: %dK cycles in %d ms\n", tsc, msec);
+      pass &= succ;
+
+      ulong cur = score(bench, tsc, msec);
+      printk("\n  min time: %dK cycles in %d ms [%d]\n", tsc, msec, cur);
+
+      bench_score += cur;
     }
   }
+
+  bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
+  
+  printk("==================================================\n");
+  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", bench_score);
+  printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
 
   _halt(0);
   return 0;
@@ -89,7 +111,6 @@ int main() {
 
 // Library
 
-static char *start;
 
 void* bench_alloc(size_t size) {
   if ((ulong)start % 16 != 0) {
@@ -97,12 +118,9 @@ void* bench_alloc(size_t size) {
   }
   char *old = start;
   start += size;
+  assert(_heap.start <= start && start < _heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  if (start >= _heap.end) {
-    return NULL;
-  }
-  ulong use = (ulong)start - (ulong)_heap.start;
-  assert(use <= current->mlim);
+  assert((ulong)start - (ulong)heap_start <= current->mlim);
   return old;
 }
 
@@ -110,24 +128,24 @@ void bench_free(void *ptr) {
 }
 
 void bench_reset() {
-  start = (char*)_heap.start;
+  start = (char*)heap_start;
 }
 
-static long seed = 1;
+static i32 seed = 1;
 
-void srand(int _seed) {
+void bench_srand(i32 _seed) {
   seed = _seed & 0x7fff;
 }
 
-int rand() {
-  seed = (seed * 214013L + 2531011L) >> 16;
+i32 bench_rand() {
+  seed = (seed * (i32)214013L + (i32)2531011L) >> 16;
   return seed & 0x7fff;
 }
 
 // FNV hash
 u32 checksum(void *start, void *end) {
-  const int x = 16777619;
-  int hash = 2166136261;
+  const i32 x = 16777619;
+  i32 hash = 2166136261;
   for (char *p = (char*)start; p != (char*)end; p ++) {
     hash = (hash ^ *p) * x;
   }
@@ -138,3 +156,27 @@ u32 checksum(void *start, void *end) {
   hash += hash << 5;
   return hash;
 }
+
+
+void *operator new(size_t size) {
+  if (start == NULL) {
+    heap_start += size;
+    return heap_start - size;
+  }
+  return bench_alloc(size);
+}
+
+void *operator new[](size_t size) {
+  if (start == NULL) {
+    heap_start += size;
+    return heap_start - size;
+  }
+  return bench_alloc(size);
+}
+
+void operator delete(void *ptr) {
+}
+
+void operator delete[](void *ptr) {
+}
+

@@ -58,8 +58,22 @@ void _putc(char ch) {
   outb(SERIAL_PORT, ch);
 }
 
+static void puts(const char *s) {
+  for (const char *p = s; *p; p ++) {
+    _putc(*p);
+  }
+}
 void _halt(int code) {
-  _putc('P'); _putc('a'); _putc('n'); _putc('i'); _putc('c'); _putc('\n');
+  puts("Exited (");
+  if (code == 0) _putc('0');
+  else {
+    char buf[10], *p = buf + 9;
+    for (*p = 0; code; code /= 10) {
+      *(-- p) = '0' + code % 10;
+    }
+    puts(p);
+  }
+  puts(").\n");
   asm volatile("cli; hlt");
 }
 
