@@ -25,8 +25,6 @@ void _halt(int code) {
 
 void memory_init(){
   //probe a memory for heap
-  _heap.start = (void *)HEAP_START;
-  _heap.end = (void *)HEAP_END;
 }
 
 void serial_init(){

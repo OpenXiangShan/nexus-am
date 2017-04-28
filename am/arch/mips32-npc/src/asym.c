@@ -98,6 +98,9 @@ void irq_handle(struct TrapFrame *tf){
         SetCompare(count + INTERVAL);
       }
     }break;
+    case 0x8://syscall
+    {
+    }
     default:_halt(0);
   }
 }

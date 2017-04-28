@@ -7,8 +7,9 @@
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
 #define KEY_CODE_ADDR ((volatile unsigned int *)0xf0000000)
 #define KEY_CODE (*KEY_CODE_ADDR)
-#define HEAP_START 0x10000
-#define HEAP_END 0x1fffc
+
+//256-512M npc(256M)
+//0-256M ARM
 
 static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
