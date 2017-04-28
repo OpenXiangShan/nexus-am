@@ -2,7 +2,7 @@
 
 ifneq ($(MAKECMDGOALS), clean)
 ifeq ($(ARCH), )
-$(error "Usage: make [play|clean] ARCH=[mips32-npc|x86-linux|x86-qemu] APP=[hello|video|...]")
+$(error "Usage: make [play|clean] ARCH=[native|mips32-npc|x86-qemu] APP=[hello|video|...]")
 endif
 endif
 
@@ -109,7 +109,7 @@ play: $(AM_LIB) image
 ifeq ($(ARCH), mips32-npc)
 	@echo "Burn it to FPGA."
 endif
-ifeq ($(ARCH), x86-linux)
+ifeq ($(ARCH), native)
 	@$(DEST)
 endif
 ifeq ($(ARCH), x86-qemu)
@@ -120,7 +120,7 @@ debug: $(AM_LIB) $(DEST)
 ifeq ($(ARCH), mips32-npc)
 	@echo "Debugging"
 endif
-ifeq ($(ARCH), x86-linux)
+ifeq ($(ARCH), native)
 	@gdb $(DEST)
 endif
 ifeq ($(ARCH), x86-qemu)
