@@ -1,5 +1,24 @@
 #include <am.h>
-#include "gui.h"
+
+_Screen _screen;
+
+// TODO: this condition should be changed
+#if !defined(__i386__) && !defined(__x86_64__)
+
+// without GUI
+
+void gui_init() { _screen.width = _screen.height = 0; }
+void _draw_p(int x, int y, _Pixel p) {}
+void _draw_f(_Pixel *p) {}
+void _draw_sync() {}
+int _peek_key() { return _KEY_NONE; }
+
+#else
+
+// with GUI (allegro5)
+
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
 
 #define W 640
 #define H 480
@@ -15,8 +34,6 @@ static inline u8 B(_Pixel p) { return p; }
 
 static ALLEGRO_VERTEX vtx[W * H];
 
-extern "C" {
-
 void gui_init() {
   _screen.width = W;
   _screen.height = H;
@@ -27,9 +44,9 @@ void gui_init() {
   
   for (int x = 0; x < W; x ++)
     for (int y = 0; y < H; y ++) {
-      auto &v = vtx[x + y * _screen.width];
-      v.x = x;
-      v.y = y;
+      int i = x + y * _screen.width;
+      vtx[i].x = x;
+      vtx[i].y = y;
     }
 }
 
@@ -49,16 +66,16 @@ void _draw_sync() {
     al_flip_display();
 }
 
-static bool k_up, k_down, k_left, k_right, k_z, k_x;
+static int k_up, k_down, k_left, k_right, k_z, k_x;
 
-static void update(int k, int &ev, bool &b, bool down) {
-  int evk = ev & ~KEYDOWN_MASK;
+static void update(int k, int *ev, int *b, int down) {
+  int evk = *ev & ~KEYDOWN_MASK;
   if (evk != _KEY_NONE) return;
-  if (b == down) {
-    ev = _KEY_NONE;
+  if (*b == down) {
+    (*ev) = _KEY_NONE;
   } else {
-    b = down;
-    ev = k | down * KEYDOWN_MASK;
+    (*b) = down;
+    (*ev) = k | down * KEYDOWN_MASK;
   }
 }
 
@@ -68,16 +85,14 @@ int _peek_key() {
 
   int ev = _KEY_NONE;
 
-  update(_KEY_UP, ev, k_up, al_key_down(&state, ALLEGRO_KEY_UP));
-  update(_KEY_DOWN, ev, k_down, al_key_down(&state, ALLEGRO_KEY_DOWN));
-  update(_KEY_LEFT, ev, k_left, al_key_down(&state, ALLEGRO_KEY_LEFT));
-  update(_KEY_RIGHT, ev, k_right, al_key_down(&state, ALLEGRO_KEY_RIGHT));
-  update(_KEY_Z, ev, k_z, al_key_down(&state, ALLEGRO_KEY_Z));
-  update(_KEY_X, ev, k_x, al_key_down(&state, ALLEGRO_KEY_X));
+  update(_KEY_UP, &ev, &k_up, al_key_down(&state, ALLEGRO_KEY_UP));
+  update(_KEY_DOWN, &ev, &k_down, al_key_down(&state, ALLEGRO_KEY_DOWN));
+  update(_KEY_LEFT, &ev, &k_left, al_key_down(&state, ALLEGRO_KEY_LEFT));
+  update(_KEY_RIGHT, &ev, &k_right, al_key_down(&state, ALLEGRO_KEY_RIGHT));
+  update(_KEY_Z, &ev, &k_z, al_key_down(&state, ALLEGRO_KEY_Z));
+  update(_KEY_X, &ev, &k_x, al_key_down(&state, ALLEGRO_KEY_X));
 
   return ev;
 }
 
-_Screen _screen;
-
-}
+#endif
