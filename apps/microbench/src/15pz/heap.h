@@ -21,7 +21,7 @@ class Updatable_heap {
     Step *pointer( T const & ) const;
 
   public:
-    Updatable_heap(); 
+    void init(); 
     ~Updatable_heap();
     T pop();
     void push( T const &, int );
@@ -41,15 +41,15 @@ class Updatable_heap<T, M>::Step {
     bool visited;
     Step *previous_step;
 
-    Step( T const &, Step *, int, int );
+    void init( T const &, Step *, int, int );
     int length() const;
     int weight() const;
 };
 
 template <typename T, int M>
-Updatable_heap<T, M>::Updatable_heap():
-heap_size( 0 ),
-maximum_heap_size( 0 ) {
+void Updatable_heap<T, M>::init() {
+  heap_size = 0;
+  maximum_heap_size = 0;
   for ( int i = 0; i < M; ++i ) {
     hash_table[i] = 0;
   }
@@ -63,7 +63,6 @@ Updatable_heap<T, M>::~Updatable_heap() {
     while ( ptr != 0 ) {
       Step *tmp = ptr;
       ptr = ptr->next;
-      delete tmp;
     }
   }
 }
@@ -148,7 +147,8 @@ void Updatable_heap<T, M>::push( T const &pz, int path_length ) {
     assert( heap_size <= M );
     ++heap_size;
 
-    Step *ptr = new Step( pz, hash_table[pz.hash() & (M - 1)], size(), path_length );
+    Step *ptr = (Step*)bench_alloc(sizeof(Step));
+    ptr->init( pz, hash_table[pz.hash() & (M - 1)], size(), path_length );
     hash_table[pz.hash() & (M - 1)] = ptr;
     heap[size()] = ptr;
 
@@ -200,16 +200,15 @@ typename Updatable_heap<T, M>::Step *Updatable_heap<T, M>::pointer( T const &pz 
  ****************************************************/
 
 template <typename T, int M>
-Updatable_heap<T, M>::Step::Step( T const &pz, Step *n, int hi, int dist ):
-element( pz ),
-next( n ),
-heap_index( hi ),
-path_length( dist ),
-path_weight( dist + element.lower_bound() ),
-visited( false ),
-previous_step( 0 ) {
-  // Empty constructor
-};
+void Updatable_heap<T, M>::Step::init( T const &pz, Step *n, int hi, int dist ) {
+  element = pz;
+  next = n;
+  heap_index = hi;
+  path_length = dist;
+  path_weight = dist + element.lower_bound();
+  visited = false;
+  previous_step = 0;
+}
 
 template <typename T, int M>
 int Updatable_heap<T, M>::Step::length() const {

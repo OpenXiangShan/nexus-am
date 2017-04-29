@@ -5,7 +5,6 @@
 #define N 2147483603
 #define M 91
 #define DIM M
-#define ANS 3957088128ul
 
 typedef u32 Matrix[DIM][DIM];
 
@@ -52,5 +51,5 @@ void bench_fib_run() {
 }
 
 const char * bench_fib_validate() {
-  return (*ans)[DIM-1][DIM-1] == ANS ? NULL : "wrong answer";
+  return (*ans)[DIM-1][DIM-1] == (u32)current->checksum ? NULL : "wrong answer";
 }

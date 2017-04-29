@@ -1,7 +1,6 @@
 #include <benchmark.h>
 
 #define N 12
-#define ANS 14200
 #define FULL ((1 << N) - 1)
 
 static int dfs(int row, int ld, int rd) {
@@ -29,5 +28,5 @@ void bench_queen_run() {
 }
 
 const char * bench_queen_validate() {
-  return (ans == ANS) ? NULL : "wrong answer";
+  return (ans == current->checksum) ? NULL : "wrong answer";
 }

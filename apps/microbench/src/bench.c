@@ -3,11 +3,14 @@
 #include <limits.h>
 
 Benchmark *current;
-static char *start, *heap_start;
+static char *start;
+
+
+#define ARR_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
 
 // The benchmark list
 
-#define ENTRY(_name, _sname, _mlim, _ref, _en, _desc) \
+#define ENTRY(_name, _sname, _mlim, _ref, _en, _cs, _desc) \
   { .prepare = bench_##_name##_prepare, \
     .run = bench_##_name##_run, \
     .validate = bench_##_name##_validate, \
@@ -15,70 +18,71 @@ static char *start, *heap_start;
     .desc = _desc, \
     .mlim = _mlim, \
     .ref = _ref, \
-    .enabled = _en, },
+    .enabled = _en, \
+    .checksum = _cs, },
 
 Benchmark benchmarks[] = {
   BENCHMARK_LIST(ENTRY)
 };
 
 // Running a benchmark
-void bench_prepare(Result *res) {
+static void bench_prepare(Result *res) {
   // TODO: try best to flush cache and other resources
   res->tsc = _cycles();
   res->msec = _uptime();
 }
 
-void bench_done(Result *res) {
+static void bench_done(Result *res) {
   res->tsc = _cycles() - res->tsc;
   res->msec = _uptime() - res->msec;
 }
 
-const char *bench_check(Benchmark &bench) {
-  if (!bench.enabled) {
+static const char *bench_check(Benchmark *bench) {
+  if (!bench->enabled) {
     return "";
   }
   ulong freesp = (ulong)_heap.end - (ulong)_heap.start;
-  if (freesp < bench.mlim) {
+  if (freesp < bench->mlim) {
     return "(insufficient memory)";
   }
-  return nullptr;
+  return NULL;
 }
 
-Result run_once(Benchmark &b) {
+Result run_once(Benchmark *b) {
   Result res;
-  current = &b;
+  current = b;
   bench_reset();       // reset malloc state
   current->prepare();  // call bechmark's prepare function
   bench_prepare(&res); // clean everything, start timer
   current->run();      // run it
   bench_done(&res);    // collect results
   res.msg = current->validate();
-  res.pass = res.msg == nullptr;
+  res.pass = res.msg == NULL;
   return res;
 }
 
-ulong score(Benchmark &b, ulong tsc, ulong msec) {
+ulong score(Benchmark *b, ulong tsc, ulong msec) {
   if (msec == 0) return 0;
-  return (REF_SCORE / 1000) * b.ref / msec;
+  return (REF_SCORE / 1000) * b->ref / msec;
 }
 
 int main() {
   _trm_init();
-  heap_start = (char*)_heap.start;
   _ioe_init();
   _asye_init();
 
   ulong bench_score = 0;
   int pass = true;
 
-  for (auto &bench: benchmarks) {
+  for (int i = 0; i < ARR_SIZE(benchmarks); i ++) {
+    Benchmark *bench = &benchmarks[i];
     const char *msg = bench_check(bench);
-    printk("[%s] %s: ", bench.name, bench.desc);
-    if (msg != nullptr) {
+    printk("[%s] %s: ", bench->name, bench->desc);
+    if (msg != NULL) {
       printk("Ignored %s\n", msg);
     } else {
       ulong tsc = ULONG_MAX, msec = ULONG_MAX;
-      bool succ = true;
+      int succ = true;
       for (int i = 0; i < REPEAT; i ++) {
         Result res = run_once(bench);
         printk(res.pass ? "*" : "X");
@@ -118,9 +122,9 @@ void* bench_alloc(size_t size) {
   }
   char *old = start;
   start += size;
-  assert(_heap.start <= start && start < _heap.end);
+  assert((ulong)_heap.start <= (ulong)start && (ulong)start < (ulong)_heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  assert((ulong)start - (ulong)heap_start <= current->mlim);
+  assert((ulong)start - (ulong)_heap.start <= current->mlim);
   return old;
 }
 
@@ -128,7 +132,7 @@ void bench_free(void *ptr) {
 }
 
 void bench_reset() {
-  start = (char*)heap_start;
+  start = (char*)_heap.start;
 }
 
 static i32 seed = 1;
@@ -145,9 +149,14 @@ i32 bench_rand() {
 // FNV hash
 u32 checksum(void *start, void *end) {
   const i32 x = 16777619;
-  i32 hash = 2166136261;
-  for (char *p = (char*)start; p != (char*)end; p ++) {
-    hash = (hash ^ *p) * x;
+  i32 hash = 2166136261u;
+  for (char *p = (char*)start; p + 4 < (char*)end; p += 4) {
+    i32 h1 = hash, h2 = hash;
+    for (int i = 0; i < 4; i ++) {
+      h1 = (h1 ^ p[i]) * x;
+      h2 = (h2 ^ p[3 - i]) * x;
+    }
+    hash = h1 ^ h2;
   }
   hash += hash << 13;
   hash ^= hash >> 7;
@@ -155,28 +164,5 @@ u32 checksum(void *start, void *end) {
   hash ^= hash >> 17;
   hash += hash << 5;
   return hash;
-}
-
-
-void *operator new(size_t size) {
-  if (start == NULL) {
-    heap_start += size;
-    return heap_start - size;
-  }
-  return bench_alloc(size);
-}
-
-void *operator new[](size_t size) {
-  if (start == NULL) {
-    heap_start += size;
-    return heap_start - size;
-  }
-  return bench_alloc(size);
-}
-
-void operator delete(void *ptr) {
-}
-
-void operator delete[](void *ptr) {
 }
 

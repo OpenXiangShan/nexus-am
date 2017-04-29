@@ -2,7 +2,6 @@
 
 #define N 128
 #define M (N * N + N * 2) * 2
-#define ANS 42425
 
 const int INF = 0x3f3f3f;
 
@@ -30,7 +29,7 @@ struct Dinic {
   bool vis[N*2 + 2];
   int d[N*2 + 2], cur[N*2 + 2], queue[N*2 + 2];
 
-  Dinic(int n) {
+  void init(int n) {
     this->n = n;
     for (int i = 0; i < n; i ++) {
       head[i] = -1;
@@ -106,7 +105,8 @@ static int ans;
 void bench_dinic_prepare() {
   bench_srand(1);
   int s = 2 * N, t = 2 * N + 1;
-  G = new Dinic(2 * N + 2);
+  G = (Dinic*)bench_alloc(sizeof(Dinic));
+  G->init(2 * N + 2);
   for (int i = 0; i < N; i ++)
     for (int j = 0; j < N; j ++) {
       G->AddEdge(i, N + j, bench_rand() % 10);
@@ -122,7 +122,7 @@ void bench_dinic_run() {
   ans = G->Maxflow(2 * N, 2 * N + 1);
 }
 const char* bench_dinic_validate() {
-  return (ans == ANS) ? (const char*)NULL : "wrong answer";
+  return ((u32)ans == current->checksum) ? (const char*)NULL : "wrong answer";
 }
 }
 

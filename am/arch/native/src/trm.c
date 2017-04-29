@@ -1,9 +1,6 @@
 #include <am.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstdarg>
-
-extern "C" {
+#include <stdio.h>
+#include <stdlib.h>
 
 #define HEAP_SIZE (128 * 1024 * 1024)
 
@@ -24,5 +21,3 @@ void _halt(int code) {
 }
 
 _Area _heap;
-
-}

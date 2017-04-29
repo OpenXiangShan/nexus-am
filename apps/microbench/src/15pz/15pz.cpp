@@ -3,7 +3,6 @@
 #include "heap.h"
 
 const int N = 4;
-const int ANS = 428940;
 const int MAXN = 65536;
 
 static int PUZZLE[N*N] = {
@@ -24,7 +23,8 @@ void bench_15pz_run() {
   N_puzzle<N> puzzle(PUZZLE);
   assert(puzzle.solvable());
 
-  auto *heap = new Updatable_heap<N_puzzle<N>, MAXN>();
+  auto *heap = (Updatable_heap<N_puzzle<N>,MAXN> *) bench_alloc(sizeof(Updatable_heap<N_puzzle<N>, MAXN>));
+  heap->init();
   heap->push( puzzle, 0 );
 
   int n = 0;
@@ -60,7 +60,7 @@ void bench_15pz_run() {
 
 
 const char * bench_15pz_validate() {
-  return (ans == ANS) ? (const char*)NULL : "wrong answer";
+  return ((u32)ans == current->checksum) ? (const char*)NULL : "wrong answer";
 }
 
 }

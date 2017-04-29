@@ -27,7 +27,6 @@
 #define CODE            ">>+>>>>>,[>+>>,]>+[--[+<<<-]<[<+>-]<[<[->[<<<+>>>>+<-]<<[>>+>[->]<<[<]" \
                         "<-]>]>>>+<[[-]<[>+<-]<]>[[>>>]+<<<-<[<<[<<<]>>+>[>>>]<-]<<[<<<]>[>>[>>" \
                         ">]<+<<[<<<]>-]]+<<<]+[->>>]>>]>>[.>>>]"
-#define CHECKSUM        0x46726783
 
 #define OP_END          0
 #define OP_INC_DP       1
@@ -146,6 +145,6 @@ void bench_bf_run() {
 
 const char * bench_bf_validate() {
   u32 cs = checksum(output, output + noutput);
-  return ((noutput == ARR_SIZE && cs == CHECKSUM) ? \
+  return ((noutput == ARR_SIZE && cs == current->checksum) ? \
             NULL : "wrong answer");
 }
