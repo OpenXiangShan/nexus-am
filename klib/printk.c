@@ -1,4 +1,3 @@
-#include<am.h>
 #include<klib.h>
 #include<stdarg.h>
 
