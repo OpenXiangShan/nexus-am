@@ -25,7 +25,7 @@ Dismiss:
 
 do_irq:
 #pusha
-	addiu		$sp,$sp,-124
+	addiu		$sp,$sp,-160
 	sw 		$at, 0x4($sp)
 	sw 		$v0, 0x8($sp)
 	sw 		$v1, 0xc($sp)
@@ -96,6 +96,6 @@ do_irq:
 	lw 		$fp, 0x78($sp)
 	lw 		$ra, 0x7c($sp)
 	lw 		$sp, 0x74($sp)
-	addiu		$sp,$sp,124
+	addiu		$sp,$sp,160
 
 	eret
