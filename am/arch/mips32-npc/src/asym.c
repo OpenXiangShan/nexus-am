@@ -1,7 +1,8 @@
 #include <am.h>
 #include <npc.h>
 #include <arch.h>
-#define INTERVAL 20000
+#define HZ 10
+#define INTERVAL 10000
 #define INTERVAL_MIN 1000  //min interval(cpu use 1000 cycles to deal interrupt)
 #define COUNT_MAX 0xffffffff	//count reg max value
 
