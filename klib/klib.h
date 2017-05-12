@@ -54,7 +54,6 @@ int snprintf(char* s, size_t n, const char* format, ...);
     } while (0)
 
 #endif
-
 #ifdef __cplusplus
 }
 #endif
