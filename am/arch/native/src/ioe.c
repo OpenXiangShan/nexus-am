@@ -40,3 +40,6 @@ void _ioe_init() {
   cycles_init();
 }
 
+void _asye_init() {
+}
+

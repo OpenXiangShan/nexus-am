@@ -1,12 +1,14 @@
 #include <cpu.h>
+#include <string.h>
 
 #define DRAM_SIZE (1 << 20)
 
 CPU cpu;
 instruction current;
-dword instr;
 byte dram[DRAM_SIZE];
 extern char *One_Byte_Op_Map[16][16];
+void ramdisk_read(dword addr, dword len, byte *data);
+void ramdisk_write(dword addr, dword len, byte *data);
 
 void init_cpu(){
   cpu.eax.val = 0;
@@ -54,13 +56,22 @@ void init_cpu(){
   cpu.gdtr.BASE = 0;
 }
 
-dword instr_fetch(dword eip, dword *i){
+dword instr_fetch(dword eip, instruction *i){
   byte data;
   ramdisk_read(eip,1,(void *)&data);
-  char op[20] = One_Byte_Op_Map[(data >> 4) & 0xf][data & 0xf];
-  char temp[3][10];
-  int i;
-  for(i = 0; op[i]
+  char op[20];
+  strcpy(op,One_Byte_Op_Map[(data >> 4) & 0xf][data & 0xf]);
+  char instr_pattern[3][20];
+  int j;
+  int n = 0;
+  for(j = 0; op[j] != '\0'; j++){
+    if(op[j] == '_'){
+      instr_pattern[n][j] = '\0';
+      n++;
+    }
+    else
+      instr_pattern[n][j] = op[j];
+  }
   return 4;
 }
 
