@@ -16,6 +16,7 @@ int get_fps(){
 int main (){
     _trm_init();
     _ioe_init();
+    _asye_init();
     int now = 0;
     int target = 0;
     bool redraw = false;
@@ -51,7 +52,7 @@ int main (){
                 set_fps(now_fps);
                 num_draw = 0;
             }
-            now +=5000;
+            now += 500;
         }
         if(redraw){
             num_draw++;

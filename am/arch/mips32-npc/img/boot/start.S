@@ -4,11 +4,9 @@
 .type _qemu, @function
 
 _start:
-  li $sp, 0x0000fffc
+  li $sp, 0x0001fffc
   jal main
-  nop
 
 _qemu:
   nop
   jal main
-  nop
