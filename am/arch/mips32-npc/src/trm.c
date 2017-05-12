@@ -27,6 +27,9 @@ void memory_init(){
   //probe a memory for heap
   _heap.start = HEAP_START;
   _heap.end = HEAP_END;
+  /*unsigned int i;
+  char *bss = ((void *)0xf0000004);
+  for(i = 0; i < 0x1fffffc; i++) { bss[i] = 0; }*/
 }
 
 void serial_init(){

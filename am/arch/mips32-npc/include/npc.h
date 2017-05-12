@@ -7,8 +7,8 @@
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
 #define KEY_CODE_ADDR ((volatile unsigned int *)0xe0000000)
 #define KEY_CODE (*KEY_CODE_ADDR)
-#define HEAP_START ((void *)0xf4000000)
-#define HEAP_END ((void *)0xf8000000)
+#define HEAP_START ((void *)0xf2000000)
+#define HEAP_END ((void *)0xf6000000)
 
 static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }

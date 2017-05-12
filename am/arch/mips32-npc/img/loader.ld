@@ -3,5 +3,5 @@ SECTIONS
     . = 0x00000000;
     .text : { *(.text) }
     .data : { *(.data) }
-    .bss  : { *(.bss) }
+    .bss 0xf0000004 : { *(.bss) }
 }
