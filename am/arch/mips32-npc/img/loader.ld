@@ -1,32 +1,11 @@
 SECTIONS
 {
     . = 0x00000000;
-    .text : {
-        _ftext = . ;
-        *(.text)
-	*(.rodata)
-	*(.rodata1)
-	*(.reginfo)
-	*(.init)
-	*(.stub)
-	*(.gnu.warning)
-    } =0
-    .fini : { *(.fini) } =0
-    .data : {
-	_fdata = . ;
-	*(.data)
-    }
-    .data1 : { *(.data1) }
+    .text : { *(.text) } =0
+    .data : { *(.data) }
     . = 0xf0000000;
     __bss_start = .;
-    .bss :
-    {
-	*(.dynbss)
-	*(.bss)
-	*(COMMON)
-    }
-    .sbss : { *(.sbss) *(.scommon) }
+    .bss : { *(.bss) }
     __bss_end = . ;
-    . = 0xf2000000;
-    _heap_start = . ;
+    _heap_start = 0xf2000000;
 }
