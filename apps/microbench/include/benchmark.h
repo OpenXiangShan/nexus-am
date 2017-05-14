@@ -19,7 +19,6 @@ extern "C" {
 // the list of benchmarks
 //       Name        |  Mem  |Ref(us)| Enable | Checksum | Desc
 #define BENCHMARK_LIST(def) \
-  def(qsort, "qsort", 640 KB, 28620, true, 0x2e074bc8, "Quick sort") \
   def(queen, "queen",   0 KB,  5490, true, 0x00003778, "Queen placement") \
   def(   bf,    "bf",  32 KB, 17520, true, 0x432858fd, "Brainf**k interpreter") \
   def(  fib,   "fib", 256 KB, 28380, true, 0xebdc5f80, "Fibonacci number") \

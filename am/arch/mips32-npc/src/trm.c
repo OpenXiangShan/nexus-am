@@ -1,13 +1,14 @@
 #include <am.h>
 #include <npc.h>
 
+#define MAX_MEMORY_SIZE 0x4000000
+
 _Area _heap;
 _Screen _screen;
 
-extern void *_heap_start;
-extern void *_heap_end;
-extern char *__bss_start;
-extern char *__bss_end;
+extern unsigned int _heap_start;
+extern unsigned int __bss_start;
+extern unsigned int __bss_end;
 
 void _trm_init() {
   serial_init();
@@ -30,12 +31,17 @@ void _halt(int code) {
 
 void memory_init(){
   //probe a memory for heap
-  _heap.start = _heap_start;
-  _heap.end = _heap_end;
-  char *st = __bss_start;
-  char *ed = __bss_end;
-  for(;st != ed; st++)
-    *st = 0;
+  volatile unsigned int st = _heap_start;
+  volatile unsigned int ed = _heap_start + MAX_MEMORY_SIZE;
+  _heap.start = (void *)st;
+  _heap.end = (void *)ed;
+  st = __bss_start;
+  ed = __bss_end;
+  volatile char *bss = (void *)st;
+  volatile unsigned int i;
+  for(i = st; i < ed; i++) {
+    bss[i - st] = 0 ;
+  }
 }
 
 void serial_init(){
