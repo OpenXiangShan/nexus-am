@@ -4,6 +4,11 @@
 _Area _heap;
 _Screen _screen;
 
+extern void *_heap_start;
+extern void *_heap_end;
+extern char *__bss_start;
+extern char *__bss_end;
+
 void _trm_init() {
   serial_init();
   memory_init();
@@ -25,11 +30,12 @@ void _halt(int code) {
 
 void memory_init(){
   //probe a memory for heap
-  _heap.start = HEAP_START;
-  _heap.end = HEAP_END;
-  /*unsigned int i;
-  char *bss = ((void *)0xf0000004);
-  for(i = 0; i < 0x1fffffc; i++) { bss[i] = 0; }*/
+  _heap.start = _heap_start;
+  _heap.end = _heap_end;
+  char *st = __bss_start;
+  char *ed = __bss_end;
+  for(;st != ed; st++)
+    *st = 0;
 }
 
 void serial_init(){
