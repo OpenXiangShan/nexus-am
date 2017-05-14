@@ -12,7 +12,7 @@ SECTIONS
 	*(.gnu.warning)
     } =0
     _etext = .;
-    PROVIDE (etexxt = .);
+    PROVIDE (etext = .);
     .fini : { *(.fini) } =0
     .data : {
 	_fdata = . ;
