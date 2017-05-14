@@ -6,6 +6,11 @@
 _Area _heap;
 _Screen _screen;
 
+char __attribute__((__noinline__)) get_stat(){
+  char *stat = SERIAL_PORT + STAT;
+  return *stat;
+}
+
 void _trm_init() {
   serial_init();
   memory_init();

@@ -5,6 +5,7 @@
 #define INTERVAL 10000
 #define INTERVAL_MIN 1000  //min interval(cpu use 1000 cycles to deal interrupt)
 #define COUNT_MAX 0xffffffff	//count reg max value
+#define NOTIME
 
 ulong npc_cycles = 0;
 ulong npc_time = 1;
@@ -20,7 +21,11 @@ void SetCompare(u32 compare){
 }
 
 ulong _uptime() {
+#ifdef NOTIME
+  return npc_time++;
+#else
   return npc_time;
+#endif
 }
 
 void _time_event(){
@@ -32,6 +37,9 @@ ulong _cycles(){
 }
 
 void _asye_init(){
+#ifdef NOTIME
+  return;
+#else
   u32 count= GetCount();
   if(count + INTERVAL > COUNT_MAX){
     SetCompare(count + INTERVAL - COUNT_MAX);
@@ -39,6 +47,7 @@ void _asye_init(){
   else{//count overflow
     SetCompare(count + INTERVAL);
   }
+#endif
 }
 
 void _listen(_RegSet* (*l)(int ex, _RegSet *regs)){

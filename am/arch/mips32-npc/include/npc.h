@@ -2,11 +2,14 @@
 #define __NPC_H__
 
 #define VMEM_ADDR ((void *)0xc0000000)
-#define SCR_WIDTH 400
-#define SCR_HEIGHT 400
+#define SCR_WIDTH 200
+#define SCR_HEIGHT 200
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
-#define KEY_CODE_ADDR ((volatile unsigned int *)0xe0000000)
-#define KEY_CODE (*KEY_CODE_ADDR)
+#define Rx 0x0
+#define Tx 0x04
+#define STAT 0x08
+#define CTRL 0x0c
+#define SERIAL_PORT ((char *)0xe0000000)
 
 static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
