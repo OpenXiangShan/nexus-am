@@ -19,13 +19,13 @@ SECTIONS
     .data1 : { *(.data1) }
     . = 0xf0000000;
     __bss_start = .;
-    .sbss : { *(.sbss) *(.scommon) }
     .bss :
     {
 	*(.dynbss)
 	*(.bss)
 	*(COMMON)
     }
+    .sbss : { *(.sbss) *(.scommon) }
     __bss_end = . ;
     . = 0xf2000000;
     _heap_start = . ;
