@@ -6,10 +6,6 @@
 _Area _heap;
 _Screen _screen;
 
-extern char _heap_start;
-extern char __bss_start;
-extern char __bss_end;
-
 void _trm_init() {
   serial_init();
   memory_init();
@@ -31,13 +27,17 @@ void _halt(int code) {
 
 void memory_init(){
   //probe a memory for heap
-  _heap.start = (void *)(&_heap_start);
-  _heap.end = (char *)(&_heap_start) + MAX_MEMORY_SIZE;
-  volatile char *st = (void *)(&__bss_start);
-  volatile char *ed = (void *)(&__bss_end);
-  for(; st != ed; st++) {
-    *st = 0 ;
-  }
+  extern char _end;
+  extern char __bss_start;
+  unsigned int st = (unsigned int)(&_end);
+  unsigned int ed = (unsigned int)(&_end) + MAX_MEMORY_SIZE;
+  _heap.start = (void *)(st);
+  _heap.end = (void *)(ed);
+  st = (unsigned int)(&__bss_start);
+  ed = (unsigned int)(&_end);
+  char *bss = (void *)(st);
+  unsigned int i;
+  for(i = st;i < ed; i++) { bss[i - st] = 0; }
 }
 
 void serial_init(){

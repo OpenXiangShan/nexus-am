@@ -4,8 +4,7 @@ SECTIONS
     .text : { *(.text) } =0
     .data : { *(.data) }
     . = 0xf0000000;
-    __bss_start = .;
+    __bss_start = . ;
     .bss : { *(.bss) }
-    __bss_end = . ;
-    _heap_start = 0xf2000000;
+    _end = . ;
 }
