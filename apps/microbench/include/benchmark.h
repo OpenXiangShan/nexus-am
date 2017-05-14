@@ -31,7 +31,7 @@ extern "C" {
   def(  md5,   "md5",  16 MB, 20200, true, 0xa2579514, "MD5 digest") \
 
 // Each benchmark will run REPEAT times
-#define REPEAT  3
+#define REPEAT  1
 
 #define DECL(_name, _sname, _mlim, _ref, _en, _cs, _desc) \
   void bench_##_name##_prepare(); \

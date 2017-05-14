@@ -1,7 +1,10 @@
 SECTIONS
 {
     . = 0x00000000;
-    .text : { *(.text) }
+    .text : { *(.text) } =0
     .data : { *(.data) }
-    .bss  : { *(.bss) }
+    . = 0xf0000000;
+    __bss_start = . ;
+    .bss : { *(.bss) }
+    _end = . ;
 }
