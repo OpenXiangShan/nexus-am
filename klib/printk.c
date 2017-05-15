@@ -6,8 +6,10 @@ char* printch(char ch,char* s);
 char* printdec(int dec,char* s);
 char* printstr(char* str,char* s);
 
+//int vprintk(
+
 int printk(const char *fmt, ...){
-	//return sprintk(0,fmt,...);
+	//return vprintk(0,fmt,...);
 	int vargint=0;
 	char* vargpch=0;
 	char vargch=0;
@@ -25,6 +27,10 @@ int printk(const char *fmt, ...){
 				case 'd':
 				case 'i':vargint=va_arg(vp,int);printdec(vargint,0);break;
 				case 's':vargpch=va_arg(vp,char*);printstr(vargpch,0);break;
+				case 'u':
+				case 'x':
+				case 'X':
+				case 'p':
 				default:;
 			}
 			pfmt++;
@@ -36,7 +42,7 @@ int printk(const char *fmt, ...){
 	va_end(vp);
 	return 0;
 }
-int sprintk(char* out,char* fmt,...){
+int sprintf(char* out,char* fmt,...){
 	int vargint=0;
 	char* vargpch=0;
 	char vargch=0;
@@ -73,6 +79,11 @@ char* printch(char ch,char* s){
 	return s;
 }
 char* printdec(int dec,char* s){
+	if(dec<0){
+		_putc('-');
+		printdec(-dec,s);
+		return s;
+	}
 	if(dec==0)return s;
 	//_putc('0');
 	s=printdec(dec/10,s);

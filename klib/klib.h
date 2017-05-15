@@ -38,7 +38,7 @@ int abs(int x);
 
 // stdio.h
 int printk(const char* fmt, ...);
-int sprintf(char* s, const char* format, ...);
+int sprintf(char* s, char* format, ...);
 int snprintf(char* s, size_t n, const char* format, ...);
 
 // assert.h
