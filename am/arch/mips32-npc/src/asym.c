@@ -1,11 +1,10 @@
 #include <am.h>
 #include <npc.h>
 #include <arch.h>
-#define HZ 10
-#define INTERVAL 10000
+#define HZ 50
+#define INTERVAL (HZ * 1000)
 #define INTERVAL_MIN 1000  //min interval(cpu use 1000 cycles to deal interrupt)
 #define COUNT_MAX 0xffffffff	//count reg max value
-#define NOTIME
 
 ulong npc_cycles = 0;
 ulong npc_time = 1;
