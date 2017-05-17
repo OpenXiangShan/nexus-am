@@ -1,11 +1,14 @@
 #include<klib.h>
 #include<stdarg.h>
 
-void printch(char ch);
-void printdec(int dec);
-void printstr(char* str);
+char* printch(char ch,char* s);
+char* printdec(int dec,char* s);
+char* printstr(char* str,char* s);
+
+//int vprintk(
 
 int printk(const char *fmt, ...){
+	//return vprintk(0,fmt,...);
 	int vargint=0;
 	char* vargpch=0;
 	char vargch=0;
@@ -19,30 +22,80 @@ int printk(const char *fmt, ...){
 	while(*pfmt){
 		if(*pfmt == '%'){
 			switch(*(++pfmt)){
-				case 'c':vargch=va_arg(vp,int);printch(vargch);break;
+				case 'c':vargch=va_arg(vp,int);printch(vargch,0);break;
 				case 'd':
-				case 'i':vargint=va_arg(vp,int);printdec(vargint);break;
-				case 's':vargpch=va_arg(vp,char*);printstr(vargpch);break;
+				case 'i':vargint=va_arg(vp,int);printdec(vargint,0);break;
+				case 's':vargpch=va_arg(vp,char*);printstr(vargpch,0);break;
+				case 'u':
+				case 'x':
+				case 'X':
+				case 'p':
 				default:;
 			}
 			pfmt++;
 		}
 		else{
-			printch(*pfmt++);
+			printch(*pfmt++,0);
 		}
 	}
 	va_end(vp);
 	return 0;
 }
-void printch(char ch){
-	_putc(ch);
+int sprintf(char* out,char* fmt,...){
+	int vargint=0;
+	char* vargpch=0;
+	char vargch=0;
+	
+	char* pfmt=0;
+	va_list vp;
+
+	va_start(vp,fmt);
+	pfmt=fmt;
+
+	while(*pfmt){
+		if(*pfmt == '%'){
+			switch(*(++pfmt)){
+				case 'c':vargch=va_arg(vp,int);out=printch(vargch,out);break;
+				case 'd':
+				case 'i':vargint=va_arg(vp,int);out=printdec(vargint,out);break;
+				case 's':vargpch=va_arg(vp,char*);out=printstr(vargpch,out);break;
+				default:;
+			}
+			pfmt++;
+		}
+		else{
+			out=printch(*pfmt++,out);
+		}
+	}
+	va_end(vp);
+	*out='\0';
+	return 0;
+
 }
-void printdec(int dec){
-	if(dec==0)return;
-	printdec(dec/10);
-	_putc((char)(dec%10+'0'));
+char* printch(char ch,char* s){
+	if(s==0)_putc(ch);
+	else *s++=ch;
+	return s;
 }
-void printstr(char* str){
-	while(*str)
-		_putc(*str++);
+char* printdec(int dec,char* s){
+	if(dec<0){
+		_putc('-');
+		printdec(-dec,s);
+		return s;
+	}
+	if(dec==0)return s;
+	//_putc('0');
+	s=printdec(dec/10,s);
+	if(s==0)_putc((char)(dec%10+'0'));
+	else *s++=(char)(dec%10+'0');
+	return s;
+}
+char* printstr(char* str,char* s){
+	while(*str){
+		//_putc(*str);
+		if(s==0)_putc(*str++);
+		else*s++=*str++;
+	}
+	//*s++='\0';
+	return s;
 }
