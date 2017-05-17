@@ -70,13 +70,9 @@ int _peek_key() {
   return ret;
 }
 
+#define XX(k) [SDL_SCANCODE_##k] = _KEY_##k
 static int keymap[256] = {
-  [SDL_SCANCODE_UP] = _KEY_UP,
-  [SDL_SCANCODE_DOWN] = _KEY_DOWN,
-  [SDL_SCANCODE_LEFT] = _KEY_LEFT,
-  [SDL_SCANCODE_RIGHT] = _KEY_RIGHT,
-  [SDL_SCANCODE_X] = _KEY_X,
-  [SDL_SCANCODE_Z] = _KEY_Z,
+  _KEYS(XX),
 };
 
 static int event_thread(void *args) {
