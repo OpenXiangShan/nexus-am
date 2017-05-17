@@ -4,6 +4,7 @@
 
 char* printch(char ch,char* s);
 char* printdec(int dec,char* s);
+char* vprintdec(int dec,char* s);
 char* printstr(char* str,char* s);
 
 //int vprintk(
@@ -25,7 +26,7 @@ int printk(const char *fmt, ...){
 			switch(*(++pfmt)){
 				case 'c':vargch=va_arg(vp,int);printch(vargch,0);break;
 				case 'd':
-				case 'i':vargint=va_arg(vp,int);printdec(vargint,0);break;
+				case 'i':vargint=va_arg(vp,int);vprintdec(vargint,0);break;
 				case 's':vargpch=va_arg(vp,char*);printstr(vargpch,0);break;
 				case 'u':
 				case 'x':
@@ -58,7 +59,7 @@ int sprintf(char* out,char* fmt,...){
 			switch(*(++pfmt)){
 				case 'c':vargch=va_arg(vp,int);out=printch(vargch,out);break;
 				case 'd':
-				case 'i':vargint=va_arg(vp,int);out=printdec(vargint,out);break;
+				case 'i':vargint=va_arg(vp,int);out=vprintdec(vargint,out);break;
 				case 's':vargpch=va_arg(vp,char*);out=printstr(vargpch,out);break;
 				default:;
 			}
@@ -78,14 +79,19 @@ char* printch(char ch,char* s){
 	else *s++=ch;
 	return s;
 }
+char* vprintdec(int dec,char* s){
+	if(dec==0)_putc('0');
+	else printdec(dec,s);
+	return s;
+}
 char* printdec(int dec,char* s){
 	if(dec<0){
 		_putc('-');
 		printdec(-dec,s);
 		return s;
 	}
-	if(dec==0)return s;
 	//_putc('0');
+	if(dec==0)return s;
 	s=printdec(dec/10,s);
 	if(s==0)_putc((char)(dec%10+'0'));
 	else *s++=(char)(dec%10+'0');
