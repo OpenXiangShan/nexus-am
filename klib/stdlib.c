@@ -20,5 +20,6 @@ int atoi(const char* s){
 }
 int abs(int x){
 	//TODO
-	return 0;
+	if(x<0)return -x;
+	return x;
 }
