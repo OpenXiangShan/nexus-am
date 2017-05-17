@@ -1,27 +1,13 @@
 #include <am.h>
+#include <assert.h>
+#include <SDL2/SDL.h>
+
+
+
+#define W 320
+#define H 200
 
 _Screen _screen;
-
-// TODO: this condition should be changed
-#if !defined(__i386__) && !defined(__x86_64__)
-
-// without GUI
-
-void gui_init() { _screen.width = _screen.height = 0; }
-void _draw_p(int x, int y, _Pixel p) {}
-void _draw_f(_Pixel *p) {}
-void _draw_sync() {}
-int _peek_key() { return _KEY_NONE; }
-
-#else
-
-// with GUI (allegro5)
-
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_primitives.h>
-
-#define W 640
-#define H 480
 
 #define KEYDOWN_MASK 0x8000
 
@@ -32,67 +18,92 @@ static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
 static inline u8 B(_Pixel p) { return p; }
 
-static ALLEGRO_VERTEX vtx[W * H];
+static SDL_Window *window;
+static SDL_Renderer *renderer;
+
+static int event_thread(void *args);
+
+#define KEY_QUEUE_LEN 1024
+static int key_queue[KEY_QUEUE_LEN];
+static int key_f = 0, key_r = 0;
+static SDL_mutex *key_queue_lock;
+
+
 
 void gui_init() {
   _screen.width = W;
   _screen.height = H;
-  al_init();
-  al_init_primitives_addon();
-  al_install_keyboard();
-  al_create_display(_screen.width, _screen.height);
-  
-  for (int x = 0; x < W; x ++)
-    for (int y = 0; y < H; y ++) {
-      int i = x + y * _screen.width;
-      vtx[i].x = x;
-      vtx[i].y = y;
-    }
+  SDL_Init(SDL_INIT_VIDEO);
+  SDL_CreateWindowAndRenderer(W, H, 0, &window, &renderer);
+  SDL_SetWindowTitle(window, "Native Application");
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+  SDL_RenderClear(renderer);
+  _draw_sync();
+  key_queue_lock = SDL_CreateMutex();
+  SDL_CreateThread(event_thread, "event thread", NULL);
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  vtx[x + y * _screen.width].color = al_map_rgb(R(p), G(p), B(p));
+  SDL_SetRenderDrawColor(renderer, R(p), G(p), B(p), 255);
+  SDL_RenderDrawPoint(renderer, x, y);
 }
 
 void _draw_f(_Pixel *p) {
-  int sz = _screen.width * _screen.height;
-  for (int i = 0; i < sz; i ++) {
-    vtx[i].color = al_map_rgb(R(p[i]), G(p[i]), B(p[i]));
-  }
+  for (int i = 0; i < H; i ++)
+    for (int j = 0; j < W; j ++) {
+      _draw_p(i, j, p[i * W + j]);
+    }
 }
 
 void _draw_sync() {
-    al_draw_prim(vtx, NULL, NULL, 0, _screen.width * _screen.height, ALLEGRO_PRIM_POINT_LIST);
-    al_flip_display();
-}
-
-static int k_up, k_down, k_left, k_right, k_z, k_x;
-
-static void update(int k, int *ev, int *b, int down) {
-  int evk = *ev & ~KEYDOWN_MASK;
-  if (evk != _KEY_NONE) return;
-  if (*b == down) {
-    (*ev) = _KEY_NONE;
-  } else {
-    (*b) = down;
-    (*ev) = k | down * KEYDOWN_MASK;
-  }
+  SDL_RenderPresent(renderer);
 }
 
 int _peek_key() {
-  ALLEGRO_KEYBOARD_STATE state;
-  al_get_keyboard_state(&state);
-
-  int ev = _KEY_NONE;
-
-  update(_KEY_UP, &ev, &k_up, al_key_down(&state, ALLEGRO_KEY_UP));
-  update(_KEY_DOWN, &ev, &k_down, al_key_down(&state, ALLEGRO_KEY_DOWN));
-  update(_KEY_LEFT, &ev, &k_left, al_key_down(&state, ALLEGRO_KEY_LEFT));
-  update(_KEY_RIGHT, &ev, &k_right, al_key_down(&state, ALLEGRO_KEY_RIGHT));
-  update(_KEY_Z, &ev, &k_z, al_key_down(&state, ALLEGRO_KEY_Z));
-  update(_KEY_X, &ev, &k_x, al_key_down(&state, ALLEGRO_KEY_X));
-
-  return ev;
+  int ret = _KEY_NONE;
+  SDL_LockMutex(key_queue_lock);
+  if (key_f != key_r) {
+    ret = key_queue[key_f];
+    key_f = (key_f + 1) % KEY_QUEUE_LEN;
+  }
+  SDL_UnlockMutex(key_queue_lock);
+  return ret;
 }
 
-#endif
+static int keymap[256] = {
+  [SDL_SCANCODE_UP] = _KEY_UP,
+  [SDL_SCANCODE_DOWN] = _KEY_DOWN,
+  [SDL_SCANCODE_LEFT] = _KEY_LEFT,
+  [SDL_SCANCODE_RIGHT] = _KEY_RIGHT,
+  [SDL_SCANCODE_X] = _KEY_X,
+  [SDL_SCANCODE_Z] = _KEY_Z,
+};
+
+static int event_thread(void *args) {
+  SDL_Event event;
+  while (1) {
+    int succ = SDL_WaitEvent(&event);
+    assert(succ);
+    switch (event.type) {
+      case SDL_QUIT: exit(0); break;
+      case SDL_KEYDOWN: 
+      case SDL_KEYUP:
+        {
+          SDL_Keysym k = event.key.keysym;
+          int keydown = event.key.type == SDL_KEYDOWN;
+          if (event.key.repeat == 0) {
+            int scancode = k.scancode;
+            if (keymap[scancode] != 0) {
+              int am_code = keymap[scancode] | (keydown ? KEYDOWN_MASK : 0);
+              SDL_LockMutex(key_queue_lock);
+              key_queue[key_r] = am_code;
+              key_r = (key_r + 1) % KEY_QUEUE_LEN;
+              SDL_UnlockMutex(key_queue_lock);
+            }
+          }
+        }
+        break;
+    }
+  }
+}
+
