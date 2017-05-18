@@ -1,8 +1,6 @@
 #include <am.h>
 #include <npc.h>
 
-#define MAX_MEMORY_SIZE 0x4000000
-
 _Area _heap;
 _Screen _screen;
 extern int main();
@@ -34,7 +32,6 @@ void _halt(int code) {
 }
 
 void memory_init(){
-  //probe a memory for heap
   extern char _end;
   extern char __bss_start;
   unsigned int st = (unsigned int)(&_end);

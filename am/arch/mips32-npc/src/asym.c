@@ -1,10 +1,6 @@
 #include <am.h>
 #include <npc.h>
 #include <arch.h>
-#define INTERVAL (HZ * 1000)
-#define INTERVAL_MIN 1000  //min interval(cpu use 1000 cycles to deal interrupt)
-#define COUNT_MAX 0xffffffff	//count reg max value
-#define NOTIME
 
 u32 GetCount(int sel){
   u32 tick = 0;
@@ -25,17 +21,7 @@ void _time_event(){
 }
 
 void _asye_init(){
-#ifdef NOTIME
   return;
-#else
-  u32 count= GetCount();
-  if(count + INTERVAL > COUNT_MAX){
-    SetCompare(count + INTERVAL - COUNT_MAX);
-  }
-  else{//count overflow
-    SetCompare(count + INTERVAL);
-  }
-#endif
 }
 
 void _listen(_RegSet* (*l)(int ex, _RegSet *regs)){
@@ -89,12 +75,7 @@ void irq_handle(struct TrapFrame *tf){
     {
       _time_event();
       u32 count= GetCount(0);
-      if(count + INTERVAL > COUNT_MAX){
-        SetCompare(count + INTERVAL - COUNT_MAX);
-      }
-      else{//count overflow
-        SetCompare(count + INTERVAL);
-      }
+      SetCompare(count + INTERVAL);
     }break;
     default:_halt(0);
   }

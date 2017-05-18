@@ -1,30 +1,28 @@
 #include <am.h>
 #include <npc.h>
 
+extern char font8x8_basic[128][8];
+extern char get_stat();
+extern u32 GetCount(int sel);
+u8 *fb;
 int curr_line = 0;
 int curr_col = 0;
-extern char font8x8_basic[128][8];
-u8 *fb;
-extern char get_stat();
-static char *csend = SERIAL_PORT + Tx;
-static char *crecv = SERIAL_PORT + Rx;
-extern u32 GetCount(int sel);
 ulong npc_time = 0;
 ulong npc_cycles = 0;
+static char *csend = SERIAL_PORT + Tx;
+static char *crecv = SERIAL_PORT + Rx;
 
 ulong _uptime(){
   ulong low = GetCount(0);
-  unsigned long long high = GetCount(1) + 1;
-  high = high << 29;
-  npc_time = (ulong)high / HZ + ((low / HZ) >> 3);
+  ulong high = GetCount(1) + 1;
+  npc_time = high * 1000 * ((1 << 32) / HZ) + low * 1000 / HZ; //npc_time returns ms
   return npc_time;
 }
 
 ulong _cycles(){
   u32 low = GetCount(0);
-  unsigned long long high = GetCount(1) + 1;
-  high = high << 29;
-  npc_cycles = (ulong)high + (low >> 3);
+  ulong high = GetCount(1) + 1;
+  npc_cycles = (high * ((1 << 32) >> 3) + (low >> 3); //npc_cycles returns Kcycles
   return npc_cycles;
 }
 
@@ -87,12 +85,12 @@ void _putc(char ch) {
 void _draw_f(_Pixel *p) {
   int i;
   for(i = 0;i < SCR_SIZE; i++){
-    fb[i] = R(p[i]) << 8 | G(p[i]) << 4 | B(p[i]);
+    fb[i] = ((R(p[i]) & 0xc0) << 4) | (G(p[i]) & 0xf0) | ((B(p[i]) & 0xc0) >> 4);
   }
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  fb[x + y * _screen.width] = R(p) << 8 | G(p) << 4 | B(p);
+  fb[x + y * _screen.width] = ((R(p) & 0xc0) << 4) | (G(p) & 0xf0) | ((B(p) & 0xc0) >> 4);
 }
 
 void _draw_sync() {
