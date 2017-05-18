@@ -96,6 +96,6 @@ void _draw_p(int x, int y, _Pixel p) {
 void _draw_sync() {
 }
 
-int _peek_key(){
+int _read_key(){
   return 0;
 }
