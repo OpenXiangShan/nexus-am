@@ -36,16 +36,16 @@ void _halt(int code) {
 void memory_init(){
   //probe a memory for heap
   extern char _end;
-  //extern char __bss_start;
+  extern char __bss_start;
   unsigned int st = (unsigned int)(&_end);
   unsigned int ed = (unsigned int)(&_end) + MAX_MEMORY_SIZE;
   _heap.start = (void *)(st);
   _heap.end = (void *)(ed);
-  /*st = (unsigned int)(&__bss_start);
+  st = (unsigned int)(&__bss_start);
   ed = (unsigned int)(&_end);
   char *bss = (void *)(st);
   unsigned int i;
-  for(i = st;i < ed; i++) { bss[i - st] = 0; }*/
+  for(i = st;i < ed; i++) { bss[i - st] = 0; }
 }
 
 void serial_init(){
