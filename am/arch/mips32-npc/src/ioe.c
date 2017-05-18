@@ -15,14 +15,21 @@ static char *crecv = SERIAL_PORT + Rx;
 ulong _uptime(){
   ulong low = GetCount(0);
   ulong high = GetCount(1) + 1;
-  npc_time = high * 1000 * ((1 << 32) / HZ) + low * 1000 / HZ; //npc_time returns ms
+/*npc_time = high * 1000 * ((1 << 32) / HZ) + low * 1000 / HZ;
+ *npc_time = (high << 22) * 1000 * 1024 / HZ + low * 1000 / HZ;
+*/
+  npc_time = (high << 22) * 1000 * 1024 / HZ + low * 1000 / HZ; //npc_time returns ms
   return npc_time;
 }
 
 ulong _cycles(){
   u32 low = GetCount(0);
   ulong high = GetCount(1) + 1;
-  npc_cycles = (high * ((1 << 32) >> 3) + (low >> 3); //npc_cycles returns Kcycles
+/*npc_cycles = high * ((1 << 32) >> 3) + (low >> 3);
+ *npc_cycles = high * (1 << 29) + (low >> 3);
+ *npc_cycles = (high << 29) + (low >> 3);
+*/
+  npc_cycles = (high << 29) + (low >> 3); //npc_cycles returns Kcycles
   return npc_cycles;
 }
 

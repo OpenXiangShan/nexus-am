@@ -12,6 +12,7 @@
 #define CTRL 0x0c
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
+#define INTERVAL 1000
 
 static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
