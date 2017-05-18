@@ -2,10 +2,8 @@
 #include <assert.h>
 #include <SDL2/SDL.h>
 
-
-
-#define W 320
-#define H 200
+#define W 640
+#define H 480
 
 _Screen _screen;
 
@@ -27,8 +25,6 @@ static int event_thread(void *args);
 static int key_queue[KEY_QUEUE_LEN];
 static int key_f = 0, key_r = 0;
 static SDL_mutex *key_queue_lock;
-
-
 
 void gui_init() {
   _screen.width = W;
@@ -59,7 +55,7 @@ void _draw_sync() {
   SDL_RenderPresent(renderer);
 }
 
-int _peek_key() {
+int _read_key() {
   int ret = _KEY_NONE;
   SDL_LockMutex(key_queue_lock);
   if (key_f != key_r) {

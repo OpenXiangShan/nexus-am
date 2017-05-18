@@ -102,7 +102,7 @@ void fce_run()
             cpu_run(1364 / 12); // 1 scanline
         }
 
-        int key = _peek_key();
+        int key = _read_key();
         if (key != _KEY_NONE) {
           int down = (key & 0x8000) != 0;
           int code = key & ~0x8000;
@@ -161,14 +161,3 @@ int main() {
   return 1;
 }
 
-static char *alloc_head;
-
-void *halloc(size_t size) {
-  if (alloc_head == 0) {
-    alloc_head = (char*)_heap.start;
-  }
-  while ((ulong)alloc_head % 16 != 0) alloc_head ++;
-  alloc_head += size;
-  if (alloc_head >= (char*)_heap.end) return 0;
-  return alloc_head - size;
-}

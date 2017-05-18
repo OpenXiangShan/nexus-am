@@ -4,8 +4,6 @@
 #include<klib.h>
 
 int main() {
-  _trm_init();
-  _ioe_init();
   char src[10]="hello\n";
   char dst[10];
   strcpy(dst,src);

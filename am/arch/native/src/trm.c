@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define HEAP_SIZE (128 * 1024 * 1024)
+#define HEAP_SIZE (64 * 1024 * 1024)
+
+static char heap[HEAP_SIZE];
 
 void _trm_init() {
   char *heap = (char*)malloc(HEAP_SIZE);
@@ -10,14 +12,6 @@ void _trm_init() {
     _heap.start = heap;
     _heap.end = heap + HEAP_SIZE;
   }
-}
-
-int main();
-
-void am_entry() {
-  _trm_init();
-  int ret = main();
-  _halt(ret);
 }
 
 void _putc(char ch) {
@@ -28,4 +22,7 @@ void _halt(int code) {
   _exit(code);
 }
 
-_Area _heap;
+_Area _heap = {
+  .start = heap,
+  .end = heap + HEAP_SIZE,
+};

@@ -41,7 +41,7 @@ int last_key_code(void) {
 bool
 keyboard_event() {
 	//TODO:listen keyboard,catch scan_code assigning to key_code
-	key_code = _peek_key();
+	key_code = _read_key();
 	if((key_code & KEYDOWN_MASK) != 0){
 		press_key((key_code));
 		return true;

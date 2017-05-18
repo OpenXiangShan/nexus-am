@@ -82,7 +82,7 @@ static inline int keydown(int e) { return (e & 0x8000) != 0; }
 static inline int upevent(int e) { return e; }
 static inline int downevent(int e) { return e | 0x8000; }
   
-int _peek_key() {
+int _read_key() {
   int status = inb(0x64);
   if ((status & 0x1) == 0) return upevent(_KEY_NONE);
   if (status & 0x20) {
