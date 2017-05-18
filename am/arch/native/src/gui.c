@@ -2,10 +2,8 @@
 #include <assert.h>
 #include <SDL2/SDL.h>
 
-
-
-#define W 320
-#define H 200
+#define W 640
+#define H 480
 
 _Screen _screen;
 

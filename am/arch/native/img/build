@@ -3,4 +3,4 @@
 DEST=$1
 shift
 
-g++ -o "$DEST" -Wl,-entry=am_entry -Wl,--start-group $@ -Wl,--end-group -lSDL2
+g++ -o "$DEST" -Wl,--start-group $@ -Wl,--end-group -lSDL2
