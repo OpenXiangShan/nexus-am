@@ -1,13 +1,37 @@
 #include <am.h>
 #include <npc.h>
 
+extern char font8x8_basic[128][8];
+extern char get_stat();
+extern u32 GetCount(int sel);
+u8 *fb;
 int curr_line = 0;
 int curr_col = 0;
-extern char font8x8_basic[128][8];
-u8 *fb;
-extern char get_stat();
+ulong npc_time = 0;
+ulong npc_cycles = 0;
 static char *csend = SERIAL_PORT + Tx;
 static char *crecv = SERIAL_PORT + Rx;
+
+ulong _uptime(){
+  ulong low = GetCount(0);
+  ulong high = GetCount(1) + 1;
+/*npc_time = high * 1000 * ((1ul << 32) / HZ) + low * 1000 / HZ;
+ *npc_time = (high << 22) * 1000 * 1024 / HZ + low * 1000 / HZ;
+*/
+  npc_time = high * 1000 * ((1ul << 31) / HZ) * 2 + low / (HZ / 1000); //npc_time returns ms
+  return npc_time;
+}
+
+ulong _cycles(){
+  u32 low = GetCount(0);
+  ulong high = GetCount(1) + 1;
+/*npc_cycles = high * ((1ul << 32) >> 10) + (low >> 10);
+ *npc_cycles = high * (1ul << 22) + (low >> 10);
+ *npc_cycles = (high << 22) + (low >> 10);
+*/
+  npc_cycles = (high << 22) + (low >> 10); //npc_cycles returns Kcycles
+  return npc_cycles;
+}
 
 void draw_character(char ch, int x, int y, _Pixel p) {
   int i, j;
@@ -47,8 +71,8 @@ char in_byte(){
 
 void _putc(char ch) {
   //TODO:use uart
-  out_byte(ch);
-  /*if(ch == '\n'){
+  //out_byte(ch);
+  if(ch == '\n'){
     curr_col = 0;
     curr_line += 8;
   }
@@ -62,49 +86,23 @@ void _putc(char ch) {
   }
   if(curr_line >= SCR_HEIGHT){
     curr_line = 0;
-}*/
+  }
 }
 
 void _draw_f(_Pixel *p) {
   int i;
   for(i = 0;i < SCR_SIZE; i++){
-    fb[i] = R(p[i]) << 8 | G(p[i]) << 4 | B(p[i]);
+    fb[i] = (R(p[i]) & 0xc0) | ((G(p[i]) & 0xf0) >> 2)| ((B(p[i]) & 0xc0) >> 6);
   }
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  fb[x + y * _screen.width] = R(p) << 8 | G(p) << 4 | B(p);
+  fb[x + y * _screen.width] = (R(p) & 0xc0) | ((G(p) & 0xf0) >> 2) | ((B(p) & 0xc0) >> 6);
 }
 
 void _draw_sync() {
-  //not to do
 }
 
-static inline int keydown(int e) { return (e & 0x8000) != 0; }
-static inline int upevent(int e) { return e; }
-static inline int downevent(int e) { return e | 0x8000; }
-
-int _peek_key(){
-  /*int key_code = in_byte();
-  switch(key_code){
-    case 'j': return downevent(_KEY_Z);break;
-    case 'k': return downevent(_KEY_X);break;
-    case 'w': return downevent(_KEY_UP);break;
-    case 's': return downevent(_KEY_DOWN);break;
-    case 'a': return downevent(_KEY_LEFT);break;
-    case 'd': return downevent(_KEY_RIGHT);break;
-    case 0xf0:{
-        switch(in_byte()){
-    	  case 'j': return upevent(_KEY_Z);break;
-    	  case 'k': return upevent(_KEY_X);break;
-    	  case 'w': return upevent(_KEY_UP);break;
-    	  case 's': return upevent(_KEY_DOWN);break;
-    	  case 'a': return upevent(_KEY_LEFT);break;
-    	  case 'd': return upevent(_KEY_RIGHT);break;
-          default: return upevent(_KEY_NONE);
-        }
-    }
-    default: return upevent(_KEY_NONE);
-  }*/
+int _read_key(){
   return 0;
 }

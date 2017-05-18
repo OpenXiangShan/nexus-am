@@ -1,10 +1,9 @@
 #include <am.h>
 #include <npc.h>
 
-#define MAX_MEMORY_SIZE 0x4000000
-
 _Area _heap;
 _Screen _screen;
+extern int main();
 
 char __attribute__((__noinline__)) get_stat(){
   char *stat = SERIAL_PORT + STAT;
@@ -14,6 +13,8 @@ char __attribute__((__noinline__)) get_stat(){
 void _trm_init() {
   serial_init();
   memory_init();
+  int ret = main();
+  _halt(ret);
 }
 
 void _ioe_init() {
@@ -31,7 +32,6 @@ void _halt(int code) {
 }
 
 void memory_init(){
-  //probe a memory for heap
   extern char _end;
   extern char __bss_start;
   unsigned int st = (unsigned int)(&_end);
