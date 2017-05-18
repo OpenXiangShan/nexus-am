@@ -5,6 +5,7 @@
 
 _Area _heap;
 _Screen _screen;
+extern int main();
 
 char __attribute__((__noinline__)) get_stat(){
   char *stat = SERIAL_PORT + STAT;
@@ -14,6 +15,8 @@ char __attribute__((__noinline__)) get_stat(){
 void _trm_init() {
   serial_init();
   memory_init();
+  int ret = main();
+  _halt(ret);
 }
 
 void _ioe_init() {

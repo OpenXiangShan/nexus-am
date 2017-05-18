@@ -1,17 +1,19 @@
 #include <am.h>
 #include <npc.h>
 #include <arch.h>
-#define HZ 50
 #define INTERVAL (HZ * 1000)
 #define INTERVAL_MIN 1000  //min interval(cpu use 1000 cycles to deal interrupt)
 #define COUNT_MAX 0xffffffff	//count reg max value
+#define NOTIME
 
-ulong npc_cycles = 0;
-ulong npc_time = 1;
-
-u32 GetCount(){
+u32 GetCount(int sel){
   u32 tick = 0;
-  asm volatile("mfc0 %0, $9\n\t":"=r"(tick));
+  if(sel == 1)
+    asm volatile("mfc0 %0, $9, %1\n\t":"=r"(tick):"i"(1));
+  else if(sel == 0)
+    asm volatile("mfc0 %0, $9, %1\n\t":"=r"(tick):"i"(0));
+  else
+    _halt(1);
   return tick;
 }
 
@@ -19,20 +21,7 @@ void SetCompare(u32 compare){
   asm volatile("mtc0 %0, $11\n\t"::"r"(compare));
 }
 
-ulong _uptime() {
-#ifdef NOTIME
-  return npc_time++;
-#else
-  return npc_time;
-#endif
-}
-
 void _time_event(){
-  npc_time++;
-}
-
-ulong _cycles(){
-  return GetCount() / 1000;
 }
 
 void _asye_init(){
@@ -99,7 +88,7 @@ void irq_handle(struct TrapFrame *tf){
     case 0x7://time interrupt
     {
       _time_event();
-      u32 count= GetCount();
+      u32 count= GetCount(0);
       if(count + INTERVAL > COUNT_MAX){
         SetCompare(count + INTERVAL - COUNT_MAX);
       }

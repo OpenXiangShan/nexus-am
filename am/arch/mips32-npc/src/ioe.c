@@ -8,6 +8,23 @@ u8 *fb;
 extern char get_stat();
 static char *csend = SERIAL_PORT + Tx;
 static char *crecv = SERIAL_PORT + Rx;
+extern u32 GetCount(int sel);
+ulong npc_time = 0;
+ulong npc_cycles = 0;
+
+ulong _uptime(){
+  u32 low = GetCount(0);
+  u32 high = GetCount(1) + 1;
+  npc_time = high * low / (HZ * 1000);
+  return npc_time;
+}
+
+ulong _cycles(){
+  u32 low = GetCount(0);
+  u32 high = GetCount(1) + 1;
+  npc_cycles = high * low / 1000;
+  return npc_cycles;
+}
 
 void draw_character(char ch, int x, int y, _Pixel p) {
   int i, j;
@@ -47,8 +64,8 @@ char in_byte(){
 
 void _putc(char ch) {
   //TODO:use uart
-  out_byte(ch);
-  /*if(ch == '\n'){
+  //out_byte(ch);
+  if(ch == '\n'){
     curr_col = 0;
     curr_line += 8;
   }
@@ -62,7 +79,7 @@ void _putc(char ch) {
   }
   if(curr_line >= SCR_HEIGHT){
     curr_line = 0;
-}*/
+  }
 }
 
 void _draw_f(_Pixel *p) {
@@ -77,34 +94,8 @@ void _draw_p(int x, int y, _Pixel p) {
 }
 
 void _draw_sync() {
-  //not to do
 }
 
-static inline int keydown(int e) { return (e & 0x8000) != 0; }
-static inline int upevent(int e) { return e; }
-static inline int downevent(int e) { return e | 0x8000; }
-
 int _peek_key(){
-  /*int key_code = in_byte();
-  switch(key_code){
-    case 'j': return downevent(_KEY_Z);break;
-    case 'k': return downevent(_KEY_X);break;
-    case 'w': return downevent(_KEY_UP);break;
-    case 's': return downevent(_KEY_DOWN);break;
-    case 'a': return downevent(_KEY_LEFT);break;
-    case 'd': return downevent(_KEY_RIGHT);break;
-    case 0xf0:{
-        switch(in_byte()){
-    	  case 'j': return upevent(_KEY_Z);break;
-    	  case 'k': return upevent(_KEY_X);break;
-    	  case 'w': return upevent(_KEY_UP);break;
-    	  case 's': return upevent(_KEY_DOWN);break;
-    	  case 'a': return upevent(_KEY_LEFT);break;
-    	  case 'd': return upevent(_KEY_RIGHT);break;
-          default: return upevent(_KEY_NONE);
-        }
-    }
-    default: return upevent(_KEY_NONE);
-  }*/
   return 0;
 }
