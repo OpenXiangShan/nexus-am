@@ -12,6 +12,14 @@ void _trm_init() {
   }
 }
 
+int main();
+
+void am_entry() {
+  _trm_init();
+  int ret = main();
+  _halt(ret);
+}
+
 void _putc(char ch) {
   putchar(ch);
 }

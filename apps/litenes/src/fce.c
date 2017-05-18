@@ -152,7 +152,6 @@ void fce_update_screen()
 
 
 int main() {
-  _trm_init();
   _ioe_init();
   _asye_init();
 
