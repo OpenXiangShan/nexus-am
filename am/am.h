@@ -64,7 +64,7 @@ extern _Area _heap;
 void _ioe_init();
 ulong _uptime();
 ulong _cycles();
-int _peek_key();
+int _read_key();
 typedef u32 _Pixel;
 void _draw_p(int x, int y, _Pixel p);
 void _draw_f(_Pixel *p); 

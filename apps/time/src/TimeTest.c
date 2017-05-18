@@ -3,7 +3,6 @@
 //_uptime() to get now time
 
 int main(){
-  _trm_init();
   _ioe_init();
   //_asye_init();
   while(_uptime() < 10000);

@@ -18,6 +18,11 @@ fly_t characters(){
     return head;
 }
 
+static int rand() {
+    static int seed = 1;
+    seed = (seed * (i32)214013L + (i32)2531011L) >> 16;
+    return seed & 0x7fff;
+}
 void create_new_letter(){
     if(head == NULL){
         head = fly_new();

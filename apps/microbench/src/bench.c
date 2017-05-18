@@ -68,7 +68,6 @@ ulong score(Benchmark *b, ulong tsc, ulong msec) {
 
 int main() {
   _ioe_init();
-  _asye_init();
 
   ulong bench_score = 0;
   int pass = true;
