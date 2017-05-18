@@ -91,5 +91,5 @@ redraw_screen() {
 	const char *fps = itoa(get_fps());
 	draw_string(fps, 0, 0, 0xffffffff);
 	draw_string("FPS", 0, strlen(fps) * 8, 0xffffffff);
-  _draw_sync();
+    _draw_sync();
 }
