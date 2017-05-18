@@ -15,21 +15,21 @@ static char *crecv = SERIAL_PORT + Rx;
 ulong _uptime(){
   ulong low = GetCount(0);
   ulong high = GetCount(1) + 1;
-/*npc_time = high * 1000 * ((1 << 32) / HZ) + low * 1000 / HZ;
+/*npc_time = high * 1000 * ((1ul << 32) / HZ) + low * 1000 / HZ;
  *npc_time = (high << 22) * 1000 * 1024 / HZ + low * 1000 / HZ;
 */
-  npc_time = (high << 22) * 1000 * 1024 / HZ + low * 1000 / HZ; //npc_time returns ms
+  npc_time = high * 1000 * ((1ul << 31) / HZ) * 2 + low / (HZ / 1000); //npc_time returns ms
   return npc_time;
 }
 
 ulong _cycles(){
   u32 low = GetCount(0);
   ulong high = GetCount(1) + 1;
-/*npc_cycles = high * ((1 << 32) >> 3) + (low >> 3);
- *npc_cycles = high * (1 << 29) + (low >> 3);
- *npc_cycles = (high << 29) + (low >> 3);
+/*npc_cycles = high * ((1ul << 32) >> 10) + (low >> 10);
+ *npc_cycles = high * (1ul << 22) + (low >> 10);
+ *npc_cycles = (high << 22) + (low >> 10);
 */
-  npc_cycles = (high << 29) + (low >> 3); //npc_cycles returns Kcycles
+  npc_cycles = (high << 22) + (low >> 10); //npc_cycles returns Kcycles
   return npc_cycles;
 }
 
@@ -92,12 +92,12 @@ void _putc(char ch) {
 void _draw_f(_Pixel *p) {
   int i;
   for(i = 0;i < SCR_SIZE; i++){
-    fb[i] = ((R(p[i]) & 0xc0) << 4) | (G(p[i]) & 0xf0) | ((B(p[i]) & 0xc0) >> 4);
+    fb[i] = (R(p[i]) & 0xc0) | ((G(p[i]) & 0xf0) >> 2)| ((B(p[i]) & 0xc0) >> 6);
   }
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  fb[x + y * _screen.width] = ((R(p) & 0xc0) << 4) | (G(p) & 0xf0) | ((B(p) & 0xc0) >> 4);
+  fb[x + y * _screen.width] = (R(p) & 0xc0) | ((G(p) & 0xf0) >> 2) | ((B(p) & 0xc0) >> 6);
 }
 
 void _draw_sync() {
