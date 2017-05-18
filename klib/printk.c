@@ -1,7 +1,4 @@
-#include<am.h>
-#include<klib.h>
-#include<stdarg.h>
-
+/*
 char* printch(char ch,char* s);
 char* printdec(int dec,char* s);
 char* vprintdec(int dec,char* s);
@@ -74,35 +71,4 @@ int sprintf(char* out,char* fmt,...){
 	return 0;
 
 }
-char* printch(char ch,char* s){
-	if(s==0)_putc(ch);
-	else *s++=ch;
-	return s;
-}
-char* vprintdec(int dec,char* s){
-	if(dec==0)_putc('0');
-	else printdec(dec,s);
-	return s;
-}
-char* printdec(int dec,char* s){
-	if(dec<0){
-		_putc('-');
-		printdec(-dec,s);
-		return s;
-	}
-	//_putc('0');
-	if(dec==0)return s;
-	s=printdec(dec/10,s);
-	if(s==0)_putc((char)(dec%10+'0'));
-	else *s++=(char)(dec%10+'0');
-	return s;
-}
-char* printstr(char* str,char* s){
-	while(*str){
-		//_putc(*str);
-		if(s==0)_putc(*str++);
-		else*s++=*str++;
-	}
-	//*s++='\0';
-	return s;
-}
+*/

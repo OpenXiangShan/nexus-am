@@ -14,7 +14,7 @@ int main() {
   //strcat(dst,src);
   //sprintf(dst,"%d%s%c",1024,src,'t');
   //printk("%d%s",memcmp(src,dst,6),src);
-  printk("%d%d%d",abs(-1),abs(0),abs(1));
+  printk("%3d",1);
   assert(1==0);
   //for (int i = 0; i < 10; i ++) {
   //  print("Hello World!\n");
