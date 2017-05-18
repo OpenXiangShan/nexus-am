@@ -13,16 +13,18 @@ ulong npc_time = 0;
 ulong npc_cycles = 0;
 
 ulong _uptime(){
-  u32 low = GetCount(0);
-  u32 high = GetCount(1) + 1;
-  npc_time = high * low / (HZ * 1000);
+  ulong low = GetCount(0);
+  unsigned long long high = GetCount(1) + 1;
+  high = (high * 0xffffffff) >> 3;
+  npc_time = (ulong)high / HZ + ((low / HZ) >> 3);
   return npc_time;
 }
 
 ulong _cycles(){
   u32 low = GetCount(0);
-  u32 high = GetCount(1) + 1;
-  npc_cycles = high * low / 1000;
+  unsigned long long high = GetCount(1) + 1;
+  high = (high * 0xffffffff) >> 3;
+  npc_cycles = (ulong)high + (low >> 3);
   return npc_cycles;
 }
 
