@@ -3,13 +3,14 @@
 #include<stdarg.h>
 
 char* printch(char ch,char* s);
-char* printdec(int dec,int base,int width,char flagc,char* s);
-int vprintdec(int dec,int base,int width,char flagc,char* s);
+char* printdec(unsigned int dec,int base,int width,char flagc,char* s);
+int vprintdec(unsigned int dec,int base,int width,char flagc,char* s);
 //char* printstr(char* str,int width,char flagc,char* s);
 char* printstr(char* str,char* s);
 
 int vprintk(char* out,const char* fmt,va_list ap){
 	int vargint=0;
+	unsigned int varguint=0;
 	char* vargpch=0;
 	char vargch=0;
 	char flagc=' ';
@@ -50,17 +51,18 @@ int vprintk(char* out,const char* fmt,va_list ap){
 				case 'c':vargch=va_arg(ap,int);printch(vargch,0);break;
 				case 'd':vargint=va_arg(ap,int);base=10;if(vargint<0){
 						 _putc('-');
-						 vargint=-vargint;
+						 varguint=-vargint;
 					 }
-					 else if(flagc=='+'){flagc=' ';_putc('+');}
+					 else {varguint=vargint;}
+					 //else if(flagc=='+'){flagc=' ';_putc('+');}
 					 goto nump;
 				//case 'o':vargint=va_arg(ap,unsigned int);base=8;goto nump;
-				case 'u':vargint=va_arg(ap,unsigned int);base=10;goto nump;
+				case 'u':varguint=va_arg(ap,unsigned int);base=10;goto nump;
 				case 'x':
-				case 'X':vargint=va_arg(ap,int);base=16;goto nump;
-				case 'p':_putc('0');_putc('x');vargint=(long)va_arg(ap,void*);base=16;goto nump;
+				case 'X':varguint=va_arg(ap,int);base=16;goto nump;
+				case 'p':_putc('0');_putc('x');varguint=(long)va_arg(ap,void*);base=16;goto nump;
 			nump:
-					 printdec(vargint,base,width,flagc,0);break;
+					 printdec(varguint,base,width,flagc,0);break;
 				case 's':vargpch=va_arg(ap,char*);printstr(vargpch,0);break;
 				default:;
 			}
@@ -94,14 +96,14 @@ char* printch(char ch,char* s){
 	return s;
 }
 //char* printdec(int dec,char* s){
-char* printdec(int dec,int base,int width,char flagc,char* s){
+char* printdec(unsigned int dec,int base,int width,char flagc,char* s){
 	if(dec==0){
 		_putc('0');
 	}
 	else vprintdec(dec,base,width,flagc,s);
 	return s;
 }
-int vprintdec(int dec,int base,int width,char flagc,char* s){
+int vprintdec(unsigned int dec,int base,int width,char flagc,char* s){
 	/*if(dec<0){
 		_putc('-');
 		vprintdec(-dec,s);
