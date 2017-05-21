@@ -1,3 +1,3 @@
 NAME = max
-SRCS = max.c
-include $(AM_HOME)/Makefile.app
+SRCS = tests/max.c
+include /home/jyy/Projects/nexus-am//Makefile.app
