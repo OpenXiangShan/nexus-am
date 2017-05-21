@@ -1,5 +1,6 @@
 #include <am.h>
 
+#include <klib.h>
 #define N 30
 
 int a[N];
@@ -11,5 +12,7 @@ int main() {
   }
   good_trap(a[N - 1] == a[N - 2] + a[N - 3]);
   _halt(1);
+  printk("%d + %d = %d Hello, World\n", 1, 2, 3);
+  // haha
   while (1);
 }
