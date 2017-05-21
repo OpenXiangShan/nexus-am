@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=./am/arch/mips32-minimal/img
+DIR=${AM_HOME}/am/arch/mips32-minimal/img
 DEST=$1
 shift
 

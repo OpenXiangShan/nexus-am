@@ -1,4 +1,5 @@
+ifneq ($(MAKECMDGOALS),clean)
 ifndef ARCH
-$(error "ARCH must be defined")
+$(error variable ARCH must be defined)
 endif
-
+endif

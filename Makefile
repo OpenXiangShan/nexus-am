@@ -5,8 +5,8 @@ AM_HOME ?= $(shell pwd)
 .PHONY: all clean
 
 all:
-	@cd am && build ARCH=$(ARCH)
-	@cd klib && build ARCH=$(ARCH)
+	@cd am && make ARCH=$(ARCH)
+	@cd klib && make ARCH=$(ARCH)
 
 clean:
 	@cd am && make clean

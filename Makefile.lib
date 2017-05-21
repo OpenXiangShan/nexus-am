@@ -14,7 +14,6 @@ include $(AM_HOME)/Makefile.compile
 
 .PHONY: lib
 lib: $(ARCHIVE)
-	@echo "Done"
 
 $(ARCHIVE): $(OBJS)
 	ar rcs $(ARCHIVE) $(OBJS)
