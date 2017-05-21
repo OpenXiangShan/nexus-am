@@ -1,4 +1,4 @@
-# AbstractMachine Specification
+# The Abstract Machine Specification
 
 ## 数据结构
 

@@ -1,3 +1,3 @@
 NAME = hello
-SRCS = hello.c print.c
+SRCS = hello.c
 include $(AM_HOME)/Makefile.app
