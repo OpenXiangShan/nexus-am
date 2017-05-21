@@ -18,7 +18,7 @@ byte ppu_screen_background[264][248];
 void draw(int x, int y, int idx) {
   if (x >= 0 && y >= 0 && x < W && y < H) {
 //    _draw_p(x, y, palette[idx]);
-    canvas[x][y] = idx;
+    canvas[y][x] = idx;
   }
 }
 
