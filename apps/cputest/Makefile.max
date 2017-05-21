@@ -1,0 +1,7 @@
+OBJS += max.o
+AM_HOME = /home/jyy/Projects/nexus-am/
+
+all:
+	@echo $A
+ 
+include ${AM_HOME}/Makefile.app

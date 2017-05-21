@@ -1,6 +1,8 @@
 #ifndef __TRAP_H__
 #define __TRAP_H__
 
+#include <am.h>
+
 #define HIT_GOOD_TRAP \
   do { \
     _halt(0); \
