@@ -1,30 +1,22 @@
+.DEFAULTGOAL = app
+
 $(info Building $(NAME) [$(ARCH)])
 include $(AM_HOME)/Makefile.check
 
 APP_DIR ?= $(shell pwd)
-INC_DIR ?= $(APP_DIR)/include/
+INC_DIR += $(APP_DIR)/include/ $(AM_HOME)/klib/
 DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
-ARCHIVE ?= $(APP_DIR)/build/$(NAME)-$(ARCH).a
+BINARY ?= $(APP_DIR)/build/$(NAME)-$(ARCH)
 
 $(shell mkdir -p $(DST_DIR))
 
-objdest = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(1))))
-depdest = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(1))))
-
-OBJS = $(call objdest, $(SRCS))
-DEPS = $(call depdest, $(SRCS))
-
-$(ARCHIVE): $(OBJS)
-	ar rcs $(ARCHIVE) $(OBJS)
-
 include $(AM_HOME)/Makefile.compile
 
-
-.PHONY: image clean
-image: $(ARCHIVE)$(OBJS)
-	@echo $(OBJS)
+.PHONY: app clean
+app: $(OBJS)
+	@cd $(AM_HOME) && make ARCH=$(ARCH)
+	@$(AM_HOME)/am/arch/$(ARHC)/img/build $(BINARY) $(AM_HOME)/am/build/am-$(ARCH).a $(AM_HOME)/klib/build/klib-$(ARCH).a $(OBJS)
 	@echo "Hello"
 
-clean:
+clean: 
 	rm -rf $(APP_DIR)/build/
-

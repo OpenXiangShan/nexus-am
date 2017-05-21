@@ -1,3 +1,9 @@
+objdest = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(1))))
+depdest = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(1))))
+
+OBJS = $(call objdest, $(SRCS))
+DEPS = $(call depdest, $(SRCS))
+
 ifeq ($(ARCH), mips32-npc)
 CROSS_COMPILE = mips-linux-gnu-
 endif
@@ -12,9 +18,10 @@ CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
 
 # Basic compilation flags
-CFLAGS   += -std=gnu99 -I${AM_HOME}/am/ -I${AM_HOME}/am/arch/${ARCH}/include -O2 -MD -Wall -Werror -ggdb
-CXXFLAGS += -std=c++11 -I${AM_HOME}/am/ -I${AM_HOME}/am/arch/${ARCH}/include -O2 -MD -Wall -Werror -ggdb
-ASFLAGS  +=            -I${AM_HOME}/am/ -I${AM_HOME}/am/arch/${ARCH}/include -MD
+INCLUDES = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/ -I$(AM_HOME)/am/arch/$(ARCH)/include
+CFLAGS   += -std=gnu99 -O2 -MD -Wall -Werror -ggdb $(INCLUDES)
+CXXFLAGS += -std=c++11 -O2 -MD -Wall -Werror -ggdb $(INCLUDES)
+ASFLAGS  +=            -MD $(INCLUDES)
 
 # Arch-dependent compilation flags
 ifeq ($(ARCH), mips32-npc)
@@ -49,3 +56,4 @@ $(DST_DIR)/%.o: %.S
 	@mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) -c -o $@ $<
 
+-include $(DEPS)
