@@ -6,4 +6,4 @@
 *.pyc
 tags
 cscope.*
-/build
+build/

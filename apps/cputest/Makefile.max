@@ -1,0 +1,3 @@
+NAME = max
+SRCS = tests/max.c
+include /home/jyy/Projects/nexus-am//Makefile.app

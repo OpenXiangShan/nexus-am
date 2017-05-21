@@ -1,5 +1,6 @@
-#include <hello.h>
 #include <am.h>
+
+void print(const char *);
 
 int main() {
   for (int i = 0; i < 10; i ++) {

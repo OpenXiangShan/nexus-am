@@ -1,0 +1,23 @@
+.DEFAULT_GOAL = lib
+
+$(info Building $(NAME) [$(ARCH)])
+include $(AM_HOME)/Makefile.check
+
+LIB_DIR ?= $(shell pwd)
+INC_DIR += $(LIB_DIR)/include/
+DST_DIR ?= $(LIB_DIR)/build/$(ARCH)/
+ARCHIVE ?= $(LIB_DIR)/build/$(NAME)-$(ARCH).a
+
+$(shell mkdir -p $(DST_DIR))
+
+include $(AM_HOME)/Makefile.compile
+
+.PHONY: lib
+lib: $(ARCHIVE)
+
+$(ARCHIVE): $(OBJS)
+	ar rcs $(ARCHIVE) $(OBJS)
+
+.PHONY: clean
+clean: 
+	rm -rf $(LIB_DIR)/build/

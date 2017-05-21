@@ -1,0 +1,5 @@
+ifneq ($(MAKECMDGOALS),clean)
+ifndef ARCH
+$(error variable ARCH must be defined)
+endif
+endif
