@@ -1,5 +1,4 @@
-SECTIONS
-{
+SECTIONS {
   . = 0x10000000;
   . += 8192;
   _stack_pointer = .;

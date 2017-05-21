@@ -18,15 +18,13 @@ extern "C" {
 
 static inline void _halt(int code) { while (1); }
 static inline void _putc(char ch) { } 
-static inline unsigned long _cycles() { return 0; }
-static inline unsigned long _uptime() { return 0; }
 
 static inline void _ioe_init() { }
-
-#define good_trap(cond) \
-  do { \
-    if ((cond)) _halt(0); else _halt(1); \
-  } while (0)
+static inline unsigned long _cycles() { return 0; }
+static inline unsigned long _uptime() { return 0; }
+static inline void _draw_p(int x, int y, u32 p) {}
+static inline void _draw_f(u32 *ps) {}
+static inline void _draw_sync() {}
 
 #ifdef __cplusplus
 }

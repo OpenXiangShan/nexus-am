@@ -1,7 +1,3 @@
-# MIPS32-NPC
+# MIPS32-Minimal
 
-AbstractMachine implementation for NJU-Personal-Computer (NPC).
-
-## Memory Mappings
-
-XXX - XXX: XXX
+Minimal AM for testing a CPU implementation
