@@ -1,33 +1,28 @@
+$(info Building $(NAME) [$(ARCH)])
+include $(AM_HOME)/Makefile.check
+
 APP_DIR ?= $(shell pwd)
-SRC_DIR ?= $(APP_DIR)/src/
 INC_DIR ?= $(APP_DIR)/include/
-DST_DIR ?= $(APP_DIR)/build/
+DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
+ARCHIVE ?= $(APP_DIR)/build/$(NAME)-$(ARCH).a
 
 $(shell mkdir -p $(DST_DIR))
 
-objdest = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(1))))
-depdest = $(addprefix build/$(ARCH)/, $(addsuffix .o, $(basename $(1))))
+objdest = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(1))))
+depdest = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(1))))
 
-OBJS = $(objdest $(SRCS))
-DEPS = $(objdest $(DEPS))
+OBJS = $(call objdest, $(SRCS))
+DEPS = $(call depdest, $(SRCS))
 
-include ${AM_HOME}/Makefile.compile
+$(ARCHIVE): $(OBJS)
+	ar rcs $(ARCHIVE) $(OBJS)
 
-# Compilation patterns
-$(DST_DIR)/$(ARCH)/%.o: %.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+include $(AM_HOME)/Makefile.compile
 
-$(DST_DIR)/$(ARCH)/%.o: %.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(DST_DIR)/$(ARCH)/%.o: %.S
-	@mkdir -p $(dir $@)
-	$(AS) $(ASFLAGS) -c -o $@ $<
 
 .PHONY: image clean
-image: $(OBJS)
+image: $(ARCHIVE)$(OBJS)
+	@echo $(OBJS)
 	@echo "Hello"
 
 clean:

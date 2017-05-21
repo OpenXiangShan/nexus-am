@@ -36,4 +36,16 @@ CXXFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -ffre
 ASFLAGS  += -m32
 endif
 
+# Compilation patterns
+$(DST_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(DST_DIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(DST_DIR)/%.o: %.S
+	@mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -c -o $@ $<
 

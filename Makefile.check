@@ -1,0 +1,8 @@
+ifndef NAME
+$(error "NAME must be defined")
+endif
+
+ifndef ARCH
+$(error "ARCH must be defined")
+endif
+
