@@ -1,7 +1,3 @@
-SRCS += max.c
+SRCS += printk.c string.c
 AM_HOME = /home/jyy/Projects/nexus-am/
-
-all:
-	@echo $A
- 
 include ${AM_HOME}/Makefile.app
