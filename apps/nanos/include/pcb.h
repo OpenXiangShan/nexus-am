@@ -5,10 +5,11 @@
 #include <klib.h>
 #include "list.h"
 
-#define NR_PCBS 512
+#define NR_PCBS 3
 #define SLEEP 1
 #define READY 0
 #define FREE 2
+#define time_chips 1000
 #define STACK_SIZE 4096
 
 typedef struct p_task_table{

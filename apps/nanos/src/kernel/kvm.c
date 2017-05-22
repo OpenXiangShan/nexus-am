@@ -1,14 +1,16 @@
 #include <am.h>
 #include <klib.h>
 
-#define RAMDISK_SIZE 4096
+_Protect kernel;
+_Protect user;
 
-char virtual_mem[RAMDISK_SIZE];
-
-void ramdisk_read(char *addr, size_t len){
+void *palloc(){
+  return (void *)0xc0000000;
 }
 
-void ramdisk_write(char *addr,char *data, size_t len){
+void pfree(void *addr){
 }
 
-
+void init_kvm(){
+  _pte_init(palloc,pfree);
+}
