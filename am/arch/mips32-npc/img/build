@@ -11,7 +11,7 @@ mips-linux-gnu-ld -EL -T $DIR/loader.ld -e _start -o ./build/kernel.o $DIR/boot/
 KERN=$(readlink -f ./build/kernel.o)
 
 # generate COE
-mips-linux-gnu-objdump -d $KERN > ./build/code.txt
+mips-linux-gnu-objdump -d -M no-aliases $KERN > ./build/code.txt
 mips-linux-gnu-objcopy -O binary $KERN ./build/kernel.bin
 readelf -a $KERN > ./build/kernel.elf
 python $DIR/scripts/bin2text.py ./build/kernel.bin ./build/ram.txt
