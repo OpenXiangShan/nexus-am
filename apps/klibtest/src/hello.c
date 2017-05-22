@@ -30,10 +30,13 @@ int main() {
   printk("=======================================================\n");
   printk("Test end!!! Good luck!!!\n");
 */
-  printk("0, -1, -2147483648, -1412505855, -32768, 102030\n");
-  printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
-  printk("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n");
-  printk("%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
+  //printk("0, -1, -2147483648, -1412505855, -32768, 102030\n");
+  //printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
+  //printk("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n");
+  //printk("%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
+
+  printk("%+8d",-102030);
+  printk("%-10d",-102030);
 
   //char src[10]="hello";
   //char dst[10];
