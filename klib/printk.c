@@ -20,6 +20,7 @@ int vprintk(char* out,const char* fmt,va_list ap){
 		if(*pfmt == '%'){
 			flagc=' ';
 			width=-1;
+			abs='+';
 		reswitch:
 			//flagc=' ';
 			//width=-1;
@@ -37,7 +38,7 @@ int vprintk(char* out,const char* fmt,va_list ap){
 				case '7':
 				case '8':
 				case '9':
-					width=0;
+					width=-1;
 					char ch;
 					while( (ch=*pfmt++)>='0'&&ch<='9'){
 						width=width*10+ch-'0';
@@ -114,7 +115,7 @@ int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char* s,in
 	if(dec==0){
 		if(flagc!='-'){
 			//_putc(width+'0');
-			while(--width>0){
+			while(width-->1){
 				if(flagc!='+'){
 					if(s==0)_putc(flagc);
 					else *s++=flagc;
@@ -124,10 +125,15 @@ int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char* s,in
 					else *s++=' ';
 				}
 			}
-			if(flagc=='+')_putc(abs);
-			else if(abs=='-')_putc('-');
-			else	_putc(flagc);
-			return 0;
+			//_putc(width+'5');
+			//if(width>=-9){
+				if(flagc=='+')_putc(abs);
+				else if(abs=='-')_putc('-');
+				else	{
+					if(width>0)_putc(flagc);
+				}
+				return 0;
+			//}
 		}
 		else if(abs=='-')_putc('-');
 		return width;
