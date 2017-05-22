@@ -136,6 +136,28 @@ inline void ppu_ram_write(word address, byte data)
 
 // Rendering
 
+#define LOOP(x) \
+    { \
+        byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1); \
+        if (color != 0) { \
+            word attribute_address = (ppu_base_nametable_address() + (mirror ? 0x400 : 0) + 0x3C0 + (tile_x >> 2) + (ppu.scanline >> 5) * 8); \
+            bool top = (ppu.scanline % 32) < 16; \
+            bool left = (tile_x % 32 < 16); \
+            byte palette_attribute = ppu_ram_read(attribute_address); \
+            if (!top) { \
+                palette_attribute >>= 4; \
+            } \
+            if (!left) { \
+                palette_attribute >>= 2; \
+            } \
+            palette_attribute &= 3; \
+            word palette_address = 0x3F00 + (palette_attribute << 2); \
+            int idx = ppu_ram_read(palette_address + color); \
+            ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color; \
+            draw((tile_x << 3) + x - ppu.PPUSCROLL_X + (mirror ? 256 : 0), ppu.scanline + 1, idx); \
+        } \
+    }
+
 void ppu_draw_background_scanline(bool mirror)
 {
     int tile_x;
@@ -152,35 +174,14 @@ void ppu_draw_background_scanline(bool mirror)
         byte l = ppu_ram_read(tile_address + y_in_tile);
         byte h = ppu_ram_read(tile_address + y_in_tile + 8);
 
-        int x;
-        for (x = 0; x < 8; x++) {
-            byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-
-            // Color 0 is transparent
-            if (color != 0) {
-                
-                word attribute_address = (ppu_base_nametable_address() + (mirror ? 0x400 : 0) + 0x3C0 + (tile_x >> 2) + (ppu.scanline >> 5) * 8);
-                bool top = (ppu.scanline % 32) < 16;
-                bool left = (tile_x % 32 < 16);
-
-                byte palette_attribute = ppu_ram_read(attribute_address);
-
-                if (!top) {
-                    palette_attribute >>= 4;
-                }
-                if (!left) {
-                    palette_attribute >>= 2;
-                }
-                palette_attribute &= 3;
-
-                word palette_address = 0x3F00 + (palette_attribute << 2);
-                int idx = ppu_ram_read(palette_address + color);
-
-                ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color;
-                
-                draw((tile_x << 3) + x - ppu.PPUSCROLL_X + (mirror ? 256 : 0), ppu.scanline + 1, idx); // bg
-            }
-        }
+        LOOP(0)
+        LOOP(1)
+        LOOP(2)
+        LOOP(3)
+        LOOP(4)
+        LOOP(5)
+        LOOP(6)
+        LOOP(7)
     }
 }
 

@@ -26,32 +26,35 @@ static int key_queue[KEY_QUEUE_LEN];
 static int key_f = 0, key_r = 0;
 static SDL_mutex *key_queue_lock;
 
+static SDL_Texture *texture;
+static _Pixel fb[W * H];
+
 void gui_init() {
   _screen.width = W;
   _screen.height = H;
   SDL_Init(SDL_INIT_VIDEO);
   SDL_CreateWindowAndRenderer(W, H, 0, &window, &renderer);
   SDL_SetWindowTitle(window, "Native Application");
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-  SDL_RenderClear(renderer);
+  SDL_CreateThread(event_thread, "event thread", NULL);
+  texture = SDL_CreateTexture(renderer,
+    SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, W, H);
+  memset(fb, 0, W * H * sizeof(u32));
   _draw_sync();
   key_queue_lock = SDL_CreateMutex();
-  SDL_CreateThread(event_thread, "event thread", NULL);
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  SDL_SetRenderDrawColor(renderer, R(p), G(p), B(p), 255);
-  SDL_RenderDrawPoint(renderer, x, y);
+  fb[y * W + x] = p;
 }
 
 void _draw_f(_Pixel *p) {
-  for (int i = 0; i < H; i ++)
-    for (int j = 0; j < W; j ++) {
-      _draw_p(i, j, p[i * W + j]);
-    }
+  memcpy(fb, p, W * H * sizeof(Uint32));
 }
 
 void _draw_sync() {
+  SDL_UpdateTexture(texture, NULL, fb, 640 * sizeof(Uint32));
+  SDL_RenderClear(renderer);
+  SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
 }
 
