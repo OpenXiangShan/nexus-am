@@ -1,0 +1,9 @@
+#!/bin/bash
+
+DIR=${AM_HOME}/am/arch/mips32-minimal/img
+DEST=$1
+shift
+
+bash -c "cd $DIR/boot && make"
+
+mips-linux-gnu-ld -EL -T $DIR/loader.ld -e _start -o $DEST $DIR/boot/start.o --start-group $@ --end-group && python $DIR/check.py $DEST
