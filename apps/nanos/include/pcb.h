@@ -30,7 +30,7 @@ extern list_head readyq_h,blockq_h,freeq_h;
 extern u16 pcb_avls;
 
 void init_idle();
-PCB *create_uthread(u32 entry);
+PCB *create_kthread(size_t entry);
 int sys_fork();
 void sys_sleep();
 void sys_wakeup(u32 time);

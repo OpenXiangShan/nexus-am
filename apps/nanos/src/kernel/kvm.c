@@ -5,7 +5,7 @@ _Protect kernel;
 _Protect user;
 
 void *palloc(){
-  return (void *)0xc0000000;
+  return NULL;
 }
 
 void pfree(void *addr){
