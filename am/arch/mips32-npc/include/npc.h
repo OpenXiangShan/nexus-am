@@ -5,11 +5,12 @@
 #define SCR_WIDTH 400
 #define SCR_HEIGHT 400
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
-#define SERIAL_PORT ((char *)0xe0000000)
+#define SERIAL_PORT ((char *)0x40600000)
 #define Rx 0x0
 #define Tx 0x04
 #define STAT 0x08
 #define CTRL 0x0c
+#define GPIO_TRAP ((char *)0x40000000)
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
 #define INTERVAL 1000
