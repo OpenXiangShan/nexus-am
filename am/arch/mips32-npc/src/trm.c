@@ -28,6 +28,9 @@ void _halt(int code) {
   _putc('i');
   _putc('c');
   _putc('\n');
+
+  GPIO_TRAP[0] = code;
+
   while(1);
 }
 
