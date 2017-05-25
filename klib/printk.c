@@ -2,13 +2,21 @@
 #include<klib.h>
 #include<stdarg.h>
 
+static char* s_h=0;
+
 char* printch(char ch,char* s);
 char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char* s);
 int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char* s,int count);
 //char* printstr(char* str,int width,char flagc,char* s);
 char* printstr(char* str,char* s);
+void myputc(char c){
+	if(s_h==0)_putc(c);
+	else *s_h++=c;
+}
+
 
 int vprintk(char* out,const char* fmt,va_list ap){
+	s_h=out;
 	int vargint=0;
 	unsigned int varguint=0;
 	char* vargpch=0;
@@ -49,7 +57,7 @@ int vprintk(char* out,const char* fmt,va_list ap){
 					goto reswitch;
 				case '*':width=va_arg(ap,int);goto reswitch;
 				//case '.':if(width<0)width=0;goto reswitch;
-				case 'c':vargch=va_arg(ap,int);printch(vargch,0);break;
+				case 'c':vargch=va_arg(ap,int);printch(vargch,out);break;
 				case 'd':vargint=va_arg(ap,int);base=10;if(vargint<0){
 						 //_putc('-');
 						 abs='-';
@@ -62,18 +70,19 @@ int vprintk(char* out,const char* fmt,va_list ap){
 				case 'u':varguint=va_arg(ap,unsigned int);base=10;goto nump;
 				case 'x':
 				case 'X':varguint=va_arg(ap,int);base=16;goto nump;
-				case 'p':_putc('0');_putc('x');varguint=(long)va_arg(ap,void*);base=16;goto nump;
+				case 'p':myputc('0');myputc('x');varguint=(long)va_arg(ap,void*);base=16;goto nump;
 			nump:
-					 printdec(varguint,base,width,abs,flagc,0);break;
-				case 's':vargpch=va_arg(ap,char*);printstr(vargpch,0);break;
+					 printdec(varguint,base,width,abs,flagc,out);break;
+				case 's':vargpch=va_arg(ap,char*);printstr(vargpch,out);break;
 				default:;
 			}
 			pfmt++;
 		}
 		else{
-			printch(*pfmt++,0);
+			out=printch(*pfmt++,out);
 		}
 	}
+	if(out!=0)printch('\0',out);
 	return 0;
 }
 
@@ -92,17 +101,30 @@ int sprintf(char* out,char* fmt,...){
 	va_end(ap);
 	return r;
 }
+
+int snprintf(char* out, size_t n, const char* fmt, ...){
+	va_list ap;
+	va_start(ap,fmt);
+	int r=vprintk(out,fmt,ap);
+	va_end(ap);
+	if(strlen(out)>=n)*(out+n)='\0';
+	return r;
+}
+
 char* printch(char ch,char* s){
-	if(s==0)_putc(ch);
-	else *s++=ch;
+	//if(s==0)_putc(ch);
+	//else *s++=ch;
+	myputc(ch);
 	return s;
 }
 //char* printdec(int dec,char* s){
 char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char* s){
+	//int c=0;
 	if(dec==0){
-		_putc('0');
+		myputc('0');
 	}
 	else vprintdec(dec,base,width,abs,flagc,s,0);
+	//_putc(c+'0');
 	return s;
 }
 int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char* s,int count){
@@ -112,52 +134,57 @@ int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char* s,in
 		return s;
 	}*/
 	//_putc(flagc);
+	//int vcount=*count;
 	if(dec==0){
 		if(flagc!='-'){
 			//_putc(width+'0');
 			while(width-->1){
 				if(flagc!='+'){
-					if(s==0)_putc(flagc);
-					else *s++=flagc;
+					//if(s==0)_putc(flagc);
+					//else *s++=flagc;
+					myputc(flagc);
 				}
 				else{
-					if(s==0)_putc(' ');
-					else *s++=' ';
+					//if(s==0)_putc(' ');
+					//else *s++=' ';
+					myputc(' ');
 				}
 			}
 			//_putc(width+'5');
 			//if(width>=-9){
-				if(flagc=='+')_putc(abs);
-				else if(abs=='-')_putc('-');
-				else	{
-					if(width>0)_putc(flagc);
-				}
-				return 0;
+			if(flagc=='+')myputc(abs);
+			else if(abs=='-')myputc('-');
+			else{
+				if(width>0)myputc(flagc);
+			}
+			return 0;
 			//}
 		}
-		else if(abs=='-')_putc('-');
+		else if(abs=='-')myputc('-');
 		return width;
 	}
 	//_putc(width+'0');
 	//assert(base==16);
 	//_putc((char)(dec%base+'0'));
 	int re;//vprintdec(dec/base,base,width-1,flagc,s+1);
-	if(s==0){
+	//(*count)++;
+	//if(s==0){
 		re=vprintdec(dec/base,base,width-1,abs,flagc,s,count+1);
-		if(dec%base>9)_putc(dec%base+'a'-10);
-		else _putc((char)(dec%base+'0'));
+		if(dec%base>9)myputc(dec%base+'a'-10);
+		else myputc((char)(dec%base+'0'));
 		if(flagc=='-'&&count==0){
-			while(re-->0)_putc(' ');
+			while(re-->0)myputc(' ');
 		}
-	}
+	//}
+	/*
 	else {
-		re=vprintdec(dec/base,base,width-1,abs,flagc,s+1,count+1);
-		if(flagc=='-'&&count==0){
+		re=vprintdec(dec/base,base,width-1,abs,flagc,s+1,count);
+		if(flagc=='-'&&vcount==0){
 			while(re-->0)*s++=' ';
 		}
 		if(dec%base>9)*s=(char)(dec%base+'a'-10);
 		else *s=(char)(dec%base+'0');
-	}
+	}*/
 	/*
 	if(flagc=='-'){
 		while(re-->0){
