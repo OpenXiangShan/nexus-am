@@ -26,7 +26,8 @@ while len(bins)%4 :
 with open(outPath, 'w') as f:
     f.write('memory_initialization_radix=16;\nmemory_initialization_vector=\n')
     for i in range(0, len(bins)/4):
-        contents = binascii.b2a_hex(bins[i*4:i*4+4])
+        ii = i * 4
+        contents = binascii.b2a_hex(bins[ii + 3] + bins[ii + 2] + bins[ii + 1] + bins[ii])
 	f.write( contents )
 	if i != (len(bins)/4-1):
 	    f.write(',\n')
