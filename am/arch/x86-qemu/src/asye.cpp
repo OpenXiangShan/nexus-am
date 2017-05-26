@@ -2,7 +2,7 @@
 #include <x86.h>
 #include <stdarg.h>
 
-static _RegSet* (*H)(int, _RegSet*) = nullptr;
+static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
 
 const int PORT_PIC_MS = 0x20;
 const int PORT_PIC_SL = 0xA0;
@@ -45,6 +45,9 @@ void irq_handle(TrapFrame *tf) {
   if (tf->irq >= 32 && tf->irq < 64) {
     lapic_eoi();
   }
+
+
+  _Event ev;
   
   if (tf->cs & DPL_USER) { // interrupt at user code
     regs.ss = tf->ss;
@@ -55,10 +58,15 @@ void irq_handle(TrapFrame *tf) {
     regs.ss0 = KSEL(SEG_KDATA);
     regs.esp0 = (u32)tf + 60; // the %esp before interrupt
   }
-  
+
+  ev.event = _EVENT_NULL;
+  if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
+  else if (tf->irq == 0x80) ev.event = _EVENT_SYSCALL;
+  else if (tf->irq < 32) ev.event = _EVENT_ERROR;
+
   _RegSet *ret = &regs;
   if (H) {
-    _RegSet *next = H(tf->irq, &regs);
+    _RegSet *next = H(ev, &regs);
     if (next != nullptr) {
       ret = next;
     }
@@ -189,7 +197,7 @@ void _idle() {
   hlt();
 }
 
-void _listen(_RegSet*(*h)(int, _RegSet*)) {
+void _listen(_RegSet*(*h)(_Event, _RegSet*)) {
   H = h;
 }
 
