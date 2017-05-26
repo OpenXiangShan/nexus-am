@@ -1,13 +1,6 @@
-#include <hello.h>
-#include <am.h>
-//#include "../../../klib/klib.h"
-#include<klib.h>
+#include <klib.h>
 
-int main() {
-  _trm_init();
-  _ioe_init();
-
-/*
+void printk_test() {
   printk("printf test begin...\n");
   printk("the answer should be:\n");
   printk("#######################################################\n");
@@ -29,7 +22,6 @@ int main() {
   printk("%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
   printk("=======================================================\n");
   printk("Test end!!! Good luck!!!\n");
-*/
   
   printk("0, -1, -2147483648, -1412505855, -32768, 102030\n");
   printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
@@ -44,32 +36,11 @@ int main() {
   printk("%u",4294967295);
 
   printk("%x\n",0xffffffff);
-  //printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
-
   
-  char src[10]="hello";
-  /*char* dst=strtok(src,"e");
-  dst=strtok(NULL,"o");
-  printk("%s\n",dst);
-  */
-  //srand (9);
-  //printk("%u\n",rand());
+  static char src[1024]="hello";
   sprintf(src,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
-  printk("%s",src);
-  sprintf("%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
   printk("%s",src);
   snprintf(src,10,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
   //sprintf(src,"%d",-2040);
   printk("%s",src);
-  //char dst[10];
-  //strcpy(dst,src);
-  //strncpy(dst,src,5);
-  //memcpy(src+1,src,5);
-  //strcat(dst,src);
-  //sprintf(dst,"%d%s%c",1024,src,'t');
-  //printk("%d%s",memcmp(src,dst,6),src);
-  //printk("%-8d\n%03d\n%c\n%s\n",15,1,'c',src,src);
-  assert(1==0);
-  //for (int i = 0; i < 10; i ++) {
-  //  print("Hello World!\n");
 }
