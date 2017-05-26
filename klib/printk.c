@@ -93,6 +93,7 @@ int printk(const char* fmt,...){
   return r;
 }
 
+/*
 int sprintf(char* out,char* fmt,...){
   va_list ap;
   va_start(ap,fmt);
@@ -109,6 +110,7 @@ int snprintf(char* out, size_t n, const char* fmt, ...){
   if(strlen(out)>=n)*(out+n)='\0';
   return r;
 }
+*/
 
 char* printch(char ch,char* s){
   //if(s==0)_putc(ch);
@@ -166,6 +168,6 @@ char* printstr(char* str,char* s){
     if(s==0)_putc(*str++);
     else*s++=*str++;
   }
-  //*s++='\0';
+  // *s++='\0';
   return s;
 }
