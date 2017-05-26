@@ -44,13 +44,16 @@ int main() {
 
   printk("%x",0xffffffff);
   */
-  printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
+  //printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
 
   char src[10]="hello";
-  sprintf(src,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
-  snprintf(src,10,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
+  char* dst=strtok(src,"e");
+  dst=strtok(NULL,"o");
+  printk("%s\n",dst);
+  //sprintf(src,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
+  //snprintf(src,10,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
   //sprintf(src,"%d",-2040);
-  printk("%s",src);
+  //printk("%s",src);
   //char dst[10];
   //strcpy(dst,src);
   //strncpy(dst,src,5);
