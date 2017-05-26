@@ -10,7 +10,10 @@ _Area _heap;
 
 // jump to main()
 
+void _trm_init();
+
 void _start() {
+  _trm_init();
   int ret = main();
   _halt(ret);
 }

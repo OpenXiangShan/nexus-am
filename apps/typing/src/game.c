@@ -14,15 +14,15 @@ int get_fps(){
 }
 
 int main (){
-    _trm_init();
     _ioe_init();
+    _asye_init();
     int now = 0;
     int target = 0;
     bool redraw = false;
     int num_draw = 0;
     while(1){
-	sti();
-	wait_intr();
+        sti();
+        wait_intr();
         cli();
         if(now == tick)
         {
@@ -33,7 +33,7 @@ int main (){
         sti();
         redraw = false;
         while(update_keypress());
-      	
+          
         while(now < target){
             if(now % (HZ / CHARACTER_PER_SECOND) == 0){
                 create_new_letter();
@@ -51,7 +51,7 @@ int main (){
                 set_fps(now_fps);
                 num_draw = 0;
             }
-            now +=5000;
+            now += 500;
         }
         if(redraw){
             num_draw++;

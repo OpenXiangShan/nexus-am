@@ -1,15 +1,37 @@
 #include <am.h>
 #include <npc.h>
 
+extern char font8x8_basic[128][8];
+extern char get_stat();
+extern u32 GetCount(int sel);
+u8 *fb;
 int curr_line = 0;
 int curr_col = 0;
-extern char font8x8_basic[128][8];
+ulong npc_time = 0;
+ulong npc_cycles = 0;
+static char *csend = SERIAL_PORT + Tx;
+static char *crecv = SERIAL_PORT + Rx;
 
-struct FBPixel {
-  u8 b : 2;
-  u8 g : 4;
-  u8 r : 2;
-} *fb;
+ulong _uptime(){
+  ulong low = GetCount(0);
+  ulong high = GetCount(1) + 1;
+/*npc_time = high * 1000 * ((1ul << 32) / HZ) + low * 1000 / HZ;
+ *npc_time = (high << 22) * 1000 * 1024 / HZ + low * 1000 / HZ;
+*/
+  npc_time = high * 1000 * ((1ul << 31) / HZ) * 2 + low / (HZ / 1000); //npc_time returns ms
+  return npc_time;
+}
+
+ulong _cycles(){
+  u32 low = GetCount(0);
+  ulong high = GetCount(1) + 1;
+/*npc_cycles = high * ((1ul << 32) >> 10) + (low >> 10);
+ *npc_cycles = high * (1ul << 22) + (low >> 10);
+ *npc_cycles = (high << 22) + (low >> 10);
+*/
+  npc_cycles = (high << 22) + (low >> 10); //npc_cycles returns Kcycles
+  return npc_cycles;
+}
 
 void draw_character(char ch, int x, int y, _Pixel p) {
   int i, j;
@@ -37,8 +59,19 @@ void vga_init(){
   fb = VMEM_ADDR;
 }
 
+void out_byte(char ch) {
+  while((get_stat() >> 3) & 0x1);
+  *csend = ch;
+}
+
+char in_byte(){
+  if(!(get_stat() & 0x1)) return '\0';
+  else return *crecv;
+}
+
 void _putc(char ch) {
   //TODO:use uart
+  //out_byte(ch);
   if(ch == '\n'){
     curr_col = 0;
     curr_line += 8;
@@ -56,25 +89,20 @@ void _putc(char ch) {
   }
 }
 
-void _draw_f(_Pixel *p) {//npc doesn't support
+void _draw_f(_Pixel *p) {
   int i;
   for(i = 0;i < SCR_SIZE; i++){
-    fb[i].r = R(p[i]);
-    fb[i].g = G(p[i]);
-    fb[i].b = B(p[i]);
+    fb[i] = (R(p[i]) & 0xc0) | ((G(p[i]) & 0xf0) >> 2)| ((B(p[i]) & 0xc0) >> 6);
   }
 }
 
 void _draw_p(int x, int y, _Pixel p) {
-  fb[x + y * _screen.width].r = R(p) >> 2;
-  fb[x + y * _screen.width].g = G(p);
-  fb[x + y * _screen.width].b = B(p) >> 2;
+  fb[x + y * _screen.width] = (R(p) & 0xc0) | ((G(p) & 0xf0) >> 2) | ((B(p) & 0xc0) >> 6);
 }
 
 void _draw_sync() {
-  //not to do
 }
 
-int _peek_key(){
+int _read_key(){
   return 0;
 }

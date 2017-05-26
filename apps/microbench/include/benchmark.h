@@ -14,10 +14,8 @@ extern "C" {
 #define REF_CPU    "i7-6700 @ 3.40GHz"
 #define REF_SCORE  100000
 
-// TODO: checksum is little-endian
-
 // the list of benchmarks
-//       Name        |  Mem  |Ref(us)| Enable | Checksum | Desc
+//       Name        |  Mem  | TRef | En  | Checksum  | Desc
 #define BENCHMARK_LIST(def) \
   def(qsort, "qsort", 640 KB, 28620, true, 0x2e074bc8, "Quick sort") \
   def(queen, "queen",   0 KB,  5490, true, 0x00003778, "Queen placement") \
@@ -31,7 +29,7 @@ extern "C" {
   def(  md5,   "md5",  16 MB, 20200, true, 0xa2579514, "MD5 digest") \
 
 // Each benchmark will run REPEAT times
-#define REPEAT  3
+#define REPEAT  1
 
 #define DECL(_name, _sname, _mlim, _ref, _en, _cs, _desc) \
   void bench_##_name##_prepare(); \

@@ -3,12 +3,18 @@
 
 _Area _heap;
 _Screen _screen;
-ulong npc_cycles = 0;
-ulong npc_time = 0;
+extern int main();
+
+char __attribute__((__noinline__)) get_stat(){
+  char *stat = SERIAL_PORT + STAT;
+  return *stat;
+}
 
 void _trm_init() {
   serial_init();
   memory_init();
+  int ret = main();
+  _halt(ret);
 }
 
 void _ioe_init() {
@@ -22,21 +28,24 @@ void _halt(int code) {
   _putc('i');
   _putc('c');
   _putc('\n');
+
+  GPIO_TRAP[0] = code;
+
   while(1);
 }
 
-ulong _uptime() {
-  return npc_time ++;
-}
-
-ulong _cycles(){
-  return npc_cycles ++;
-}
-
 void memory_init(){
-  //probe a memory for heap
-  _heap.start = (void *)HEAP_START;
-  _heap.end = (void *)HEAP_END;
+  extern char _end;
+  extern char __bss_start;
+  unsigned int st = (unsigned int)(&__bss_start);
+  unsigned int ed = (unsigned int)(&_end);
+  char *bss = (void *)(st);
+  unsigned int i;
+  for(i = st;i < ed; i++) { bss[i - st] = 0; }
+  st = (unsigned int)(&_end);
+  ed = (unsigned int)(&_end) + MAX_MEMORY_SIZE;
+  _heap.start = (void *)(st);
+  _heap.end = (void *)(ed);
 }
 
 void serial_init(){

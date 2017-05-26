@@ -5,14 +5,14 @@ static int p = 10;
 
 static int MAP[256] = {
   0, // On/Off
-  _KEY_Z, // A
-  _KEY_X, // B
-  _KEY_UP, // SELECT
-  _KEY_DOWN, // START
-  255,
-  255,
-  _KEY_LEFT, 
-  _KEY_RIGHT, 
+  _KEY_G, // A
+  _KEY_H, // B
+  _KEY_T, // SELECT
+  _KEY_Y, // START
+  _KEY_W,
+  _KEY_S,
+  _KEY_A, 
+  _KEY_D, 
   255,
 };
 

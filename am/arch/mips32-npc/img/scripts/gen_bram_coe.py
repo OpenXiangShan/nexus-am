@@ -20,17 +20,16 @@ outPath = sys.argv[2]
 with open(inPath, 'rb') as f:
     bins = f.read()
 
-while len(bins)%32 :
+while len(bins)%4 :
     bins = bins + '\0'
 
 with open(outPath, 'w') as f:
     f.write('memory_initialization_radix=16;\nmemory_initialization_vector=\n')
-    for i in range(0, len(bins)/32):
-        contents = ''
-        for j in range(0,8):
-	    contents = str( binascii.b2a_hex(bins[i*32+4*j:i*32+4*j+4]) )+contents
+    for i in range(0, len(bins)/4):
+        ii = i * 4
+        contents = binascii.b2a_hex(bins[ii + 3] + bins[ii + 2] + bins[ii + 1] + bins[ii])
 	f.write( contents )
-	if i != (len(bins)/32-1):
+	if i != (len(bins)/4-1):
 	    f.write(',\n')
 	else:
 	    f.write(';')

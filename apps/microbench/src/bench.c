@@ -27,7 +27,6 @@ Benchmark benchmarks[] = {
 
 // Running a benchmark
 static void bench_prepare(Result *res) {
-  // TODO: try best to flush cache and other resources
   res->tsc = _cycles();
   res->msec = _uptime();
 }
@@ -67,7 +66,6 @@ ulong score(Benchmark *b, ulong tsc, ulong msec) {
 }
 
 int main() {
-  _trm_init();
   _ioe_init();
 
   ulong bench_score = 0;

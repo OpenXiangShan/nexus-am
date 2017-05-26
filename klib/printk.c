@@ -1,5 +1,4 @@
-#include<am.h>
-#include<klib.h>
+#include"klib.h"
 #include<stdarg.h>
 
 static char* s_h=0;
