@@ -1,13 +1,9 @@
 #include "common.h"
 #include "video.h"
 
+static _Pixel canvas[W][H];
+
 extern char font8x8_basic[128][8];
-static inline unsigned int pixel(int color){
-	char r = (color >> 24) & 0xff;
-	char g = (color >> 16) & 0xff;
-	char b = (color >> 8) & 0xff;
-	return (r << 16 | g << 8 | b );
-}
 
 static char inline *reverse(char *s)  
 {  
@@ -54,13 +50,14 @@ static inline void draw_character(char ch, int x, int y, int color) {
 	for (i = 0; i < 8; i ++) 
 		for (j = 0; j < 8; j ++) 
 			if ((p[i] >> j) & 1)
-				_draw_p(y + j, x + i, pixel(color));
+        if (y + j < W && x + i < H)
+  				canvas[y + j][x + i] = color;
 }
 
 static inline void draw_string(const char *str, int x, int y, int color) {
 	while (*str) {
 		draw_character(*str ++, x, y, color);
-		if (y + 8 >= _screen.width) {
+		if (y + 8 >= W) {
 			x += 8; y = 0;
 		} else {
 			y += 8;
@@ -83,13 +80,23 @@ redraw_screen() {
 
 	/* 绘制命中数、miss数、最后一次按键扫描码和fps */
 	const char *key = itoa(last_key_code());
-	draw_string(key, _screen.height - 8, 0, 0xffffffff);
+	draw_string(key, W - 8, 0, 0xffffffff);
 	hit = itoa(get_hit());
-	draw_string(hit, 0, _screen.width - strlen(hit) * 8, 0xffffffff);
+	draw_string(hit, 0, W - strlen(hit) * 8, 0x00ff00);
 	miss = itoa(get_miss());
-	draw_string(miss, _screen.height - 8, _screen.width - strlen(miss) * 8, 0xffffffff);
+	draw_string(miss, H - 8, W - strlen(miss) * 8, 0xfa5858);
 	const char *fps = itoa(get_fps());
-	draw_string(fps, 0, 0, 0xffffffff);
-	draw_string("FPS", 0, strlen(fps) * 8, 0xffffffff);
-    _draw_sync();
+	draw_string(fps, 0, 0, 0xf3f781);
+	draw_string("FPS", 0, strlen(fps) * 8, 0xf3f781);
+
+  int w = _screen.width, h = _screen.height;
+  for (int y = 0; y < w; y ++)
+    for (int x = 0; x < h; x ++) {
+      _draw_p(y, x, canvas[y * W / w][x * H / h]);
+    }
+
+  _draw_sync();
+  for (int y = 0; y < W; y ++)
+    for (int x = 0; x < H; x ++) 
+      canvas[y][x] = 0x2a0a29;
 }

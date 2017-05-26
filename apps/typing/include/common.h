@@ -3,9 +3,12 @@
 
 #define HZ 100
 #define FPS 30
-#define CHARACTER_PER_SECOND 3
+#define CHARACTER_PER_SECOND 10
 #define UPDATE_PER_SECOND 100
 #define NULL ((void *)0)
+
+#define W 320
+#define H 200
 
 #include <am.h>
 #include <klib.h>

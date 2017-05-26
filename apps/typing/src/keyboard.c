@@ -1,13 +1,36 @@
 #include "common.h"
 
 /* a-z对应的键盘扫描码 */
+
 static int letter_code[] = {
-	0x1c,0x32,0x21,0x23,0x24,
-	0x2b,0x34,0x33,0x43,0x3b,
-	0x42,0x4b,0x3a,0x31,0x44,
-	0x4d,0x15,0x2d,0x1b,0x2c,
-	0x3c,0x2a,0x1d,0x22,0x35,_KEY_Z
+  _KEY_A,
+  _KEY_B,
+  _KEY_C,
+  _KEY_D,
+  _KEY_E,
+  _KEY_F,
+  _KEY_G,
+  _KEY_H,
+  _KEY_I,
+  _KEY_J,
+  _KEY_K,
+  _KEY_L,
+  _KEY_M,
+  _KEY_N,
+  _KEY_O,
+  _KEY_P,
+  _KEY_Q,
+  _KEY_R,
+  _KEY_S,
+  _KEY_T,
+  _KEY_U,
+  _KEY_V,
+  _KEY_W,
+  _KEY_X,
+  _KEY_Y,
+  _KEY_Z,
 };
+
 /* 对应键按下的标志位 */
 static bool letter_pressed[26];
 
@@ -31,21 +54,23 @@ query_key(int index) {
 	return letter_pressed[index];
 }
 
-/* key_code保存了上一次键盘事件中的扫描码 */
 static volatile int key_code = 0;
 
 int last_key_code(void) {
 	return key_code;
 }
+
 #define KEYDOWN_MASK 0x8000
 bool
 keyboard_event() {
-	//TODO:listen keyboard,catch scan_code assigning to key_code
-	key_code = _read_key();
+	int key_code = _read_key();
+  if (key_code == _KEY_NONE) return false;
+
 	if((key_code & KEYDOWN_MASK) != 0){
-		press_key((key_code));
-		return true;
-	}
-	return false;
+		press_key((key_code) & ~KEYDOWN_MASK);
+	} else {
+    release_key((key_code));
+  }
+	return true;
 }
 
