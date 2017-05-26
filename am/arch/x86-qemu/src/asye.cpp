@@ -4,9 +4,6 @@
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
 
-const int PORT_PIC_MS = 0x20;
-const int PORT_PIC_SL = 0xA0;
-
 extern "C" {
 void irq0();
 void irq1();
