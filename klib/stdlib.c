@@ -23,3 +23,15 @@ int abs(int x){
 	if(x<0)return -x;
 	return x;
 }
+ulong time(){
+	return _uptime();
+}
+unsigned long next=1;
+void srand(unsigned int seed){
+	next=seed;
+}
+int rand(){
+	next=next*1103515245+12345;
+	return ((unsigned)(next/65536)%32768);
+}
+

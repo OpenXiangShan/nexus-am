@@ -36,6 +36,10 @@ char* strtok(char* s,char* delim);
 // stdlib.h
 int atoi(const char* nptr);
 int abs(int x);
+ulong time();
+char* strtok(char* s,char* delim);
+void srand(unsigned int seed);
+int rand();
 
 // stdio.h
 int printk(const char* fmt, ...);

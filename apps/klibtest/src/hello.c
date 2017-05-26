@@ -46,10 +46,14 @@ int main() {
   */
   //printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
 
+  /*
   char src[10]="hello";
   char* dst=strtok(src,"e");
   dst=strtok(NULL,"o");
   printk("%s\n",dst);
+  */
+  srand (9);
+  printk("%u\n",rand());
   //sprintf(src,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
   //snprintf(src,10,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
   //sprintf(src,"%d",-2040);
