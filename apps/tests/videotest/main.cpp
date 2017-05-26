@@ -1,6 +1,15 @@
 #include <am.h>
-#include <video.h>
 #include <klib.h>
+
+const int FPS = 30;
+const int N = 32;
+
+static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+  return (r << 16) | (g << 8) | b;
+}
+static inline u8 R(_Pixel p) { return p >> 16; }
+static inline u8 G(_Pixel p) { return p >> 8; }
+static inline u8 B(_Pixel p) { return p; }
 
 _Pixel canvas[N][N];
 bool used[N][N];
