@@ -1,3 +1,3 @@
 NAME = typing
-SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
+SRCS = game.c draw.c font.c keyboard.c
 include $(AM_HOME)/Makefile.app
