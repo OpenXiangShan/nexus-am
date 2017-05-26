@@ -102,7 +102,7 @@ void fce_run()
             cpu_run(1364 / 12); // 1 scanline
         }
 
-        int key = _peek_key();
+        int key = _read_key();
         if (key != _KEY_NONE) {
           int down = (key & 0x8000) != 0;
           int code = key & ~0x8000;
@@ -127,32 +127,36 @@ static const _Pixel palette[64] = {
   0xB3EEFF, 0xDDDDDD, 0x111111, 0x111111
 }; 
 
-byte canvas[W][H];
+byte canvas[H][W];
 
+// TODO: time-consuming function
 void fce_update_screen()
 {
+  static int frame = 0;
   int idx = ppu_ram_read(0x3F00);
 
   int w = _screen.width;
   int h = _screen.height;
 
+  frame = (frame + 1) & 1;
+
   int pad = (w - h) / 2;
-  for (int x = pad; x < w - pad; x ++) {
-    for (int y = 0; y < h; y ++) {
-      _draw_p(x, y, palette[canvas[(x - pad) * W / h][y * H / h]]);
+  for (int y = 0; y < h; y ++) {
+    if ( (y & 1) != frame ) continue;
+    for (int x = pad; x < w - pad; x ++) {
+      _draw_p(x, y, palette[canvas[y * H / h][(x - pad) * W / h]]);
     }
   }
 
   _draw_sync();
 
-  for (int i = 0; i < W; i ++)
-    for (int j = 0; j < H; j ++)
-      canvas[i][j] = idx;
+  for (int y = 0; y < H; y ++)
+    for (int x = 0; x < W; x ++)
+      canvas[y][x] = idx;
 }
 
 
 int main() {
-  _trm_init();
   _ioe_init();
   _asye_init();
 
@@ -162,14 +166,3 @@ int main() {
   return 1;
 }
 
-static char *alloc_head;
-
-void *halloc(size_t size) {
-  if (alloc_head == 0) {
-    alloc_head = (char*)_heap.start;
-  }
-  while ((ulong)alloc_head % 16 != 0) alloc_head ++;
-  alloc_head += size;
-  if (alloc_head >= (char*)_heap.end) return 0;
-  return alloc_head - size;
-}

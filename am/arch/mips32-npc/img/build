@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=./am/arch/mips32-npc/img
+DIR=${AM_HOME}/am/arch/mips32-npc/img
 DEST=$1
 shift
 

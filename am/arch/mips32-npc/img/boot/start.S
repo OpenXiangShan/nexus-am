@@ -2,11 +2,12 @@
 .type _start, @function
 .globl _qemu
 .type _qemu, @function
+.extern _trm_init
 
 _start:
   li $sp, 0xf7fffffc
-  jal main
+  jal _trm_init
 
 _qemu:
   nop
-  jal main
+  jal _trm_init

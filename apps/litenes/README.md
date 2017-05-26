@@ -1,16 +1,13 @@
 # LiteNES
 
-Nintendo Entertainment System模拟器。
+Nintendo Entertainment System模拟器。故意做了一些错误的实现以提高性能（所以部分图形显示不正确）。
 
 内置Super Mario Bros游戏ROM (mario.c)。
 
-操作方式（由于AM暂时只有6个键，之后加入更多按键）：
+操作方式:
 
-* UP — SELECT
-* DOWN — START
-* LEFT — 方向左
-* RIGHT — 方向右
-* Z — A键
-* X — B键
-
-由于原先项目的限制，只能运行一些老小ROM。
+* T — SELECT
+* Y — START
+* G — A键
+* H — B键
+* W/S/A/D — UP/DOWN/LEFT/RIGHT

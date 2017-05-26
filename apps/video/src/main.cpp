@@ -53,7 +53,6 @@ void update() {
 
 
 int main() {
-  _trm_init();
   _ioe_init();
 
   ulong last = 0;
