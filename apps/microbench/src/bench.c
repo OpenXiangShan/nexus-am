@@ -94,7 +94,7 @@ int main() {
       pass &= succ;
 
       ulong cur = score(bench, tsc, msec);
-      printk("\n  min time: %dK cycles in %d ms [%d]\n", tsc, msec, cur);
+      printk("\n  min time: %dK cycles in %d ms [%d]\n", (uint)tsc, (uint)msec, (uint)cur);
 
       bench_score += cur;
     }
@@ -103,7 +103,7 @@ int main() {
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
   printk("==================================================\n");
-  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", bench_score);
+  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", (uint)bench_score);
   printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
 
   _halt(0);
