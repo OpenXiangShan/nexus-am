@@ -12,10 +12,13 @@ $(shell mkdir -p $(DST_DIR))
 
 include $(AM_HOME)/Makefile.compile
 
-.PHONY: app clean
+.PHONY: app run clean
 app: $(OBJS)
 	@cd $(AM_HOME) && make ARCH=$(ARCH)
 	@$(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(AM_HOME)/am/build/am-$(ARCH).a $(AM_HOME)/klib/build/klib-$(ARCH).a $(OBJS)
+
+run: app
+	@$(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
 
 clean: 
 	rm -rf $(APP_DIR)/build/
