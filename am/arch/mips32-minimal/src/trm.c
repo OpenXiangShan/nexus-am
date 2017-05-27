@@ -32,13 +32,9 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
-  _putc('P');
-  _putc('a');
-  _putc('n');
-  _putc('i');
-  _putc('c');
-  _putc('\n');
-
+  for (const char *p = "Halt\n"; *p; p ++) {
+    _putc(*p);
+  }
   GPIO_TRAP[0] = code;
 
   while (1);

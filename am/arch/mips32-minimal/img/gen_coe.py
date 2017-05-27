@@ -33,6 +33,13 @@ print "There are {0} instructions:".format(len(insts))
 print "  {0}".format(" ".join([i.upper() for i in insts]))
 
 def gen_coe(fname):
+  assembly = execute(["mips-linux-gnu-objdump", "-d", fname])
+  names = execute(["mips-linux-gnu-nm", fname])
+  with open(fname + ".txt", "w") as f:
+    f.write(assembly)
+    f.write(names)
+    f.close()
+
   bins = execute(["mips-linux-gnu-objcopy", "-O", "binary", fname, "/dev/stdout"])
 
   while len(bins) % 4 != 0:
