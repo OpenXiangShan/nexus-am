@@ -85,7 +85,7 @@ int vprintk(char* out,const char* fmt,va_list ap){
   return 0;
 }
 
-int printk(const char* fmt,...){
+int printf(const char* fmt,...){
   va_list ap;
   va_start(ap,fmt);
   int r=vprintk(0,fmt,ap);

@@ -12,11 +12,16 @@ $(shell mkdir -p $(DST_DIR))
 
 include $(AM_HOME)/Makefile.compile
 
+LINK_FILES = $(AM_HOME)/am/build/am-$(ARCH).a $(OBJS)
+
+ifneq ($(ARCH), native)
+LINK_FILES += $(AM_HOME)/klib/build/klib-$(ARCH).a
+endif
+
 .PHONY: app run clean
 app: $(OBJS)
 	@cd $(AM_HOME) && make ARCH=$(ARCH)
-	@$(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(AM_HOME)/am/build/am-$(ARCH).a $(AM_HOME)/klib/build/klib-$(ARCH).a $(OBJS)
-
+	@$(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
 run: app
 	@$(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
 
