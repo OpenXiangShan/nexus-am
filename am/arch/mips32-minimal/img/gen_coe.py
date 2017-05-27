@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, re, subprocess
+import sys, re, subprocess, binascii
 from subprocess import PIPE
 
 def execute(commands):
@@ -31,4 +31,27 @@ binary = sys.argv[1]
 insts = parse(binary)
 print "There are {0} instructions:".format(len(insts))
 print "  {0}".format(" ".join([i.upper() for i in insts]))
+
+def gen_coe(fname):
+  bins = execute(["mips-linux-gnu-objcopy", "-O", "binary", fname, "/dev/stdout"])
+
+  while len(bins) % 4 != 0:
+    bins = bins + '\0'
+
+  with open(fname + ".coe", 'w') as f:
+    f.write('memory_initialization_radix=16;\nmemory_initialization_vector=\n')
+    for i in range(0, len(bins)/4):
+      ii = i * 4
+      contents = binascii.b2a_hex(bins[ii + 3] + bins[ii + 2] + bins[ii + 1] + bins[ii])
+      f.write( contents )
+      if i != (len(bins)/4-1):
+        f.write(',\n')
+      else:
+        f.write(';')
+    f.write('\n')
+    f.close()
+
+gen_coe(binary)
+exit()
+
 
