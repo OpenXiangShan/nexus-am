@@ -1,6 +1,10 @@
 #include <am.h>
 #include <x86.h>
+#include <am-x86.h>
 #include <stdarg.h>
+
+
+extern "C" { int printk(const char *, ...); }
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
 
@@ -27,8 +31,6 @@ void vecsys();
 void irqall();
 
 extern TSS tss[];
-
-void lapic_eoi();
 
 void irq_handle(TrapFrame *tf) {
   _RegSet regs = {
@@ -58,6 +60,7 @@ void irq_handle(TrapFrame *tf) {
 
   ev.event = _EVENT_NULL;
   if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
+  else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) ev.event = _EVENT_SYSCALL;
   else if (tf->irq < 32) ev.event = _EVENT_ERROR;
 
@@ -159,7 +162,12 @@ void irq_handle(TrapFrame *tf) {
 
 static GateDesc idt[NR_IRQ];
 
+
 void _asye_init() {
+  smp_init();
+  lapic_init();
+  ioapic_enable(IRQ_KBD, 0);
+
   // init IDT
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
     idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
@@ -188,6 +196,7 @@ void _asye_init() {
   // -------------------- system call --------------------------
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
   set_idt(idt, sizeof(idt));
+
 }
 
 void _idle() {
