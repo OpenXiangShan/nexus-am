@@ -12,7 +12,7 @@ typedef u32 off_t;
 
 typedef struct _RegSet {
   u32 eax, ebx, ecx, edx,
-      esi, edi, ebp, esp,
+      esi, edi, ebp, esp3,
       eip, eflags,
       cs, ds, es, ss,
       ss0, esp0;
