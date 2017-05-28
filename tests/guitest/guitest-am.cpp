@@ -1,30 +1,51 @@
 #include <am.h>
 #include <imgui.h>
 
-//#include <stdio.h>
+#include <stdio.h>
 
 float min(float a, float b, float c) {
-  if (a < b && a < c) return a;
-  if (b < a && b < c) return b;
+  if (a <= b && a <= c) return a;
+  if (b <= a && b <= c) return b;
   return c;
 }
 float max(float a, float b, float c) {
-  if (a > b && a > c) return a;
-  if (b > a && b > c) return b;
+  if (a >= b && a >= c) return a;
+  if (b >= a && b >= c) return b;
   return c;
 }
 
+template<typename T>
+void swap(T &a, T &b) {
+  T tmp = a;
+  a = b;
+  b = tmp;
+}
+
+int at_left(float x, float y, ImVec2 p, ImVec2 q) {
+  if (p.y > q.y) {
+    swap(p, q);
+  }
+  if (!(p.y <= y && y <= q.y)) return 0;
+  return (x - p.x) * (q.y - p.y) - (y - p.y) * (q.x - p.x) <= 0;
+}
+
 static void render_triangle(const ImDrawVert *a, const ImDrawVert *b, const ImDrawVert *c) {
+  swap(a, c);
   float minx = min(a->pos.x, b->pos.x, c->pos.x);
-  float miny = min(a->pos.y, b->pos.y, c->pos.y);
   float maxx = max(a->pos.x, b->pos.x, c->pos.x);
+  float miny = min(a->pos.y, b->pos.y, c->pos.y);
   float maxy = max(a->pos.y, b->pos.y, c->pos.y);
+
   for (int x = minx; x <= maxx; x ++)
     for (int y = miny; y <= maxy; y ++) {
-      //int x1 = x - 500;
-      int x1 = x;
-      if (x1 >= 0 && x1 < 640 && y >= 0 && y < 480) {
-        _draw_p(x1, y, c->col);
+      if (x >= 0 && x < _screen.width && y >= 0 && y < _screen.height) {
+        int ns = 
+          at_left(x + 0.5, y + 0.5, a->pos, b->pos) +
+          at_left(x + 0.5, y + 0.5, b->pos, c->pos) +
+          at_left(x + 0.5, y + 0.5, c->pos, a->pos);
+        if (ns & 1) {
+          _draw_p(x, y, a->col);
+        }
       }
     }
 }
@@ -47,7 +68,7 @@ void render(ImDrawData *draw_data) {
           const ImDrawVert *a = vtx_buffer + idx_buffer[i];
           const ImDrawVert *b = vtx_buffer + idx_buffer[i+1];
           const ImDrawVert *c = vtx_buffer + idx_buffer[i+2];
-          render_triangle(a, b, c);
+          render_triangle(a, b, c); // a, b, c);
         }
 //        printf("\n");
       }
@@ -81,12 +102,13 @@ int main() {
     ImGui::NewFrame();
     bool show_test_window = true;
     {
-      ImGui::SetNextWindowPos(ImVec2(40, 20), ImGuiSetCond_FirstUseEver);
+      ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiSetCond_FirstUseEver);
       ImGui::Begin("New Window");
       ImGui::Text("Hello, world!");
       ImGui::End();
     }
 
+    ImGui::SetNextWindowPos(ImVec2(60, 10), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
 
     for (int i = 0; i < _screen.width; i ++)
