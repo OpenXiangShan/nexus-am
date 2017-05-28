@@ -5,7 +5,7 @@
 .extern _trm_init
 
 _start:
-  li $sp, 0xf7fffffc
+  li $sp, 0x17fffffc
   jal _trm_init
 
 _qemu:
