@@ -70,23 +70,10 @@ char in_byte(){
 }
 
 void _putc(char ch) {
-  //TODO:use uart
-  //out_byte(ch);
-  if(ch == '\n'){
-    curr_col = 0;
-    curr_line += 8;
+  if(ch == '\n') {
+    out_byte('\r');
   }
-  else{
-    draw_character(ch,curr_line,curr_col,pixel(0xff,0xff,0xff));
-  }
-  if (curr_col + 8 >= SCR_WIDTH) {
-    curr_line += 8; curr_col = 0;
-  } else {
-    curr_col += 8;
-  }
-  if(curr_line >= SCR_HEIGHT){
-    curr_line = 0;
-  }
+  out_byte(ch);
 }
 
 void _draw_f(_Pixel *p) {
