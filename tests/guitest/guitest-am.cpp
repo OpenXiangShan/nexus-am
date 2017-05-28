@@ -47,22 +47,19 @@ static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const Im
   float minv = min(a->uv.y, b->uv.y, c->uv.y);
   float maxv = max(a->uv.y, b->uv.y, c->uv.y);
 
-/*
-  minx = max(minx, pcmd->ClipRect.x, -8192.0);
-  maxx = min(maxx, pcmd->ClipRect.z, 8192.0);
-  miny = max(miny, pcmd->ClipRect.y, -8192.0);
-  maxy = min(maxy, pcmd->ClipRect.w, 8192.0);
-*/
-
   float du = (maxu - minu) / (maxx - minx);
   float dv = (maxv - minv) / (maxy - miny);
-//  printf("(%.6f, %.6f) -- (%.6f, %.6f) -- (%.6f, %.6f)\n", a->uv.x, a->uv.y, b->uv.x, b->uv.y, c->uv.x, c->uv.y);
+
+  auto &clip = pcmd->ClipRect;
 
   float u = minu;
   for (int x = minx; x <= maxx; x ++) {
     float v = minv;
     for (int y = miny; y <= maxy; y ++) {
-      if (x >= 0 && x < _screen.width && y >= 0 && y < _screen.height) {
+      if (x >= 0 && x < _screen.width && y >= 0 && y < _screen.height &&
+          clip.x <= x && x <= clip.z && 
+          clip.y <= y && y <= clip.w
+      ) {
         int ns = 
           at_left(x, y, a->pos, b->pos) +
           at_left(x, y, b->pos, c->pos) +
@@ -76,7 +73,6 @@ static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const Im
             int idx = x + y * _screen.width;
             u32 old = fb[idx];
             u32 col = a->col & 0xffffff;
-
             fb[idx] = ((col * alpha + old * (255 - alpha)) / 255) & 0xffffff;
           }
         }
