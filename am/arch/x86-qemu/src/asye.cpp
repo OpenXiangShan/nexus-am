@@ -3,7 +3,6 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
-
 extern "C" { int printk(const char *, ...); }
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
@@ -35,7 +34,7 @@ extern TSS tss[];
 void irq_handle(TrapFrame *tf) {
   _RegSet regs = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
-    .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp = 0,
+    .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp3 = 0,
     .eip = tf->eip, .eflags = tf->eflags,
     .cs = tf->cs, .ds = tf->ds, .es = tf->es, .ss = 0,
     .ss0 = 0, .esp0 = 0,
@@ -50,7 +49,7 @@ void irq_handle(TrapFrame *tf) {
   
   if (tf->cs & DPL_USER) { // interrupt at user code
     regs.ss = tf->ss;
-    regs.esp = tf->esp;
+    regs.esp3 = tf->esp;
     regs.ss0 = KSEL(SEG_KDATA);
     regs.esp0 = (u32)tf + 68;
   } else { // interrupt at kernel code
@@ -101,7 +100,7 @@ void irq_handle(TrapFrame *tf) {
       "nop;"
     : : "m"(ret->esp0),
         "m"(ret->ss),
-        "m"(ret->esp),
+        "m"(ret->esp3),
         "m"(ret->eflags),
         "m"(ret->cs),
         "m"(ret->eip),
@@ -209,7 +208,7 @@ void _listen(_RegSet*(*h)(_Event, _RegSet*)) {
 
 _RegSet *_make(_Area stack, void *entry) {
   _RegSet *regs = (_RegSet*)stack.start;
-  regs->esp = reinterpret_cast<u32>(stack.end);
+  regs->esp0 = reinterpret_cast<u32>(stack.end);
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
   regs->eip = (u32)entry;

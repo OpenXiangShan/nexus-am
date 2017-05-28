@@ -6,8 +6,8 @@ AM_HOME ?= $(shell pwd)
 
 all:
 	@cd am && make ARCH=$(ARCH)
-	@cd klib && make ARCH=$(ARCH)
+	@cd libs/klib && make ARCH=$(ARCH)
 
 clean:
 	@cd am && make clean
-	@cd klib && make clean
+	@cd libs/klib && make clean
