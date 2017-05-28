@@ -101,6 +101,7 @@ void render(ImDrawData *draw_data) {
           render_triangle(pcmd, a, b, c); // a, b, c);
         }
       }
+      idx_buffer += pcmd->ElemCount;
     }
   }
   _draw_sync();
@@ -116,8 +117,10 @@ int main() {
 
   io.RenderDrawListsFn = render;
   int mx = 10, my = 10;
+  static int frames = 0;
   while (1) {
-    mx += 3; my += 1;
+    frames ++;
+    mx += 3; my += 2;
     if (mx > 400) { mx = my = 10; }
 
     io.MousePos = ImVec2(float(mx), float(my));
@@ -127,6 +130,12 @@ int main() {
     io.DeltaTime = 1.0f / 60.0f;
     ImGui::NewFrame();
 
+    if (frames % 5 == 0) {
+      io.MouseDown[0] = 1;
+    }
+    if (frames % 5 == 1) {
+      io.MouseDown[0] = 0;
+    }
     bool show_test_window = true;
     ImGui::SetNextWindowPos(ImVec2(60, 10), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
@@ -135,6 +144,9 @@ int main() {
       for (int j = 0; j < _screen.height; j ++) {
         _draw_p(i, j, (114<<16) | (144<<8) | 154);
       }
+    ulong t1 = _uptime();
     ImGui::Render();
+    ulong used = _uptime() - t1;
+    printf("Render time: %ld ms\n", used);
   }
 }
