@@ -3,7 +3,7 @@
 
 #include <arch.h>
 
-#define SERIAL_PORT ((volatile char *)0x40600000)
+#define SERIAL_PORT ((volatile char *)0x40001000)
 #define Rx 0x0
 #define Tx 0x04
 #define STAT 0x08
