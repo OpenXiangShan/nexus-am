@@ -28,6 +28,9 @@ char uart_recv() {
 }
 
 void _putc(char ch) {
+  if(ch == '\n') {
+    uart_send('\r');
+  }
   uart_send(ch);
 }
 
