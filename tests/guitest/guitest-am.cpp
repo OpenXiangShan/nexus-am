@@ -26,12 +26,15 @@ void swap(T &a, T &b) {
 }
 
 int at_left(float x, float y, ImVec2 p, ImVec2 q) {
+  x += 0.49; y += 0.49;
   if (p.y > q.y) {
     swap(p, q);
   }
   if (!(p.y <= y && y <= q.y)) return 0;
   return (x - p.x) * (q.y - p.y) - (y - p.y) * (q.x - p.x) <= 0;
 }
+
+static u32 *fb;
 
 static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const ImDrawVert *b, const ImDrawVert *c) {
   float minx = min(a->pos.x, b->pos.x, c->pos.x);
@@ -61,15 +64,20 @@ static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const Im
     for (int y = miny; y <= maxy; y ++) {
       if (x >= 0 && x < _screen.width && y >= 0 && y < _screen.height) {
         int ns = 
-          at_left(x + 0.5, y + 0.5, a->pos, b->pos) +
-          at_left(x + 0.5, y + 0.5, b->pos, c->pos) +
-          at_left(x + 0.5, y + 0.5, c->pos, a->pos);
+          at_left(x, y, a->pos, b->pos) +
+          at_left(x, y, b->pos, c->pos) +
+          at_left(x, y, c->pos, a->pos);
 
         if (ns & 1) {
           int tx = u * t_width;
           int ty = v * t_height;
-          if (texture[tx + ty * t_width] != 0) {
-            _draw_p(x, y, a->col);
+          u8 alpha = texture[tx + ty * t_width];
+          if (alpha > 0) {
+            int idx = x + y * _screen.width;
+            u32 old = fb[idx];
+            u32 col = a->col & 0xffffff;
+
+            fb[idx] = ((col * alpha + old * (255 - alpha)) / 255) & 0xffffff;
           }
         }
       }
@@ -80,6 +88,9 @@ static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const Im
 }
 
 void render(ImDrawData *draw_data) {
+  for (int i = 0; i < _screen.width * _screen.height; i ++)
+    fb[i] = IM_COL32(114, 144, 154, 255);
+
 //  printf("=== Render ===\n");
   for (int n = 0; n < draw_data->CmdListsCount; n ++) {
     printf("n = %d\n", n);
@@ -104,6 +115,11 @@ void render(ImDrawData *draw_data) {
       idx_buffer += pcmd->ElemCount;
     }
   }
+  for (int i = 0; i < _screen.width * _screen.height; i ++) {
+    u32 p = fb[i];
+    fb[i] = ((p >> 16) & 0xff) | (((p >> 8) & 0xff) << 8) | ((p & 0xff) << 16);
+  }
+  _draw_f(fb);
   _draw_sync();
 }
 
@@ -111,13 +127,15 @@ int main() {
   _ioe_init();
 
   ImGuiIO &io = ImGui::GetIO();
+  fb = new u32[_screen.width * _screen.height];
 
   io.Fonts->GetTexDataAsAlpha8(&texture, &t_width, &t_height);
   io.Fonts->TexID = texture;
 
   io.RenderDrawListsFn = render;
-  int mx = 10, my = 10;
+  int mx = 60, my = 150;
   static int frames = 0;
+  bool click = true;
   while (1) {
     frames ++;
     mx += 3; my += 2;
@@ -130,7 +148,8 @@ int main() {
     io.DeltaTime = 1.0f / 60.0f;
     ImGui::NewFrame();
 
-    if (frames % 5 == 0) {
+    if (click && frames % 5 == 0) {
+      click = false;
       io.MouseDown[0] = 1;
     }
     if (frames % 5 == 1) {
@@ -140,10 +159,6 @@ int main() {
     ImGui::SetNextWindowPos(ImVec2(60, 10), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
 
-    for (int i = 0; i < _screen.width; i ++)
-      for (int j = 0; j < _screen.height; j ++) {
-        _draw_p(i, j, (114<<16) | (144<<8) | 154);
-      }
     ulong t1 = _uptime();
     ImGui::Render();
     ulong used = _uptime() - t1;
