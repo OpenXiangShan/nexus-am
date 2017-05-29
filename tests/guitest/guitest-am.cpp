@@ -1,9 +1,6 @@
 #include <am.h>
 #include <imgui.h>
 
-#include <stdio.h>
-
-
 static unsigned char *texture;
 static int t_width, t_height;
 
@@ -87,9 +84,7 @@ void render(ImDrawData *draw_data) {
   for (int i = 0; i < _screen.width * _screen.height; i ++)
     fb[i] = IM_COL32(114, 144, 154, 255);
 
-//  printf("=== Render ===\n");
   for (int n = 0; n < draw_data->CmdListsCount; n ++) {
-    printf("n = %d\n", n);
     const ImDrawList *cmd_list = draw_data->CmdLists[n];
     const ImDrawVert* vtx_buffer = cmd_list->VtxBuffer.Data;
     const ImDrawIdx* idx_buffer = cmd_list->IdxBuffer.Data;
@@ -99,7 +94,7 @@ void render(ImDrawData *draw_data) {
         pcmd->UserCallback(cmd_list, pcmd);
       } else {
         int nt = pcmd->ElemCount;
-        printf("Render texture %lx, %d triangles\n", (ulong)pcmd->TextureId, nt/3);
+        //printf("Render texture %lx, %d triangles\n", (ulong)pcmd->TextureId, nt/3);
         assert(nt % 3 == 0);
         for (int i = 0; i < nt; i += 3) {
           const ImDrawVert *a = vtx_buffer + idx_buffer[i];
@@ -155,9 +150,9 @@ int main() {
     ImGui::SetNextWindowPos(ImVec2(60, 10), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
 
-    ulong t1 = _uptime();
+    //ulong t1 = _uptime();
     ImGui::Render();
-    ulong used = _uptime() - t1;
-    printf("Render time: %ld ms\n", used);
+    //ulong used = _uptime() - t1;
+    //printf("Render time: %ld ms\n", used);
   }
 }
