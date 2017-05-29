@@ -33,10 +33,16 @@ print "There are {0} instructions:".format(len(insts))
 print "  {0}".format(" ".join([i.upper() for i in insts]))
 
 def gen_coe(fname):
-  bins = execute(["mips-linux-gnu-objcopy", "-O", "binary", fname, "/dev/stdout"])
+  execute(["mips-linux-gnu-objcopy", "-O", "binary", fname, fname + ".bin"])
+  with open(fname + ".bin", "r") as fp:
+    bins = fp.read()
+    fp.close()
+
+  len_bss = int(execute(["size", fname]).split('\n')[1].split()[2])
 
   while len(bins) % 4 != 0:
     bins = bins + '\0'
+  bins += '\0' * len_bss
 
   with open(fname + ".coe", 'w') as f:
     f.write('memory_initialization_radix=16;\nmemory_initialization_vector=\n')
