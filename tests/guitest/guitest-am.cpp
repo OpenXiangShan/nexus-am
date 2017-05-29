@@ -10,11 +10,12 @@ void free(void*);
 }
 
 void *kalloc(size_t size) {
-  return malloc(size);
+  void *ret = _heap.start;
+  _heap.start = ((char*)_heap.start) + size;
+  return ret;
 }
 
 void kfree(void *ptr) {
-  free(ptr);
 }
 
 float min(float a, float b, float c) {

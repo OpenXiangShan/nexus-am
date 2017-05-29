@@ -1,6 +1,4 @@
 NAME = guitest
 SRCS = guitest-am.cpp
-INC_DIR += $(AM_HOME)/libs/imgui/include
-LINK_FILES += $(AM_HOME)/libs/imgui/build/imgui-$(ARCH).a
-
+LIBS = klib imgui
 include $(AM_HOME)/Makefile.app

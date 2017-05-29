@@ -621,7 +621,6 @@
 #define IMGUI_DEFINE_PLACEMENT_NEW
 #include "imgui_internal.h"
 
-#include <ctype.h>      // toupper, isprint
 #include <limits.h>     // INT_MIN, INT_MAX
 #if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
 #include <stddef.h>     // intptr_t
