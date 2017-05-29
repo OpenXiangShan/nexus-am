@@ -45,7 +45,7 @@ int at_left(float x, float y, ImVec2 p, ImVec2 q) {
   return (x - p.x) * (q.y - p.y) - (y - p.y) * (q.x - p.x) <= 0;
 }
 
-static u32 *fb;
+static u32 fb[1024 * 768];
 
 static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const ImDrawVert *b, const ImDrawVert *c) {
   float minx = min(a->pos.x, b->pos.x, c->pos.x);
@@ -109,7 +109,6 @@ void render(ImDrawData *draw_data) {
       } else {
         int nt = pcmd->ElemCount;
         //printf("Render texture %lx, %d triangles\n", (ulong)pcmd->TextureId, nt/3);
-        assert(nt % 3 == 0);
         for (int i = 0; i < nt; i += 3) {
           const ImDrawVert *a = vtx_buffer + idx_buffer[i];
           const ImDrawVert *b = vtx_buffer + idx_buffer[i+1];
@@ -132,7 +131,6 @@ int main() {
   _ioe_init();
 
   ImGuiIO &io = ImGui::GetIO();
-  fb = new u32[_screen.width * _screen.height];
 
   io.Fonts->GetTexDataAsAlpha8(&texture, &t_width, &t_height);
   io.Fonts->TexID = texture;
