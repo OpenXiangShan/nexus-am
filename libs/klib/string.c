@@ -43,26 +43,6 @@ int strncmp(const char* s1, const char* s2, size_t n){
   while(--n>0&&*s1&&*s1==*s2)s1++,s2++;
   return (int)(*s1-*s2);
 }
-char* s_last;
-char* strtok(char* s,char* delim){
-  if(s==NULL)s=s_last;
-  if(s==NULL)return NULL;
-  char* tok=s;
-  while(*s!='\0'){
-    char* dm=delim;
-    while(*dm!='\0'){
-      if(*s==*dm){
-        *s='\0';
-	s_last=s+1;
-	break;
-      }
-      dm++;
-    }
-    s++;
-  }
-  return tok;
-}
-
 
 
 void* memset(void* v,int c,size_t n){

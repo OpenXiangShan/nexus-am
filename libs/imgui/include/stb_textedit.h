@@ -377,7 +377,6 @@ typedef struct
 #ifdef STB_TEXTEDIT_IMPLEMENTATION
 
 #ifndef STB_TEXTEDIT_memmove
-#include <string.h>
 #define STB_TEXTEDIT_memmove memmove
 #endif
 

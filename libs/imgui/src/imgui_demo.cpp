@@ -2113,18 +2113,18 @@ struct ExampleAppConsole
     {
         ClearLog();
         for (int i = 0; i < History.Size; i++)
-            free(History[i]);
+            kfree(History[i]);
     }
 
     // Portable helpers
     static int   Stricmp(const char* str1, const char* str2)         { int d; while ((d = toupper(*str2) - toupper(*str1)) == 0 && *str1) { str1++; str2++; } return d; }
     static int   Strnicmp(const char* str1, const char* str2, int n) { int d = 0; while (n > 0 && (d = toupper(*str2) - toupper(*str1)) == 0 && *str1) { str1++; str2++; n--; } return d; }
-    static char* Strdup(const char *str)                             { size_t len = strlen(str) + 1; void* buff = malloc(len); return (char*)memcpy(buff, (const void*)str, len); }
+    static char* Strdup(const char *str)                             { size_t len = strlen(str) + 1; void* buff = kalloc(len); return (char*)memcpy(buff, (const void*)str, len); }
 
     void    ClearLog()
     {
         for (int i = 0; i < Items.Size; i++)
-            free(Items[i]);
+            kfree(Items[i]);
         Items.clear();
         ScrollToBottom = true;
     }
@@ -2233,7 +2233,7 @@ struct ExampleAppConsole
         for (int i = History.Size-1; i >= 0; i--)
             if (Stricmp(History[i], command_line) == 0)
             {
-                free(History[i]);
+                kfree(History[i]);
                 History.erase(History.begin() + i);
                 break;
             }

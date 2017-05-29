@@ -16,6 +16,9 @@ extern "C" {
 #define NULL  ((void*)0)
 #endif
 
+void *kalloc(size_t);
+void kfree(void*);
+
 // string.h
 void* memset(void* v, int c, size_t n);
 void* memcpy(void* dst, const void* src, size_t n);
@@ -27,14 +30,14 @@ char* strcpy(char* dst, const char* src);
 char* strncpy(char* dst, const char* src, size_t n);
 int strcmp(const char* s1, const char* s2);
 int strncmp(const char* s1, const char* s2, size_t n);
-char* strtok(char* s,char* delim);
-char *strchr(const char *s, int c);
+char* strtok(char* s,const char* delim);
+char *strstr(const char *, const char *);
+const char *strchr(const char *s, int c);
 
 // stdlib.h
 int atoi(const char* nptr);
 int abs(int x);
 ulong time();
-char* strtok(char* s,char* delim);
 void srand(unsigned int seed);
 int rand();
 
@@ -66,6 +69,10 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, co
 // math.h
 float sqrtf(float);
 float fabsf(float);
+float floorf(float);
+float ceilf(float);
+float sinf(float);
+float cosf(float);
 float powf(float, float);
 float fmodf(float, float);
 float sqrtf(float);

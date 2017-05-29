@@ -397,40 +397,33 @@ int main(int arg, char **argv)
 
    // #define your own STBTT_ifloor/STBTT_iceil() to avoid math.h
    #ifndef STBTT_ifloor
-   #include <math.h>
-   #define STBTT_ifloor(x)   ((int) floor(x))
-   #define STBTT_iceil(x)    ((int) ceil(x))
+   #define STBTT_ifloor(x)   ((int) floorf(x))
+   #define STBTT_iceil(x)    ((int) ceilf(x))
    #endif
 
    #ifndef STBTT_sqrt
-   #include <math.h>
-   #define STBTT_sqrt(x)      sqrt(x)
+   #define STBTT_sqrt(x)      sqrtf(x)
    #endif
 
    #ifndef STBTT_fabs
-   #include <math.h>
-   #define STBTT_fabs(x)      fabs(x)
+   #define STBTT_fabs(x)      fabsf(x)
    #endif
 
    // #define your own functions "STBTT_malloc" / "STBTT_free" to avoid malloc.h
    #ifndef STBTT_malloc
-   #include <stdlib.h>
-   #define STBTT_malloc(x,u)  ((void)(u),malloc(x))
-   #define STBTT_free(x,u)    ((void)(u),free(x))
+   #define STBTT_malloc(x,u)  ((void)(u),kalloc(x))
+   #define STBTT_free(x,u)    ((void)(u),kfree(x))
    #endif
 
    #ifndef STBTT_assert
-   #include <assert.h>
    #define STBTT_assert(x)    assert(x)
    #endif
 
    #ifndef STBTT_strlen
-   #include <string.h>
    #define STBTT_strlen(x)    strlen(x)
    #endif
 
    #ifndef STBTT_memcpy
-   #include <memory.h>
    #define STBTT_memcpy       memcpy
    #define STBTT_memset       memset
    #endif
