@@ -15,7 +15,6 @@ SECTIONS {
   } > bram
   stack : {
     . += 1024;
-    . = ALIGN(4);
-    _stack_pointer = .;
+    _stack_pointer = ALIGN(4);
   } > bram
 } 
