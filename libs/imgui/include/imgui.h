@@ -14,7 +14,6 @@
 #include <float.h>          // FLT_MAX
 #include <stdarg.h>         // va_list
 #include <stddef.h>         // ptrdiff_t, NULL
-#include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
 #define IMGUI_VERSION       "1.50 WIP"
 
@@ -25,7 +24,6 @@
 
 // Define assertion handler.
 #ifndef IM_ASSERT
-#include <assert.h>
 #define IM_ASSERT(_EXPR)    assert(_EXPR)
 #endif
 

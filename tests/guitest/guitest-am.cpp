@@ -4,6 +4,14 @@
 static unsigned char *texture;
 static int t_width, t_height;
 
+void *kalloc(size_t size) {
+  return malloc(size);
+}
+
+void kfree(void *ptr) {
+  free(ptr);
+}
+
 float min(float a, float b, float c) {
   if (a <= b && a <= c) return a;
   if (b <= a && b <= c) return b;

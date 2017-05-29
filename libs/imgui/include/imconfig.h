@@ -6,6 +6,19 @@
 
 #pragma once
 
+#include <am.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+
+struct File {};
+
+void* kalloc(size_t);
+void kfree(void*);
+
 //---- Define assertion handler. Defaults to calling assert().
 //#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
 
