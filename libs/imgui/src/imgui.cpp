@@ -621,9 +621,6 @@
 #define IMGUI_DEFINE_PLACEMENT_NEW
 #include "imgui_internal.h"
 
-#include <ctype.h>      // toupper, isprint
-#include <stdlib.h>     // NULL, malloc, free, qsort, atoi
-#include <stdio.h>      // vsnprintf, sscanf, printf
 #include <limits.h>     // INT_MIN, INT_MAX
 #if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
 #include <stddef.h>     // intptr_t
@@ -820,8 +817,8 @@ ImGuiIO::ImGuiIO()
     DisplaySize = ImVec2(-1.0f, -1.0f);
     DeltaTime = 1.0f/60.0f;
     IniSavingRate = 5.0f;
-    IniFilename = "imgui.ini";
-    LogFilename = "imgui_log.txt";
+    IniFilename = NULL;
+    LogFilename = NULL;
     Fonts = &GImDefaultFontAtlas;
     FontGlobalScale = 1.0f;
     FontDefault = NULL;
@@ -843,8 +840,8 @@ ImGuiIO::ImGuiIO()
 
     // User functions
     RenderDrawListsFn = NULL;
-    MemAllocFn = malloc;
-    MemFreeFn = free;
+    MemAllocFn = kalloc;
+    MemFreeFn = kfree;
     GetClipboardTextFn = GetClipboardTextFn_DefaultImpl;   // Platform dependent default implementations
     SetClipboardTextFn = SetClipboardTextFn_DefaultImpl;
     ClipboardUserData = NULL;
@@ -1298,60 +1295,15 @@ void ImGui::ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float&
 
 FILE* ImFileOpen(const char* filename, const char* mode)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    // We need a fopen() wrapper because MSVC/Windows fopen doesn't handle UTF-8 filenames. Converting both strings from UTF-8 to wchar format (using a single allocation, because we can)
-    const int filename_wsize = ImTextCountCharsFromUtf8(filename, NULL) + 1;
-    const int mode_wsize = ImTextCountCharsFromUtf8(mode, NULL) + 1;
-    ImVector<ImWchar> buf;
-    buf.resize(filename_wsize + mode_wsize);
-    ImTextStrFromUtf8(&buf[0], filename_wsize, filename, NULL);
-    ImTextStrFromUtf8(&buf[filename_wsize], mode_wsize, mode, NULL);
-    return _wfopen((wchar_t*)&buf[0], (wchar_t*)&buf[filename_wsize]);
-#else
-    return fopen(filename, mode);
-#endif
+  return NULL;
 }
 
 // Load file content into memory
 // Memory allocated with ImGui::MemAlloc(), must be freed by user using ImGui::MemFree()
 void* ImFileLoadToMemory(const char* filename, const char* file_open_mode, int* out_file_size, int padding_bytes)
 {
-    IM_ASSERT(filename && file_open_mode);
-    if (out_file_size)
-        *out_file_size = 0;
-
-    FILE* f;
-    if ((f = ImFileOpen(filename, file_open_mode)) == NULL)
-        return NULL;
-
-    long file_size_signed;
-    if (fseek(f, 0, SEEK_END) || (file_size_signed = ftell(f)) == -1 || fseek(f, 0, SEEK_SET))
-    {
-        fclose(f);
-        return NULL;
-    }
-
-    int file_size = (int)file_size_signed;
-    void* file_data = ImGui::MemAlloc(file_size + padding_bytes);
-    if (file_data == NULL)
-    {
-        fclose(f);
-        return NULL;
-    }
-    if (fread(file_data, 1, (size_t)file_size, f) != (size_t)file_size)
-    {
-        fclose(f);
-        ImGui::MemFree(file_data);
-        return NULL;
-    }
-    if (padding_bytes > 0)
-        memset((void *)(((char*)file_data) + file_size), 0, padding_bytes);
-
-    fclose(f);
-    if (out_file_size)
-        *out_file_size = file_size;
-
-    return file_data;
+    assert(0);
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -2082,11 +2034,11 @@ void ImGui::SetCurrentContext(ImGuiContext* ctx)
 
 ImGuiContext* ImGui::CreateContext(void* (*malloc_fn)(size_t), void (*free_fn)(void*))
 {
-    if (!malloc_fn) malloc_fn = malloc;
+    assert(malloc_fn); assert(free_fn);
     ImGuiContext* ctx = (ImGuiContext*)malloc_fn(sizeof(ImGuiContext));
     IM_PLACEMENT_NEW(ctx) ImGuiContext();
     ctx->IO.MemAllocFn = malloc_fn;
-    ctx->IO.MemFreeFn = free_fn ? free_fn : free;
+    ctx->IO.MemFreeFn = free_fn;
     return ctx;
 }
 
@@ -2417,11 +2369,6 @@ void ImGui::Shutdown()
     g.InputTextState.InitialText.clear();
     g.InputTextState.TempTextBuffer.clear();
 
-    if (g.LogFile && g.LogFile != stdout)
-    {
-        fclose(g.LogFile);
-        g.LogFile = NULL;
-    }
     if (g.LogClipboard)
     {
         g.LogClipboard->~ImGuiTextBuffer();
@@ -2460,89 +2407,10 @@ static ImGuiIniData* AddWindowSettings(const char* name)
 // FIXME: Write something less rubbish
 static void LoadIniSettingsFromDisk(const char* ini_filename)
 {
-    ImGuiContext& g = *GImGui;
-    if (!ini_filename)
-        return;
-
-    int file_size;
-    char* file_data = (char*)ImFileLoadToMemory(ini_filename, "rb", &file_size, 1);
-    if (!file_data)
-        return;
-
-    ImGuiIniData* settings = NULL;
-    const char* buf_end = file_data + file_size;
-    for (const char* line_start = file_data; line_start < buf_end; )
-    {
-        const char* line_end = line_start;
-        while (line_end < buf_end && *line_end != '\n' && *line_end != '\r')
-            line_end++;
-
-        if (line_start[0] == '[' && line_end > line_start && line_end[-1] == ']')
-        {
-            char name[64];
-            ImFormatString(name, IM_ARRAYSIZE(name), "%.*s", (int)(line_end-line_start-2), line_start+1);
-            settings = FindWindowSettings(name);
-            if (!settings)
-                settings = AddWindowSettings(name);
-        }
-        else if (settings)
-        {
-            float x, y;
-            int i;
-            if (sscanf(line_start, "Pos=%f,%f", &x, &y) == 2)
-                settings->Pos = ImVec2(x, y);
-            else if (sscanf(line_start, "Size=%f,%f", &x, &y) == 2)
-                settings->Size = ImMax(ImVec2(x, y), g.Style.WindowMinSize);
-            else if (sscanf(line_start, "Collapsed=%d", &i) == 1)
-                settings->Collapsed = (i != 0);
-        }
-
-        line_start = line_end+1;
-    }
-
-    ImGui::MemFree(file_data);
 }
 
 static void SaveIniSettingsToDisk(const char* ini_filename)
 {
-    ImGuiContext& g = *GImGui;
-    g.SettingsDirtyTimer = 0.0f;
-    if (!ini_filename)
-        return;
-
-    // Gather data from windows that were active during this session
-    for (int i = 0; i != g.Windows.Size; i++)
-    {
-        ImGuiWindow* window = g.Windows[i];
-        if (window->Flags & ImGuiWindowFlags_NoSavedSettings)
-            continue;
-        ImGuiIniData* settings = FindWindowSettings(window->Name);
-        settings->Pos = window->Pos;
-        settings->Size = window->SizeFull;
-        settings->Collapsed = window->Collapsed;
-    }
-
-    // Write .ini file
-    // If a window wasn't opened in this session we preserve its settings
-    FILE* f = ImFileOpen(ini_filename, "wt");
-    if (!f)
-        return;
-    for (int i = 0; i != g.Settings.Size; i++)
-    {
-        const ImGuiIniData* settings = &g.Settings[i];
-        if (settings->Pos.x == FLT_MAX)
-            continue;
-        const char* name = settings->Name;
-        if (const char* p = strstr(name, "###"))  // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
-            name = p;
-        fprintf(f, "[%s]\n", name);
-        fprintf(f, "Pos=%d,%d\n", (int)settings->Pos.x, (int)settings->Pos.y);
-        fprintf(f, "Size=%d,%d\n", (int)settings->Size.x, (int)settings->Size.y);
-        fprintf(f, "Collapsed=%d\n", settings->Collapsed);
-        fprintf(f, "\n");
-    }
-
-    fclose(f);
 }
 
 static void MarkIniSettingsDirty()
@@ -2804,21 +2672,6 @@ const char* ImGui::FindRenderedTextEnd(const char* text, const char* text_end)
 // Pass text data straight to log (without being displayed)
 void ImGui::LogText(const char* fmt, ...)
 {
-    ImGuiContext& g = *GImGui;
-    if (!g.LogEnabled)
-        return;
-
-    va_list args;
-    va_start(args, fmt);
-    if (g.LogFile)
-    {
-        vfprintf(g.LogFile, fmt, args);
-    }
-    else
-    {
-        g.LogClipboard->appendv(fmt, args);
-    }
-    va_end(args);
 }
 
 // Internal version that takes a position to decide on newline placement and pad items according to their depth.
@@ -5793,7 +5646,7 @@ void ImGui::LogToTTY(int max_depth)
     ImGuiWindow* window = GetCurrentWindowRead();
 
     g.LogEnabled = true;
-    g.LogFile = stdout;
+    g.LogFile = NULL;
     g.LogStartDepth = window->DC.TreeDepth;
     if (max_depth >= 0)
         g.LogAutoExpandMaxDepth = max_depth;
@@ -5802,28 +5655,6 @@ void ImGui::LogToTTY(int max_depth)
 // Start logging ImGui output to given file
 void ImGui::LogToFile(int max_depth, const char* filename)
 {
-    ImGuiContext& g = *GImGui;
-    if (g.LogEnabled)
-        return;
-    ImGuiWindow* window = GetCurrentWindowRead();
-
-    if (!filename)
-    {
-        filename = g.IO.LogFilename;
-        if (!filename)
-            return;
-    }
-
-    g.LogFile = ImFileOpen(filename, "ab");
-    if (!g.LogFile)
-    {
-        IM_ASSERT(g.LogFile != NULL); // Consider this an error
-        return;
-    }
-    g.LogEnabled = true;
-    g.LogStartDepth = window->DC.TreeDepth;
-    if (max_depth >= 0)
-        g.LogAutoExpandMaxDepth = max_depth;
 }
 
 // Start logging ImGui output to clipboard
@@ -5843,25 +5674,6 @@ void ImGui::LogToClipboard(int max_depth)
 
 void ImGui::LogFinish()
 {
-    ImGuiContext& g = *GImGui;
-    if (!g.LogEnabled)
-        return;
-
-    LogText(IM_NEWLINE);
-    g.LogEnabled = false;
-    if (g.LogFile != NULL)
-    {
-        if (g.LogFile == stdout)
-            fflush(g.LogFile);
-        else
-            fclose(g.LogFile);
-        g.LogFile = NULL;
-    }
-    if (g.LogClipboard->size() > 1)
-    {
-        SetClipboardText(g.LogClipboard->begin());
-        g.LogClipboard->clear();
-    }
 }
 
 // Helper to display logging buttons

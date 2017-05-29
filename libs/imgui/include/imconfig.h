@@ -6,6 +6,13 @@
 
 #pragma once
 
+#include <klib.h>
+
+typedef struct FILE {} FILE;
+
+void* kalloc(size_t);
+void kfree(void*);
+
 //---- Define assertion handler. Defaults to calling assert().
 //#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
 

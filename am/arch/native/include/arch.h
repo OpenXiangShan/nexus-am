@@ -2,6 +2,7 @@
 #define __TYPES_H__
 
 #include <unistd.h>
+#include <sys/types.h>
 
 typedef char i8;
 typedef unsigned char u8;

@@ -4,19 +4,29 @@ $(info Building $(NAME) [$(ARCH)])
 include $(AM_HOME)/Makefile.check
 
 APP_DIR ?= $(shell pwd)
-INC_DIR += $(APP_DIR)/include/ $(AM_HOME)/libs/klib/
+INC_DIR += $(APP_DIR)/include/
 DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
 BINARY ?= $(APP_DIR)/build/$(NAME)-$(ARCH)
+
+INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 
 $(shell mkdir -p $(DST_DIR))
 
 include $(AM_HOME)/Makefile.compile
 
-LINK_FILES += $(AM_HOME)/am/build/am-$(ARCH).a $(OBJS)
-
-ifneq ($(ARCH), native)
-LINK_FILES += $(AM_HOME)/libs/klib/build/klib-$(ARCH).a
+ifeq ($(ARCH), native)
+LINKLIBS = $(filter-out klib, $(LIBS))
 endif
+
+LINK_FILES += $(AM_HOME)/am/build/am-$(ARCH).a $(OBJS)
+LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
+  $(addsuffix /build/, $(addprefix $(AM_HOME)/libs/, $(LINKLIBS))), \
+  $(LINKLIBS) \
+))
+
+#ifneq ($(ARCH), native)
+#LINK_FILES += $(AM_HOME)/libs/klib/build/klib-$(ARCH).a
+#endif
 
 .PHONY: app run clean
 app: $(OBJS)
