@@ -4,6 +4,9 @@
 static unsigned char *texture;
 static int t_width, t_height;
 
+void *malloc(size_t);
+void free(void*);
+
 void *kalloc(size_t size) {
   return malloc(size);
 }

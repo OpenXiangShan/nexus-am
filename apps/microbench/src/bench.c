@@ -69,7 +69,7 @@ int main() {
   _ioe_init();
 
   ulong bench_score = 0;
-  int pass = true;
+  int pass = 1;
 
   for (int i = 0; i < ARR_SIZE(benchmarks); i ++) {
     Benchmark *bench = &benchmarks[i];
@@ -79,7 +79,7 @@ int main() {
       printk("Ignored %s\n", msg);
     } else {
       ulong tsc = ULONG_MAX, msec = ULONG_MAX;
-      int succ = true;
+      int succ = 1;
       for (int i = 0; i < REPEAT; i ++) {
         Result res = run_once(bench);
         printk(res.pass ? "*" : "X");

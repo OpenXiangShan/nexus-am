@@ -6,15 +6,9 @@
 
 #pragma once
 
-#include <am.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+#include <klib.h>
 
-
-struct File {};
+typedef struct FILE {} FILE;
 
 void* kalloc(size_t);
 void kfree(void*);

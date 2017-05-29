@@ -2408,47 +2408,6 @@ static ImGuiIniData* AddWindowSettings(const char* name)
 // FIXME: Write something less rubbish
 static void LoadIniSettingsFromDisk(const char* ini_filename)
 {
-    ImGuiContext& g = *GImGui;
-    if (!ini_filename)
-        return;
-
-    int file_size;
-    char* file_data = (char*)ImFileLoadToMemory(ini_filename, "rb", &file_size, 1);
-    if (!file_data)
-        return;
-
-    ImGuiIniData* settings = NULL;
-    const char* buf_end = file_data + file_size;
-    for (const char* line_start = file_data; line_start < buf_end; )
-    {
-        const char* line_end = line_start;
-        while (line_end < buf_end && *line_end != '\n' && *line_end != '\r')
-            line_end++;
-
-        if (line_start[0] == '[' && line_end > line_start && line_end[-1] == ']')
-        {
-            char name[64];
-            ImFormatString(name, IM_ARRAYSIZE(name), "%.*s", (int)(line_end-line_start-2), line_start+1);
-            settings = FindWindowSettings(name);
-            if (!settings)
-                settings = AddWindowSettings(name);
-        }
-        else if (settings)
-        {
-            float x, y;
-            int i;
-            if (sscanf(line_start, "Pos=%f,%f", &x, &y) == 2)
-                settings->Pos = ImVec2(x, y);
-            else if (sscanf(line_start, "Size=%f,%f", &x, &y) == 2)
-                settings->Size = ImMax(ImVec2(x, y), g.Style.WindowMinSize);
-            else if (sscanf(line_start, "Collapsed=%d", &i) == 1)
-                settings->Collapsed = (i != 0);
-        }
-
-        line_start = line_end+1;
-    }
-
-    ImGui::MemFree(file_data);
 }
 
 static void SaveIniSettingsToDisk(const char* ini_filename)
@@ -2714,21 +2673,6 @@ const char* ImGui::FindRenderedTextEnd(const char* text, const char* text_end)
 // Pass text data straight to log (without being displayed)
 void ImGui::LogText(const char* fmt, ...)
 {
-    ImGuiContext& g = *GImGui;
-    if (!g.LogEnabled)
-        return;
-
-    va_list args;
-    va_start(args, fmt);
-    if (g.LogFile)
-    {
-        vfprintf(g.LogFile, fmt, args);
-    }
-    else
-    {
-        g.LogClipboard->appendv(fmt, args);
-    }
-    va_end(args);
 }
 
 // Internal version that takes a position to decide on newline placement and pad items according to their depth.
