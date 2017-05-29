@@ -19,7 +19,12 @@ def instr_check(fname):
   }
 
   insts = set()
-  for line in execute(["mips-linux-gnu-objdump", "-M", "no-aliases", "-d", fname]).split('\n'):
+  asm = execute(["mips-linux-gnu-objdump", "-M", "no-aliases", "-d", fname])
+
+  with open(fname + '.txt', 'w') as fp:
+    fp.write(asm)
+
+  for line in asm.split('\n'):
     m = INST.match(line.strip())
     if m:
       inst = m.group(3)
