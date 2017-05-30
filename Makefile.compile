@@ -4,11 +4,11 @@ depdest = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(1))))
 OBJS = $(call objdest, $(SRCS))
 DEPS = $(call depdest, $(SRCS))
 
-ifeq ($(ARCH), mips32-npc)
-CROSS_COMPILE = mips-linux-gnu-
-endif
-# TODO: refactor
-ifeq ($(ARCH), mips32-minimal)
+ARCH_SPLIT = $(subst -, ,$(ARCH))
+REAL_ARCH  = $(word 1,$(ARCH_SPLIT))
+PLATFORM   = $(word 2,$(ARCH_SPLIT))
+
+ifeq ($(REAL_ARCH), mips32)
 CROSS_COMPILE = mips-linux-gnu-
 endif
 
@@ -24,21 +24,15 @@ CXXFLAGS += -std=c++11 -O2 -MD -Wall -Werror -ggdb $(INCLUDES)
 ASFLAGS  +=            -MD $(INCLUDES)
 
 # Arch-dependent compilation flags
-ifeq ($(ARCH), mips32-npc)
+ifeq ($(REAL_ARCH), mips32)
 CXX = $(CROSS_COMPILE)g++-5
-CFLAGS   += -MD -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL
-CXXFLAGS += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -ffreestanding -fno-rtti -fno-exceptions -mno-check-zero-division -EL
-ASFLAGS  += -march=mips32 -EL -MD -mno-check-zero-division -O0 -mno-abicalls -fno-pic -fno-delayed-branch
-endif
-ifeq ($(ARCH), mips32-minimal)
-CXX = $(CROSS_COMPILE)g++-5
-CFLAGS   += -MD -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL
-CFLAGS   += -mno-llsc -mno-imadd -mno-mad
-CXXFLAGS += -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -ffreestanding -fno-rtti -fno-exceptions -mno-check-zero-division -EL
-ASFLAGS  += -march=mips32 -EL -MD -mno-check-zero-division -O0 -mno-abicalls -fno-pic -fno-delayed-branch
+CFLAGS_COMMON = -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL -mno-llsc -mno-imadd -mno-mad
+CFLAGS   += $(CFLAGS_COMMON)
+CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
+ASFLAGS  += -march=mips32 -EL -mno-check-zero-division -O0 -mno-abicalls -fno-pic -fno-delayed-branch
 endif
 
-ifeq ($(ARCH), x86-qemu)
+ifeq ($(REAL_ARCH), x86)
 CFLAGS   += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer
 CXXFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -ffreestanding -fno-rtti -fno-exceptions
 ASFLAGS  += -m32
