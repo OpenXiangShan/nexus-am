@@ -9,7 +9,7 @@ int cube(int n) {
 int main() {
 	int n, n2, n1, n0;
 	int k = 0;
-	for(n = 100; n < 1000; n ++) {
+	for(n = 100; n < 500; n ++) {
 		n2 = n / 100;
 		n1 = (n / 10) % 10;
 		n0 = n % 10;
@@ -21,8 +21,6 @@ int main() {
 	}
 
 	nemu_assert(k == 4);
-
-	HIT_GOOD_TRAP;
 
 	return 0;
 }

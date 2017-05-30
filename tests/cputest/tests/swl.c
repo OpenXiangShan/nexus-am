@@ -10,7 +10,5 @@ int main() {
 	x = *((unsigned*)0x1003);
 	nemu_assert(x == 0xaabbccdd);
 
-	HIT_GOOD_TRAP;
-
 	return 0;
 }

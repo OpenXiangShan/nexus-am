@@ -9,7 +9,5 @@ int main() {
 					"movl $14, %edx;"	// length
 					"int $0x80");
 
-	HIT_GOOD_TRAP;
-
 	return 0;
 }
