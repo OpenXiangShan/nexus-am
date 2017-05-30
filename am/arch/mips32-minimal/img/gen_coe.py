@@ -48,9 +48,24 @@ def gen_coe(fname):
         [",", ";"][0 if i + 4 < len(bins) else 1] ) )
     f.close()
 
+def gen_mif(fname):
+  with open(fname + '.coe', 'r') as fp:
+    contents = fp.read()
+    fp.close()
+  data = re.findall('[0-9a-f]{8}', contents, re.M)
+  with open(fname + '.mif', 'w') as f:
+    for i in range(0, len(data)):
+      f.write(bin(int(data[i], 16))[2:].zfill(32))
+      if i != len(data) - 1:
+        f.write('\n')
+    f.close()
+    
+
 binary = sys.argv[1]
 insts = instr_check(binary)
 print "There are {0} instructions:".format(len(insts))
 print "  {0}".format(" ".join([i.upper() for i in insts]))
 
+# don't change the order
 gen_coe(binary)
+gen_mif(binary)
