@@ -16,6 +16,8 @@ include $(AM_HOME)/Makefile.compile
 
 ifeq ($(ARCH), native)
 LINKLIBS = $(filter-out klib, $(LIBS))
+else
+LINKLIBS = $(LIBS)
 endif
 
 LINK_FILES += $(AM_HOME)/am/build/am-$(ARCH).a $(OBJS)
@@ -24,13 +26,10 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
   $(LINKLIBS) \
 ))
 
-#ifneq ($(ARCH), native)
-#LINK_FILES += $(AM_HOME)/libs/klib/build/klib-$(ARCH).a
-#endif
-
 .PHONY: app run clean
 app: $(OBJS)
 	@cd $(AM_HOME) && make ARCH=$(ARCH)
+	@echo $(LINK_FILES)
 	@$(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
 run: app
 	@$(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
