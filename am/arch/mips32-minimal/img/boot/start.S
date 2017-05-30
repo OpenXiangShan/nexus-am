@@ -3,4 +3,4 @@
   
 _start:
   la $sp, _stack_pointer
-  j main
+  j _trm_init
