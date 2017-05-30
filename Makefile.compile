@@ -19,9 +19,9 @@ LD = $(CROSS_COMPILE)ld
 
 # Basic compilation flags
 INCLUDES = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/ -I$(AM_HOME)/am/arch/$(ARCH)/include
-CFLAGS   += -std=gnu99 -O2 -MD -Wall -Werror -ggdb $(INCLUDES)
-CXXFLAGS += -std=c++11 -O2 -MD -Wall -Werror -ggdb $(INCLUDES)
-ASFLAGS  +=            -MD $(INCLUDES)
+CFLAGS   += -std=gnu99 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES)
+CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES)
+ASFLAGS  +=            -MMD $(INCLUDES)
 
 # Arch-dependent compilation flags
 ifeq ($(REAL_ARCH), mips32)
