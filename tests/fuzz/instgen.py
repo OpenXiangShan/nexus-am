@@ -1,7 +1,13 @@
 #!/usr/bin/python
 
-import random
-# random.seed(10)
+import random, tempfile, subprocess
+
+def execute(commands):
+  p = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  (out, err) = p.communicate()
+  if p.returncode != 0:
+    raise Exception("Execute {0} fail".format(' '.join(commands)))
+  return out
 
 def gen(n, arr_len, var):
   VARS = [ "a[{0}]".format(i) for i in range(0, arr_len) ] + var
@@ -61,13 +67,13 @@ u32 {1};
     return gen_rval(random.randint(0, lim))
 
   def gen_block():
-    program.append("  {0} = {1};".format(L(), R()) )
+    for x in range(0, random.randint(1, 5)):
+      program.append("  {0} = {1};".format(L(), R()) )
   def gen_cond():
-    program.append( "  if ({0} < {1})".format(R(1), R(1)), )
+    program.append( "  if (({0}) {1} ({2}))".format(R(1), random.choice(["<", ">", "!=", "=="]), R(1)), )
 
   for i in range(0, n):
     program.append( "Label{0}:".format(i) )
-    program.append( "  asm volatile(\"\":::\"memory\");" )
     program.append( "  S ++;")
 
     now = i
@@ -87,7 +93,8 @@ u32 {1};
   program.append( '}\n' )
 
   def gen_print():
-    return '\n'.join( [ '  printf("0x%08x\\n", {0});'.format(v) for v in VARS ] )
+    return '\n'.join( [ '  printf("0x%08x\\n", {0});'.format(v) for v in VARS ] + 
+                      [ '  printf("%d\\n", S);' ])
       
   code_pr = '''
 #include <stdio.h>
@@ -100,8 +107,31 @@ int main() {
   f();
 ''' + gen_print() + "\n  return 0;\n}\n"
 
-  print code_pr
+  fp = tempfile.NamedTemporaryFile(suffix = ".c", delete = False)
+  fp.write(code_pr)
+  fp.close()
 
-gen(1024, 3, ["x", "y", "z", "u", "v", "w"])
+  cfile = fp.name
+  execute(["gcc", "-m32", cfile, "-o", cfile + ".exe"])
+  ans = execute([cfile + ".exe"])
+
+  def gen_assert(ans):
+    return '\n'.join( [ '  nemu_assert({0} == {1});'.format(v, a) for (v, a) in zip(VARS + ['S'], ans) ] )
 
 
+  return '''
+#include <am.h>
+#include "trap.h"
+#pragma GCC diagnostic ignored "-Wunused-label"
+
+u32 S = 0;
+''' + '\n'.join(program) + '''
+int main() {
+  f();
+''' + gen_assert(ans.strip().split('\n')) + '''
+  HIT_GOOD_TRAP;
+  return 0;
+}
+'''
+
+print gen(16, 3, ["x", "y", "z", "u", "v", "w"])
