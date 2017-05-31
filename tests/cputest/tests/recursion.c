@@ -35,8 +35,6 @@ int f3(int n, int l) {
   return n <= 0 ? 1 : func[2](n / 2, l + 1) * 3 + func[2](n / 2, l + 1) * 2;
 };
 
-#include <stdio.h>
-
 int ans[] = {1269520, 1274, 30};
 
 int main() {
