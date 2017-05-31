@@ -11,4 +11,4 @@ _start:
 
 .org EX_ENTRY
 _ex_entry:
-  j _trap
+  j _trap_entry
