@@ -8,6 +8,7 @@ int main(){
   _ioe_init();
   _asye_init();
   init_idle();
+  create_kthread((size_t)umain);
   _ienable();
   while(1){
     _putc('^');

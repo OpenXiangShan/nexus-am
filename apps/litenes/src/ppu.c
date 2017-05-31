@@ -18,7 +18,7 @@ byte ppu_screen_background[264][248];
 void draw(int x, int y, int idx) {
   if (x >= 0 && y >= 0 && x < W && y < H) {
 //    _draw_p(x, y, palette[idx]);
-    canvas[x][y] = idx;
+    canvas[y][x] = idx;
   }
 }
 
@@ -136,51 +136,59 @@ inline void ppu_ram_write(word address, byte data)
 
 // Rendering
 
+#define LOOP(x) \
+    { \
+        byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1); \
+        if (color != 0) { \
+            int idx = ppu_ram_read(palette_address + color); \
+            ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color; \
+            draw(scroll_base + x, ppu.scanline + 1, idx); \
+        } \
+    }
+
 void ppu_draw_background_scanline(bool mirror)
 {
-    int tile_x;
+    int tile_x, tile_y = ppu.scanline >> 3;
+    int taddr = ppu_base_nametable_address() + (tile_y << 5) + (mirror ? 0x400 : 0);
+    int y_in_tile = ppu.scanline & 0x7;
+    int scroll_base = - ppu.PPUSCROLL_X + (mirror ? 256 : 0);
+    word attribute_address = (ppu_base_nametable_address() + (mirror ? 0x400 : 0) + 0x3C0 +  -1 + ((ppu.scanline >> 5) << 3));
+
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < 32; tile_x++) {
         // Skipping off-screen pixels
         if (((tile_x << 3) - ppu.PPUSCROLL_X + (mirror ? 256 : 0)) > 256)
             continue;
 
-        int tile_y = ppu.scanline >> 3;
-        int tile_index = ppu_ram_read(ppu_base_nametable_address() + tile_x + (tile_y << 5) + (mirror ? 0x400 : 0));
-        word tile_address = ppu_background_pattern_table_address() + 16 * tile_index;
+        int tile_index = ppu_ram_read(taddr);
+        word tile_address = ppu_background_pattern_table_address() + (tile_index << 4);
 
-        int y_in_tile = ppu.scanline & 0x7;
         byte l = ppu_ram_read(tile_address + y_in_tile);
         byte h = ppu_ram_read(tile_address + y_in_tile + 8);
 
-        int x;
-        for (x = 0; x < 8; x++) {
-            byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-
-            // Color 0 is transparent
-            if (color != 0) {
-                
-                word attribute_address = (ppu_base_nametable_address() + (mirror ? 0x400 : 0) + 0x3C0 + (tile_x >> 2) + (ppu.scanline >> 5) * 8);
-                bool top = (ppu.scanline % 32) < 16;
-                bool left = (tile_x % 32 < 16);
-
-                byte palette_attribute = ppu_ram_read(attribute_address);
-
-                if (!top) {
-                    palette_attribute >>= 4;
-                }
-                if (!left) {
-                    palette_attribute >>= 2;
-                }
-                palette_attribute &= 3;
-
-                word palette_address = 0x3F00 + (palette_attribute << 2);
-                int idx = ppu_ram_read(palette_address + color);
-
-                ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color;
-                
-                draw((tile_x << 3) + x - ppu.PPUSCROLL_X + (mirror ? 256 : 0), ppu.scanline + 1, idx); // bg
-            }
+        attribute_address += (tile_x & 3) == 0;
+        bool top = (ppu.scanline & 31) < 16;
+        bool left = ((tile_x & 31) < 16);
+        byte palette_attribute = ppu_ram_read(attribute_address);
+        if (!top) {
+            palette_attribute >>= 4;
         }
+        if (!left) {
+            palette_attribute >>= 2;
+        }
+        palette_attribute &= 3;
+        word palette_address = 0x3F00 + (palette_attribute << 2);
+
+        LOOP(0)
+        LOOP(1)
+        LOOP(2)
+        LOOP(3)
+        LOOP(4)
+        LOOP(5)
+        LOOP(6)
+        LOOP(7)
+
+        taddr ++;
+        scroll_base += 8;
     }
 }
 

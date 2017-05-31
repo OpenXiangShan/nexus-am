@@ -9,7 +9,7 @@
 #define SLEEP 1
 #define READY 0
 #define FREE 2
-#define time_chips 1000
+#define time_chips 10
 #define STACK_SIZE 4096
 
 typedef struct p_task_table{

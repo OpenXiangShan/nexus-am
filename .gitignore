@@ -4,6 +4,7 @@
 *.o
 *.d
 *.pyc
+*.ini
 tags
 cscope.*
-/build
+build/

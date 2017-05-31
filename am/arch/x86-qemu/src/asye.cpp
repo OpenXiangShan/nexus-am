@@ -1,11 +1,11 @@
 #include <am.h>
 #include <x86.h>
+#include <am-x86.h>
 #include <stdarg.h>
 
-static _RegSet* (*H)(int, _RegSet*) = nullptr;
+extern "C" { int printk(const char *, ...); }
 
-const int PORT_PIC_MS = 0x20;
-const int PORT_PIC_SL = 0xA0;
+static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
 
 extern "C" {
 void irq0();
@@ -31,12 +31,10 @@ void irqall();
 
 extern TSS tss[];
 
-void lapic_eoi();
-
 void irq_handle(TrapFrame *tf) {
   _RegSet regs = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
-    .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp = 0,
+    .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp3 = 0,
     .eip = tf->eip, .eflags = tf->eflags,
     .cs = tf->cs, .ds = tf->ds, .es = tf->es, .ss = 0,
     .ss0 = 0, .esp0 = 0,
@@ -45,20 +43,29 @@ void irq_handle(TrapFrame *tf) {
   if (tf->irq >= 32 && tf->irq < 64) {
     lapic_eoi();
   }
+
+
+  _Event ev;
   
   if (tf->cs & DPL_USER) { // interrupt at user code
     regs.ss = tf->ss;
-    regs.esp = tf->esp;
+    regs.esp3 = tf->esp;
     regs.ss0 = KSEL(SEG_KDATA);
     regs.esp0 = (u32)tf + 68;
   } else { // interrupt at kernel code
     regs.ss0 = KSEL(SEG_KDATA);
     regs.esp0 = (u32)tf + 60; // the %esp before interrupt
   }
-  
+
+  ev.event = _EVENT_NULL;
+  if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
+  else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
+  else if (tf->irq == 0x80) ev.event = _EVENT_SYSCALL;
+  else if (tf->irq < 32) ev.event = _EVENT_ERROR;
+
   _RegSet *ret = &regs;
   if (H) {
-    _RegSet *next = H(tf->irq, &regs);
+    _RegSet *next = H(ev, &regs);
     if (next != nullptr) {
       ret = next;
     }
@@ -93,7 +100,7 @@ void irq_handle(TrapFrame *tf) {
       "nop;"
     : : "m"(ret->esp0),
         "m"(ret->ss),
-        "m"(ret->esp),
+        "m"(ret->esp3),
         "m"(ret->eflags),
         "m"(ret->cs),
         "m"(ret->eip),
@@ -154,7 +161,12 @@ void irq_handle(TrapFrame *tf) {
 
 static GateDesc idt[NR_IRQ];
 
+
 void _asye_init() {
+  smp_init();
+  lapic_init();
+  ioapic_enable(IRQ_KBD, 0);
+
   // init IDT
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
     idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
@@ -183,19 +195,20 @@ void _asye_init() {
   // -------------------- system call --------------------------
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
   set_idt(idt, sizeof(idt));
+
 }
 
 void _idle() {
   hlt();
 }
 
-void _listen(_RegSet*(*h)(int, _RegSet*)) {
+void _listen(_RegSet*(*h)(_Event, _RegSet*)) {
   H = h;
 }
 
 _RegSet *_make(_Area stack, void *entry) {
   _RegSet *regs = (_RegSet*)stack.start;
-  regs->esp = reinterpret_cast<u32>(stack.end);
+  regs->esp0 = reinterpret_cast<u32>(stack.end);
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
   regs->eip = (u32)entry;

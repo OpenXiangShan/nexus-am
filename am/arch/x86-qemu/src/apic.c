@@ -1,3 +1,5 @@
+// code from xv6
+
 #include <am.h>
 #include <x86.h>
 
@@ -46,7 +48,7 @@ lapicw(int index, int value)
 //PAGEBREAK!
 
 void
-init_lapic(void)
+lapic_init(void)
 {
   // Enable local APIC; set spurious interrupt vector.
   lapicw(SVR, ENABLE | (T_IRQ0 + IRQ_SPURIOUS));
@@ -88,8 +90,7 @@ init_lapic(void)
   lapicw(TPR, 0);
 }
 
-int
-current_cpu(void)
+int _cpu(void)
 {
   return lapic[ID] >> 24;
 }
@@ -197,7 +198,7 @@ ioapicwrite(int reg, uint data)
 }
 
 void
-init_ioapic(void)
+ioapic_init(void)
 {
   int i, maxintr;
 

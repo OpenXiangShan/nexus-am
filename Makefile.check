@@ -1,0 +1,8 @@
+ifneq ($(MAKECMDGOALS),clean)
+ifeq ($(AM_HOME),)
+$(error Variable AM_HOME must be defined.)
+endif
+ifndef ARCH
+$(error Variable ARCH must be defined. Examples: native, x86-qemu, mips32-npc)
+endif
+endif

@@ -3,6 +3,6 @@
 
 int umain(){
   printk("jump into umain");
-  _halt(0);
+  while(1);
   return 0;
 }
