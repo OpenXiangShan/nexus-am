@@ -67,16 +67,75 @@ void irq_handle(struct TrapFrame *tf){
 //TODO:handle interrupt
   u32 arg = 0;
   u32 intr = 0;
+  u8  IPCode = 0;
+  u8  ExcCode = 0;
+  u32 EPC = 0;
+  u32 BadVaddr = 0;
   asm volatile("add %0,$k1,$zero\n\t":"=r"(arg));
   asm volatile("add %0,$k0,$zero\n\t":"=r"(intr));
+  asm volatile("mfc0 %0, $14\n\t":"=r"(EPC));
+  asm volatile("mfc0 %0, $8\n\t":"=r"(BadVaddr));
   tf = (void *)arg;
-  switch(intr){
-    case 0x7://time interrupt
-    {
-      _time_event();
-      u32 count= GetCount(0);
-      SetCompare(count + INTERVAL);
-    }break;
+  IPCode = (intr & 0xff00) >> 8;
+  ExcCode = (intr & 0xff) >> 2;
+  switch(ExcCode){
+    case 0:{ //interrupt
+      switch(IPCode){
+      	case 0x80: // time interrupt
+      	{
+            _time_event();
+            u32 count= GetCount(0);
+            SetCompare(count + INTERVAL);
+      	}
+      	break;
+      	default:_halt(0);
+      }
+    }
+    break;
+    case 4:{ //AdEL
+      printk("AdEL\n");
+      printk("$epc = 0x%x\n", EPC);
+      printk("$BadVaddr = 0x%x\n", BadVaddr);
+      _halt(0);
+    }
+    break;
+    case 5:{ //AdES
+      printk("AdES\n");
+      printk("$epc = 0x%x\n", EPC);
+      printk("$BadVaddr = 0x%x\n", BadVaddr);
+      _halt(0);
+    }
+    break;
+    case 8:{ // syscall
+      printk("syscall\n");
+      EPC += 4;
+      asm volatile("mtc0 %0, $14\n\t"::"g"(EPC));
+    }
+    break;
+    case 9:{ // breakpoint
+      printk("Break\n");
+      EPC += 4;
+      asm volatile("mtc0 %0, $14\n\t"::"g"(EPC));
+    }
+    break;
+    case 10:{ // invalid instruction
+      printk("Invalid instruction\n");
+      _halt(0);
+    }
+    break;
+    case 12:{ // overflow
+      printk("Overflow\n");
+      EPC += 4;
+      asm volatile("mtc0 %0, $14\n\t"::"g"(EPC));
+    }
+    break;
+    case 13:{ // trap
+      printk("Trap\n");
+      EPC += 4;
+      asm volatile("mtc0 %0, $14\n\t"::"g"(EPC));
+      _halt(0);
+    }
+    break;
     default:_halt(0);
   }
 }
