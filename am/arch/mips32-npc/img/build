@@ -6,13 +6,9 @@ shift
 
 bash -c "cd $DIR/boot && make"
 
-mips-linux-gnu-ld -EL -T $DIR/loader.ld -e _start -o ${DEST}.o $DIR/boot/start.o --start-group $@ --end-group
-
-# generate COE
-mips-linux-gnu-objdump -d ${DEST}.o > ${DEST}.code.txt
-mips-linux-gnu-objcopy -O binary ${DEST}.o ${DEST}.bin
-python $DIR/scripts/gen_bram_coe.py ${DEST}.bin ${DEST}.coe
-
-# check instructions
+mips-linux-gnu-ld -EL -T $DIR/loader.ld -e _start -o ${DEST}.o $DIR/boot/start.o --start-group $@ --end-group &&  \
+mips-linux-gnu-objdump -d ${DEST}.o > ${DEST}.code.txt && \
+mips-linux-gnu-objcopy -O binary ${DEST}.o ${DEST}.bin && \
+python $DIR/scripts/gen_bram_coe.py ${DEST}.bin ${DEST}.coe && \
 mips-linux-gnu-objdump -d ${DEST}.o | python $DIR/scripts/instr_check.py
 

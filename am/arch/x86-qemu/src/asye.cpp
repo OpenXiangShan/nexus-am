@@ -58,15 +58,16 @@ void irq_handle(TrapFrame *tf) {
     regs.esp0 = (u32)tf + 60; // the %esp before interrupt
   }
 
+  args[0] = regs.eax;
+  args[1] = regs.edx;
+  args[2] = regs.ecx;
+  args[3] = regs.ebx;
+
   ev.event = _EVENT_NULL;
   if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
     ev.event = _EVENT_SYSCALL;
-    args[0] = regs.eax;
-    args[1] = regs.edx;
-    args[2] = regs.ecx;
-    args[3] = regs.ebx;
     ev.cause = args;
   }
   else if (tf->irq < 32) ev.event = _EVENT_ERROR;
@@ -76,6 +77,7 @@ void irq_handle(TrapFrame *tf) {
     _RegSet *next = H(ev, &regs);
     if (next != nullptr) {
       ret = next;
+      ret->eax = args[0];
     }
   }
 
@@ -224,9 +226,8 @@ _RegSet *_make(_Area stack, void *entry) {
   return regs;
 }
 
-int _trap(int num, int check, u32 args1, u32 args2) {
-  asm volatile("int $0x80"::"a"(num),"d"(check),"c"(args1),"b"(args2));
-  return args[0];
+void _trap() {
+  asm volatile("int $0x80");
 }
 
 void _idisable() {
