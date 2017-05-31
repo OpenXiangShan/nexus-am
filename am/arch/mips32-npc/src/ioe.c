@@ -90,6 +90,38 @@ void _draw_p(int x, int y, _Pixel p) {
 void _draw_sync() {
 }
 
+static inline int upevent(int e) { return e; }
+static inline int downevent(int e) { return e | 0x8000; }
+
+int pre_key = _KEY_NONE;
+
 int _read_key(){
-  return 0;
+  int key_code = in_byte();
+  switch(key_code){
+    case 'a':{
+      if(pre_key != _KEY_A) { int t = pre_key; pre_key = _KEY_A; return upevent(t);}
+      else { pre_key = _KEY_A; return downevent(_KEY_A);}
+    }
+    case 's':{
+      if(pre_key != _KEY_S) { int t = pre_key; pre_key = _KEY_S; return upevent(t);}
+      else { pre_key = _KEY_S; return downevent(_KEY_S);}
+    }
+    case 'w':{
+      if(pre_key != _KEY_W) { int t = pre_key; pre_key = _KEY_W; return upevent(t);}
+      else { pre_key = _KEY_W; return downevent(_KEY_W);}
+    }
+    case 'd':{
+      if(pre_key != _KEY_D) { int t = pre_key; pre_key = _KEY_D; return upevent(t);}
+      else { pre_key = _KEY_D; return downevent(_KEY_D);}
+    }
+    case 'y':{
+      if(pre_key != _KEY_Y) { int t = pre_key; pre_key = _KEY_Y; return upevent(t);}
+      else { pre_key = _KEY_Y; return downevent(_KEY_Y);}
+    }
+    case 'g':{
+      if(pre_key != _KEY_G) { int t = pre_key; pre_key = _KEY_G; return upevent(t);}
+      else { pre_key = _KEY_G; return downevent(_KEY_G);}
+    }
+    default:{int t = pre_key; pre_key = _KEY_NONE; return upevent(t);}
+  }
 }
