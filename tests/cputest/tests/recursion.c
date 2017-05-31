@@ -35,13 +35,12 @@ int f3(int n, int l) {
   return n <= 0 ? 1 : func[2](n / 2, l + 1) * 3 + func[2](n / 2, l + 1) * 2;
 };
 
-int ans[] = {1269520, 1274, 30};
+int ans[] = {38270, 218, 20};
 
 int main() {
-  int x = func[0](1437128, 0);
+  int x = func[0](14371, 0);
   assert(x == ans[0]);   // answer
   assert(rec == ans[1]); // # recursions
   assert(lvl == ans[2]); // max depth
-  HIT_GOOD_TRAP;
   return 0;
 }
