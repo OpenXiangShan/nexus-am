@@ -54,8 +54,6 @@ void draw_string(const char *str, int x, int y, _Pixel p) {
 }
 
 void vga_init(){
-_putc('o');
-_putc('k');
   _screen.width = SCR_WIDTH;
   _screen.height = SCR_HEIGHT;
   fb = VMEM_ADDR;
