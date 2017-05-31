@@ -11,5 +11,5 @@ _start:
 
 .org 0x20
 _ex_entry:
-  la $k0, _trap
+  la $k0, _trap_entry
   jr $k0
