@@ -9,14 +9,12 @@ LIST_HEAD(freeq_h);
 LIST_HEAD(blockq_h);
 u16 pcb_avls = 0;	//pcb available index
 _Area stack;
+extern int umain();
 
 extern void schedule();
 
 _RegSet* handle(int irq, _RegSet *r){
-printk("%d",irq);
   switch(irq){
-    case 8:return r;
-    case 13:return r;
     default:_halt(irq);return r;
   }
 }
@@ -24,10 +22,11 @@ printk("%d",irq);
 void init_idle(){
   PCB *pcb = &(PCBs[pcb_avls]);
   current = pcb;
-  //first thread not need to save regs
   current->pid = 0;
+  stack.start = current->p_stack;
+  stack.end = current->p_stack + STACK_SIZE;
+  current->sf = _make(stack,umain);
   current->state = READY;
-  current->sf = (void *)current->p_stack;
   current->time_count = 0;
   current->sleep_time = 0;
   current->lock_depth = 0;

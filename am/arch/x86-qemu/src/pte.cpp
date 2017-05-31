@@ -28,7 +28,7 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
   set_tr(KSEL(SEG_TSS));
 
-  /*PDE *kpdir = kpdirs[_cpu()];
+  PDE *kpdir = kpdirs[_cpu()];
   PDE *alloc = kptabs[_cpu()];
   for (auto &seg: segments) {
     PTE *ptab = nullptr;
@@ -43,7 +43,7 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   }
   
   set_cr3(kpdir);
-  set_cr0(get_cr0() | CR0_PG);*/
+  set_cr0(get_cr0() | CR0_PG);
 }
 
 void _protect(_Protect *p) {
