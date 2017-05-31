@@ -13,6 +13,7 @@ void schedule() {
     int i;
     for(i = 0; PCBs[i].state_list.next != tmp->next && PCBs[i].state_list.prev != tmp->prev; i++);
     PCB *next = (void *)&(PCBs[i]);
+    printk("next = %s",next->name);
     //fresh new pcb time count
     if(current->pid != 0){
       current->time_count = time_chips;

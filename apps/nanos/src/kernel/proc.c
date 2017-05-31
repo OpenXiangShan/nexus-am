@@ -1,6 +1,7 @@
 #include <am.h>
 #include <klib.h>
 #include "pcb.h"
+#include "irq.h"
 
 PCB PCBs[NR_PCBS];
 PCB *current;
@@ -9,25 +10,6 @@ LIST_HEAD(freeq_h);
 LIST_HEAD(blockq_h);
 u16 pcb_avls = 0;	//pcb available index
 _Area stack;
-
-extern void schedule();
-
-_RegSet* handle(_Event ev, _RegSet *r){
-  switch(ev.event){
-    case _EVENT_IRQ_TIME: {
-      memcpy(current->sf, r, sizeof(struct _RegSet));
-      if(current->time_count == 0){
-        schedule();
-      }
-      else{
-        _putc('-');
-        current->time_count--;
-      }
-      return current->sf;
-    }
-    default:_halt(ev.event);return r;
-  }
-}
 
 void init_idle(){
   PCB *pcb = &(PCBs[pcb_avls]);
@@ -58,8 +40,26 @@ PCB *create_kthread(size_t entry){
   pcb->sleep_time = 0;
 
   pcb->state = READY;
-  strcpy(pcb->name,"PCB");
+  strcpy(pcb->name,"PCB0");
   pcb_avls++;
   list_add(&(pcb->state_list),&readyq_h);
   return pcb;
+}
+
+int sys_fork(){
+  assert(pcb_avls < NR_PCBS);
+  PCB *pcb = &(PCBs[pcb_avls]);
+  pcb->pid = pcb_avls;	//use index to define pid
+  pcb->lock_depth = 0;
+
+  pcb->sf = (void *)pcb->p_stack;
+  memcpy(pcb->sf,current->sf,sizeof(struct _RegSet));
+  pcb->time_count = time_chips;
+  pcb->sleep_time = 0;
+
+  pcb->state = READY;
+  strcpy(pcb->name,"PCB1");
+  pcb_avls++;
+  list_add(&(pcb->state_list),&readyq_h);
+  return 0;
 }

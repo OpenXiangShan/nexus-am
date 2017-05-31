@@ -93,7 +93,7 @@ extern _Screen _screen;
 void _asye_init();
 void _listen(_RegSet* (*l)(_Event ev, _RegSet *regs));
 _RegSet *_make(_Area kstack, void *entry);
-void _trap();
+int _trap(int num, int check, u32 args1, u32 args2);
 void _idle();
 void _ienable();
 void _idisable();

@@ -6,6 +6,7 @@
 extern "C" { int printk(const char *, ...); }
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
+static u32 args[4];
 
 extern "C" {
 void irq0();
@@ -60,7 +61,14 @@ void irq_handle(TrapFrame *tf) {
   ev.event = _EVENT_NULL;
   if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
-  else if (tf->irq == 0x80) ev.event = _EVENT_SYSCALL;
+  else if (tf->irq == 0x80) {
+    ev.event = _EVENT_SYSCALL;
+    args[0] = regs.eax;
+    args[1] = regs.edx;
+    args[2] = regs.ecx;
+    args[3] = regs.ebx;
+    ev.cause = args;
+  }
   else if (tf->irq < 32) ev.event = _EVENT_ERROR;
 
   _RegSet *ret = &regs;
@@ -216,8 +224,9 @@ _RegSet *_make(_Area stack, void *entry) {
   return regs;
 }
 
-void _trap() {
-  asm volatile("int $0x80");
+int _trap(int num, int check, u32 args1, u32 args2) {
+  asm volatile("int $0x80"::"a"(num),"d"(check),"c"(args1),"b"(args2));
+  return args[0];
 }
 
 void _idisable() {

@@ -51,6 +51,11 @@ int sscanf(const char *str, const char *format, ...);
 
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 
+//unistd.h
+int fork(void);
+void sleep(ulong time);
+void exit(int status);
+
 #define printk printf
 
 // assert.h

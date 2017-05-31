@@ -5,7 +5,7 @@
 #include <klib.h>
 #include "list.h"
 
-#define NR_PCBS 3
+#define NR_PCBS 10
 #define SLEEP 1
 #define READY 0
 #define FREE 2
@@ -31,6 +31,7 @@ extern u16 pcb_avls;
 
 void init_idle();
 PCB *create_kthread(size_t entry);
+void schedule();
 int sys_fork();
 void sys_sleep();
 void sys_wakeup(u32 time);
