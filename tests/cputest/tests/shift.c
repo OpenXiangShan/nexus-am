@@ -34,7 +34,5 @@ int main() {
 		nemu_assert((test[i] >> (i + 4)) == srlv_ans[i]);
 	}
 
-	HIT_GOOD_TRAP;
-
 	return 0;
 }

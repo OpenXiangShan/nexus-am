@@ -2,6 +2,7 @@
 #include <npc.h>
 
 extern char _end;
+extern int main();
 
 _Area _heap = {
   .start = &_end,
@@ -41,4 +42,9 @@ void _halt(int code) {
   GPIO_TRAP[0] = code;
 
   while (1);
+}
+
+void _trm_init() {
+  int ret = main();
+  _halt(ret);
 }

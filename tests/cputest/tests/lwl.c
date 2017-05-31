@@ -19,7 +19,5 @@ int main() {
 
 	nemu_assert(x == 0x03040506);
 
-	HIT_GOOD_TRAP;
-
 	return 0;
 }

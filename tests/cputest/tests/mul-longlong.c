@@ -16,9 +16,10 @@ int main() {
 		for (j = i;j < NR_DATA;j++) { 
 			nemu_assert(ans[ans_idx++] == mul(test_data[i],test_data[j]));
 		}
+		nemu_assert(j == NR_DATA);
 	}
 
-	HIT_GOOD_TRAP;
+	nemu_assert(i == NR_DATA);
 
 	return 0;
 }
