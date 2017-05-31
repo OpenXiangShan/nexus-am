@@ -11,3 +11,5 @@ Nintendo Entertainment System模拟器。故意做了一些错误的实现以提
 * G — A键
 * H — B键
 * W/S/A/D — UP/DOWN/LEFT/RIGHT
+
+需要正确的IOE (绘图、定时)。

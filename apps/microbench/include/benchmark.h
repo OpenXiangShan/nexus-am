@@ -11,6 +11,9 @@ extern "C" {
 #define MB * 1024 * 1024
 #define KB * 1024
 
+#define true 1
+#define false 0
+
 #define REF_CPU    "i7-6700 @ 3.40GHz"
 #define REF_SCORE  100000
 

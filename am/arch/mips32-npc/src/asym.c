@@ -24,7 +24,7 @@ void _asye_init(){
   return;
 }
 
-void _listen(_RegSet* (*l)(int ex, _RegSet *regs)){
+void _listen(_RegSet* (*l)(_Event ex, _RegSet *regs)){
 }
 
 _RegSet *_make(_Area kstack, void *entry){

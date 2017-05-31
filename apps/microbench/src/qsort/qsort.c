@@ -18,7 +18,7 @@ static void swap(int *a, int *b) {
   *b = t;
 }
 
-static void qsort(int *a, int l, int r) {
+static void myqsort(int *a, int l, int r) {
   if (l < r) {
     int p = a[l], pivot = l, j;
     for (j = l + 1; j < r; j ++) {
@@ -27,13 +27,13 @@ static void qsort(int *a, int l, int r) {
       }
     }
     swap(&a[pivot], &a[l]);
-    qsort(a, l, pivot);
-    qsort(a, pivot + 1, r);
+    myqsort(a, l, pivot);
+    myqsort(a, pivot + 1, r);
   }
 }
 
 void bench_qsort_run() {
-  qsort(data, 0, N);
+  myqsort(data, 0, N);
 }
 
 const char * bench_qsort_validate() {

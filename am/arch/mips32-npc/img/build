@@ -6,6 +6,7 @@ shift
 
 bash -c "cd $DIR/boot && make"
 
+<<<<<<< HEAD
 mips-linux-gnu-ld -EL -T $DIR/loader.ld -e _start -o ./build/kernel.o $DIR/boot/start.o ./build/mips32-npc/am/arch/mips32-npc/src/trap.o --start-group $@ --end-group
 
 KERN=$(readlink -f ./build/kernel.o)
@@ -19,4 +20,11 @@ python $DIR/scripts/gen_bram_coe.py ./build/kernel.bin ./build/app.coe
 
 # check instructions
 mips-linux-gnu-objdump -d $KERN | python $DIR/scripts/instr_check.py
+=======
+mips-linux-gnu-ld -EL -T $DIR/loader.ld -e _start -o ${DEST}.o $DIR/boot/start.o --start-group $@ --end-group &&  \
+mips-linux-gnu-objdump -d ${DEST}.o > ${DEST}.code.txt && \
+mips-linux-gnu-objcopy -O binary ${DEST}.o ${DEST}.bin && \
+python $DIR/scripts/gen_bram_coe.py ${DEST}.bin ${DEST}.coe && \
+mips-linux-gnu-objdump -d ${DEST}.o | python $DIR/scripts/instr_check.py
+>>>>>>> 5e3221cee56570a2ac4e2c2f9931fb9904cbdeb5
 

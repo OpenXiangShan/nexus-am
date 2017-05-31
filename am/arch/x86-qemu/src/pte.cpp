@@ -89,15 +89,15 @@ _RegSet *_umake(_Area ustack, _Area kstack, void *entry, int argc, char **argv) 
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
-  regs->esp = reinterpret_cast<u32>(ustack.end);
+  regs->esp3 = reinterpret_cast<u32>(ustack.end);
   regs->ss0 = KSEL(SEG_KDATA);
   regs->esp0 = reinterpret_cast<u32>(kstack.end);
   regs->eip = (u32)entry;
   regs->eflags = FL_IF;
 
-  u32 esp = regs->esp;
+  u32 esp = regs->esp3;
   esp -= 4; *(reinterpret_cast<char***>(esp)) = argv;
   esp -= 4; *(reinterpret_cast<int*>(esp)) = argc;
-  regs->esp = esp;
+  regs->esp3 = esp;
   return regs;
 }

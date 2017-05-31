@@ -16,9 +16,6 @@ typedef struct _RegSet {
 extern "C" {
 #endif
 
-static inline void _halt(int code) { while (1); }
-static inline void _putc(char ch) { } 
-
 static inline void _ioe_init() { }
 static inline unsigned long _cycles() { return 0; }
 static inline unsigned long _uptime() { return 0; }

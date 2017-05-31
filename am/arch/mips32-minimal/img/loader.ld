@@ -1,9 +1,20 @@
-SECTIONS {
-  . = 0x10000000;
-  . += 8192;
-  _stack_pointer = .;
-  .text : { *(.text) }
-  .data : { *(.data) }
-  .bss : { *(.bss) }
-  _end = .;
+MEMORY {
+  bram : ORIGIN = 0, LENGTH = 8K
 }
+
+SECTIONS {
+  .text : {
+    *(.text);
+  } > bram
+  .data : {
+    *(.data);
+  } > bram
+  .bss : {
+    *(.bss);
+    _end = .;
+  } > bram
+  stack : {
+    . += 1024;
+    _stack_pointer = ALIGN(4);
+  } > bram
+} 
