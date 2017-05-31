@@ -1,6 +1,7 @@
 #include "game.h"
 
 static int real_fps;
+
 void set_fps(int value) {
   real_fps = value;
 }
