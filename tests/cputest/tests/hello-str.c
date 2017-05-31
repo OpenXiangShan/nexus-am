@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <string.h>
+#include <klib.h>
 #include "trap.h"
 
 char buf[128];

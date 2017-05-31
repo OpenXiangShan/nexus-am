@@ -1,8 +1,7 @@
 #ifndef __NPC_H__
 #define __NPC_H__
 
-#include <arch.h>
-
+#define EX_ENTRY 0x20
 #define SERIAL_PORT ((volatile char *)0x40001000)
 #define Rx 0x0
 #define Tx 0x04
@@ -10,6 +9,10 @@
 #define CTRL 0x0c
 #define GPIO_TRAP ((volatile char *)0x40000000)
 #define HZ 50000000
+
+#ifndef __ASSEMBLER__
+
+#include <arch.h>
 
 struct TrapFrame{
   u32 at,
@@ -21,5 +24,7 @@ struct TrapFrame{
   gp,sp,fp,ra;
 };
 void serial_init();
+
+#endif
 
 #endif

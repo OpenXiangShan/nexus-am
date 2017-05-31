@@ -13,7 +13,7 @@ int is_prime(int n) {
 	return 1;
 }
 
-int gotbaha(int n) {
+int goldbach(int n) {
 	int i;
 	for(i = 2; i < n; i ++) {
 		if(is_prime(i) && is_prime(n - i)) {
@@ -27,7 +27,7 @@ int gotbaha(int n) {
 int main() {
 	int n;
 	for(n = 4; n <= 30; n += 2) {
-		nemu_assert(gotbaha(n) == 1);
+		nemu_assert(goldbach(n) == 1);
 	}
 
 	return 0;
