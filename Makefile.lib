@@ -9,7 +9,6 @@ DST_DIR ?= $(LIB_DIR)/build/$(ARCH)/
 ARCHIVE ?= $(LIB_DIR)/build/$(NAME)-$(ARCH).a
 
 INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
-INC_DIR += $(AM_HOME)/libs/klib/include/
 
 $(shell mkdir -p $(DST_DIR))
 

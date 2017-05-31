@@ -22,10 +22,10 @@ void exception_handle() {
 	uint exccode = (cause >> 2) & 0x1f;
 
 	switch(exccode) {
-		case 4:		printf("BadVAddr when loading @PC= 0x%x", epc);		break;
-		case 5:		printf("BadVAddr when storing @PC= 0x%x", epc);		break;
-		case 10:	printf("Invalid OPCODE @PC= 0x%x", epc);	break;
-		default:	printf("Unhandled exception, ExcCode = %d", exccode);
+		case 4:		printf("BadVAddr when loading @PC = 0x%d.\n", epc);		break;
+		case 5:		printf("BadVAddr when storing @PC = 0x%d.\n", epc);		break;
+		case 10:	printf("Invalid OPCODE @PC = 0x%d.\n", epc);			break;
+		default:	printf("Unhandled exception, ExcCode = %d.\n", exccode);
 	}
 
 	_halt(1);
