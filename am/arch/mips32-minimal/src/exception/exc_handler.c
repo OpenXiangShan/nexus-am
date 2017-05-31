@@ -1,17 +1,16 @@
-
 #include <am.h>
 
-void printstr(char *str) {
+static void printstr(char *str) {
 	while(*str ++) _putc(*str);
 }
 
-uint get_cause() {
+static uint get_cause() {
 	uint ret;
 	asm volatile("mfc0 %0, $13\n\t":"=r"(ret));
 	return ret;
 }
 
-uint get_epc() {
+static uint get_epc() {
 	uint ret;
 	asm volatile("mfc0 %0, $14\n\t":"=r"(ret));
 	return ret;
