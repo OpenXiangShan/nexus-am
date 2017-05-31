@@ -8,7 +8,7 @@ all: $(addprefix Makefile., $(ALL))
 
 Makefile.%: tests/%.c latest
 	@echo "Build $*"
-	@echo "NAME = $*\nSRCS = $<\ninclude $${AM_HOME}/Makefile.app" > $@
+	@echo "NAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile.app" > $@
 	-make -f $@ ARCH=$(ARCH)
 
 clean: 

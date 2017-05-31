@@ -1,5 +1,5 @@
 #include "trap.h"
-#include <string.h>
+#include <klib.h>
 
 char *s[] = {
 	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 
