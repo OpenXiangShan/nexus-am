@@ -5,4 +5,8 @@ endif
 ifndef ARCH
 $(error Variable ARCH must be defined. Examples: native, x86-qemu, mips32-npc)
 endif
+legal_path = $(filter mips32-minimal mips32-npc native x86-qemu, $(ARCH))
+ifeq ($(legal_path),)
+$(error Variable ARCH is not right. All: mips32-minimal, mips32-npc, native, x86-qemu)
+endif
 endif
