@@ -1,8 +1,11 @@
 #include <am.h>
+#include <klib.h>
 
+/*
 void printstr(char *str) {
 	while(*str ++) _putc(*str);
 }
+*/
 
 uint get_cause() {
 	uint ret;
@@ -18,21 +21,21 @@ uint get_epc() {
 
 void exception_handle() {
 	uint cause = get_cause();
-	//uint epc = get_epc();
+	uint epc = get_epc();
 
 	uint exccode = (cause >> 2) & 0x1f;
 
 	switch(exccode) {
-		/* printf verison
-		case 4:		printf("BadVAddr when loading @PC = 0x%d.\n", epc);		break;
-		case 5:		printf("BadVAddr when storing @PC = 0x%d.\n", epc);		break;
-		case 10:	printf("Invalid OPCODE @PC = 0x%d.\n", epc);			break;
+		case 4:		printf("BadVAddr when loading @PC = 0x%x.\n", epc);		break;
+		case 5:		printf("BadVAddr when storing @PC = 0x%x.\n", epc);		break;
+		case 10:	printf("Invalid OPCODE @PC = 0x%x.\n", epc);			break;
 		default:	printf("Unhandled exception, ExcCode = %d.\n", exccode);
-		*/
+		/*
 		case 4:		printstr("BadVAddr when loading.\n");		break;
 		case 5:		printstr("BadVAddr when storing.\n");		break;
 		case 10:	printstr("Invalid OPCODE.\n");				break;
 		default:	printstr("Unhandled exception.\n");
+		*/
 	}
 
 	_halt(1);
