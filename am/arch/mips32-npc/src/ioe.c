@@ -1,80 +1,39 @@
 #include <am.h>
 #include <npc.h>
 
-extern char font8x8_basic[128][8];
-extern char get_stat();
-extern u32 GetCount(int sel);
-u8 *fb;
-int curr_line = 0;
-int curr_col = 0;
-ulong npc_time = 0;
-ulong npc_cycles = 0;
-static char *csend = SERIAL_PORT + Tx;
-static char *crecv = SERIAL_PORT + Rx;
+void _ioe_init() {
+}
+
+// -------------------- cycles and uptime --------------------
+
+static ulong npc_time = 0;
+static ulong npc_cycles = 0;
 
 ulong _uptime(){
+  // time (ms) = HIGH * 1000 * (2^32) / HZ + LOW * 1000 / HZ
+  // ** be careful of overflow **
   ulong low = GetCount(0);
   ulong high = GetCount(1) + 1;
-/*npc_time = high * 1000 * ((1ul << 32) / HZ) + low * 1000 / HZ;
- *npc_time = (high << 22) * 1000 * 1024 / HZ + low * 1000 / HZ;
-*/
-  npc_time = high * 1000 * ((1ul << 31) / HZ) * 2 + low / (HZ / 1000); //npc_time returns ms
+  npc_time = high * 1000 * ((1ul << 31) / HZ) * 2 + low / (HZ / 1000);
   return npc_time;
 }
 
 ulong _cycles(){
+  // cycles (K) = ((HIGH << 32) | LOW) / 1024
   u32 low = GetCount(0);
   ulong high = GetCount(1) + 1;
-/*npc_cycles = high * ((1ul << 32) >> 10) + (low >> 10);
- *npc_cycles = high * (1ul << 22) + (low >> 10);
- *npc_cycles = (high << 22) + (low >> 10);
-*/
   npc_cycles = (high << 22) + (low >> 10); //npc_cycles returns Kcycles
   return npc_cycles;
 }
 
-void draw_character(char ch, int x, int y, _Pixel p) {
-  int i, j;
-  char *c = font8x8_basic[(int)ch];
-  for (i = 0; i < 8; i ++) 
-    for (j = 0; j < 8; j ++) 
-      if ((c[i] >> j) & 1)
-        _draw_p(y + j, x + i, p);
-}
+// -------------------- video --------------------
 
-void draw_string(const char *str, int x, int y, _Pixel p) {
-  while (*str) {
-    draw_character(*str ++, x, y, p);
-    if (y + 8 >= SCR_WIDTH) {
-      x += 8; y = 0;
-    } else {
-      y += 8;
-    }
-  }
-}
+_Screen _screen = {
+  .width = SCR_WIDTH,
+  .height = SCR_HEIGHT,
+};
 
-void vga_init(){
-  _screen.width = SCR_WIDTH;
-  _screen.height = SCR_HEIGHT;
-  fb = VMEM_ADDR;
-}
-
-void out_byte(char ch) {
-  while((get_stat() >> 3) & 0x1);
-  *csend = ch;
-}
-
-char in_byte(){
-  if(!(get_stat() & 0x1)) return '\0';
-  else return *crecv;
-}
-
-void _putc(char ch) {
-  if(ch == '\n') {
-    out_byte('\r');
-  }
-  out_byte(ch);
-}
+static u8 *fb = VMEM_ADDR;
 
 void _draw_f(_Pixel *p) {
   int i;
@@ -90,11 +49,14 @@ void _draw_p(int x, int y, _Pixel p) {
 void _draw_sync() {
 }
 
+// -------------------- keyboard --------------------
+
 static inline int upevent(int e) { return e; }
 static inline int downevent(int e) { return e | 0x8000; }
 
 int pre_key = _KEY_NONE;
 
+// TODO: refactor
 int _read_key(){
   int key_code = in_byte();
   switch(key_code){
