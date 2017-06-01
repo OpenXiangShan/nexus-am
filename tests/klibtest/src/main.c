@@ -4,7 +4,6 @@
 #include<klib.h>
 
 int main() {
-  _trm_init();
   _ioe_init();
 
 /*
@@ -41,7 +40,7 @@ int main() {
   printk("%-8dx\n",102030);
   printk("%8dx\n",102030);
 
-  printk("%u",4294967295);
+  printk("%u",4294967295u);
 
   printk("%x\n",0xffffffff);
   //printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
@@ -56,7 +55,7 @@ int main() {
   //printk("%u\n",rand());
   sprintf(src,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
   printk("%s",src);
-  sprintf("%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
+  sprintf(src,"%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
   printk("%s",src);
   snprintf(src,10,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
   //sprintf(src,"%d",-2040);
