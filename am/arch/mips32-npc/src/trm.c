@@ -1,9 +1,15 @@
 #include <am.h>
 #include <npc.h>
+#include <klib.h>
 
-_Area _heap;
-_Screen _screen;
 extern int main();
+extern unsigned int _bss_start, _bss_end, _heap_start, _heap_end; // symbols
+
+_Area _heap = {
+  .start = &_heap_start,
+  .end = &_heap_end,
+};
+_Screen _screen;
 
 char __attribute__((__noinline__)) get_stat(){
   char *stat = SERIAL_PORT + STAT;
@@ -11,8 +17,10 @@ char __attribute__((__noinline__)) get_stat(){
 }
 
 void _trm_init() {
-  serial_init();
-  memory_init();
+  // clean up bss
+  for (u32 *p = &_bss_start; p != &_bss_end; p ++) {
+    *p = 0;
+  }
   int ret = main();
   _halt(ret);
 }
@@ -22,32 +30,8 @@ void _ioe_init() {
 }
 
 void _halt(int code) {
-  _putc('P');
-  _putc('a');
-  _putc('n');
-  _putc('i');
-  _putc('c');
-  _putc('\n');
-
+  printf("Exited (%d)\n", code);
   GPIO_TRAP[0] = code;
-
   while(1);
 }
 
-void memory_init(){
-  extern char _end;
-  extern char __bss_start;
-  unsigned int st = (unsigned int)(&__bss_start);
-  unsigned int ed = (unsigned int)(&_end);
-  char *bss = (void *)(st);
-  unsigned int i;
-  for(i = st;i < ed; i++) { bss[i - st] = 0; }
-  st = (unsigned int)(&_end);
-  ed = (unsigned int)(&_end) + MAX_MEMORY_SIZE;
-  _heap.start = (void *)(st);
-  _heap.end = (void *)(ed);
-}
-
-void serial_init(){
-  //not to do
-}

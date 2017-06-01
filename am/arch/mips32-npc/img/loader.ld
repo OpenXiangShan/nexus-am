@@ -8,10 +8,13 @@ SECTIONS {
   .text : { *(.text) } > ddr
   .data : { *(.data) } > ddr
   .bss : {
-    __bss_start = .;
+    _bss_start = .;
     *(.bss*)
     *(.sbss)
     *(.scommon)
-    _end = .;
+    _bss_end = .;
   } > ddr
+  _heap_start = ALIGN(4096);
+  _stack_pointer = ORIGIN(ddr) + LENGTH(ddr);
+  _heap_end = _stack_pointer - 8192;
 }
