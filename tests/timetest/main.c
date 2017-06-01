@@ -1,13 +1,12 @@
 #include <am.h>
 #include <klib.h>
-//_uptime() to get now time
 
 int main(){
   _ioe_init();
-  //_asye_init();
-  while(_uptime() < 10000);
-  char *str = "Pass";
-  while(*str){_putc(*str); str++;}
-  _halt(0);
+  int sec = 1;
+  while (1) {
+    while(_uptime() < 1000 * sec) ;
+    printf("%d seconds.\n", sec ++);
+  }
   return 0;
 }
