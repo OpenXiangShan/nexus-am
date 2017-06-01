@@ -16,5 +16,5 @@ SECTIONS {
   } > ddr
   _heap_start = ALIGN(4096);
   _stack_pointer = ORIGIN(ddr) + LENGTH(ddr);
-  _heap_end = _stack_pointer - 8192;
+  _heap_end = _stack_pointer - 4 * 1024 * 1024;
 }
