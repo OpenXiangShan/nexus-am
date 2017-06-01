@@ -94,10 +94,13 @@ static __inline ui32 hash_func(ui32 i)
 
 static __inline ui32 fast_read(void const *src, ui32 bytes)
 {
-	if (bytes >= 1 && bytes <= 4)
-		return *((ui32*)src);
-	else
-		return 0;
+  u32 ret = 0;
+	if (bytes >= 1 && bytes <= 4) {
+    for (u32 i = 0; i < bytes; i ++) {
+      ret |= ((u8*)src)[i] << (i * 8);
+    }
+  }
+  return ret;
 }
 
 static __inline ui32 hashat(const unsigned char *src)
@@ -144,15 +147,6 @@ size_t qlz_size_header(const char *source)
 static __inline void memcpy_up(unsigned char *dst, const unsigned char *src, ui32 n)
 {
   assert(0); // unaligned memory access
-/*
-	ui32 f = 0;
-	do
-	{
-		*(ui32 *)(dst + f) = *(ui32 *)(src + f);
-		f += 1;
-	}
-	while (f < n);
-*/
 }
 
 static __inline void update_hash(qlz_state_decompress *state, const unsigned char *s)
