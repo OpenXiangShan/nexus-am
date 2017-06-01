@@ -2,6 +2,7 @@
 #include <npc.h>
 #include <arch.h>
 
+// TODO: why this is in the asye?
 u32 GetCount(int sel){
   u32 tick = 0;
   if(sel == 1)
@@ -21,7 +22,6 @@ void _time_event(){
 }
 
 void _asye_init(){
-  return;
 }
 
 void _listen(_RegSet* (*l)(_Event ex, _RegSet *regs)){

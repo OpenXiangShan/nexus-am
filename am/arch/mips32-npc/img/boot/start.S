@@ -5,7 +5,7 @@
 .type _ex_entry, @function
 
 _start:
-  li $sp, 0x17fffffc
+  la $sp, _stack_pointer
   la $k0, _trm_init
   jr $k0
 
