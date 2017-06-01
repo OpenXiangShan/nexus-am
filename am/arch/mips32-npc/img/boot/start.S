@@ -1,4 +1,4 @@
-.section loader, "x"
+.section loader, "ax"
 .globl _start
 .type _start, @function
 .globl _ex_entry
