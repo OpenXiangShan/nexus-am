@@ -9,7 +9,9 @@ SECTIONS {
   .data : { *(.data) } > ddr
   .bss : {
     __bss_start = .;
-    *(.bss)
-    _end = . ;
+    *(.bss*)
+    *(.sbss)
+    *(.scommon)
+    _end = .;
   } > ddr
 }
