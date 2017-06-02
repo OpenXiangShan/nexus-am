@@ -1,12 +1,13 @@
-ifneq ($(MAKECMDGOALS),clean)
-ifeq ($(AM_HOME),)
-$(error Variable AM_HOME must be defined.)
+ifneq ($(MAKECMDGOALS),clean) # ignore check for make clean
+
+ifeq ($(AM_HOME),) # AM_HOME must exist
+$(error Environment variable AM_HOME must be defined.)
 endif
-ifndef ARCH
-$(error Variable ARCH must be defined. Examples: native, x86-qemu, mips32-npc)
+
+ARCHS = $(shell ls $(AM_HOME)/am/arch/)
+
+ifeq ($(filter $(ARCHS), $(ARCH)), ) # ARCH must be valid
+$(error Invalid ARCH. Supported: $(ARCHS))
 endif
-legal_path = $(filter mips32-minimal mips32-npc native x86-qemu, $(ARCH))
-ifeq ($(legal_path),)
-$(error Variable ARCH is not right. All: mips32-minimal, mips32-npc, native, x86-qemu)
-endif
+
 endif
