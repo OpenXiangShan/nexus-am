@@ -12,7 +12,7 @@
 
 # TODO: this should be the real entry
 _trap_entry:
-  j _trap_entry
+  j intr
 
 intr:
 	la	$k0, 0x1000ff03

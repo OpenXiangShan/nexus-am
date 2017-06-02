@@ -82,6 +82,7 @@ void irq_handle(struct TrapFrame *tf){
   
 
   //TODO: exception handling
+  // Delayslot should be considered when handle exceptions !!!
   switch(ExcCode){
     case 0:{ //interrupt
       switch(IPCode){
