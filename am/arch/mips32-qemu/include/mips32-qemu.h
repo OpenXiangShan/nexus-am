@@ -7,7 +7,7 @@
 
 #include <arch.h>
 
-#define MMIO_BASE 0xb8000000
+#define MMIO_BASE 0x1fd00000
 #define SERIAL_PORT ((volatile char *)((MMIO_BASE) + 0x3f8))
 
 struct TrapFrame{

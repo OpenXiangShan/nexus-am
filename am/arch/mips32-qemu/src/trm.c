@@ -1,12 +1,13 @@
 #include <am.h>
-#include <mips-qemu.h>
+#include <mips32-qemu.h>
 
-extern char _end;
+extern char _heap_start;
+extern char _heap_end;
 extern int main();
 
 _Area _heap = {
-  .start = &_end,
-  .end   = &_end,
+  .start = &_heap_start,
+  .end = &_heap_end,
 };
 
 _Screen _screen = {

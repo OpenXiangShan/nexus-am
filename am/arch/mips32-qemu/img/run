@@ -1,3 +1,3 @@
 #!/bin/bash
 
-qemu-system-mipsel -serial /dev/stdout -kernel $1 -nographic
+qemu-system-mipsel -serial /dev/stdout -kernel $1 -nographic -machine mipssim
