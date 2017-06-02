@@ -27,9 +27,7 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
 ))
 
 .PHONY: app run clean
-app: $(OBJS)
-	@cd $(AM_HOME) && make ARCH=$(ARCH)
-	@echo $(LINK_FILES)
+app: $(OBJS) am $(LIBS)
 	@$(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
 run: app
 	@$(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
