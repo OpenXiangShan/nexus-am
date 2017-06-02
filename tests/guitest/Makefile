@@ -1,4 +1,4 @@
 NAME = guitest
-SRCS = guitest-am.cpp
+SRCS = guitest.cpp
 LIBS = klib imgui
 include $(AM_HOME)/Makefile.app

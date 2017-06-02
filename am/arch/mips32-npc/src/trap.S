@@ -7,6 +7,13 @@
 .extern irq_handle
 .set noat
 
+.globl _trap_entry
+.type _trapPentry function
+
+# TODO: this should be the real entry
+_trap_entry:
+  j _trap_entry
+
 intr:
 	la	$k0, 0x1000ff03
 	mtc0	$k0, $12

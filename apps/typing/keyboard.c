@@ -21,8 +21,10 @@ void press_key(int scan_code) {
   }
 }
 
-void release_key(int index) {
-  letter_pressed[index] = false;
+void release_key(int scan_code) {
+  for(int i = 0; i < 26; i++)
+    if(letter_code[i] == scan_code)
+      letter_pressed[i] = false;
 }
 
 bool query_key(int index) {
@@ -43,7 +45,7 @@ bool keyboard_event() {
   if((key_code & KEYDOWN_MASK) != 0){
     press_key((key_code) & ~KEYDOWN_MASK);
   } else {
-    release_key((key_code));
+    release_key((key_code) & ~KEYDOWN_MASK);
   }
   return true;
 }

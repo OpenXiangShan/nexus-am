@@ -10,6 +10,8 @@ ARCHIVE ?= $(LIB_DIR)/build/$(NAME)-$(ARCH).a
 
 INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 
+CFLAGS += -fdata-sections -ffunction-sections
+
 $(shell mkdir -p $(DST_DIR))
 
 include $(AM_HOME)/Makefile.compile

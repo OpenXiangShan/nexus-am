@@ -13,9 +13,4 @@ void nemu_assert(int cond) {
   if (!cond) _halt(1);
 }
 
-#define assert(cond) \
-  do { \
-    nemu_assert(cond); \
-  } while (0)
-
 #endif

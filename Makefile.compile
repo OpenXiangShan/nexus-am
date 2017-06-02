@@ -1,9 +1,4 @@
-objdest = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(1))))
-depdest = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(1))))
-
-OBJS = $(call objdest, $(SRCS))
-DEPS = $(call depdest, $(SRCS))
-
+# Compilation flags
 ARCH_SPLIT = $(subst -, ,$(ARCH))
 REAL_ARCH  = $(word 1,$(ARCH_SPLIT))
 PLATFORM   = $(word 2,$(ARCH_SPLIT))
@@ -17,13 +12,12 @@ CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
 
-# Basic compilation flags
-INCLUDES = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/ -I$(AM_HOME)/am/arch/$(ARCH)/include
+INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
+INCLUDES += -I$(AM_HOME)/am/arch/$(ARCH)/include
 CFLAGS   += -std=gnu99 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES)
 CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES)
-ASFLAGS  +=            -MMD $(INCLUDES)
+ASFLAGS  +=                -MMD                     $(INCLUDES)
 
-# Arch-dependent compilation flags
 ifeq ($(REAL_ARCH), mips32)
 CXX = $(CROSS_COMPILE)g++-5
 CFLAGS_COMMON = -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL -mno-llsc -mno-imadd -mno-mad
@@ -38,17 +32,27 @@ CXXFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -ffre
 ASFLAGS  += -m32
 endif
 
+# Files to be compiled
+OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
+
 # Compilation patterns
 $(DST_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
 $(DST_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
-
 $(DST_DIR)/%.o: %.S
 	@mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) -c -o $@ $<
 
+# Depencies
+DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
 -include $(DEPS)
+
+# Dependent AM and libraries
+.PHONY: $(LIBS) am
+am:
+	cd $(AM_HOME) && make
+$(LIBS): %:
+	cd $(AM_HOME)/libs/$* && make

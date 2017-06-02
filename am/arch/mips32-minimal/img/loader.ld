@@ -4,13 +4,15 @@ MEMORY {
 
 SECTIONS {
   .text : {
-    *(.text);
+    *(.text)
   } > bram
   .data : {
-    *(.data);
+    *(.data)
   } > bram
   .bss : {
-    *(.bss);
+    *(.bss*)
+    *(.sbss)
+    *(.scommon)
     _end = .;
   } > bram
   stack : {

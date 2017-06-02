@@ -49,10 +49,11 @@ struct TrapFrame{
   k0,k1,
   gp,sp,fp,ra;
 };
-void vga_init();
-void serial_init();
-void memory_init();
+
 u32 GetCount(int sel);
 void SetCompare(u32 compare);
+
+char in_byte();
+void out_byte(char);
 
 #endif
