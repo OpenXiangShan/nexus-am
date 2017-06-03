@@ -12,18 +12,23 @@
 
 # TODO: this should be the real entry
 _trap_entry:
-  j _trap_entry
+  j intr
 
 intr:
 	la	$k0, 0x1000ff03
 	mtc0	$k0, $12
 	mfc0	$k0, $13
+	#exceptions
+	#$k0 = 0x00 00 IP(0) ExcCode
+	andi	$k0, 0x000000ff
+	bne	$k0, $zero, do_irq
+	#interruptions
+	#$k0 = 0x00 00 IP ExcCode(0)
+	mfc0	$k0, $13
 	mfc0	$k1, $12
 	andi	$k0, $k0, 0x0000ff00
 	and	$k0, $k0, $k1
 	beq	$k0, $zero, Dismiss
-	clz	$k0, $k0
-	xori	$k0, $k0, 0x17
 	la	$k1, do_irq
 	jr	$k1
 

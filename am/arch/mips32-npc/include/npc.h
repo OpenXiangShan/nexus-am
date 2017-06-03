@@ -14,6 +14,23 @@
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
 #define INTERVAL 1000
+   
+#define cp0_badvaddr 8
+#define cp0_count    9
+#define cp0_compare  11
+#define cp0_status   12
+#define cp0_cause    13
+#define cp0_epc      14
+
+#define MFC0(dst, src, sel) \
+asm volatile("mfc0 %0, $"_STR(src)", %1\n\t":"=r"(dst):"i"(sel))
+
+#define MTC0(dst, src, sel) \
+asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
+
+#define _STR(x) _VAL(x)
+#define _VAL(x) #x
+
 
 static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
