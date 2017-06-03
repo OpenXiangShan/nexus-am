@@ -140,6 +140,7 @@ void irq_handle(struct TrapFrame *tf){
     break;
     case 13:{ // trap
       printk("Trap\n");
+      printk("$epc = 0x%x\n", EPC);
       EPC += 4;
       MTC0(cp0_epc, EPC, 0);
       _halt(0);
