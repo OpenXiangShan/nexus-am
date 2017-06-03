@@ -760,6 +760,8 @@ int main ()
   REG   int             Run_Index;
   REG   int             Number_Of_Runs;
 
+  _ioe_init();
+
  Number_Of_Runs = NUMBER_OF_RUNS;
 
   /* Initializations */
@@ -938,7 +940,7 @@ int main ()
 
   printf ("Finished in %d ms\n", (int)User_Time);
   printk("==================================================\n");
-  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", 0);
+  printk("Dhrystone %s         %d Marks\n", pass ? "PASS" : "FAIL", 0);
   printk("                   vs. 100000 Marks (i7-6700 @ 3.40GHz)\n");
 
 
