@@ -7,7 +7,6 @@ ADDI
 ADDIU
 SUB
 SUBU
-NEGU
 AND
 ANDI
 OR
@@ -82,7 +81,8 @@ MFC0
 MTC0
 SYSCALL
 ERET
-NOP"""
+NOP
+NEGU"""
 
 INST = [i.strip() for i in INST.strip().split('\n')]
 

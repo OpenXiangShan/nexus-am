@@ -1,11 +1,11 @@
 #ifndef __NPC_H__
 #define __NPC_H__
 
-#define VMEM_ADDR ((void *)0xc0000000)
-#define SCR_WIDTH 400
-#define SCR_HEIGHT 400
+#define VMEM_ADDR ((void *)0x40010000)
+#define SCR_WIDTH 320
+#define SCR_HEIGHT 200
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
-#define SERIAL_PORT ((char *)0x40600000)
+#define SERIAL_PORT ((char *)0x40001000)
 #define Rx 0x0
 #define Tx 0x04
 #define STAT 0x08
@@ -14,6 +14,23 @@
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
 #define INTERVAL 1000
+   
+#define cp0_badvaddr 8
+#define cp0_count    9
+#define cp0_compare  11
+#define cp0_status   12
+#define cp0_cause    13
+#define cp0_epc      14
+
+#define MFC0(dst, src, sel) \
+asm volatile("mfc0 %0, $"_STR(src)", %1\n\t":"=r"(dst):"i"(sel))
+
+#define MTC0(dst, src, sel) \
+asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
+
+#define _STR(x) _VAL(x)
+#define _VAL(x) #x
+
 
 static inline u8 R(_Pixel p) { return p >> 16; }
 static inline u8 G(_Pixel p) { return p >> 8; }
@@ -32,10 +49,11 @@ struct TrapFrame{
   k0,k1,
   gp,sp,fp,ra;
 };
-void vga_init();
-void serial_init();
-void memory_init();
+
 u32 GetCount(int sel);
 void SetCompare(u32 compare);
+
+char in_byte();
+void out_byte(char);
 
 #endif

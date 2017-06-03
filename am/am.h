@@ -36,6 +36,21 @@ enum {
   _KEYS(_KEY_NAME),
 };
 
+#define _EVENTS(_) \
+  _(IRQ_TIME), _(IRQ_IODEV), _(ERROR), _(SYSCALL) \
+
+#define _EVENT_NAME(ev) _EVENT_##ev
+
+enum {
+  _EVENT_NULL = 0,
+  _EVENTS(_EVENT_NAME),
+};
+
+typedef struct _Event {
+  int event;
+  void *cause;
+} _Event;
+
 typedef struct _Screen {
   int width, height;
 } _Screen;
@@ -76,7 +91,7 @@ extern _Screen _screen;
 // =======================================================================
 
 void _asye_init();
-void _listen(_RegSet* (*l)(int ex, _RegSet *regs));
+void _listen(_RegSet* (*l)(_Event ev, _RegSet *regs));
 _RegSet *_make(_Area kstack, void *entry);
 void _trap();
 void _idle();

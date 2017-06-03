@@ -52,7 +52,7 @@ void _draw_f(_Pixel *p) {
 }
 
 void _draw_sync() {
-  SDL_UpdateTexture(texture, NULL, fb, 640 * sizeof(Uint32));
+  SDL_UpdateTexture(texture, NULL, fb, W * sizeof(Uint32));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);

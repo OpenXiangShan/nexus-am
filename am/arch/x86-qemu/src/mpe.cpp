@@ -1,14 +1,10 @@
 #include <am.h>
 #include <x86.h>
+#include <am-x86.h>
 
 extern "C" {
-  void init_ioapic();
-  void init_lapic();
-  void lapic_bootap(int, u32);
-  void ioapic_enable(int, int);
   int current_cpu();
 }
-
 
 #define MP_PROC  0x00
 
@@ -61,7 +57,7 @@ static MPDesc *search() {
   return 0;
 }
 
-static void init_smp() {
+void smp_init() {
   MPDesc *mp = search();
   MPConf *conf = mp->conf;
   lapic = conf->lapicaddr;
@@ -84,15 +80,15 @@ static void (* volatile _entry)();
 static ulong ap_boot = 0;
 
 static void mp_entry() {
-  init_lapic();
-  ioapic_enable(IRQ_KBD, _cpu());
+  if (_cpu() != 0) {
+    lapic_init();
+    ioapic_enable(IRQ_KBD, _cpu());
+  }
   _atomic_xchg(&ap_boot, 1);
   _entry();
 }
 
 void _mpe_init(void (*entry)()) {
-  init_smp();
-  init_ioapic();
   _entry = entry;
 
   for (int cpu = 1; cpu < _NR_CPU; cpu ++) {
@@ -106,10 +102,6 @@ void _mpe_init(void (*entry)()) {
   }
 
   mp_entry();
-}
-
-int _cpu() {
-  return current_cpu();
 }
 
 ulong _atomic_xchg(volatile ulong *addr, ulong newval) {

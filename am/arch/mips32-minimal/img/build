@@ -6,4 +6,4 @@ shift
 
 bash -c "cd $DIR/boot && make"
 
-mips-linux-gnu-ld -EL -T $DIR/loader.ld -e _start -o $DEST $DIR/boot/start.o --start-group $@ --end-group && python $DIR/check.py $DEST
+mips-linux-gnu-ld --gc-sections -EL -T $DIR/loader.ld -e _start -o $DEST $DIR/boot/start.o $@ && python $DIR/gen_coe.py $DEST
