@@ -59,6 +59,6 @@ void out_byte(char);
 
 
 void timer_init();
-u32 get_TCR();
+u32 get_TCR(int sel);
 
 #endif
