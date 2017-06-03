@@ -1,22 +1,21 @@
 #include"klib.h"
 #include<stdarg.h>
 
-//static char* s_h=0;
+static char* s_h=0;
 
-char* printch(char ch,char** s);
-char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s);
-int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,int count);
+char* printch(char ch,char* s);
+char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char* s);
+int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char* s,int count);
 //char* printstr(char* str,int width,char flagc,char* s);
-char* printstr(char* str,char** s);
-void myputc(char c,char** s_h){
+char* printstr(char* str,char* s);
+void myputc(char c){
   if(s_h==0)_putc(c);
-  else **s_h=c;
-  (*s_h)++;
+  else *s_h++=c;
 }
 
 
 int vprintk(char* out,const char* fmt,va_list ap){
-  char** s_v=&out;
+  s_h=out;
   int vargint=0;
   unsigned int varguint=0;
   char* vargpch=0;
@@ -57,7 +56,7 @@ int vprintk(char* out,const char* fmt,va_list ap){
           goto reswitch;
         case '*':width=va_arg(ap,int);goto reswitch;
 	//case '.':if(width<0)width=0;goto reswitch;
-	case 'c':vargch=va_arg(ap,int);printch(vargch,s_v);break;
+	case 'c':vargch=va_arg(ap,int);printch(vargch,out);break;
 	case 'd':vargint=va_arg(ap,int);base=10;if(vargint<0){
 		 //_putc('-');
 		 abs='-';
@@ -70,23 +69,23 @@ int vprintk(char* out,const char* fmt,va_list ap){
 	case 'u':varguint=va_arg(ap,unsigned int);base=10;goto nump;
 	case 'x':
 	case 'X':varguint=va_arg(ap,int);base=16;goto nump;
-	case 'p':myputc('0',s_v);myputc('x',s_v);varguint=(long)va_arg(ap,void*);base=16;goto nump;
+	case 'p':myputc('0');myputc('x');varguint=(long)va_arg(ap,void*);base=16;goto nump;
       nump:
-	printdec(varguint,base,width,abs,flagc,s_v);break;
-	case 's':vargpch=va_arg(ap,char*);printstr(vargpch,s_v);break;
+	printdec(varguint,base,width,abs,flagc,out);break;
+	case 's':vargpch=va_arg(ap,char*);printstr(vargpch,out);break;
 	default:;
       }
       pfmt++;
     }
     else{
-      out=printch(*pfmt++,s_v);
+      out=printch(*pfmt++,out);
     }
   }
-  if(out!=0)printch('\0',s_v);
+  if(out!=0)printch('\0',out);
   return 0;
 }
 
-int printf(const char* fmt,...){
+int printk(const char* fmt,...){
   va_list ap;
   va_start(ap,fmt);
   int r=vprintk(0,fmt,ap);
@@ -94,7 +93,7 @@ int printf(const char* fmt,...){
   return r;
 }
 
-int sprintf(char* out,const char* fmt,...){
+int sprintf(char* out,char* fmt,...){
   va_list ap;
   va_start(ap,fmt);
   int r=vprintk(out,fmt,ap);
@@ -111,68 +110,62 @@ int snprintf(char* out, size_t n, const char* fmt, ...){
   return r;
 }
 
-char* printch(char ch,char** s){
+char* printch(char ch,char* s){
   //if(s==0)_putc(ch);
   //else *s++=ch;
-  myputc(ch,s);
-  return *s;
+  myputc(ch);
+  return s;
 }
 //char* printdec(int dec,char* s){
-char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s){
+char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char* s){
   //int c=0;
   //if(abs=='-'||flagc=='+')c++;
   if(dec==0){
-    myputc('0',s);
+    myputc('0');
   }
   else vprintdec(dec,base,width,abs,flagc,s,0);
   //_putc(c+'0');
-  return *s;
+  return s;
 }
-int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,int count){
+int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char* s,int count){
   if(dec==0){
     if(flagc!='-'){
       width++;
       if(abs=='-')width--;
       while(width-->1){
         if(flagc!='+'){
-          myputc(flagc,s);
+          myputc(flagc);
         }
         else{
-          myputc(' ',s);
+          myputc(' ');
         }
       }
-      if(flagc=='+')myputc(abs,s);
-      else if(abs=='-')myputc('-',s);
+      if(flagc=='+')myputc(abs);
+      else if(abs=='-')myputc('-');
       else{
-        if(width>0)myputc(flagc,s);
+        if(width>0)myputc(flagc);
       }
       return 0;
     }
-    else if(abs=='-'){myputc('-',s);width--;}
+    else if(abs=='-'){myputc('-');width--;}
     return width;
   }
   int re;//vprintdec(dec/base,base,width-1,flagc,s+1);
   re=vprintdec(dec/base,base,width-1,abs,flagc,s,count+1);
-  if(dec%base>9)myputc(dec%base+'a'-10,s);
-  else myputc((char)(dec%base+'0'),s);
+  if(dec%base>9)myputc(dec%base+'a'-10);
+  else myputc((char)(dec%base+'0'));
   if(flagc=='-'&&count==0){
-    while(re-->0)myputc(' ',s);
+    while(re-->0)myputc(' ');
   }
   return re;
 }
 
-char* printstr(char* str,char** s){
+char* printstr(char* str,char* s){
   while(*str){
     //_putc(*str);
-    //if(s==0)_putc(*str++);
-    //else*s++=*str++;
-    myputc(*str++,s);
+    if(s==0)_putc(*str++);
+    else*s++=*str++;
   }
-<<<<<<< HEAD:klib/printk.c
   //*s++='\0';
-  return *s;
-=======
-  // *s++='\0';
   return s;
->>>>>>> 9dee9bc9c17876cb03833b701c07ec48792a0971:libs/klib/printk.c
 }
