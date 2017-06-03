@@ -19,7 +19,7 @@ include $(AM_HOME)/Makefile.compile
 .PHONY: lib
 lib: $(ARCHIVE)
 
-$(ARCHIVE): $(OBJS)
+$(ARCHIVE): $(OBJS) $(LIBS)
 	ar rcs $(ARCHIVE) $(OBJS)
 
 .PHONY: clean
