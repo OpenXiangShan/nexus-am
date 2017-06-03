@@ -13,7 +13,7 @@ ulong _uptime(){
   // time (ms) = HIGH * 1000 * (2^32) / HZ + LOW * 1000 / HZ
   // ** be careful of overflow **
   ulong low = GetCount(0);
-  ulong high = GetCount(1) + 1;
+  ulong high = GetCount(1);
   npc_time = high * 1000 * ((1ul << 31) / HZ) * 2 + low / (HZ / 1000);
   return npc_time;
 }
@@ -21,7 +21,7 @@ ulong _uptime(){
 ulong _cycles(){
   // cycles (K) = ((HIGH << 32) | LOW) / 1024
   u32 low = GetCount(0);
-  ulong high = GetCount(1) + 1;
+  ulong high = GetCount(1);
   npc_cycles = (high << 22) + (low >> 10); //npc_cycles returns Kcycles
   return npc_cycles;
 }

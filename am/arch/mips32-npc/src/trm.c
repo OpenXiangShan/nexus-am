@@ -32,11 +32,11 @@ static void memory_init() {
 
 // -------------------- debug console --------------------
 
-static char *csend = SERIAL_PORT + Tx;
-static char *crecv = SERIAL_PORT + Rx;
+volatile static char *csend = SERIAL_PORT + Tx;
+volatile static char *crecv = SERIAL_PORT + Rx;
 
 static char __attribute__((__noinline__)) get_stat(){
-  char *stat = SERIAL_PORT + STAT;
+  volatile char *stat = SERIAL_PORT + STAT;
   return *stat;
 }
 
