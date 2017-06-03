@@ -315,6 +315,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 			ee_printf("[%d]crcstate      : 0x%04x\n",i,results[i].crcstate);
 	for (i=0 ; i<default_num_contexts; i++) 
 		ee_printf("[%d]crcfinal      : 0x%04x\n",i,results[i].crc);
+  ee_printf("Finised in %d ms.\n", (int)total_time);
 	if (total_errors==0) {
     ee_printf("==================================================\n");
 	  ee_printf("CoreMark PASS       %d Marks\n",47 * 100000 / time_in_secs(total_time));
