@@ -311,7 +311,9 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	for (i=0 ; i<default_num_contexts; i++) 
 		ee_printf("[%d]crcfinal      : 0x%04x\n",i,results[i].crc);
 	if (total_errors==0) {
-    ee_printf("Correct operation validated.\n");
+    ee_printf("==================================================\n");
+	  ee_printf("CoreMark PASS       %d Marks\n",47 * 100000 / time_in_secs(total_time));
+	  ee_printf("                vs. 100000 Marks (i7-6700 @ 3.40GHz)\n");
   }
 	if (total_errors>0)
 		ee_printf("Errors detected\n");
