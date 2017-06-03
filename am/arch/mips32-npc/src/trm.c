@@ -61,7 +61,14 @@ void _putc(char ch) {
 // -------------------- halting --------------------
 
 void _halt(int code) {
-  printf("Exited (%d)\n", code);
+  const char *msg = (code == 0) ?
+    "Exited (0)." :
+    "Exited (error).";
+
+  for (; *msg; msg ++) {
+    _putc(*msg);
+  }
+
   GPIO_TRAP[0] = code;
   while(1);
 }
