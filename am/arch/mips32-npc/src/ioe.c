@@ -30,9 +30,16 @@ ulong _uptime(){
 
 ulong _cycles(){
   // cycles (K) = ((HIGH << 32) | LOW) / 1024
-  u32 low = GetCount(0);
+/*  u32 low = GetCount(0);
   ulong high = GetCount(1);
-  npc_cycles = (high << 22) + (low >> 10); //npc_cycles returns Kcycles
+  npc_cycles = (high << 22) + (low >> 10); //npc_cycles returns Kcycles*/
+
+  ulong TCR1 = get_TCR(1);
+  ulong TCR0 = 0;
+  do {
+    TCR0 = get_TCR(0);
+  }while(TCR1 != get_TCR(1));
+  npc_cycles = (TCR1 << 22) + (TCR0 >> 10); //npc_cycles returns Kcycle
   return npc_cycles;
 }
 
