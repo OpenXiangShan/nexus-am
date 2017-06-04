@@ -14,6 +14,8 @@ $(shell mkdir -p $(DST_DIR))
 
 include $(AM_HOME)/Makefile.compile
 
+LIBS += klib # link klib by default
+
 ifeq ($(ARCH), native)
 LINKLIBS = $(filter-out klib, $(LIBS))
 else
@@ -25,7 +27,6 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
   $(addsuffix /build/, $(addprefix $(AM_HOME)/libs/, $(LINKLIBS))), \
   $(LINKLIBS) \
 ))
-LINK_FILES += $(AM_HOME)/libs/klib/build/klib-$(ARCH).a
 
 .PHONY: app run clean
 app: $(OBJS) am $(LIBS)
