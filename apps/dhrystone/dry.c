@@ -895,19 +895,19 @@ int main ()
     printf("        should be:   DHRYSTONE PROGRAM, SOME STRING\n");
   }
 
-  if (!check((int)Ptr_Glob->Discr == 0)) {
+  if (!check((int)Next_Ptr_Glob->Discr == 0)) {
     printf("Next_Ptr_Glob->Discr:             %d\n", Next_Ptr_Glob->Discr);
     printf("        should be:   %d\n", 0);
   }
-  if (!check(Ptr_Glob->variant.var_1.Enum_Comp == 3)) {
+  if (!check(Next_Ptr_Glob->variant.var_1.Enum_Comp == 3)) {
     printf("Next_Ptr_Glob->Enum_Comp:         %d\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
     printf("        should be:   %d\n", 3);
   }
-  if (!check(Ptr_Glob->variant.var_1.Int_Comp == 18)) {
+  if (!check(Next_Ptr_Glob->variant.var_1.Int_Comp == 18)) {
     printf("Next_Ptr_Glob->Int_Comp:          %d\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
     printf("        should be:   %d\n", 18);
   }
-  if (!check(strcmp(Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING") == 0)) {
+  if (!check(strcmp(Next_Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING") == 0)) {
     printf("Next_Ptr_Glob->Str_Comp:          %s\n", Next_Ptr_Glob->variant.var_1.Str_Comp);
     printf("        should be:   DHRYSTONE PROGRAM, SOME STRING\n");
   }
