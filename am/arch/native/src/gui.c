@@ -1,8 +1,8 @@
 #include <am.h>
 #include <SDL2/SDL.h>
 
-#define W 640
-#define H 480
+#define W 320
+#define H 200
 
 _Screen _screen;
 
@@ -32,7 +32,7 @@ void gui_init() {
   _screen.width = W;
   _screen.height = H;
   SDL_Init(SDL_INIT_VIDEO);
-  SDL_CreateWindowAndRenderer(W, H, 0, &window, &renderer);
+  SDL_CreateWindowAndRenderer(W * 2, H * 2, 0, &window, &renderer);
   SDL_SetWindowTitle(window, "Native Application");
   SDL_CreateThread(event_thread, "event thread", NULL);
   texture = SDL_CreateTexture(renderer,
