@@ -14,6 +14,7 @@
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
 #define INTERVAL 1000
+#define TIMER_BASE ((volatile char *)0x41c00000)
    
 #define cp0_badvaddr 8
 #define cp0_count    9
@@ -55,5 +56,9 @@ void SetCompare(u32 compare);
 
 char in_byte();
 void out_byte(char);
+
+
+void timer_init();
+u32 get_TCR(int sel);
 
 #endif

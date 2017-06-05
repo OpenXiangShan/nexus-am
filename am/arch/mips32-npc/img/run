@@ -1,0 +1,5 @@
+#!/bin/bash
+
+fname=${1##*/}
+scp $1 root@192.168.1.114:~/
+ssh root@192.168.1.114 ./loader $fname

@@ -71,8 +71,8 @@ void irq_handle(struct TrapFrame *tf){
   u32 EPC = 0, BadVaddr = 0;
 
   // cp0 info & general regfiles, values of k0 & k1 come from trap.S
-  asm volatile("add %0,$k1,$zero\n\t":"=r"(arg));
-  asm volatile("add %0,$k0,$zero\n\t":"=r"(IPExcCode));
+  asm volatile("addu %0,$k1,$zero\n\t":"=r"(arg));
+  asm volatile("addu %0,$k0,$zero\n\t":"=r"(IPExcCode));
   MFC0(EPC, cp0_epc, 0);
   MFC0(BadVaddr, cp0_badvaddr, 0);
   
