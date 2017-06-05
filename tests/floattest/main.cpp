@@ -58,5 +58,7 @@ int main() {
   // y = asin(x) / (pi/2)
   plot( [](Float x) { Float x1 = x; return x1.asin() / Float(3.1415 / 2); } );
 
+  while (1);
+
   return 0;
 }
