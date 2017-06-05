@@ -21,10 +21,8 @@ void press_key(int scan_code) {
   }
 }
 
-void release_key(int scan_code) {
-  for(int i = 0; i < 26; i++)
-    if(letter_code[i] == scan_code)
-      letter_pressed[i] = false;
+void release_key(int index) {
+  letter_pressed[index] = false;
 }
 
 bool query_key(int index) {
@@ -39,14 +37,21 @@ int last_key_code(void) {
 
 #define KEYDOWN_MASK 0x8000
 bool keyboard_event() {
-  int key_code = _read_key();
-  if (key_code == _KEY_NONE) return false;
+  int keycode = _read_key();
+  if (keycode == _KEY_NONE) return false;
 
-  if((key_code & KEYDOWN_MASK) != 0){
+  if((keycode & KEYDOWN_MASK) != 0){
+    key_code = keycode;
     press_key((key_code) & ~KEYDOWN_MASK);
-  } else {
-    release_key((key_code) & ~KEYDOWN_MASK);
+    return true;
   }
-  return true;
+  else{
+    for(int i = 0; i < 26; i++){
+      if(keycode == letter_code[i]){
+        release_key(i);
+      }
+    }
+    return true;
+  }
 }
 
