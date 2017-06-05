@@ -356,7 +356,7 @@
 #define Start_Timer() Begin_Time = _uptime()
 #define Stop_Timer()  End_Time   = _uptime()
 
-#define NUMBER_OF_RUNS		1 /* Default number of runs */
+#define NUMBER_OF_RUNS		500000 /* Default number of runs */
 #define PASS2
 
 #ifdef  NOSTRUCTASSIGN
@@ -457,7 +457,6 @@ static char* myalloc(size_t size) {
   while ((ulong)free_mem % 4 != 0) free_mem ++;
   char *ret = free_mem;
   free_mem += size;
-  printf("Allocate %d get %lx\n", (int)size, (ulong)ret);
   return ret;
 }
 
@@ -705,13 +704,13 @@ Str_30  Str_2_Par_Ref;
   if (Ch_Loc >= 'W' && Ch_Loc < 'Z')
     /* then, not executed */
     Int_Loc = 7;
-  if (Ch_Loc == 'R')
+  if (Ch_Loc == 'R') {
     /* then, not executed */
     return (true);
+  }
   else /* executed */
   {
     if (strcmp (Str_1_Par_Ref, Str_2_Par_Ref) > 0)
-      /* then, not executed */
     {
       Int_Loc += 7;
       Int_Glob = Int_Loc;
@@ -808,7 +807,6 @@ int main ()
       strcpy (Str_2_Loc, "DHRYSTONE PROGRAM, 2'ND STRING");
       Enum_Loc = Ident_2;
       Bool_Glob = ! Func_2 (Str_1_Loc, Str_2_Loc);
-	  //assert(Bool_Glob == 1);
 	/* Bool_Glob == 1 */
       while (Int_1_Loc < Int_2_Loc)  /* loop body executed once */
       {
