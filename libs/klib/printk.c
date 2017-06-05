@@ -78,7 +78,14 @@ int vprintk(char* out,const char* fmt,va_list ap){
       pfmt++;
     }
     else{
-      out=printch(*pfmt++,out);
+      //printch(*(pfmt++),out);
+      
+	    
+	    
+	    
+	    
+	    _putc(*pfmt);
+      pfmt++;
     }
   }
   if(out!=0)printch('\0',out);
@@ -93,7 +100,7 @@ int printk(const char* fmt,...){
   return r;
 }
 
-int sprintf(char* out,char* fmt,...){
+int sprintf(char* out,const char* fmt,...){
   va_list ap;
   va_start(ap,fmt);
   int r=vprintk(out,fmt,ap);
