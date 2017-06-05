@@ -1,5 +1,4 @@
 #include <am.h>
-#include <assert.h>
 #include <SDL2/SDL.h>
 
 #define W 640
@@ -52,7 +51,7 @@ void _draw_f(_Pixel *p) {
 }
 
 void _draw_sync() {
-  SDL_UpdateTexture(texture, NULL, fb, 640 * sizeof(Uint32));
+  SDL_UpdateTexture(texture, NULL, fb, W * sizeof(Uint32));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
@@ -77,8 +76,7 @@ static int keymap[256] = {
 static int event_thread(void *args) {
   SDL_Event event;
   while (1) {
-    int succ = SDL_WaitEvent(&event);
-    assert(succ);
+    SDL_WaitEvent(&event);
     switch (event.type) {
       case SDL_QUIT: exit(0); break;
       case SDL_KEYDOWN: 

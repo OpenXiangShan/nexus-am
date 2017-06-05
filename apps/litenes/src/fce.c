@@ -76,14 +76,14 @@ void fce_init()
     cpu_reset();
 }
 
-static ulong time;
+static ulong gtime;
 
 void wait_for_frame() {
-  ulong cnt = _uptime();
-  while (cnt - time < 1000 / FPS) {
-    cnt = _uptime();
+  ulong cur = _uptime();
+  while (cur - gtime < 1000 / FPS) {
+    cur = _uptime();
   }
-  time = cnt;
+  gtime = cur;
 }
 
 
@@ -91,7 +91,7 @@ void wait_for_frame() {
 void fce_run()
 {
     key_state[0] = 1;
-    time = _uptime();
+    gtime = _uptime();
     while(1)
     {
         wait_for_frame();
@@ -129,7 +129,8 @@ static const _Pixel palette[64] = {
 
 byte canvas[H][W];
 
-// TODO: time-consuming function
+static int xmap[1024];
+
 void fce_update_screen()
 {
   static int frame = 0;
@@ -138,13 +139,14 @@ void fce_update_screen()
   int w = _screen.width;
   int h = _screen.height;
 
-  frame = (frame + 1) & 1;
+  frame ++;
 
   int pad = (w - h) / 2;
   for (int y = 0; y < h; y ++) {
-    if ( (y & 1) != frame ) continue;
+    if ( (y & 1) != (frame & 1) ) continue;
+    int y1 = y * H / h;
     for (int x = pad; x < w - pad; x ++) {
-      _draw_p(x, y, palette[canvas[y * H / h][(x - pad) * W / h]]);
+      _draw_p(x, y, palette[canvas[y1][xmap[x]]]);
     }
   }
 
@@ -155,11 +157,20 @@ void fce_update_screen()
       canvas[y][x] = idx;
 }
 
+void xmap_init() {
+  int w = _screen.width;
+  int h = _screen.height;
+  int pad = (w - h) / 2;
+  for (int x = pad; x < w - pad; x ++) {
+    xmap[x] = (x - pad) * W / h;
+  }
+}
 
 int main() {
   _ioe_init();
   _asye_init();
 
+  xmap_init();
   fce_load_rom(rom_mario_nes);
   fce_init();
   fce_run();

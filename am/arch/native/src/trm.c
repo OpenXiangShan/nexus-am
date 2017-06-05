@@ -7,11 +7,6 @@
 static char heap[HEAP_SIZE];
 
 void _trm_init() {
-  char *heap = (char*)malloc(HEAP_SIZE);
-  if (heap) {
-    _heap.start = heap;
-    _heap.end = heap + HEAP_SIZE;
-  }
 }
 
 void _putc(char ch) {
@@ -19,6 +14,7 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
+  printf("Exit (%d)\n", code);
   _exit(code);
 }
 

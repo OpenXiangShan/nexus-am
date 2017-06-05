@@ -8,6 +8,10 @@ INC_DIR += $(LIB_DIR)/include/
 DST_DIR ?= $(LIB_DIR)/build/$(ARCH)/
 ARCHIVE ?= $(LIB_DIR)/build/$(NAME)-$(ARCH).a
 
+INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
+
+CFLAGS += -fdata-sections -ffunction-sections
+
 $(shell mkdir -p $(DST_DIR))
 
 include $(AM_HOME)/Makefile.compile
@@ -15,7 +19,7 @@ include $(AM_HOME)/Makefile.compile
 .PHONY: lib
 lib: $(ARCHIVE)
 
-$(ARCHIVE): $(OBJS)
+$(ARCHIVE): $(OBJS) $(LIBS)
 	ar rcs $(ARCHIVE) $(OBJS)
 
 .PHONY: clean

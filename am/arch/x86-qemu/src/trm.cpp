@@ -1,6 +1,6 @@
 #include <x86.h>
+#include <am-x86.h>
 #include <am.h>
-
 
 extern "C" {
 
@@ -54,6 +54,7 @@ static void memory_init() {
 void _trm_init() {
   serial_init();
   memory_init();
+  ioapic_init();
 }
 
 void _putc(char ch) {
