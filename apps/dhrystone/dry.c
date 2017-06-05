@@ -454,9 +454,9 @@ static char memory[1024];
 static char *free_mem = &memory[0];
 
 static char* myalloc(size_t size) {
+  while ((ulong)free_mem % 4 != 0) free_mem ++;
   char *ret = free_mem;
-  ret += size;
-  while ((ulong)ret % 4 != 0) ret ++;
+  free_mem += size;
   return ret;
 }
 
@@ -704,13 +704,13 @@ Str_30  Str_2_Par_Ref;
   if (Ch_Loc >= 'W' && Ch_Loc < 'Z')
     /* then, not executed */
     Int_Loc = 7;
-  if (Ch_Loc == 'R')
+  if (Ch_Loc == 'R') {
     /* then, not executed */
     return (true);
+  }
   else /* executed */
   {
     if (strcmp (Str_1_Par_Ref, Str_2_Par_Ref) > 0)
-      /* then, not executed */
     {
       Int_Loc += 7;
       Int_Glob = Int_Loc;
@@ -882,13 +882,13 @@ int main ()
     printf("Ptr_Glob->Discr:             %d\n", Ptr_Glob->Discr);
     printf("        should be:   %d\n", 0);
   }
-  if (!check(Ptr_Glob->variant.var_1.Enum_Comp == 3)) {
+  if (!check(Ptr_Glob->variant.var_1.Enum_Comp == 2)) {
     printf("Ptr_Glob->Enum_Comp:         %d\n", Ptr_Glob->variant.var_1.Enum_Comp);
-    printf("        should be:   %d\n", 3);
+    printf("        should be:   %d\n", 2);
   }
-  if (!check(Ptr_Glob->variant.var_1.Int_Comp == 18)) {
+  if (!check(Ptr_Glob->variant.var_1.Int_Comp == 17)) {
     printf("Ptr_Glob->Int_Comp:          %d\n", Ptr_Glob->variant.var_1.Int_Comp);
-    printf("        should be:   %d\n", 18);
+    printf("        should be:   %d\n", 17);
   }
   if (!check(strcmp(Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING") == 0)) {
     printf("Ptr_Glob->Str_Comp:          %s\n", Ptr_Glob->variant.var_1.Str_Comp);
@@ -899,9 +899,9 @@ int main ()
     printf("Next_Ptr_Glob->Discr:             %d\n", Next_Ptr_Glob->Discr);
     printf("        should be:   %d\n", 0);
   }
-  if (!check(Next_Ptr_Glob->variant.var_1.Enum_Comp == 3)) {
+  if (!check(Next_Ptr_Glob->variant.var_1.Enum_Comp == 1)) {
     printf("Next_Ptr_Glob->Enum_Comp:         %d\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
-    printf("        should be:   %d\n", 3);
+    printf("        should be:   %d\n", 1);
   }
   if (!check(Next_Ptr_Glob->variant.var_1.Int_Comp == 18)) {
     printf("Next_Ptr_Glob->Int_Comp:          %d\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
@@ -943,8 +943,7 @@ int main ()
   printk("Dhrystone %s         %d Marks\n", pass ? "PASS" : "FAIL", 1030270 / (int)User_Time);
   printk("                   vs. 100000 Marks (i7-6700 @ 3.40GHz)\n");
 
-
-  
+  return 0;
 }
 
 
