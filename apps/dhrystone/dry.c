@@ -356,7 +356,7 @@
 #define Start_Timer() Begin_Time = _uptime()
 #define Stop_Timer()  End_Time   = _uptime()
 
-#define NUMBER_OF_RUNS		500000 /* Default number of runs */
+#define NUMBER_OF_RUNS		1 /* Default number of runs */
 #define PASS2
 
 #ifdef  NOSTRUCTASSIGN
@@ -454,9 +454,10 @@ static char memory[1024];
 static char *free_mem = &memory[0];
 
 static char* myalloc(size_t size) {
+  while ((ulong)free_mem % 4 != 0) free_mem ++;
   char *ret = free_mem;
-  ret += size;
-  while ((ulong)ret % 4 != 0) ret ++;
+  free_mem += size;
+  printf("Allocate %d get %lx\n", (int)size, (ulong)ret);
   return ret;
 }
 
@@ -807,6 +808,7 @@ int main ()
       strcpy (Str_2_Loc, "DHRYSTONE PROGRAM, 2'ND STRING");
       Enum_Loc = Ident_2;
       Bool_Glob = ! Func_2 (Str_1_Loc, Str_2_Loc);
+	  //assert(Bool_Glob == 1);
 	/* Bool_Glob == 1 */
       while (Int_1_Loc < Int_2_Loc)  /* loop body executed once */
       {
@@ -882,13 +884,13 @@ int main ()
     printf("Ptr_Glob->Discr:             %d\n", Ptr_Glob->Discr);
     printf("        should be:   %d\n", 0);
   }
-  if (!check(Ptr_Glob->variant.var_1.Enum_Comp == 3)) {
+  if (!check(Ptr_Glob->variant.var_1.Enum_Comp == 2)) {
     printf("Ptr_Glob->Enum_Comp:         %d\n", Ptr_Glob->variant.var_1.Enum_Comp);
-    printf("        should be:   %d\n", 3);
+    printf("        should be:   %d\n", 2);
   }
-  if (!check(Ptr_Glob->variant.var_1.Int_Comp == 18)) {
+  if (!check(Ptr_Glob->variant.var_1.Int_Comp == 17)) {
     printf("Ptr_Glob->Int_Comp:          %d\n", Ptr_Glob->variant.var_1.Int_Comp);
-    printf("        should be:   %d\n", 18);
+    printf("        should be:   %d\n", 17);
   }
   if (!check(strcmp(Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING") == 0)) {
     printf("Ptr_Glob->Str_Comp:          %s\n", Ptr_Glob->variant.var_1.Str_Comp);
@@ -899,9 +901,9 @@ int main ()
     printf("Next_Ptr_Glob->Discr:             %d\n", Next_Ptr_Glob->Discr);
     printf("        should be:   %d\n", 0);
   }
-  if (!check(Next_Ptr_Glob->variant.var_1.Enum_Comp == 3)) {
+  if (!check(Next_Ptr_Glob->variant.var_1.Enum_Comp == 1)) {
     printf("Next_Ptr_Glob->Enum_Comp:         %d\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
-    printf("        should be:   %d\n", 3);
+    printf("        should be:   %d\n", 1);
   }
   if (!check(Next_Ptr_Glob->variant.var_1.Int_Comp == 18)) {
     printf("Next_Ptr_Glob->Int_Comp:          %d\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
@@ -943,8 +945,7 @@ int main ()
   printk("Dhrystone %s         %d Marks\n", pass ? "PASS" : "FAIL", 1030270 / (int)User_Time);
   printk("                   vs. 100000 Marks (i7-6700 @ 3.40GHz)\n");
 
-
-  
+  return 0;
 }
 
 
