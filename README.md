@@ -33,7 +33,7 @@ include $(AM_HOME)/Makefile.app
 * 应用目录下的`include/`目录会被添加到编译的`-I`选项中。
 * 环境变量`AM_HOME`需要包含**nexus-am项目的根目录的绝对路径**。
 
-编译时，首先确保`AM_HOME`正确设置，然后执行`make ARCH=体系结构名`编译。例如`make ARCH=native`将会编译成本地可运行的项目，`make ARCH=mips32-minimal`生成用于仿真的MIPS32程序。
+编译时，首先确保`AM_HOME`正确设置，然后执行`make ARCH=体系结构名`编译。例如`make ARCH=native`将会编译成本地可运行的项目，`make ARCH=mips32-minimal`生成用于仿真的MIPS32程序。`ARCH`缺省时默认编译到本地。
 
 ## 体系结构相关说明
 
