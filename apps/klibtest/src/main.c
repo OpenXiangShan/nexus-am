@@ -1,5 +1,5 @@
 #include <am.h>
-#include <klib.h>
+#include "klib.h"
 
 void printk_test();
 void memory_test();
