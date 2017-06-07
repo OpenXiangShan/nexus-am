@@ -1,94 +1,36 @@
-import sys
+import re, sys, subprocess
+from subprocess import PIPE
 
-INST = """ADD
-LI
-ADDU
-ADDI
-ADDIU
-SUB
-SUBU
-AND
-ANDI
-OR
-ORI
-XOR
-XORI
-NOR
-SLT
-SLTU
-SLTI
-SLTIU
-SLL
-SLLV
-SRL
-SRLV
-SRA
-SRAV
-CLO
-SEH
-SEB
-CLZ
-B
-BEQ
-BEQL
-BEQZ
-BGEZ
-BGTZ
-BLEZ
-BLTZ
-BNE
-BNEZ
-TGE
-TGEI
-TGEU
-TGEIU
-TLT
-TLTI
-TLTU
-TLTIU
-TNE
-TNEI
-J
-JAL
-JALR
-JR
-MOVE
-MOVN
-MOVZ
-LUI
-MUL
-MULT
-MULTU
-DIV
-DIVU
-MFHI
-MTHI
-MFLO
-MTLO
-LB
-LBU
-LH
-LHU
-LW
-SB
-SH
-SW
-LWL
-LWR
-SWL
-SWR
-MFC0
-MTC0
-SYSCALL
-ERET
-NOP
-NEGU"""
+def execute(commands):
+  p = subprocess.Popen(commands, stdout=PIPE, stderr=PIPE)
+  (out, err) = p.communicate()
+  if p.returncode != 0:
+    raise Exception("Execute {0} fail".format(' '.join(commands)))
+  return out
 
-INST = [i.strip() for i in INST.strip().split('\n')]
 
-for line in sys.stdin:
-    content = line.strip().split('\t')
-    if len(content) >= 3:
-        inst = content[2].upper()
-        if inst not in INST:
-            print "[INSTcheck] '{0}' is invalid.".format(inst)
+def get_instr(fname):
+  INST = re.compile('^([0-9a-f]+):\t([0-9a-f]+)\s+([a-z]+[0-9]*).*$')
+  MAP = {
+    'beqz': 'beq',
+    'bnez': 'bne',
+    'negu': 'subu',
+  }
+
+  insts = set()
+  asm = execute(["mips-linux-gnu-objdump", "-M", "no-aliases", "-d", fname])
+  with open(fname + '.txt', 'w') as fp:
+    fp.write(asm)
+
+  for line in asm.split('\n'):
+    m = INST.match(line.strip())
+    if m:
+      inst = m.group(3)
+      insts.add( MAP.get(inst, inst).upper() )
+  return sorted(list(insts))
+
+insts = get_instr(sys.argv[1])
+
+print "There are {0} instructions:".format(len(insts))
+print "  {0}".format(' '.join(insts))
+

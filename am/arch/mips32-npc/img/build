@@ -7,6 +7,4 @@ shift
 bash -c "cd $DIR/boot && make"
 
 mips-linux-gnu-ld --gc-sections -EL -T $DIR/loader.ld -e _start -o ${DEST} $DIR/boot/start.o --start-group $@ --end-group &&  \
-mips-linux-gnu-objdump -d ${DEST} > ${DEST}.code.txt && \
-mips-linux-gnu-objdump -d ${DEST} | python $DIR/scripts/instr_check.py
-
+python $DIR/scripts/instr_check.py ${DEST}
