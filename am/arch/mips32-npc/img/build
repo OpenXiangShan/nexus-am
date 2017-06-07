@@ -7,4 +7,4 @@ shift
 bash -c "cd $DIR/boot && make"
 
 mips-linux-gnu-ld --gc-sections -EL -T $DIR/loader.ld -e _start -o ${DEST} $DIR/boot/start.o --start-group $@ --end-group &&  \
-python $DIR/scripts/instr_check.py ${DEST}
+python $DIR/instr_check.py ${DEST}
