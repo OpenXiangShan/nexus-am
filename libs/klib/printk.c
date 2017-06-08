@@ -113,7 +113,7 @@ int snprintf(char* out, size_t n, const char* fmt, ...){
   va_start(ap,fmt);
   int r=vprintk(out,fmt,ap);
   va_end(ap);
-  if(strlen(out)>=n)*(out+n)='\0';
+  if(strlen(out)>=n)*(out+n-1)='\0';
   return r;
 }
 
