@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "Run with Makefile under the NEMU project"
