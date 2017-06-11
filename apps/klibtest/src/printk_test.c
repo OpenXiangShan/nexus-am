@@ -24,6 +24,7 @@ void printk_test() {
   printk("=======================================================\n");
   printk("Test end!!! Good luck!!!\n");
   */
+  /*
   static char src[1024]="hello";
   printk("0, -1, -2147483648, -1412505855, -32768, 102030\n");
   printk("%d, %d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -32768, 102030);
@@ -44,7 +45,17 @@ void printk_test() {
   printk("ffffffff\n");
   printk("%x\n",0xffffffff);
   printk("0, -1, -2\n");
-  snprintf(src,10,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
+  */
+  char buf[128];
+  sprintf(buf, "%s", "Hello world!\n");
+ // printk("%s\n",buf);
+  assert(strcmp(buf, "Hello world!\n") == 0);
+  sprintf(buf, "%d + %d = %d\n", 1, 1, 2);
+  assert(strcmp(buf, "1 + 1 = 2\n") == 0);
+  sprintf(buf, "%d + %d = %d\n", 2, 10, 12);
+  assert(strcmp(buf, "2 + 10 = 12\n") == 0);
+
+  //snprintf(src,10,"%d, %d, %d, %d, %d\n", 0, 0xffffffff, 0x80000000, 0xabcedf01, -102030);
   //sprintf(src,"%d",-2040);
-  printk("%s",src);
+  //printk("%s",src);
 }
