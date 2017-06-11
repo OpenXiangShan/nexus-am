@@ -10,11 +10,6 @@ _Area _heap = {
   .end = &_heap_end,
 };
 
-_Screen _screen = {
-  .width  = 0,
-  .height = 0,
-};
-
 static void serial_init() {
 #ifdef HAS_DEVICE
   SERIAL_PORT[1] = 0x00;
