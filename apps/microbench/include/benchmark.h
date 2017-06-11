@@ -56,7 +56,6 @@ typedef struct Result {
   int pass;
   const char *msg;
   ulong tsc, msec;
-  ulong score;
 } Result;
 
 void prepare(Result *res);
