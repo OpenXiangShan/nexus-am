@@ -10,7 +10,7 @@ ARCHIVE ?= $(LIB_DIR)/build/$(NAME)-$(ARCH).a
 
 INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 
-CFLAGS += -fdata-sections -ffunction-sections
+CFLAGS += -fdata-sections -ffunction-sections -fno-builtin
 
 $(shell mkdir -p $(DST_DIR))
 
