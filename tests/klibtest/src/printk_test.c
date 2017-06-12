@@ -41,7 +41,7 @@ void printk_test() {
   printk("  102030x\n");
   printk("%8dx\n",102030);
   printk("4294967295\n");
-  printk("%u\n",4294967295);
+  printk("%u\n",4294967295u);
   printk("ffffffff\n");
   printk("%x\n",0xffffffff);
   printk("0, -1, -2\n");
