@@ -9,9 +9,10 @@ int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,i
 //char* printstr(char* str,int width,char flagc,char* s);
 char* printstr(char* str,char** s);
 void myputc(char c,char** s_h){
-  if(s_h==0)_putc(c);
-  else **s_h=c;
-  (*s_h)++;
+  if(*s_h==0)_putc(c);
+  else {**s_h=c;
+	(*s_h)++;
+  }
 }
 
 
