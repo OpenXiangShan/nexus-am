@@ -33,8 +33,8 @@ void memory_test() {
       check_equal(st, ed, val);
     }
 
-  // memmove = memcpy
-  for (int st = 0; st < N; st ++) 
+  // memmove
+  for (int st = 0; st < N; st ++) {
     for (int ed = st + 1; ed <= N; ed ++) {
       int len = ed - st;
       for (int cp = 0; cp + len <= N; cp ++) {
@@ -45,6 +45,11 @@ void memory_test() {
         check_sequence(st + len, N, st + len);
       }
     }
+  }
 
+  // memcpy: TODO
 
+  // strcpy / strncpy: TODO
+
+  // strcmp / strncmp: TODO
 }
