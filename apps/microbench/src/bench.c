@@ -139,8 +139,8 @@ void bench_srand(i32 _seed) {
 }
 
 i32 bench_rand() {
-  seed = (seed * (i32)214013L + (i32)2531011L) >> 16;
-  return seed & 0x7fff;
+  seed = (seed * (i32)214013L + (i32)2531011L);
+  return (seed >> 16) & 0x7fff;
 }
 
 // FNV hash
@@ -148,12 +148,11 @@ u32 checksum(void *start, void *end) {
   const i32 x = 16777619;
   i32 hash = 2166136261u;
   for (char *p = (char*)start; p + 4 < (char*)end; p += 4) {
-    i32 h1 = hash, h2 = hash;
+    i32 h1 = hash;
     for (int i = 0; i < 4; i ++) {
       h1 = (h1 ^ p[i]) * x;
-      h2 = (h2 ^ p[3 - i]) * x;
     }
-    hash = h1 ^ h2;
+    hash = h1;
   }
   hash += hash << 13;
   hash ^= hash >> 7;
