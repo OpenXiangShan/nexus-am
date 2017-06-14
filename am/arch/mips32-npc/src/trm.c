@@ -3,32 +3,20 @@
 #include <klib.h>
 
 int main();
-static void memory_init();
 
 void _trm_init() {
-  memory_init();
   int ret = main();
   _halt(ret);
 }
 
 // -------------------- memory --------------------
 
-extern unsigned int _edata, _end, _heap_start, _heap_end; // symbols
+extern unsigned int heap_start, _heap_end; // symbols
 
 _Area _heap = {
   .start = &_heap_start,
   .end = &_heap_end,
 };
-
-static void memory_init() {
-  // TODO: This should be done by the loader.
-  // When the loader is fixed, delte:
-  //   1. this function
-  //   2. symbols in loader.ld
-  for (u32 *p = &_edata; p != &_end; p ++) {
-    *p = 0;
-  }
-}
 
 // -------------------- debug console --------------------
 
