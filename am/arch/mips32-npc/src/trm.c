@@ -13,7 +13,7 @@ void _trm_init() {
 
 // -------------------- memory --------------------
 
-extern unsigned int _bss_start, _bss_end, _heap_start, _heap_end; // symbols
+extern unsigned int _edata, _end, _heap_start, _heap_end; // symbols
 
 _Area _heap = {
   .start = &_heap_start,
@@ -25,7 +25,7 @@ static void memory_init() {
   // When the loader is fixed, delte:
   //   1. this function
   //   2. symbols in loader.ld
-  for (u32 *p = &_bss_start; p != &_bss_end; p ++) {
+  for (u32 *p = &_edata; p != &_end; p ++) {
     *p = 0;
   }
 }

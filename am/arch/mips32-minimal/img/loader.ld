@@ -5,14 +5,19 @@ MEMORY {
 SECTIONS {
   .text : {
     *(.text)
+    etext = .;
+    _etext = .;
   } > bram
   .data : {
     *(.data)
+    edata = .;
+    _edata = .;
   } > bram
   .bss : {
     *(.bss*)
     *(.sbss)
     *(.scommon)
+    end = .;
     _end = .;
   } > bram
   stack : {
