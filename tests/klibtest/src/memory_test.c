@@ -42,7 +42,7 @@ void memory_test() {
       check_equal(st, ed, val);
     }
 
-  // memmove memcpy
+  // memmove
   for (int st = 0; st < N; st ++) {
     for (int ed = st + 1; ed <= N; ed ++) {
       int len = ed - st;
@@ -56,7 +56,24 @@ void memory_test() {
     }
   }
 
-  // memcpy: memcpy是用的memmove实现所以共用一个测试即可
+  // memcpy
+  for (int st = 0; st < N; st ++) {
+    for (int ed = st + 1; ed <= N; ed ++) {
+      int len = ed - st;
+      for (int cp = 0; cp + len <= N; cp ++) {
+        reset();
+        if ((cp + len > st && cp < st) || (st + len > cp && st < cp)) {
+          // if the areas overlap, skip this testcase since the result is undefined
+          // see 'man memcpy' for details
+          continue;
+        }
+        memcpy(data + st, data + cp, len);
+        check_sequence(0, st, 0);
+        check_sequence(st, st + len, cp);
+        check_sequence(st + len, N, st + len);
+      }
+    }
+  }
 
   // strcpy / strncpy:
   for (int st = 0; st < N; st ++) {
