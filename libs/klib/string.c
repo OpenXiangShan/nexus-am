@@ -47,12 +47,29 @@ int strncmp(const char* s1, const char* s2, size_t n){
 
 void* memset(void* v,int c,size_t n){
   assert(v);
-  char* p;
-  int m;
-  p=v;
-  m=n;
-  while(--m>=0)*p++=c;
-  return v;
+
+  void* ori_dst = v;
+  c &= 0xff;
+  int cc = c | (c << 8);
+  int cccc = cc | (cc << 16);
+
+  int res = n & 0x3;
+  n >>= 2;
+  int i;
+  for (i = 0; i < n; i ++) {
+    ((int *)v)[i] = cccc;
+  }
+
+  i <<= 2;
+  v += i;
+  switch (res) {
+    case 3: ((char *)v)[2] = c;
+    case 2: ((char *)v)[1] = c;
+    case 1: ((char *)v)[0] = c;
+    default: ;
+  }
+
+  return ori_dst;
 }
 
 void* memmove(void* dst,const void* src,size_t n){
