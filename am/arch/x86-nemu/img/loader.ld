@@ -1,13 +1,23 @@
 SECTIONS {
   . = 0x100000;
   entry : { *(entry) }
-  .text : { *(.text*) }
-  .rodata : { *(.rodata*) }
-  .data : { *(.data*) }
+  .text : {
+    *(.text*)
+  }
+  .rodata : {
+    *(.rodata*)
+    etext = .;
+    _etext = .;
+  }
+  .data : {
+    *(.data*)
+    edata = .;
+    _edata = .;
+  }
   .bss : {
-    _bss_start = .;
     *(.bss*)
-    _bss_end = .;
+    end = .;
+    _end = .;
   }
   _heap_start = ALIGN(4096);
   _stack_pointer = 128M;

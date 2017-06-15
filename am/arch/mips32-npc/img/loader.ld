@@ -4,15 +4,25 @@ MEMORY {
 }
 
 SECTIONS {
-  loader : { *(loader) } > bram
-  .text : { *(.text) } > ddr
-  .data : { *(.data) } > ddr
+  loader : {
+    *(loader)
+  } > bram
+  .text : {
+    *(.text)
+    etext = .;
+    _etext = .;
+  } > ddr
+  .data : {
+    *(.data)
+    edata = .;
+    _edata = .;
+  } > ddr
   .bss : {
-    _bss_start = .;
     *(.bss*)
     *(.sbss)
     *(.scommon)
-    _bss_end = .;
+    end = .;
+    _end = .;
   } > ddr
   _heap_start = ALIGN(4096);
   _stack_pointer = ORIGIN(ddr) + LENGTH(ddr);
