@@ -1,15 +1,9 @@
 #ifndef __ARCH_H__
 #define __ARCH_H__
 
-typedef unsigned int u32;
-typedef int i32;
-typedef unsigned short u16;
-typedef short int i16;
-typedef unsigned char u8;
-typedef char i8;
 typedef u32 size_t;
 
-typedef struct _RegSet {
+struct _RegSet {
 	u32 at,
 	v0,v1,
 	a0,a1,a2,a3,
@@ -17,6 +11,6 @@ typedef struct _RegSet {
 	s0,s1,s2,s3,s4,s5,s6,s7,
 	k0,k1,
 	gp,sp,fp,ra;
-} _RegSet;
+};
 
 #endif
