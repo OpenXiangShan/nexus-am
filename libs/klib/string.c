@@ -14,7 +14,7 @@ char* strcpy(char* dst,const char* src){
   char* ret;
   ret=dst;
   while((*dst++=*src++)!='\0');
-    return ret;
+  return ret;
 }
 char* strncpy(char* dst, const char* src, size_t n){
   assert(src&&dst);
