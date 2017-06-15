@@ -48,28 +48,24 @@ int strncmp(const char* s1, const char* s2, size_t n){
 void* memset(void* v,int c,size_t n){
   assert(v);
 
-  void* ori_dst = v;
   c &= 0xff;
-  int cc = c | (c << 8);
-  int cccc = cc | (cc << 16);
+  uint32_t c2 = (c << 8) | c;
+  uint32_t c4 = (c2 << 16) | c2;
+  uint64_t c8 = (((uint64_t)c4 << 16) << 16) | c4;
+  int n_align = n & ~0xf;
 
-  int res = n & 0x3;
-  n >>= 2;
   int i;
-  for (i = 0; i < n; i ++) {
-    ((int *)v)[i] = cccc;
+  // TODO: adjust 'v' to be 8-byte align to avoid unalign accesses on MIPS
+  for (i = 0; i < n_align; i += 16) {
+    *(uint64_t *)(v + i    ) = c8;
+    *(uint64_t *)(v + i + 8) = c8;
   }
 
-  i <<= 2;
-  v += i;
-  switch (res) {
-    case 3: ((char *)v)[2] = c;
-    case 2: ((char *)v)[1] = c;
-    case 1: ((char *)v)[0] = c;
-    default: ;
+  for (; i < n; i ++) {
+    ((char *)v)[i] = c;
   }
 
-  return ori_dst;
+  return v;
 }
 
 void* memmove(void* dst,const void* src,size_t n){
@@ -91,25 +87,19 @@ void* memmove(void* dst,const void* src,size_t n){
 void* memcpy(void* dst, const void* src, size_t n){
   assert(dst&&src);
 
-  void* ori_dst = dst;
-  int res = n & 0x3;
-  n >>= 2;
+  int n_align = n & ~0xf;
   int i;
-  for (i = 0; i < n; i ++) {
-    ((int *)dst)[i] = ((int *)src)[i];
+  // TODO: adjust 'dst' and 'src' to be 8-byte align to avoid unalign accesses on MIPS
+  for (i = 0; i < n_align; i += 16) {
+    *(uint64_t *)(dst + i     ) = *(uint64_t *)(src + i     );
+    *(uint64_t *)(dst + i + 8 ) = *(uint64_t *)(src + i + 8 );
   }
 
-  i <<= 2;
-  dst += i;
-  src += i;
-  switch (res) {
-    case 3: ((char *)dst)[2] = ((char *)src)[2];
-    case 2: ((char *)dst)[1] = ((char *)src)[1];
-    case 1: ((char *)dst)[0] = ((char *)src)[0];
-    default: ;
+  for (; i < n; i ++) {
+    ((char *)dst)[i] = ((char *)src)[i];
   }
 
-  return ori_dst;
+  return dst;
 }
 int memcmp(const void* s1, const void* s2, size_t n){
   return strncmp(s1,s2,n);
