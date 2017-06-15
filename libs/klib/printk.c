@@ -59,6 +59,7 @@ int vprintk(char* out,const char* fmt,va_list ap){
         case '*':width=va_arg(ap,int);goto reswitch;
 	//case '.':if(width<0)width=0;goto reswitch;
 	case 'c':vargch=va_arg(ap,int);printch(vargch,s_v);break;
+	case '%':printch('%',s_v);break;
 	case 'd':vargint=va_arg(ap,int);base=10;if(vargint<0){
 		 //_putc('-');
 		 abs='-';
