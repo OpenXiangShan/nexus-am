@@ -47,12 +47,29 @@ int strncmp(const char* s1, const char* s2, size_t n){
 
 void* memset(void* v,int c,size_t n){
   assert(v);
-  char* p;
-  int m;
-  p=v;
-  m=n;
-  while(--m>=0)*p++=c;
-  return v;
+
+  void* ori_dst = v;
+  c &= 0xff;
+  int cc = c | (c << 8);
+  int cccc = cc | (cc << 16);
+
+  int res = n & 0x3;
+  n >>= 2;
+  int i;
+  for (i = 0; i < n; i ++) {
+    ((int *)v)[i] = cccc;
+  }
+
+  i <<= 2;
+  v += i;
+  switch (res) {
+    case 3: ((char *)v)[2] = c;
+    case 2: ((char *)v)[1] = c;
+    case 1: ((char *)v)[0] = c;
+    default: ;
+  }
+
+  return ori_dst;
 }
 
 void* memmove(void* dst,const void* src,size_t n){
@@ -72,8 +89,27 @@ void* memmove(void* dst,const void* src,size_t n){
   return dst;
 }
 void* memcpy(void* dst, const void* src, size_t n){
-  memmove(dst,src,n);
-  return dst;
+  assert(dst&&src);
+
+  void* ori_dst = dst;
+  int res = n & 0x3;
+  n >>= 2;
+  int i;
+  for (i = 0; i < n; i ++) {
+    ((int *)dst)[i] = ((int *)src)[i];
+  }
+
+  i <<= 2;
+  dst += i;
+  src += i;
+  switch (res) {
+    case 3: ((char *)dst)[2] = ((char *)src)[2];
+    case 2: ((char *)dst)[1] = ((char *)src)[1];
+    case 1: ((char *)dst)[0] = ((char *)src)[0];
+    default: ;
+  }
+
+  return ori_dst;
 }
 int memcmp(const void* s1, const void* s2, size_t n){
   return strncmp(s1,s2,n);
