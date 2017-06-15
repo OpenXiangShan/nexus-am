@@ -7,12 +7,23 @@
 #ifndef __AM_H__
 #define __AM_H__
 
-#include <arch.h>
+#include <stdint.h>
+
+typedef int8_t    i8;
+typedef int16_t  i16;
+typedef int32_t  i32;
+typedef int64_t  i64;
+typedef uint8_t   u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
 typedef unsigned long  ulong;
 typedef unsigned int   uint;
 typedef unsigned short ushort;
 typedef unsigned char  uchar;
+
+#include <arch.h>
 
 #define MAX_CPU 8
 
@@ -45,6 +56,8 @@ enum {
   _EVENT_NULL = 0,
   _EVENTS(_EVENT_NAME),
 };
+
+typedef struct _RegSet _RegSet;
 
 typedef struct _Event {
   int event;
