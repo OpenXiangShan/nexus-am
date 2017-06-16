@@ -18,14 +18,10 @@ static void check_src(char* s){
 
 
 void printk_test() {
-  // sprintf: TODO
-
   // a string generator
   // thorough testing of all combinations
   // use assert() to check correctness
 
-  // printk: TODO
-  
   //打印所有可显示ascii字符----c
     printk(" !\"#$%%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n");
   for(int i = 0; i + ' ' <= '~'; i ++){
@@ -35,6 +31,7 @@ void printk_test() {
   }
   //%s
   printk("\n%s\n", src);
+  reset_src();
   sprintf(dst,"%s", src);
   assert(0 == strcmp( dst, src));
 
@@ -59,6 +56,7 @@ void printk_test() {
   printk("%p, %p, %p, %p, %p, %p\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
   sprintf(src,"%p, %p, %p, %p, %p, %p\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
   check_src("0x0, 0xffffffff, 0x80000000, 0xabcdef01, 0xffff8000, 0x18e8e\n");
+  //TODO flags
   /*这里往后是flag的测试
   printk(" -102030\n");
   printk("%*d\n",8,-102030);
