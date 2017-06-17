@@ -1,5 +1,6 @@
 #include "common.h"
-//#include "memory.h"
+#include "memory.h"
+#include "x86.h"
 #include <elf.h>
 
 #define ELF_OFFSET_IN_DISK 0
@@ -35,21 +36,22 @@ uint32_t loader() {
   //TODO();
   for(ph = (void *)buf + elf->e_phoff, eph = ph + elf->e_phnum; ph < eph; ph ++) {
     /* Scan the program header table, load each segment into memory */
-    if(ph->p_type == PT_LOAD) {
+    if(ph->p_type == PT_LOAD && ph->p_memsz != 0) {
 
       /* TODO: read the content of the segment from the ELF file
        * to the memory region [VirtAddr, VirtAddr + FileSiz)
        */
-      driver_read((void *)ph->p_vaddr, ELF_OFFSET_IN_DISK + ph->p_offset, ph->p_filesz);
+      uint32_t va = mm_malloc(ph->p_vaddr, ph->p_memsz);
+      driver_read((void *)va, ELF_OFFSET_IN_DISK + ph->p_offset, ph->p_filesz);
 
 
       /* TODO: zero the memory region
        * [VirtAddr + FileSiz, VirtAddr + MemSiz)
        */
-      memset((void *)ph->p_vaddr + ph->p_filesz, 0, ph->p_memsz - ph->p_filesz);
+      memset((void *)va + ph->p_filesz, 0, ph->p_memsz - ph->p_filesz);
 
 
-#ifdef IA32_PAGE
+#ifdef __PAGE
       /* Record the program break for future use. */
       extern uint32_t cur_brk, max_brk;
       uint32_t new_brk = ph->p_vaddr + ph->p_memsz - 1;
@@ -60,8 +62,8 @@ uint32_t loader() {
 
   volatile uint32_t entry = elf->e_entry;
 
-#ifdef IA32_PAGE
-  mm_malloc(KOFFSET - STACK_SIZE, STACK_SIZE);
+#ifdef __PAGE
+  mm_malloc(0xc0000000 - STACK_SIZE, STACK_SIZE);
 
 #ifdef HAS_DEVICE
   create_video_mapping();
