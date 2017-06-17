@@ -4,6 +4,8 @@
 #define MIN_INT 0x80000000
 #define MAX_UINT 0xffffffff
 
+#define FLAGNUM 4
+
 static char src[1024];
 static char dst[1024];
 
@@ -56,7 +58,29 @@ void printk_test() {
   printk("%p, %p, %p, %p, %p, %p\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
   sprintf(src,"%p, %p, %p, %p, %p, %p\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
   check_src("0x0, 0xffffffff, 0x80000000, 0xabcdef01, 0xffff8000, 0x18e8e\n");
-  //TODO flags
+  //TODO flags - 0 ' ' +
+  char stdstr[1024]="%  d\n";
+  char flag[FLAGNUM]={' ','0','-','+'};
+  //int width=0;
+  //int printnum=102030;
+  char* src_p=src;
+  reset_src();
+  for(int i=0;i<FLAGNUM;i++){
+    stdstr[1]=flag[i];
+    for(int j=5;j<9;j++){
+      stdstr[2]='0'+j;
+      printk(stdstr,102030);
+      sprintf(src_p,stdstr,102030);
+      src_p+=j;
+      if(j==5)src_p++;
+      if(flag[i]=='+')src_p++;
+    }
+  }
+  printk("%s",src);
+  check_src("102030102030 102030  102030102030102030010203000102030102030102030102030 102030  +102030+102030 +102030  +102030\n");
+
+
+  
   /*这里往后是flag的测试
   printk(" -102030\n");
   printk("%*d\n",8,-102030);
