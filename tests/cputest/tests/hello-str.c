@@ -1,4 +1,3 @@
-#include <klib.h>
 #include "trap.h"
 
 char buf[128];
