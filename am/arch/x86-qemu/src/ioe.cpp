@@ -81,7 +81,19 @@ void _draw_sync() {
 static inline int keydown(int e) { return (e & 0x8000) != 0; }
 static inline int upevent(int e) { return e; }
 static inline int downevent(int e) { return e | 0x8000; }
-  
+
+int scan_code[] = {
+  0,
+  1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
+  41, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 43,
+  58, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 28,
+  42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+  29, 91, 56, 57, 56, 29, 
+  72, 80, 75, 77, 0, 0, 0, 0, 0, 0
+};
+
+#include <klib.h>
 int _read_key() {
   int status = inb(0x64);
   if ((status & 0x1) == 0) return upevent(_KEY_NONE);
@@ -90,23 +102,17 @@ int _read_key() {
     return upevent(_KEY_NONE);
   } else {
     int code = inb(0x60) & 0xff;
-    //printk("> %d\n", code);
-    // TODO: this is ugly.
-    switch (code) {
-      case 44: return downevent(_KEY_Z);
-      case 172: return upevent(_KEY_Z);
-      case 45: return downevent(_KEY_X);
-      case 173: return upevent(_KEY_X);
-      case 72: return downevent(_KEY_UP);
-      case 200: return upevent(_KEY_UP);
-      case 80: return downevent(_KEY_DOWN);
-      case 208: return upevent(_KEY_DOWN);
-      case 75: return downevent(_KEY_LEFT);
-      case 203: return upevent(_KEY_LEFT);
-      case 77: return downevent(_KEY_RIGHT);
-      case 205: return upevent(_KEY_RIGHT);
+    printk("> %d\n", code);
+
+    for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
+      if (scan_code[i] == 0) continue;
+      if (scan_code[i] == code) {
+        return downevent(i);
+      } else if (scan_code[i] + 128 == code) {
+        return upevent(i);
+      }
     }
-    return upevent(_KEY_NONE);
+    return _KEY_NONE;
   }
 }
 
