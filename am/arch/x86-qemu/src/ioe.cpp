@@ -93,7 +93,6 @@ int scan_code[] = {
   72, 80, 75, 77, 0, 0, 0, 0, 0, 0
 };
 
-#include <klib.h>
 int _read_key() {
   int status = inb(0x64);
   if ((status & 0x1) == 0) return upevent(_KEY_NONE);
@@ -102,7 +101,6 @@ int _read_key() {
     return upevent(_KEY_NONE);
   } else {
     int code = inb(0x60) & 0xff;
-    printk("> %d\n", code);
 
     for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
       if (scan_code[i] == 0) continue;
