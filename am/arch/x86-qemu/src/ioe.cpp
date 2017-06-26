@@ -114,24 +114,11 @@ int _read_key() {
   }
 }
 
-static inline ulong rdtsc() {
-  u32 lo, hi;
-  asm volatile ("rdtsc": "=a"(lo), "=d"(hi)::);
-  return (hi << (32 - 10)) | (lo >> 10);
-}
-
-static ulong init_tsc;
-
 void _ioe_init() {
   vga_init();
-  init_tsc = rdtsc();
 }
 
 ulong i386_uptime = 0;
-
-ulong _cycles() {
-  return rdtsc() - init_tsc;
-}
 
 ulong _uptime() {
   // TODO: this is not precise.

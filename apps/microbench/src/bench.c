@@ -27,12 +27,10 @@ Benchmark benchmarks[] = {
 
 // Running a benchmark
 static void bench_prepare(Result *res) {
-  res->tsc = _cycles();
   res->msec = _uptime();
 }
 
 static void bench_done(Result *res) {
-  res->tsc = _cycles() - res->tsc;
   res->msec = _uptime() - res->msec;
 }
 
@@ -78,13 +76,12 @@ int main() {
     if (msg != NULL) {
       printk("Ignored %s\n", msg);
     } else {
-      ulong tsc = ULONG_MAX, msec = ULONG_MAX;
+      ulong msec = ULONG_MAX;
       int succ = 1;
       for (int i = 0; i < REPEAT; i ++) {
         Result res = run_once(bench);
         printk(res.pass ? "*" : "X");
         succ &= res.pass;
-        if (res.tsc < tsc) tsc = res.tsc;
         if (res.msec < msec) msec = res.msec;
       }
 
@@ -93,8 +90,8 @@ int main() {
 
       pass &= succ;
 
-      ulong cur = score(bench, tsc, msec);
-      printk("\n  min time: %dK cycles in %d ms [%d]\n", (uint)tsc, (uint)msec, (uint)cur);
+      ulong cur = score(bench, 0, msec);
+      printk("\n  min time: %d ms [%d]\n", (uint)msec, (uint)cur);
 
       bench_score += cur;
     }
