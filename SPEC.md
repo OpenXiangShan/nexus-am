@@ -42,6 +42,13 @@
 
 * `void _asye_init();`初始化Extension。
 * `void _listen(_RegSet* (*l)(Event ev, _RegSet *regs));`监听中断/异常事件。在中断/异常事件到来时调用l(ev, regs)。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。
+  * `_EVENT_IRQ_TIME:` 
+  * `_EVENT_IRQ_IODEV`:
+  * `_EVENT_ERROR`:
+  * `_EVENT_PAGE_FAULT`:
+  * `_EVENT_BUSE_RROR`:
+  * `_EVENT_NUMERIC`:
+  * `_EVENT_TRAP`:
 * `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
 * `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
 * `void _idle();`在内核态等待下一次中断到来。
@@ -51,13 +58,13 @@
 
 ## Protection Extension
 
-* `void _pte_init(void*(*palloc)(), void (*pfree)(void*));`初始化Extension。传入两个函数，分别代表分配/释放一个物理页。
+* `void _pte_init(void*(*palloc)(), void (*pfree)(void*));`初始化Extension。传入两个函数，分别代表分配/释放一个物理页(reent)。
 * `void _protect(_Protect *p);` 创建一个保护的地址空间。
 * `void _release(_Protect *p);` 释放一个保护的地址空间。
 * `void _map(_Protect *p, void *va, void *pa);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
-* `void _ummap(_Protect *p, void *va);`释放虚拟地址空间va的一页。
+* `void _unmap(_Protect *p, void *va);`释放虚拟地址空间va的一页。
 * `void _switch(_Protect *p);`切换到一个保护的地址空间。注意在内核态下，内核代码将始终可用。
-* `_RegSet *_umake();`创建一个用户进程。还没想好怎么做。
+* `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]);`创建一个用户进程(ustack, kstack, entry, argv, envp).
 
 ## Multi-Processor Extension
 

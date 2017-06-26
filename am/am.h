@@ -48,7 +48,9 @@ enum {
 };
 
 #define _EVENTS(_) \
-  _(IRQ_TIME) _(IRQ_IODEV) _(PAGE_FAULT) _(ERROR) _(TRAP)
+  _(IRQ_TIME) _(IRQ_IODEV) \
+  _(ERROR) _(PAGE_FAULT) _(BUS_ERROR) _(NUMERIC) \
+  _(TRAP)
 
 #define _EVENT_NAME(ev) _EVENT_##ev,
 
@@ -61,7 +63,7 @@ typedef struct _RegSet _RegSet;
 
 typedef struct _Event {
   int event;
-  void *cause;
+  intptr_t cause;
 } _Event;
 
 typedef struct _Screen {
@@ -121,7 +123,7 @@ void _release(_Protect *p);
 void _map(_Protect *p, void *va, void *pa);
 void _unmap(_Protect *p, void *va);
 void _switch(_Protect *p);
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv, char *const envp);
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]);
 
 // =======================================================================
 // [4] Multi-Processor Extension (MPE)

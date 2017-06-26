@@ -68,7 +68,6 @@ void irq_handle(TrapFrame *tf) {
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
     ev.event = _EVENT_TRAP;
-    ev.cause = args;
   }
   else if (tf->irq < 32) ev.event = _EVENT_ERROR;
 
