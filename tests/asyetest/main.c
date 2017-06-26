@@ -29,9 +29,8 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
 
 int main(){
   _ioe_init();
-  _asye_init();
-  _listen(handler);
-  _ienable();
+  _asye_init(handler);
+  assert(!_istatus(1));
   _make(_heap, main, 0);
   while (1) _trap();
   return 0;

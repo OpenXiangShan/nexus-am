@@ -104,14 +104,10 @@ extern _Screen _screen;
 // [2] Asynchronous Extension (ASYE)
 // =======================================================================
 
-void _asye_init();
-void _listen(_RegSet* (*l)(_Event ev, _RegSet *regs));
+void _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs));
 _RegSet *_make(_Area kstack, void *entry, void *arg);
 void _trap();
-void _idle();
-void _ienable();
-void _idisable();
-int _istatus();
+int _istatus(int enable);
 
 // =======================================================================
 // [3] Protection Extension (PTE)

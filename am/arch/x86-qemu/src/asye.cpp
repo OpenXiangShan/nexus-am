@@ -171,7 +171,7 @@ void irq_handle(TrapFrame *tf) {
 static GateDesc idt[NR_IRQ];
 
 
-void _asye_init() {
+void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
   smp_init();
   lapic_init();
   ioapic_enable(IRQ_KBD, 0);
@@ -204,14 +204,6 @@ void _asye_init() {
   // -------------------- system call --------------------------
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
   set_idt(idt, sizeof(idt));
-
-}
-
-void _idle() {
-  hlt();
-}
-
-void _listen(_RegSet*(*h)(_Event, _RegSet*)) {
   H = h;
 }
 
@@ -230,12 +222,13 @@ void _trap() {
   asm volatile("int $0x80");
 }
 
-void _idisable() {
-  cli();
+int _istatus(int enable) {
+  int ret = (get_efl() & FL_IF) != 0;
+  if (enable) {
+    sti();
+  } else {
+    cli();
+  }
+  return ret;
 }
-void _ienable() {
-  sti();
-}
-int _istatus() {
-  return (get_efl() & FL_IF) != 0;
-}
+

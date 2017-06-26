@@ -51,7 +51,7 @@
   * `_EVENT_TRAP`:系统调用自陷(无cause)，系统调用参数将`_RegSet`转换为`intptr_t*`后按次序排列。第一个参数为返回值。
 * `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
 * `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
-* `int _interrupt(int enable);`设置中断状态(enable非0时打开)。返回设置前的中断状态。
+* `int _istatus(int enable);`设置中断状态(enable非0时打开)。返回设置前的中断状态。
 
 ## Protection Extension
 
