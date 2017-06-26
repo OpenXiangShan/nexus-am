@@ -6,6 +6,7 @@
 * `_Screen`描述系统初始化后的屏幕（后续可通过PCI总线设置显示控制器，则此设置不再有效）。
 * 屏幕的像素颜色由32位整数`typedef u32 _Pixel;`确定，从高位到低位是`00rrggbb`（不论大小端），红绿蓝各8位。
 * 按键代码由`_KEY_XXX`指定，其中`_KEY_NONE = 0`。
+* `_RegSet`代表体系结构相关的寄存器组。
 * `_Protect`描述一个被保护的地址空间(`_area`)，以及一个体系结构相关的指针(`ptr`)。
 
 ## 体系结构相关代码规范
@@ -31,7 +32,6 @@
 
 * `void _ioe_init();` 初始化Extension。
 * `ulong _uptime();` 返回系统启动后的毫秒数。溢出后归零。
-* `ulong _cycles();` 返回系统启动后的周期数。溢出后归零。
 * `int _read_key();` 返回按键。如果没有按键返回`_KEY_NONE`。
 * `void _draw_p(int x, int y, _Pixel p);` 在(`x`, `y`)坐标绘制像素`p`（非立即生效）。
 * `void _draw_f(_Pixel *p);` 绘制W*H个像素的数组，填充整个屏幕（非立即生效）。
@@ -40,31 +40,28 @@
 
 ## Asynchronous Extension
 
+* `void _asye_init();`初始化Extension。
+* `void _listen(_RegSet* (*l)(Event ev, _RegSet *regs));`监听中断/异常事件。在中断/异常事件到来时调用l(ev, regs)。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。
+* `_RegSet *_make(_Area kstack, void *entry);`创建一个内核上下文。
+* `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
+* `void _idle();`在内核态等待下一次中断到来。
+* `void _ienable();`打开中断。
+* `void _idisable();`关闭中断。
+* `int _istatus();`返回当前中断打开/关闭(1/0)。
+
 ## Protection Extension
+
+* `void _pte_init(void*(*palloc)(), void (*pfree)(void*));`初始化Extension。传入两个函数，分别代表分配/释放一个物理页。
+* `void _protect(_Protect *p);` 创建一个保护的地址空间。
+* `void _release(_Protect *p);` 释放一个保护的地址空间。
+* `void _map(_Protect *p, void *va, void *pa);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
+* `void _ummap(_Protect *p, void *va);`释放虚拟地址空间va的一页。
+* `void _switch(_Protect *p);`切换到一个保护的地址空间。注意在内核态下，内核代码将始终可用。
+* `_RegSet *_umake();`创建一个用户进程。还没想好怎么做。
 
 ## Multi-Processor Extension
 
 ```
-void _asye_init();
-void _listen(_RegSet* (*l)(int ex, _RegSet *regs));
-_RegSet *_make(_Area kstack, void *entry);
-void _trap();
-void _idle();
-void _ienable();
-void _idisable();
-int _istatus();
-
-// =======================================================================
-// Protection Extension
-// =======================================================================
-
-void _pte_init(void*(*palloc)(), void (*pfree)(void*));
-void _protect(_Protect *p);
-void _release(_Protect *p);
-void _map(_Protect *p, void *va, void *pa);
-void _ummap(_Protect *p, void *va);
-void _switch(_Protect *p);
-_RegSet *_umake(_Area ustack, _Area kstack, void *entry, int argc, char **argv);
 
 // =======================================================================
 // Multi-processor Extension
