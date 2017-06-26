@@ -11,12 +11,12 @@ typedef int bool;
 #define true  1
 #define false 0
 
-static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+static inline u32 pixel(u8 r, u8 g, u8 b) {
   return (r << 16) | (g << 8) | b;
 }
-static inline u8 R(_Pixel p) { return p >> 16; }
-static inline u8 G(_Pixel p) { return p >> 8; }
-static inline u8 B(_Pixel p) { return p; }
+static inline u8 R(u32 p) { return p >> 16; }
+static inline u8 G(u32 p) { return p >> 8; }
+static inline u8 B(u32 p) { return p; }
 
 // Byte Bit Operations
 void common_set_bitb(byte *variable, byte position);

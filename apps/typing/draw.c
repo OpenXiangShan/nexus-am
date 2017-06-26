@@ -1,6 +1,6 @@
 #include "game.h"
 
-static _Pixel canvas[W][H];
+static u32 canvas[W][H];
 
 extern char font8x8_basic[128][8];
 

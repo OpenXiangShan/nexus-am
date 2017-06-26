@@ -41,12 +41,12 @@ struct VBEInfo {
   u8 reserved1[206];
 } __attribute__ ((packed));
 
-static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+static inline u32 pixel(u8 r, u8 g, u8 b) {
   return (r << 16) | (g << 8) | b;
 }
-static u8 R(_Pixel p) { return p >> 16; }
-static u8 G(_Pixel p) { return p >> 8; }
-static u8 B(_Pixel p) { return p; }
+static u8 R(u32 p) { return p >> 16; }
+static u8 G(u32 p) { return p >> 8; }
+static u8 B(u32 p) { return p; }
 
 static struct FBPixel {
   u8 b, g, r;
@@ -59,14 +59,14 @@ static void vga_init() {
   fb = reinterpret_cast<FBPixel*>(info->framebuffer);
 }
 
-void _draw_p(int x, int y, _Pixel p) {
+void _draw_p(int x, int y, u32 p) {
   FBPixel &v = fb[x + y * _screen.width];
   v.r = R(p);
   v.g = G(p);
   v.b = B(p);
 }
 
-void _draw_f(_Pixel *p) {
+void _draw_f(u32 *p) {
   int npx = _screen.width * _screen.height;
   for (int i = 0; i < npx; i ++) {
     fb[i].r = R(p[i]);

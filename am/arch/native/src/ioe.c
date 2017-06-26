@@ -19,6 +19,4 @@ void _ioe_init() {
   gettimeofday(&boot_time, NULL);
 }
 
-void _asye_init() {
-}
 

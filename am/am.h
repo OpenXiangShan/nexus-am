@@ -94,9 +94,8 @@ extern _Area _heap;
 void _ioe_init();
 ulong _uptime();
 int _read_key();
-typedef u32 _Pixel;
-void _draw_p(int x, int y, _Pixel p);
-void _draw_f(_Pixel *p); 
+void _draw_p(int x, int y, u32 p);
+void _draw_f(u32 *p); 
 void _draw_sync();
 extern _Screen _screen;
 

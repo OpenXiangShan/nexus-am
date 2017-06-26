@@ -4,7 +4,7 @@
 
 * `_Area`代表一段连续的内存，组成`[start, end)`的左闭右开区间。
 * `_Screen`描述系统初始化后的屏幕（后续可通过PCI总线设置显示控制器，则此设置不再有效）。
-* 屏幕的像素颜色由32位整数`typedef u32 _Pixel;`确定，从高位到低位是`00rrggbb`（不论大小端），红绿蓝各8位。
+* 屏幕的像素颜色由32位整数确定，从高位到低位是`00rrggbb`（不论大小端），红绿蓝各8位。
 * 按键代码由`_KEY_XXX`指定，其中`_KEY_NONE = 0`。
 * `_RegSet`代表体系结构相关的寄存器组。
 * `_Event`表示一个异常/中断事件，event域由_EVENT_XXX指定，cause由具体事件指定。
@@ -34,7 +34,7 @@
 * `void _ioe_init();` 初始化Extension。
 * `ulong _uptime();` 返回系统启动后的毫秒数。溢出后归零。
 * `int _read_key();` 返回按键。如果没有按键返回`_KEY_NONE`。
-* `void _draw_p(int x, int y, _Pixel p);` 在(`x`, `y`)坐标绘制像素`p`（非立即生效）。
+* `void _draw_p(int x, int y, u32 p);` 在(`x`, `y`)坐标绘制像素`p`（非立即生效）。
 * `void _draw_f(_Pixel *p);` 绘制W*H个像素的数组，填充整个屏幕（非立即生效）。
 * `void _draw_sync();` 保证之前绘制的内容显示在屏幕上。
 * `extern _Screen _screen;` 屏幕的描述信息。在`_ioe_init`后调用后可用。
@@ -51,7 +51,7 @@
   * `_EVENT_TRAP`:系统调用自陷(无cause)，系统调用参数将`_RegSet`转换为`intptr_t*`后按次序排列。第一个参数为返回值。
 * `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
 * `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
-* `int _istatus(int enable);`设置中断状态(enable非0时打开)。返回设置前的中断状态。
+* `int _istatus(int enable);`设置中断状态(enable非0时打开)。返回设置前的中断状态(0/1)。
 
 ## Protection Extension
 

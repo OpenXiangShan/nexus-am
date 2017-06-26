@@ -113,7 +113,7 @@ void fce_run()
 
 // Rendering
 
-static const _Pixel palette[64] = {
+static const u32 palette[64] = {
   0x808080, 0x0000BB, 0x3700BF, 0x8400A6, 0xBB006A, 0xB7001E,
   0xB30000, 0x912600, 0x7B2B00, 0x003E00, 0x00480D, 0x003C22,
   0x002F66, 0x000000, 0x050505, 0x050505, 0xC8C8C8, 0x0059FF,
@@ -168,7 +168,6 @@ void xmap_init() {
 
 int main() {
   _ioe_init();
-  _asye_init();
 
   xmap_init();
   fce_load_rom(rom_mario_nes);

@@ -4,14 +4,14 @@
 const int FPS = 30;
 const int N = 32;
 
-static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+static inline u32 pixel(u8 r, u8 g, u8 b) {
   return (r << 16) | (g << 8) | b;
 }
-static inline u8 R(_Pixel p) { return p >> 16; }
-static inline u8 G(_Pixel p) { return p >> 8; }
-static inline u8 B(_Pixel p) { return p; }
+static inline u8 R(u32 p) { return p >> 16; }
+static inline u8 G(u32 p) { return p >> 8; }
+static inline u8 B(u32 p) { return p; }
 
-_Pixel canvas[N][N];
+u32 canvas[N][N];
 bool used[N][N];
 
 void redraw() {
@@ -26,7 +26,7 @@ void redraw() {
    _draw_sync();
 }
 
-static _Pixel p(int tsc) {
+static u32 p(int tsc) {
   int b = tsc & 0xff;
   return pixel(b * 6, b * 7, b);
 }

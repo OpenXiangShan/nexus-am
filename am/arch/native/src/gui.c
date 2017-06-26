@@ -8,12 +8,12 @@ _Screen _screen;
 
 #define KEYDOWN_MASK 0x8000
 
-static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+static inline u32 pixel(u8 r, u8 g, u8 b) {
   return (r << 16) | (g << 8) | b;
 }
-static inline u8 R(_Pixel p) { return p >> 16; }
-static inline u8 G(_Pixel p) { return p >> 8; }
-static inline u8 B(_Pixel p) { return p; }
+static inline u8 R(u32 p) { return p >> 16; }
+static inline u8 G(u32 p) { return p >> 8; }
+static inline u8 B(u32 p) { return p; }
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -26,7 +26,7 @@ static int key_f = 0, key_r = 0;
 static SDL_mutex *key_queue_lock;
 
 static SDL_Texture *texture;
-static _Pixel fb[W * H];
+static u32 fb[W * H];
 
 void gui_init() {
   _screen.width = W;
@@ -42,11 +42,11 @@ void gui_init() {
   key_queue_lock = SDL_CreateMutex();
 }
 
-void _draw_p(int x, int y, _Pixel p) {
+void _draw_p(int x, int y, u32 p) {
   fb[y * W + x] = p;
 }
 
-void _draw_f(_Pixel *p) {
+void _draw_f(u32 *p) {
   memcpy(fb, p, W * H * sizeof(Uint32));
 }
 
