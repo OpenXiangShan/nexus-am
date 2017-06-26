@@ -80,7 +80,6 @@ void _ioe_init();
 uintptr_t _uptime();
 int _read_key();
 void _draw_p(int x, int y, uint32_t p);
-void _draw_f(uint32_t *p); 
 void _draw_sync();
 extern _Screen _screen;
 

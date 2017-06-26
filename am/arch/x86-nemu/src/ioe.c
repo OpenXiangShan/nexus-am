@@ -25,9 +25,6 @@ _Screen _screen = {
   .height = 0,
 };
 
-void _draw_f(_Pixel *p) {
-}
-
 void _draw_p(int x, int y, _Pixel p) {
 }
 

@@ -52,13 +52,6 @@ _Screen _screen = {
 
 static uint8_t *fb = VMEM_ADDR;
 
-void _draw_f(_Pixel *p) {
-  int i;
-  for(i = 0;i < SCR_SIZE; i++){
-    fb[i] = (R(p[i]) & 0xc0) | ((G(p[i]) & 0xf0) >> 2)| ((B(p[i]) & 0xc0) >> 6);
-  }
-}
-
 void _draw_p(int x, int y, _Pixel p) {
   fb[x + y * _screen.width] = (R(p) & 0xc0) | ((G(p) & 0xf0) >> 2) | ((B(p) & 0xc0) >> 6);
 }

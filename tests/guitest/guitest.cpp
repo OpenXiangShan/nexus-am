@@ -119,11 +119,11 @@ void render(ImDrawData *draw_data) {
       idx_buffer += pcmd->ElemCount;
     }
   }
-  for (int i = 0; i < _screen.width * _screen.height; i ++) {
-    uint32_t p = fb[i];
-    fb[i] = ((p >> 16) & 0xff) | (((p >> 8) & 0xff) << 8) | ((p & 0xff) << 16);
-  }
-  _draw_f(fb);
+
+  for (int i = 0; i < _screen.width; i ++)
+    for (int j = 0; j < _screen.height; j ++)
+      _draw_p(i, j, fb[i + j * _screen.width]);
+
   _draw_sync();
 }
 

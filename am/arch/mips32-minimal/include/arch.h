@@ -14,7 +14,6 @@ static inline void _ioe_init() { }
 static inline unsigned long _cycles() { return 0; }
 static inline unsigned long _uptime() { return 0; }
 static inline void _draw_p(int x, int y, uint32_t p) {}
-static inline void _draw_f(uint32_t *ps) {}
 static inline void _draw_sync() {}
 
 #ifdef __cplusplus

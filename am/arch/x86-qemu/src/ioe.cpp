@@ -66,15 +66,6 @@ void _draw_p(int x, int y, uint32_t p) {
   v.b = B(p);
 }
 
-void _draw_f(uint32_t *p) {
-  int npx = _screen.width * _screen.height;
-  for (int i = 0; i < npx; i ++) {
-    fb[i].r = R(p[i]);
-    fb[i].g = G(p[i]);
-    fb[i].b = B(p[i]);
-  }
-}
-
 void _draw_sync() {
 }
 

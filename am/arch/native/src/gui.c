@@ -46,10 +46,6 @@ void _draw_p(int x, int y, uint32_t p) {
   fb[y * W + x] = p;
 }
 
-void _draw_f(uint32_t *p) {
-  memcpy(fb, p, W * H * sizeof(Uint32));
-}
-
 void _draw_sync() {
   SDL_UpdateTexture(texture, NULL, fb, W * sizeof(Uint32));
   SDL_RenderClear(renderer);
