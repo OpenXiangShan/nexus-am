@@ -85,7 +85,7 @@ void _map(_Protect *p, void *va, void *pa) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Area ustack, _Area kstack, void *entry, int argc, char **argv) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
@@ -96,8 +96,8 @@ _RegSet *_umake(_Area ustack, _Area kstack, void *entry, int argc, char **argv) 
   regs->eflags = FL_IF;
 
   u32 esp = regs->esp3;
-  esp -= 4; *(reinterpret_cast<char***>(esp)) = argv;
-  esp -= 4; *(reinterpret_cast<int*>(esp)) = argc;
   regs->esp3 = esp;
+  // TODO: implement umake
+
   return regs;
 }
