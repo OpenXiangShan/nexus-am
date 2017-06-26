@@ -2,7 +2,7 @@
 
 #define N 64
 #define CMPN 6
-static u8 data[N];
+static uint8_t data[N];
 static char cmp_data[CMPN][64]={"","1","12","123","124","45"};
 
 static void reset() {
@@ -35,7 +35,7 @@ void memory_test() {
   for (int st = 0; st < N; st ++)
     for (int ed = st + 1; ed <= N; ed ++) {
       reset();
-      u8 val = (st + ed) / 2;
+      uint8_t val = (st + ed) / 2;
       memset(data + st, val, ed - st);
       check_sequence(0, st, 0);
       check_sequence(ed, N, ed);

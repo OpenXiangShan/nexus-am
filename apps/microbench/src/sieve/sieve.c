@@ -3,7 +3,7 @@
 #define N 10000000
 
 static int ans;
-static u32 *primes;
+static uint32_t *primes;
 
 static inline int get(int n) {
   return (primes[n >> 5] >> (n & 31)) & 1;
@@ -14,7 +14,7 @@ static inline void clear(int n) {
 }
 
 void bench_sieve_prepare() {
-  primes = (u32*)bench_alloc(N / 8 + 128);
+  primes = (uint32_t*)bench_alloc(N / 8 + 128);
   for (int i = 0; i <= N / 32; i ++) {
     primes[i] = 0xffffffff;
   }

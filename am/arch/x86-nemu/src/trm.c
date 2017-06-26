@@ -27,7 +27,7 @@ void _putc(char ch) {
   while ((SERIAL_PORT[5] & 0x20) == 0);
   SERIAL_PORT[0] = ch;
 #else
-  asm volatile(".byte 0xd6" : :"a"(2), "b"((u8)ch));
+  asm volatile(".byte 0xd6" : :"a"(2), "b"((uint8_t)ch));
 #endif
 }
 

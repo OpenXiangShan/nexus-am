@@ -8,12 +8,12 @@ _Screen _screen;
 
 #define KEYDOWN_MASK 0x8000
 
-static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
   return (r << 16) | (g << 8) | b;
 }
-static inline u8 R(_Pixel p) { return p >> 16; }
-static inline u8 G(_Pixel p) { return p >> 8; }
-static inline u8 B(_Pixel p) { return p; }
+static inline uint8_t R(uint32_t p) { return p >> 16; }
+static inline uint8_t G(uint32_t p) { return p >> 8; }
+static inline uint8_t B(uint32_t p) { return p; }
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -26,7 +26,7 @@ static int key_f = 0, key_r = 0;
 static SDL_mutex *key_queue_lock;
 
 static SDL_Texture *texture;
-static _Pixel fb[W * H];
+static uint32_t fb[W * H];
 
 void gui_init() {
   _screen.width = W;
@@ -37,17 +37,13 @@ void gui_init() {
   SDL_CreateThread(event_thread, "event thread", NULL);
   texture = SDL_CreateTexture(renderer,
     SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, W, H);
-  memset(fb, 0, W * H * sizeof(u32));
+  memset(fb, 0, W * H * sizeof(uint32_t));
   _draw_sync();
   key_queue_lock = SDL_CreateMutex();
 }
 
-void _draw_p(int x, int y, _Pixel p) {
+void _draw_p(int x, int y, uint32_t p) {
   fb[y * W + x] = p;
-}
-
-void _draw_f(_Pixel *p) {
-  memcpy(fb, p, W * H * sizeof(Uint32));
 }
 
 void _draw_sync() {
@@ -68,9 +64,9 @@ int _read_key() {
   return ret;
 }
 
-#define XX(k) [SDL_SCANCODE_##k] = _KEY_##k
+#define XX(k) [SDL_SCANCODE_##k] = _KEY_##k,
 static int keymap[256] = {
-  _KEYS(XX),
+  _KEYS(XX)
 };
 
 static int event_thread(void *args) {

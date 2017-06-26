@@ -2,7 +2,7 @@
 #include <klib.h>
 
 #define NAME(key) \
-  [_KEY_##key] = #key
+  [_KEY_##key] = #key,
 
 const char *names[256] = {
   [_KEY_NONE] = "NONE",

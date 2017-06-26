@@ -60,7 +60,7 @@ void bench_15pz_run() {
 
 
 const char * bench_15pz_validate() {
-  return ((u32)ans == current->checksum) ? (const char*)NULL : "wrong answer";
+  return ((uint32_t)ans == current->checksum) ? (const char*)NULL : "wrong answer";
 }
 
 }

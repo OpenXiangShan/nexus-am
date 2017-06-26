@@ -122,7 +122,7 @@ void bench_dinic_run() {
   ans = G->Maxflow(2 * N, 2 * N + 1);
 }
 const char* bench_dinic_validate() {
-  return ((u32)ans == current->checksum) ? (const char*)NULL : "wrong answer";
+  return ((uint32_t)ans == current->checksum) ? (const char*)NULL : "wrong answer";
 }
 }
 

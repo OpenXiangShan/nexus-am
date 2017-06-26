@@ -33,16 +33,16 @@ asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
 #define _VAL(x) #x
 
 
-static inline u8 R(_Pixel p) { return p >> 16; }
-static inline u8 G(_Pixel p) { return p >> 8; }
-static inline u8 B(_Pixel p) { return p; }
+static inline uint8_t R(_Pixel p) { return p >> 16; }
+static inline uint8_t G(_Pixel p) { return p >> 8; }
+static inline uint8_t B(_Pixel p) { return p; }
 
-static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+static inline _Pixel pixel(uint8_t r, uint8_t g, uint8_t b) {
   return (r << 16) | (g << 8) | b;
 }
 
 struct TrapFrame{
-  u32 at,
+  uint32_t at,
   v0,v1,
   a0,a1,a2,a3,
   t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,
@@ -51,14 +51,14 @@ struct TrapFrame{
   gp,sp,fp,ra;
 };
 
-u32 GetCount(int sel);
-void SetCompare(u32 compare);
+uint32_t GetCount(int sel);
+void SetCompare(uint32_t compare);
 
 char in_byte();
 void out_byte(char);
 
 
 void timer_init();
-u32 get_TCR(int sel);
+uint32_t get_TCR(int sel);
 
 #endif

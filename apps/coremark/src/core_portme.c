@@ -37,7 +37,7 @@
 #define EE_TICKS_PER_SEC (NSECS_PER_SEC / TIMER_RES_DIVIDER)
 
 /** Define Host specific (POSIX), or target specific global time variables. */
-ulong start_time_val, stop_time_val;
+unsigned long start_time_val, stop_time_val;
 
 /* Function : start_time
 	This function will be called right before starting the timed portion of the benchmark.

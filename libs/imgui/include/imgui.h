@@ -48,7 +48,7 @@ struct ImDrawVert;                  // A single vertex (20 bytes by default, ove
 struct ImFont;                      // Runtime data for a single font within a parent ImFontAtlas
 struct ImFontAtlas;                 // Runtime data for multiple fonts, bake multiple fonts into a single texture, TTF font loader
 struct ImFontConfig;                // Configuration data when adding a font or merging fonts
-struct ImColor;                     // Helper functions to create a color that can be converted to either u32 or float4
+struct ImColor;                     // Helper functions to create a color that can be converted to either uint32_t or float4
 struct ImGuiIO;                     // Main configuration and I/O between your application and ImGui
 struct ImGuiOnceUponAFrame;         // Simple helper for running a block of code not more than once a frame, used by IMGUI_ONCE_UPON_A_FRAME macro
 struct ImGuiStorage;                // Simple custom key value storage
@@ -1054,7 +1054,7 @@ struct ImGuiSizeConstraintCallbackData
 
 // ImColor() helper to implicity converts colors to either ImU32 (packed 4x1 byte) or ImVec4 (4x1 float)
 // Prefer using IM_COL32() macros if you want a guaranteed compile-time ImU32 for usage with ImDrawList API.
-// **Avoid storing ImColor! Store either u32 of ImVec4. This is not a full-featured color class.
+// **Avoid storing ImColor! Store either uint32_t of ImVec4. This is not a full-featured color class.
 // **None of the ImGui API are using ImColor directly but you can use it as a convenience to pass colors in either ImU32 or ImVec4 formats.
 struct ImColor
 {

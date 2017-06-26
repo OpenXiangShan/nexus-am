@@ -6,7 +6,7 @@
 // The local APIC manages internal (non-I/O) interrupts.
 // See Chapter 8 & Appendix C of Intel processor manual volume 3.
 
-// Local APIC registers, divided by 4 for use as uint[] indices.
+// Local APIC registers, divided by 4 for use as unsigned int[] indices.
 #define ID      (0x0020/4)   // ID
 #define VER     (0x0030/4)   // Version
 #define TPR     (0x0080/4)   // Task Priority
@@ -37,7 +37,7 @@
 #define TCCR    (0x0390/4)   // Timer Current Count
 #define TDCR    (0x03E0/4)   // Timer Divide Configuration
 
-volatile uint *lapic;  // Initialized in mp.c
+volatile unsigned int *lapic;  // Initialized in mp.c
 
 static void
 lapicw(int index, int value)
@@ -116,10 +116,10 @@ microdelay(int us)
 // Start additional processor running entry code at addr.
 // See Appendix B of MultiProcessor Specification.
 void
-lapic_bootap(uchar apicid, uint addr)
+lapic_bootap(unsigned char apicid, unsigned int addr)
 {
   int i;
-  ushort *wrv;
+  unsigned short *wrv;
 
   
   // "The BSP must initialize CMOS shutdown code to 0AH
@@ -127,7 +127,7 @@ lapic_bootap(uchar apicid, uint addr)
   // the AP startup code prior to the [universal startup algorithm]."
   outb(CMOS_PORT, 0xF);  // offset 0xF is shutdown code
   outb(CMOS_PORT+1, 0x0A);
-  wrv = (ushort*)((0x40<<4 | 0x67));  // Warm reset vector
+  wrv = (unsigned short*)((0x40<<4 | 0x67));  // Warm reset vector
   wrv[0] = 0;
   wrv[1] = addr >> 4;
 
@@ -161,7 +161,7 @@ lapic_bootap(uchar apicid, uint addr)
 #include <x86.h>
 
 struct IOAPIC {
-    u32 reg, pad[3], data;
+    uint32_t reg, pad[3], data;
 };
 typedef struct IOAPIC IOAPIC;
 
@@ -183,7 +183,7 @@ static volatile IOAPIC *ioapic;
 #define INT_ACTIVELOW  0x00002000  // Active low (vs high)
 #define INT_LOGICAL    0x00000800  // Destination is CPU id (vs APIC ID)
 
-static uint
+static unsigned int
 ioapicread(int reg)
 {
   ioapic->reg = reg;
@@ -191,7 +191,7 @@ ioapicread(int reg)
 }
 
 static void
-ioapicwrite(int reg, uint data)
+ioapicwrite(int reg, unsigned int data)
 {
   ioapic->reg = reg;
   ioapic->data = data;

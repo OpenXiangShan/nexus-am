@@ -2,7 +2,7 @@
 #include <klib.h>
 #include <fix16.h>
 
-u32 colors[] = {
+uint32_t colors[] = {
   0xff0000,
   0xeeb422,
   0xeeee00,
@@ -13,7 +13,7 @@ u32 colors[] = {
 };
 
 void print(Float f) {
-  printf("%d.%04x\n", (u32)f.value >> 16, (u32)f.value & 0xffff);
+  printf("%d.%04x\n", (uint32_t)f.value >> 16, (uint32_t)f.value & 0xffff);
 }
 
 void plot(Float(*f)(Float)) {
@@ -26,7 +26,7 @@ void plot(Float(*f)(Float)) {
   for (int i = 0; i < N; i ++) {
     Float x = Float(i << 16) / n;
     Float y = f(x) * n;
-    int iy = (i16)((u32)y.value >> 16);
+    int iy = (int16_t)((uint32_t)y.value >> 16);
 
     if (iy >= -N && iy <= N) {
       iy = (iy + N) / 2;

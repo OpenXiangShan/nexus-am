@@ -6,7 +6,7 @@
 extern "C" { int printk(const char *, ...); }
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
-static u32 args[4];
+static uint32_t args[4];
 
 extern "C" {
 void irq0();
@@ -52,10 +52,10 @@ void irq_handle(TrapFrame *tf) {
     regs.ss = tf->ss;
     regs.esp3 = tf->esp;
     regs.ss0 = KSEL(SEG_KDATA);
-    regs.esp0 = (u32)tf + 68;
+    regs.esp0 = (uint32_t)tf + 68;
   } else { // interrupt at kernel code
     regs.ss0 = KSEL(SEG_KDATA);
-    regs.esp0 = (u32)tf + 60; // the %esp before interrupt
+    regs.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
   }
 
   args[0] = regs.eax;
@@ -67,8 +67,7 @@ void irq_handle(TrapFrame *tf) {
   if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
-    ev.event = _EVENT_SYSCALL;
-    ev.cause = args;
+    ev.event = _EVENT_TRAP;
   }
   else if (tf->irq < 32) ev.event = _EVENT_ERROR;
 
@@ -172,7 +171,7 @@ void irq_handle(TrapFrame *tf) {
 static GateDesc idt[NR_IRQ];
 
 
-void _asye_init() {
+void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
   smp_init();
   lapic_init();
   ioapic_enable(IRQ_KBD, 0);
@@ -205,23 +204,16 @@ void _asye_init() {
   // -------------------- system call --------------------------
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
   set_idt(idt, sizeof(idt));
-
-}
-
-void _idle() {
-  hlt();
-}
-
-void _listen(_RegSet*(*h)(_Event, _RegSet*)) {
   H = h;
 }
 
-_RegSet *_make(_Area stack, void *entry) {
+_RegSet *_make(_Area stack, void *entry, void *arg) {
+  // TODO: pass arg
   _RegSet *regs = (_RegSet*)stack.start;
-  regs->esp0 = reinterpret_cast<u32>(stack.end);
+  regs->esp0 = reinterpret_cast<uint32_t>(stack.end);
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
-  regs->eip = (u32)entry;
+  regs->eip = (uint32_t)entry;
   regs->eflags = FL_IF;
   return regs;
 }
@@ -230,12 +222,13 @@ void _trap() {
   asm volatile("int $0x80");
 }
 
-void _idisable() {
-  cli();
+int _istatus(int enable) {
+  int ret = (get_efl() & FL_IF) != 0;
+  if (enable) {
+    sti();
+  } else {
+    cli();
+  }
+  return ret;
 }
-void _ienable() {
-  sti();
-}
-int _istatus() {
-  return (get_efl() & FL_IF) != 0;
-}
+

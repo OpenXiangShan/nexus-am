@@ -6,7 +6,7 @@
 #define M 91
 #define DIM M
 
-typedef u32 Matrix[DIM][DIM];
+typedef uint32_t Matrix[DIM][DIM];
 
 static inline void mult(Matrix *c, Matrix *a, Matrix *b) {
   for (int i = 0; i < DIM; i ++)
@@ -51,5 +51,5 @@ void bench_fib_run() {
 }
 
 const char * bench_fib_validate() {
-  return (*ans)[DIM-1][DIM-1] == (u32)current->checksum ? NULL : "wrong answer";
+  return (*ans)[DIM-1][DIM-1] == (uint32_t)current->checksum ? NULL : "wrong answer";
 }
