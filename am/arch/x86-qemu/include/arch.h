@@ -13,4 +13,9 @@ struct _RegSet {
       ss0, esp0;
 };
 
+#define REG1(regs) ((regs)->eax)
+#define REG2(regs) ((regs)->ebx)
+#define REG3(regs) ((regs)->ecx)
+#define REG4(regs) ((regs)->edx)
+
 #endif

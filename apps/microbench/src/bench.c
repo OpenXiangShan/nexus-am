@@ -5,7 +5,6 @@
 Benchmark *current;
 static char *start;
 
-
 #define ARR_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
 
 // The benchmark list

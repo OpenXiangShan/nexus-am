@@ -68,9 +68,9 @@ int _read_key() {
   return ret;
 }
 
-#define XX(k) [SDL_SCANCODE_##k] = _KEY_##k
+#define XX(k) [SDL_SCANCODE_##k] = _KEY_##k,
 static int keymap[256] = {
-  _KEYS(XX),
+  _KEYS(XX)
 };
 
 static int event_thread(void *args) {

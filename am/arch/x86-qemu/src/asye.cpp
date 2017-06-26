@@ -67,7 +67,7 @@ void irq_handle(TrapFrame *tf) {
   if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
-    ev.event = _EVENT_SYSCALL;
+    ev.event = _EVENT_TRAP;
     ev.cause = args;
   }
   else if (tf->irq < 32) ev.event = _EVENT_ERROR;
@@ -216,7 +216,8 @@ void _listen(_RegSet*(*h)(_Event, _RegSet*)) {
   H = h;
 }
 
-_RegSet *_make(_Area stack, void *entry) {
+_RegSet *_make(_Area stack, void *entry, void *arg) {
+  // TODO: pass arg
   _RegSet *regs = (_RegSet*)stack.start;
   regs->esp0 = reinterpret_cast<u32>(stack.end);
   regs->cs = KSEL(SEG_KCODE);
