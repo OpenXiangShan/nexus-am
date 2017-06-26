@@ -23,7 +23,6 @@
 
 ## Turing Machine
 
-* `void _start();` loader加载完毕后，系统的入口地址。
 * `void _putc(char ch);` 调试输出一个字符，输出到最容易观测的地方。对qemu输出到串口，对Linux native输出到本地控制台。
 * `void _halt(int code);` 终止运行并报告返回代码。`code`为0表示正常终止。
 * `extern _Area _heap;` 一段可以完全自由使用的内存，作为可分配的堆区。
@@ -31,7 +30,7 @@
 ## IO Extension
 
 * `void _ioe_init();` 初始化Extension。
-* `ulong _uptime();` 返回系统启动后的毫秒数。溢出后归零。
+* `uintptr_t _uptime();` 返回系统启动后的毫秒数。溢出后归零。
 * `int _read_key();` 返回按键。如果没有按键返回`_KEY_NONE`。
 * `void _draw_p(int x, int y, u32 p);` 在(`x`, `y`)坐标绘制像素`p`（非立即生效）像素颜色由32位整数确定，从高位到低位是`00rrggbb`（不论大小端），红绿蓝各8位。
 * `void _draw_sync();` 保证之前绘制的内容显示在屏幕上。
@@ -46,7 +45,8 @@
   * `_EVENT_PAGE_FAULT`:缺页/页保护错(cause: 产生缺页的地址)
   * `_EVENT_BUS_ERROR`:总线错误(cause: 产生错误的地址)
   * `_EVENT_NUMERIC`:数值错误(无cause)
-  * `_EVENT_TRAP`:系统调用自陷(无cause)，系统调用参数将`_RegSet`转换为`intptr_t*`后按次序排列。第一个参数为返回值。
+  * `_EVENT_TRAP`:内核态自陷(无cause)
+  * `_EVENT_SYSCALL`: 系统调用(无cause)，系统调用参数将`_RegSet`转换为`intptr_t*`后按次序排列。第一个参数为返回值。
 * `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
 * `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
 * `int _istatus(int enable);`设置中断状态(enable非0时打开)。返回设置前的中断状态(0/1)。

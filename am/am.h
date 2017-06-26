@@ -35,7 +35,7 @@ enum {
 #define _EVENTS(_) \
   _(IRQ_TIME) _(IRQ_IODEV) \
   _(ERROR) _(PAGE_FAULT) _(BUS_ERROR) _(NUMERIC) \
-  _(TRAP)
+  _(TRAP) _(SYSCALL)
 
 #define _EVENT_NAME(ev) _EVENT_##ev,
 
