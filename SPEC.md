@@ -42,7 +42,7 @@
 
 * `void _asye_init();`初始化Extension。
 * `void _listen(_RegSet* (*l)(Event ev, _RegSet *regs));`监听中断/异常事件。在中断/异常事件到来时调用l(ev, regs)。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。
-* `_RegSet *_make(_Area kstack, void *entry);`创建一个内核上下文。
+* `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
 * `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
 * `void _idle();`在内核态等待下一次中断到来。
 * `void _ienable();`打开中断。
