@@ -8,21 +8,6 @@
 #define __AM_H__
 
 #include <stdint.h>
-
-typedef int8_t    i8;
-typedef int16_t  i16;
-typedef int32_t  i32;
-typedef int64_t  i64;
-typedef uint8_t   u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-
-typedef unsigned long  ulong;
-typedef unsigned int   uint;
-typedef unsigned short ushort;
-typedef unsigned char  uchar;
-
 #include <arch.h>
 
 #define MAX_CPU 8
@@ -92,10 +77,10 @@ extern _Area _heap;
 // =======================================================================
 
 void _ioe_init();
-ulong _uptime();
+uintptr_t _uptime();
 int _read_key();
-void _draw_p(int x, int y, u32 p);
-void _draw_f(u32 *p); 
+void _draw_p(int x, int y, uint32_t p);
+void _draw_f(uint32_t *p); 
 void _draw_sync();
 extern _Screen _screen;
 
@@ -126,7 +111,7 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *cons
 
 void _mpe_init(void (*entry)());
 int _cpu();
-ulong _atomic_xchg(volatile ulong *addr, ulong newval);
+intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval);
 void _barrier();
 extern int _NR_CPU;
 

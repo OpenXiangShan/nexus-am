@@ -45,7 +45,7 @@ int at_left(float x, float y, ImVec2 p, ImVec2 q) {
   return (x - p.x) * (q.y - p.y) - (y - p.y) * (q.x - p.x) <= 0;
 }
 
-static u32 fb[1024 * 768];
+static uint32_t fb[1024 * 768];
 
 static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const ImDrawVert *b, const ImDrawVert *c) {
   float minx = min(a->pos.x, b->pos.x, c->pos.x);
@@ -79,11 +79,11 @@ static void render_triangle(const ImDrawCmd *pcmd, const ImDrawVert *a, const Im
         if (ns & 1) {
           int tx = u * t_width;
           int ty = v * t_height;
-          u8 alpha = texture[tx + ty * t_width];
+          uint8_t alpha = texture[tx + ty * t_width];
           if (alpha > 0) {
             int idx = x + y * _screen.width;
-            u32 old = fb[idx];
-            u32 col = a->col & 0xffffff;
+            uint32_t old = fb[idx];
+            uint32_t col = a->col & 0xffffff;
             fb[idx] = ((col * alpha + old * (255 - alpha)) / 255) & 0xffffff;
           }
         }
@@ -108,7 +108,7 @@ void render(ImDrawData *draw_data) {
         pcmd->UserCallback(cmd_list, pcmd);
       } else {
         int nt = pcmd->ElemCount;
-        //printf("Render texture %lx, %d triangles\n", (ulong)pcmd->TextureId, nt/3);
+        //printf("Render texture %lx, %d triangles\n", (unsigned long)pcmd->TextureId, nt/3);
         for (int i = 0; i < nt; i += 3) {
           const ImDrawVert *a = vtx_buffer + idx_buffer[i];
           const ImDrawVert *b = vtx_buffer + idx_buffer[i+1];
@@ -120,7 +120,7 @@ void render(ImDrawData *draw_data) {
     }
   }
   for (int i = 0; i < _screen.width * _screen.height; i ++) {
-    u32 p = fb[i];
+    uint32_t p = fb[i];
     fb[i] = ((p >> 16) & 0xff) | (((p >> 8) & 0xff) << 8) | ((p & 0xff) << 16);
   }
   _draw_f(fb);
@@ -162,9 +162,9 @@ int main() {
     ImGui::SetNextWindowPos(ImVec2(60, 10), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
 
-    //ulong t1 = _uptime();
+    //unsigned long t1 = _uptime();
     ImGui::Render();
-    //ulong used = _uptime() - t1;
+    //unsigned long used = _uptime() - t1;
     //printf("Render time: %ld ms\n", used);
   }
 }

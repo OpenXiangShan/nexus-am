@@ -37,7 +37,7 @@ const char *strchr(const char *s, int c);
 // stdlib.h
 int atoi(const char* nptr);
 int abs(int x);
-ulong time();
+unsigned long time();
 void srand(unsigned int seed);
 int rand();
 

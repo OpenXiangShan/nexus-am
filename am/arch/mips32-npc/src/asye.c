@@ -4,8 +4,8 @@
 #include <klib.h>
 
 // TODO: why this is in the asye?
-u32 GetCount(int sel){
-  u32 tick = 0;
+uint32_t GetCount(int sel){
+  uint32_t tick = 0;
   if(sel == 0)
     MFC0(tick, cp0_count, 0);
   else if(sel == 1)
@@ -15,7 +15,7 @@ u32 GetCount(int sel){
   return tick;
 }
 
-void SetCompare(u32 compare){
+void SetCompare(uint32_t compare){
   MTC0(cp0_compare, compare, 0);
 }
 
@@ -66,9 +66,9 @@ int _istatus(){
 
 void irq_handle(struct TrapFrame *tf){
 //TODO:handle interrupt
-  u32 arg = 0, IPExcCode = 0;
-  u8  IPCode = 0, ExcCode = 0;
-  u32 EPC = 0, BadVaddr = 0;
+  uint32_t arg = 0, IPExcCode = 0;
+  uint8_t  IPCode = 0, ExcCode = 0;
+  uint32_t EPC = 0, BadVaddr = 0;
 
   // cp0 info & general regfiles, values of k0 & k1 come from trap.S
   asm volatile("addu %0,$k1,$zero\n\t":"=r"(arg));
@@ -89,7 +89,7 @@ void irq_handle(struct TrapFrame *tf){
       	case 0x80: // time interrupt
       	{
             _time_event();
-            u32 count= GetCount(0);
+            uint32_t count= GetCount(0);
             SetCompare(count + INTERVAL);
       	}
       	break;

@@ -6,14 +6,14 @@ void _ioe_init() {
 
 // -------------------- cycles and uptime --------------------
 
-static ulong nemu_time = 0;
-static ulong nemu_cycles = 0;
+static unsigned long nemu_time = 0;
+static unsigned long nemu_cycles = 0;
 
-ulong _uptime(){
+unsigned long _uptime(){
   return nemu_time ++;
 }
 
-ulong _cycles(){
+unsigned long _cycles(){
   return nemu_cycles ++;
 }
 

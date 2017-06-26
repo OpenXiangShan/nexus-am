@@ -32,11 +32,11 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   PDE *alloc = kptabs[_cpu()];
   for (auto &seg: segments) {
     PTE *ptab = nullptr;
-    for (u32 pa = reinterpret_cast<u32>(seg.start); pa != reinterpret_cast<u32>(seg.end); pa += PGSIZE) {
+    for (uint32_t pa = reinterpret_cast<uint32_t>(seg.start); pa != reinterpret_cast<uint32_t>(seg.end); pa += PGSIZE) {
       if (!(kpdir[PDX(pa)] & PTE_P)) {
           ptab = alloc;
           alloc += NR_PDE;
-          kpdir[PDX(pa)] = PTE_P | PTE_W | (u32)ptab;
+          kpdir[PDX(pa)] = PTE_P | PTE_W | (uint32_t)ptab;
       }
       ptab[PTX(pa)] = PTE_P | PTE_W | pa;
     }
@@ -74,11 +74,11 @@ void _map(_Protect *p, void *va, void *pa) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | PTE_W | PTE_U | reinterpret_cast<u32>(palloc_f());
+    *pde = PTE_P | PTE_W | PTE_U | reinterpret_cast<uint32_t>(palloc_f());
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
-    *pte = PTE_P | PTE_W | PTE_U | reinterpret_cast<u32>(pa);
+    *pte = PTE_P | PTE_W | PTE_U | reinterpret_cast<uint32_t>(pa);
   }
 }
 
@@ -89,13 +89,13 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *cons
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
-  regs->esp3 = reinterpret_cast<u32>(ustack.end);
+  regs->esp3 = reinterpret_cast<uint32_t>(ustack.end);
   regs->ss0 = KSEL(SEG_KDATA);
-  regs->esp0 = reinterpret_cast<u32>(kstack.end);
-  regs->eip = (u32)entry;
+  regs->esp0 = reinterpret_cast<uint32_t>(kstack.end);
+  regs->eip = (uint32_t)entry;
   regs->eflags = FL_IF;
 
-  u32 esp = regs->esp3;
+  uint32_t esp = regs->esp3;
   regs->esp3 = esp;
   // TODO: implement umake
 

@@ -23,7 +23,7 @@ int abs(int x){
   if(x<0)return -x;
   return x;
 }
-ulong time(){
+unsigned long time(){
   return _uptime();
 }
 unsigned long next=1;

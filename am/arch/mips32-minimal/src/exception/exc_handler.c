@@ -7,23 +7,23 @@ void printstr(char *str) {
 }
 */
 
-uint get_cause() {
-	uint ret;
+unsigned int get_cause() {
+	unsigned int ret;
 	asm volatile("mfc0 %0, $13\n\t":"=r"(ret));
 	return ret;
 }
 
-uint get_epc() {
-	uint ret;
+unsigned int get_epc() {
+	unsigned int ret;
 	asm volatile("mfc0 %0, $14\n\t":"=r"(ret));
 	return ret;
 }
 
 void exception_handle() {
-	uint cause = get_cause();
-	uint epc = get_epc();
+	unsigned int cause = get_cause();
+	unsigned int epc = get_epc();
 
-	uint exccode = (cause >> 2) & 0x1f;
+	unsigned int exccode = (cause >> 2) & 0x1f;
 
 	switch(exccode) {
 		case 4:		printf("BadVAddr when loading @PC = 0x%x.\n", epc);		break;

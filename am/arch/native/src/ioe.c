@@ -4,11 +4,11 @@
 
 static struct timeval boot_time;
 
-ulong _uptime() {
+uintptr_t _uptime() {
   struct timeval now;
   gettimeofday(&now, NULL);
-  long seconds = now.tv_sec - boot_time.tv_sec;
-  long useconds = now.tv_usec - boot_time.tv_usec;
+  uintptr_t seconds = now.tv_sec - boot_time.tv_sec;
+  uintptr_t useconds = now.tv_usec - boot_time.tv_usec;
   return seconds * 1000 + (useconds + 500) / 1000;
 }
 

@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 struct _RegSet {
-  u32 eax, ebx, ecx, edx,
+  uint32_t eax, ebx, ecx, edx,
       esi, edi, ebp, esp3,
       eip, eflags,
       cs, ds, es, ss,

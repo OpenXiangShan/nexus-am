@@ -50,7 +50,7 @@
 /* Configuration : CORE_TICKS
 	Define type of return from the timing functions.
  */
-typedef u32 CORE_TICKS;
+typedef uint32_t CORE_TICKS;
 
 /* Definitions : COMPILER_VERSION, COMPILER_FLAGS, MEM_LOCATION
 	Initialize these strings per platform

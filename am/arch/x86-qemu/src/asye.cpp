@@ -6,7 +6,7 @@
 extern "C" { int printk(const char *, ...); }
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
-static u32 args[4];
+static uint32_t args[4];
 
 extern "C" {
 void irq0();
@@ -52,10 +52,10 @@ void irq_handle(TrapFrame *tf) {
     regs.ss = tf->ss;
     regs.esp3 = tf->esp;
     regs.ss0 = KSEL(SEG_KDATA);
-    regs.esp0 = (u32)tf + 68;
+    regs.esp0 = (uint32_t)tf + 68;
   } else { // interrupt at kernel code
     regs.ss0 = KSEL(SEG_KDATA);
-    regs.esp0 = (u32)tf + 60; // the %esp before interrupt
+    regs.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
   }
 
   args[0] = regs.eax;
@@ -210,10 +210,10 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
 _RegSet *_make(_Area stack, void *entry, void *arg) {
   // TODO: pass arg
   _RegSet *regs = (_RegSet*)stack.start;
-  regs->esp0 = reinterpret_cast<u32>(stack.end);
+  regs->esp0 = reinterpret_cast<uint32_t>(stack.end);
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
-  regs->eip = (u32)entry;
+  regs->eip = (uint32_t)entry;
   regs->eflags = FL_IF;
   return regs;
 }

@@ -37,7 +37,7 @@ static const char *bench_check(Benchmark *bench) {
   if (!bench->enabled) {
     return "";
   }
-  ulong freesp = (ulong)_heap.end - (ulong)_heap.start;
+  unsigned long freesp = (unsigned long)_heap.end - (unsigned long)_heap.start;
   if (freesp < bench->mlim) {
     return "(insufficient memory)";
   }
@@ -57,7 +57,7 @@ Result run_once(Benchmark *b) {
   return res;
 }
 
-ulong score(Benchmark *b, ulong tsc, ulong msec) {
+unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
   if (msec == 0) return 0;
   return (REF_SCORE / 1000) * b->ref / msec;
 }
@@ -65,7 +65,7 @@ ulong score(Benchmark *b, ulong tsc, ulong msec) {
 int main() {
   _ioe_init();
 
-  ulong bench_score = 0;
+  unsigned long bench_score = 0;
   int pass = 1;
 
   for (int i = 0; i < ARR_SIZE(benchmarks); i ++) {
@@ -75,7 +75,7 @@ int main() {
     if (msg != NULL) {
       printk("Ignored %s\n", msg);
     } else {
-      ulong msec = ULONG_MAX;
+      unsigned long msec = ULONG_MAX;
       int succ = 1;
       for (int i = 0; i < REPEAT; i ++) {
         Result res = run_once(bench);
@@ -89,8 +89,8 @@ int main() {
 
       pass &= succ;
 
-      ulong cur = score(bench, 0, msec);
-      printk("\n  min time: %d ms [%d]\n", (uint)msec, (uint)cur);
+      unsigned long cur = score(bench, 0, msec);
+      printk("\n  min time: %d ms [%d]\n", (unsigned int)msec, (unsigned int)cur);
 
       bench_score += cur;
     }
@@ -99,7 +99,7 @@ int main() {
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
   printk("==================================================\n");
-  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", (uint)bench_score);
+  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", (unsigned int)bench_score);
   printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
 
   _halt(0);
@@ -110,14 +110,14 @@ int main() {
 
 
 void* bench_alloc(size_t size) {
-  if ((ulong)start % 16 != 0) {
-    start = start + 16 - ((ulong)start % 16);
+  if ((unsigned long)start % 16 != 0) {
+    start = start + 16 - ((unsigned long)start % 16);
   }
   char *old = start;
   start += size;
-  assert((ulong)_heap.start <= (ulong)start && (ulong)start < (ulong)_heap.end);
+  assert((unsigned long)_heap.start <= (unsigned long)start && (unsigned long)start < (unsigned long)_heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  assert((ulong)start - (ulong)_heap.start <= current->mlim);
+  assert((unsigned long)start - (unsigned long)_heap.start <= current->mlim);
   return old;
 }
 
@@ -128,23 +128,23 @@ void bench_reset() {
   start = (char*)_heap.start;
 }
 
-static i32 seed = 1;
+static int32_t seed = 1;
 
-void bench_srand(i32 _seed) {
+void bench_srand(int32_t _seed) {
   seed = _seed & 0x7fff;
 }
 
-i32 bench_rand() {
-  seed = (seed * (i32)214013L + (i32)2531011L);
+int32_t bench_rand() {
+  seed = (seed * (int32_t)214013L + (int32_t)2531011L);
   return (seed >> 16) & 0x7fff;
 }
 
 // FNV hash
-u32 checksum(void *start, void *end) {
-  const i32 x = 16777619;
-  i32 hash = 2166136261u;
+uint32_t checksum(void *start, void *end) {
+  const int32_t x = 16777619;
+  int32_t hash = 2166136261u;
   for (char *p = (char*)start; p + 4 < (char*)end; p += 4) {
-    i32 h1 = hash;
+    int32_t h1 = hash;
     for (int i = 0; i < 4; i ++) {
       h1 = (h1 ^ p[i]) * x;
     }
