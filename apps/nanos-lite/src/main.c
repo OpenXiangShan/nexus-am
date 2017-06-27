@@ -1,8 +1,8 @@
 #include "common.h"
 
-uint32_t loader(void);
-void init_page(void);
+uint32_t loader(_Protect *);
 void init_mm(void);
+static uint32_t entry;
 
 #ifndef __PAGE
 static inline void relocate_myself() {
@@ -21,18 +21,30 @@ int main() {
 #ifndef __PAGE
   relocate_myself();
 #else
-  init_page();
 
   init_mm();
+
 #endif
 
   Log("'Hello World!' from Nanos-lite");
 
-  uint32_t entry = loader();
-
 #ifdef __PAGE
+
+  _Protect user_as;  // user process address space
+
+  _protect(&user_as);
+
+  entry = loader(&user_as);
+
+  _switch(&user_as);
+
   /* Set the %esp for user program */
   asm volatile("movl %0, %%esp" : : "i"(0xc0000000));
+
+#else
+
+  entry = loader(NULL);
+
 #endif
 
   /* Keep the `bt' command happy. */

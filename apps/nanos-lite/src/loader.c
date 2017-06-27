@@ -1,6 +1,5 @@
 #include "common.h"
 #include "memory.h"
-#include "x86.h"
 #include <elf.h>
 
 #define ELF_OFFSET_IN_DISK 0
@@ -13,12 +12,9 @@
 
 void driver_read(uint8_t *, uint32_t, uint32_t);
 
-#define STACK_SIZE (8 << 10)
+#define STACK_SIZE (2 * PGSIZE)
 
-void create_video_mapping();
-uint32_t get_ucr3();
-
-uint32_t loader() {
+uint32_t loader(_Protect *p) {
   Elf32_Ehdr *elf;
   Elf32_Phdr *ph = NULL, *eph;
 
@@ -41,14 +37,21 @@ uint32_t loader() {
       /* TODO: read the content of the segment from the ELF file
        * to the memory region [VirtAddr, VirtAddr + FileSiz)
        */
-      uint32_t va = mm_malloc(ph->p_vaddr, ph->p_memsz);
-      driver_read((void *)va, ELF_OFFSET_IN_DISK + ph->p_offset, ph->p_filesz);
+      void *va_align = (void *)(ph->p_vaddr & ~PGMASK);
+      uint32_t size = ph->p_memsz + (ph->p_vaddr - (uint32_t)va_align);
+      void *pa = kmalloc(size);
+      uint32_t i;
+      for (i = 0; i < size; i += PGSIZE) {
+        _map(p, va_align + i, pa + i);
+      }
+
+      driver_read((void *)pa, ELF_OFFSET_IN_DISK + ph->p_offset, ph->p_filesz);
 
 
       /* TODO: zero the memory region
        * [VirtAddr + FileSiz, VirtAddr + MemSiz)
        */
-      memset((void *)va + ph->p_filesz, 0, ph->p_memsz - ph->p_filesz);
+      memset((void *)pa + ph->p_filesz, 0, ph->p_memsz - ph->p_filesz);
 
 
 #ifdef __PAGE
@@ -60,17 +63,13 @@ uint32_t loader() {
     }
   }
 
-  volatile uint32_t entry = elf->e_entry;
-
 #ifdef __PAGE
-  mm_malloc(0xc0000000 - STACK_SIZE, STACK_SIZE);
-
-#ifdef HAS_DEVICE
-  create_video_mapping();
+  void *va = (void *)(0xc0000000 - STACK_SIZE);
+  while(va < (void *)0xc0000000) {
+    _map(p, va, new_page());
+    va += PGSIZE;
+  }
 #endif
 
-  write_cr3(get_ucr3());
-#endif
-
-  return entry;
+  return elf->e_entry;
 }
