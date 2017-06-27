@@ -10,7 +10,7 @@ $(ALL): %: Makefile.%
 
 Makefile.%: tests/%.c latest
 	@echo "Build $*"
-	@echo -e "NAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile.app" > $@
+	@echo "NAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile.app" > $@
 	-make -f $@ ARCH=$(ARCH)
 	-rm -f Makefile.$*
 
