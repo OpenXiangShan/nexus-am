@@ -8,6 +8,8 @@
 //#define HAS_DEVICE
 //#define USE_HARDDISK
 
+#define PMEM_SIZE (128 * 1024 * 1024)
+
 #ifndef __ASSEMBLER__
 /* The following code will be included if the source file is a "*.c" file. */
 
