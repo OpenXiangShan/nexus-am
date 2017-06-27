@@ -24,11 +24,11 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   int i;
   for (i = 0; i < NR_KSEG_MAP; i ++) {
     PTE *ptab = NULL;
-    for (u32 pa = (u32)segments[i].start; pa != (u32)segments[i].end; pa += PGSIZE) {
+    for (uint32_t pa = (uint32_t)segments[i].start; pa != (uint32_t)segments[i].end; pa += PGSIZE) {
       if (!(kpdir[PDX(pa)] & PTE_P)) {
           ptab = alloc;
           alloc += NR_PDE;
-          kpdir[PDX(pa)] = PTE_P | PTE_W | (u32)ptab;
+          kpdir[PDX(pa)] = PTE_P | PTE_W | (uint32_t)ptab;
       }
       ptab[PTX(pa)] = PTE_P | PTE_W | pa;
     }
@@ -66,17 +66,17 @@ void _map(_Protect *p, void *va, void *pa) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | PTE_W | PTE_U | (u32)palloc_f();
+    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)palloc_f();
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
-    *pte = PTE_P | PTE_W | PTE_U | (u32)pa;
+    *pte = PTE_P | PTE_W | PTE_U | (uint32_t)pa;
   }
 }
 
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Area ustack, _Area kstack, void *entry, int argc, char **argv) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
   return NULL;
 }
