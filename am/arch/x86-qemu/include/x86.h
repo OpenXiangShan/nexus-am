@@ -73,98 +73,98 @@
 // |      Index     |      Index     |                     |
 // +----------------+----------------+---------------------+
 //  \--- PDX(va) --/ \--- PTX(va) --/\------ OFF(va) ------/
-typedef u32 PTE;
-typedef u32 PDE;
-#define PDX(va)     (((u32)(va) >> PDXSHFT) & 0x3ff)
-#define PTX(va)     (((u32)(va) >> PTXSHFT) & 0x3ff)
-#define OFF(va)     ((u32)(va) & 0xfff)
+typedef uint32_t PTE;
+typedef uint32_t PDE;
+#define PDX(va)     (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
+#define PTX(va)     (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
+#define OFF(va)     ((uint32_t)(va) & 0xfff)
 
 // construct virtual address from indexes and offset
-#define PGADDR(d, t, o) ((u32)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
+#define PGADDR(d, t, o) ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 
 #define PGROUNDUP(sz)   (((sz)+PGSIZE-1) & ~(PGSIZE-1))
 #define PGROUNDDOWN(a)  (((a)) & ~(PGSIZE-1))
 
 // Address in page table or page directory entry
-#define PTE_ADDR(pte)   ((u32)(pte) & ~0xfff)
+#define PTE_ADDR(pte)   ((uint32_t)(pte) & ~0xfff)
 
 // Segment Descriptor
 typedef struct SegDesc {
-  u32 lim_15_0 : 16;  // Low bits of segment limit
-  u32 base_15_0 : 16; // Low bits of segment base address
-  u32 base_23_16 : 8; // Middle bits of segment base address
-  u32 type : 4;     // Segment type (see STS_ constants)
-  u32 s : 1;      // 0 = system, 1 = application
-  u32 dpl : 2;    // Descriptor Privilege Level
-  u32 p : 1;      // Present
-  u32 lim_19_16 : 4;  // High bits of segment limit
-  u32 avl : 1;    // Unused (available for software use)
-  u32 rsv1 : 1;     // Reserved
-  u32 db : 1;     // 0 = 16-bit segment, 1 = 32-bit segment
-  u32 g : 1;      // Granularity: limit scaled by 4K when set
-  u32 base_31_24 : 8; // High bits of segment base address
+  uint32_t lim_15_0 : 16;  // Low bits of segment limit
+  uint32_t base_15_0 : 16; // Low bits of segment base address
+  uint32_t base_23_16 : 8; // Middle bits of segment base address
+  uint32_t type : 4;     // Segment type (see STS_ constants)
+  uint32_t s : 1;      // 0 = system, 1 = application
+  uint32_t dpl : 2;    // Descriptor Privilege Level
+  uint32_t p : 1;      // Present
+  uint32_t lim_19_16 : 4;  // High bits of segment limit
+  uint32_t avl : 1;    // Unused (available for software use)
+  uint32_t rsv1 : 1;     // Reserved
+  uint32_t db : 1;     // 0 = 16-bit segment, 1 = 32-bit segment
+  uint32_t g : 1;      // Granularity: limit scaled by 4K when set
+  uint32_t base_31_24 : 8; // High bits of segment base address
 } SegDesc;
 
 #define SEG(type, base, lim, dpl) (SegDesc)           \
-{  ((lim) >> 12) & 0xffff, (u32)(base) & 0xffff,    \
-  ((u32)(base) >> 16) & 0xff, type, 1, dpl, 1,     \
-  (u32)(lim) >> 28, 0, 0, 1, 1, (u32)(base) >> 24 }
+{  ((lim) >> 12) & 0xffff, (uint32_t)(base) & 0xffff,    \
+  ((uint32_t)(base) >> 16) & 0xff, type, 1, dpl, 1,     \
+  (uint32_t)(lim) >> 28, 0, 0, 1, 1, (uint32_t)(base) >> 24 }
 
 #define SEG16(type, base, lim, dpl) (SegDesc)         \
-{  (lim) & 0xffff, (u32)(base) & 0xffff,        \
-  ((u32)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
-  (u32)(lim) >> 16, 0, 0, 1, 0, (u32)(base) >> 24 }
+{  (lim) & 0xffff, (uint32_t)(base) & 0xffff,        \
+  ((uint32_t)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
+  (uint32_t)(lim) >> 16, 0, 0, 1, 0, (uint32_t)(base) >> 24 }
 
 // Gate descriptors for interrupts and traps
 typedef struct GateDesc {
-  u32 off_15_0 : 16;   // Low 16 bits of offset in segment
-  u32 cs : 16;     // Code segment selector
-  u32 args : 5;    // # args, 0 for interrupt/trap gates
-  u32 rsv1 : 3;    // Reserved(should be zero I guess)
-  u32 type : 4;    // Type(STS_{TG,IG32,TG32})
-  u32 s : 1;       // Must be 0 (system)
-  u32 dpl : 2;     // Descriptor(meaning new) privilege level
-  u32 p : 1;       // Present
-  u32 off_31_16 : 16;  // High bits of offset in segment
+  uint32_t off_15_0 : 16;   // Low 16 bits of offset in segment
+  uint32_t cs : 16;     // Code segment selector
+  uint32_t args : 5;    // # args, 0 for interrupt/trap gates
+  uint32_t rsv1 : 3;    // Reserved(should be zero I guess)
+  uint32_t type : 4;    // Type(STS_{TG,IG32,TG32})
+  uint32_t s : 1;       // Must be 0 (system)
+  uint32_t dpl : 2;     // Descriptor(meaning new) privilege level
+  uint32_t p : 1;       // Present
+  uint32_t off_31_16 : 16;  // High bits of offset in segment
 } GateDesc;
 
 #define GATE(type, cs, entry, dpl) (GateDesc)         \
-{  (u32)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
-  1, (u32)(entry) >> 16 }
+{  (uint32_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
+  1, (uint32_t)(entry) >> 16 }
 
 
 // Task state segment format
 struct TSS {
-  u32 link;     // Unused
-  u32 esp0;     // Stack pointers and segment selectors
-  u32 ss0;      //   after an increase in privilege level
+  uint32_t link;     // Unused
+  uint32_t esp0;     // Stack pointers and segment selectors
+  uint32_t ss0;      //   after an increase in privilege level
   char dontcare[88];
 };
 
 // Interrupt and exception frame
 struct TrapFrame {
-  u32 edi, esi, ebp, esp_;
-  u32 ebx, edx, ecx, eax;   // Register saved by pushal
-  u32 es, ds;         // Segment register
+  uint32_t edi, esi, ebp, esp_;
+  uint32_t ebx, edx, ecx, eax;   // Register saved by pushal
+  uint32_t es, ds;         // Segment register
   int   irq;          // # of irq
-  u32 err, eip, cs, eflags; // Execution state before trap 
-  u32 esp, ss;        // Used only when returning to DPL=3
+  uint32_t err, eip, cs, eflags; // Execution state before trap 
+  uint32_t esp, ss;        // Used only when returning to DPL=3
 };
 
-static inline u8 inb(int port) {
+static inline uint8_t inb(int port) {
   char data;
-  asm volatile("inb %1, %0" : "=a"(data) : "d"((u16)port));
+  asm volatile("inb %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
-static inline u32 inl(int port) {
+static inline uint32_t inl(int port) {
   long data;
-  asm volatile("inl %1, %0" : "=a"(data) : "d"((u16)port));
+  asm volatile("inl %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
 static inline void outb(int port, int data) {
-  asm volatile("outb %%al, %%dx" : : "a"(data), "d"((u16)port));
+  asm volatile("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 static inline void cli() {
@@ -179,45 +179,45 @@ static inline void hlt() {
   asm volatile("hlt");
 }
 
-static inline u32 get_efl() {
-  volatile u32 efl;
+static inline uint32_t get_efl() {
+  volatile uint32_t efl;
   asm volatile("pushf; pop %0": "=r"(efl));
   return efl;
 }
 
-static inline u32 get_cr0(void) {
-  volatile u32 val;
+static inline uint32_t get_cr0(void) {
+  volatile uint32_t val;
   asm volatile("movl %%cr0, %0" : "=r"(val));
   return val;
 }
 
-static inline void set_cr0(u32 cr0) {
+static inline void set_cr0(uint32_t cr0) {
   asm volatile("movl %0, %%cr0" : : "r"(cr0));
 }
 
 
 static inline void set_idt(GateDesc *idt, int size) {
-  volatile static u16 data[3];
+  volatile static uint16_t data[3];
   data[0] = size - 1;
-  data[1] = (u32)idt;
-  data[2] = (u32)idt >> 16;
+  data[1] = (uint32_t)idt;
+  data[2] = (uint32_t)idt >> 16;
   asm volatile("lidt (%0)" : : "r"(data));
 }
 
 static inline void set_gdt(SegDesc *gdt, int size) {
-  volatile static u16 data[3];
+  volatile static uint16_t data[3];
   data[0] = size - 1;
-  data[1] = (u32)gdt;
-  data[2] = (u32)gdt >> 16;
+  data[1] = (uint32_t)gdt;
+  data[2] = (uint32_t)gdt >> 16;
   asm volatile("lgdt (%0)" : : "r"(data));
 }
 
 static inline void set_tr(int selector) {
-  asm volatile("ltr %0" : : "r"((u16)selector));
+  asm volatile("ltr %0" : : "r"((uint16_t)selector));
 }
 
-static inline u32 get_cr2() {
-  volatile u32 val;
+static inline uint32_t get_cr2() {
+  volatile uint32_t val;
   asm volatile("movl %%cr2, %0" : "=r"(val));
   return val;
 }

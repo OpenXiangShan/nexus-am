@@ -94,10 +94,10 @@ static __inline ui32 hash_func(ui32 i)
 
 static __inline ui32 fast_read(void const *src, ui32 bytes)
 {
-  u32 ret = 0;
+  uint32_t ret = 0;
 	if (bytes >= 1 && bytes <= 4) {
-    for (u32 i = 0; i < bytes; i ++) {
-      ret |= ((u8*)src)[i] << (i * 8);
+    for (uint32_t i = 0; i < bytes; i ++) {
+      ret |= ((uint8_t*)src)[i] << (i * 8);
     }
   }
   return ret;

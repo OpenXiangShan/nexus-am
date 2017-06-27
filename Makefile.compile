@@ -12,11 +12,13 @@ CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
 
+ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
+
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
 INCLUDES += -I$(AM_HOME)/am/arch/$(ARCH)/include
-CFLAGS   += -std=gnu99 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES)
-CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES)
-ASFLAGS  +=                -MMD                     $(INCLUDES)
+CFLAGS   += -std=gnu99 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF)
+CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF)
+ASFLAGS  +=                -MMD                     $(INCLUDES) -D$(ISA_DEF)
 
 ifeq ($(ISA), mips32)
 CXX = $(CROSS_COMPILE)g++-5

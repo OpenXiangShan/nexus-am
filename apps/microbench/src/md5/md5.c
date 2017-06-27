@@ -8,7 +8,7 @@
 #define N 10000000
 
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
-const u32 k[64] = {
+const uint32_t k[64] = {
 0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee ,
 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501 ,
 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be ,
@@ -27,7 +27,7 @@ const u32 k[64] = {
 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391 };
  
 // r specifies the per-round shift amounts
-static const u32 r[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+static const uint32_t r[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
                  5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20,
                  4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
                  6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21};
@@ -35,30 +35,30 @@ static const u32 r[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 
 // leftrotate function definition
 #define LEFTROTATE(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
  
-static void to_bytes(u32 val, u8 *bytes)
+static void to_bytes(uint32_t val, uint8_t *bytes)
 {
-    bytes[0] = (u8) val;
-    bytes[1] = (u8) (val >> 8);
-    bytes[2] = (u8) (val >> 16);
-    bytes[3] = (u8) (val >> 24);
+    bytes[0] = (uint8_t) val;
+    bytes[1] = (uint8_t) (val >> 8);
+    bytes[2] = (uint8_t) (val >> 16);
+    bytes[3] = (uint8_t) (val >> 24);
 }
  
-static u32 to_int32(const u8 *bytes)
+static uint32_t to_int32(const uint8_t *bytes)
 {
-    return (u32) bytes[0]
-        | ((u32) bytes[1] << 8)
-        | ((u32) bytes[2] << 16)
-        | ((u32) bytes[3] << 24);
+    return (uint32_t) bytes[0]
+        | ((uint32_t) bytes[1] << 8)
+        | ((uint32_t) bytes[2] << 16)
+        | ((uint32_t) bytes[3] << 24);
 }
  
-static void md5(u8 *msg, size_t initial_len, u8 *digest) {
+static void md5(uint8_t *msg, size_t initial_len, uint8_t *digest) {
  
     // These vars will contain the hash
-    u32 h0, h1, h2, h3;
+    uint32_t h0, h1, h2, h3;
  
     size_t new_len, offset;
-    u32 w[16];
-    u32 a, b, c, d, i, f, g, temp;
+    uint32_t w[16];
+    uint32_t a, b, c, d, i, f, g, temp;
  
     // Initialize variables - simple count in nibbles:
     h0 = 0x67452301;
@@ -137,8 +137,8 @@ static void md5(u8 *msg, size_t initial_len, u8 *digest) {
     to_bytes(h3, digest + 12);
 }
  
-static u8 *str;
-static u8 *digest;
+static uint8_t *str;
+static uint8_t *digest;
 
 void bench_md5_prepare() {
   bench_srand(1);

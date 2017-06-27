@@ -144,7 +144,7 @@ void bench_bf_run() {
 }
 
 const char * bench_bf_validate() {
-  u32 cs = checksum(output, output + noutput);
+  uint32_t cs = checksum(output, output + noutput);
   return ((noutput == ARR_SIZE && cs == current->checksum) ? \
             NULL : "wrong answer");
 }

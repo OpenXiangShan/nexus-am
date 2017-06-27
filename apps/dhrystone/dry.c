@@ -454,7 +454,7 @@ static char memory[1024];
 static char *free_mem = &memory[0];
 
 static char* myalloc(size_t size) {
-  while ((ulong)free_mem % 4 != 0) free_mem ++;
+  while ((unsigned long)free_mem % 4 != 0) free_mem ++;
   char *ret = free_mem;
   free_mem += size;
   return ret;

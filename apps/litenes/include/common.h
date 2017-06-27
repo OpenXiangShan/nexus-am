@@ -3,20 +3,20 @@
 
 #include <am.h>
 
-typedef u8 byte;
-typedef u16 word;
-typedef u32 dword;
+typedef uint8_t byte;
+typedef uint16_t word;
+typedef uint32_t dword;
 typedef int bool;
 
 #define true  1
 #define false 0
 
-static inline _Pixel pixel(u8 r, u8 g, u8 b) {
+static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
   return (r << 16) | (g << 8) | b;
 }
-static inline u8 R(_Pixel p) { return p >> 16; }
-static inline u8 G(_Pixel p) { return p >> 8; }
-static inline u8 B(_Pixel p) { return p; }
+static inline uint8_t R(uint32_t p) { return p >> 16; }
+static inline uint8_t G(uint32_t p) { return p >> 8; }
+static inline uint8_t B(uint32_t p) { return p; }
 
 // Byte Bit Operations
 void common_set_bitb(byte *variable, byte position);
@@ -53,6 +53,6 @@ static inline int memcmp(const void *dest, const void *src, size_t n) {
   return 0;
 }
 
-static inline bool common_bit_set(ulong value, byte position) { return value & (1L << position); }
+static inline bool common_bit_set(unsigned long value, byte position) { return value & (1L << position); }
 
 #endif

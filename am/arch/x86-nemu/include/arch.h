@@ -3,7 +3,7 @@
 
 #include <am.h>
 
-typedef u32 size_t;
+typedef uint32_t size_t;
 
 struct _RegSet {
 };
