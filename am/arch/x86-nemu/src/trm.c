@@ -2,9 +2,7 @@
 #include <x86-nemu.h>
 #include <x86.h>
 
-#ifdef HAS_DEVICE
-# define SERIAL_PORT 0x3f8
-#endif
+#define SERIAL_PORT 0x3f8
 
 extern char _heap_start;
 extern char _heap_end;
