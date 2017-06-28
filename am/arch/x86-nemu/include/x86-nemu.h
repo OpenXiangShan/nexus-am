@@ -5,17 +5,13 @@
 #define IA32_SEG
 //#define IA32_PAGE
 //#define IA32_INTR
-//#define HAS_DEVICE
+#define HAS_DEVICE
 //#define USE_HARDDISK
 
 #ifndef __ASSEMBLER__
 /* The following code will be included if the source file is a "*.c" file. */
 
 #include <arch.h>
-
-#ifdef HAS_DEVICE
-# define SERIAL_PORT ((volatile char *)0x3f8)
-#endif
 
 #endif
 
