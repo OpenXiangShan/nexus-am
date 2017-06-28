@@ -664,7 +664,7 @@ size_t qlz_compress(const void *source, char *destination, size_t size, qlz_stat
 #endif
 		if(r == base)
 		{
-			memcpy(destination + base, source, size);
+			bench_memcpy(destination + base, source, size);
 			r = size + base;
 			compressed = 0;
 		}
@@ -679,12 +679,12 @@ size_t qlz_compress(const void *source, char *destination, size_t size, qlz_stat
 	{
 		unsigned char *src = state->stream_buffer + state->stream_counter;
 
-		memcpy(src, source, size);
+		bench_memcpy(src, source, size);
 		r = base + qlz_compress_core(src, (unsigned char*)destination + base, size, state);
 
  		if(r == base)
 		{
-			memcpy(destination + base, src, size);
+			bench_memcpy(destination + base, src, size);
 			r = size + base;
 			compressed = 0;
 			reset_table_compress(state);
@@ -734,7 +734,7 @@ size_t qlz_decompress(const char *source, void *destination, qlz_state_decompres
 		}
 		else
 		{
-			memcpy(destination, source + qlz_size_header(source), dsiz);
+			bench_memcpy(destination, source + qlz_size_header(source), dsiz);
 		}
 		state->stream_counter = 0;
 		reset_table_decompress(state);
@@ -749,10 +749,10 @@ size_t qlz_decompress(const char *source, void *destination, qlz_state_decompres
 		}
 		else
 		{
-			memcpy(dst, source + qlz_size_header(source), dsiz);
+			bench_memcpy(dst, source + qlz_size_header(source), dsiz);
 			reset_table_decompress(state);
 		}
-		memcpy(destination, dst, dsiz);
+		bench_memcpy(destination, dst, dsiz);
 		state->stream_counter += dsiz;
 	}
 #endif
