@@ -1,15 +1,19 @@
 #include <am.h>
 #include <x86-nemu.h>
+#include <x86.h>
+
+#define RTC_PORT 0x48   // Note that this is not standard
+static uint32_t boot_time;
 
 void _ioe_init() {
+  boot_time = inl(RTC_PORT);
 }
 
 // -------------------- cycles and uptime --------------------
 
-static unsigned long nemu_time = 0;
-
-uintptr_t _uptime(){
-  return nemu_time ++;
+uintptr_t _uptime() {
+  return inl(RTC_PORT) - boot_time;
+  //return 0;
 }
 
 // -------------------- video --------------------
