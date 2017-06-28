@@ -20,6 +20,6 @@ SECTIONS {
     _end = .;
   }
   _heap_start = ALIGN(4096);
-  _stack_pointer = 128M;
-  _heap_end = _stack_pointer - 4 * 1024 * 1024;
+  _stack_pointer = 0x8000;
+  _heap_end = 0x8000000;
 }
