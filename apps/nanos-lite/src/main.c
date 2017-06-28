@@ -2,7 +2,7 @@
 
 uint32_t loader(_Protect *);
 void init_mm(void);
-static uint32_t entry;
+void init_irq(void);
 
 #ifndef __PAGE
 static inline void relocate_myself() {
@@ -18,30 +18,39 @@ static inline void relocate_myself() {
 #endif
 
 int main() {
-#ifndef __PAGE
-  relocate_myself();
-#else
-
-  init_mm();
-
-#endif
-
   Log("'Hello World!' from Nanos-lite");
+  Log("Build time: %s, %s", __TIME__, __DATE__);
+
+  extern uint8_t ramdisk_start;
+  extern uint8_t ramdisk_end;
+  Log("ramdisk.start = %p, ramdisk.size = %d bytes", &ramdisk_start, &ramdisk_end - &ramdisk_start);
+
+  static uint32_t entry;
 
 #ifdef __PAGE
+
+  Log("Initializing memory manager...");
+  init_mm();
+
+  Log("Initializing interrupt/exception handler...");
+  init_irq();
 
   _Protect user_as;  // user process address space
 
   _protect(&user_as);
 
+  Log("Loading user program...");
   entry = loader(&user_as);
 
+  Log("Switching to user address space...");
   _switch(&user_as);
 
   /* Set the %esp for user program */
   asm volatile("movl %0, %%esp" : : "i"(0xc0000000));
 
 #else
+
+  relocate_myself();
 
   entry = loader(NULL);
 
