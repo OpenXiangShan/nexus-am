@@ -10,6 +10,10 @@
 #include <stdint.h>
 #include <arch.h>
 
+#ifndef NULL
+# define NULL ((void *)0)
+#endif
+
 #define MAX_CPU 8
 
 typedef struct _Area {

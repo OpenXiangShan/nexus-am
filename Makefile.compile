@@ -29,8 +29,8 @@ ASFLAGS  += -march=mips32 -EL -mno-check-zero-division -O0 -mno-abicalls -fno-pi
 endif
 
 ifeq ($(ISA), x86)
-CFLAGS   += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -march=i386
-CXXFLAGS += -m32 -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -march=i386 -ffreestanding -fno-rtti -fno-exceptions
+CFLAGS   += -m32 -fno-pic -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -march=i386
+CXXFLAGS += -m32 -fno-pic -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -march=i386 -ffreestanding -fno-rtti -fno-exceptions
 ASFLAGS  += -m32
 endif
 
