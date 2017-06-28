@@ -4,8 +4,6 @@
 
 static struct timeval boot_time;
 
-#include <stdio.h>
-
 uintptr_t _uptime() {
   struct timeval now;
   gettimeofday(&now, NULL);
