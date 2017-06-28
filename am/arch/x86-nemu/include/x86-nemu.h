@@ -8,8 +8,6 @@
 //#define HAS_DEVICE
 //#define USE_HARDDISK
 
-#define PMEM_SIZE (128 * 1024 * 1024)
-
 #ifndef __ASSEMBLER__
 /* The following code will be included if the source file is a "*.c" file. */
 
@@ -18,9 +16,6 @@
 #ifdef HAS_DEVICE
 # define SERIAL_PORT ((volatile char *)0x3f8)
 #endif
-
-struct TrapFrame{
-};
 
 #endif
 
