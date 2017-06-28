@@ -18,13 +18,18 @@ uintptr_t _uptime() {
 
 // -------------------- video --------------------
 
+#define fb ((uint32_t *)0x40000)
+#define SCREEN_W 320
+#define SCREEN_H 200
 
 _Screen _screen = {
-  .width  = 0,
-  .height = 0,
+  .width  = SCREEN_W,
+  .height = SCREEN_H,
 };
 
+
 void _draw_p(int x, int y, uint32_t p) {
+  fb[y * SCREEN_W + x] = p;
 }
 
 void _draw_sync() {
