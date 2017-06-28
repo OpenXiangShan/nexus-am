@@ -7,8 +7,8 @@ static struct timeval boot_time;
 uintptr_t _uptime() {
   struct timeval now;
   gettimeofday(&now, NULL);
-  uintptr_t seconds = now.tv_sec - boot_time.tv_sec;
-  uintptr_t useconds = now.tv_usec - boot_time.tv_usec;
+  intptr_t seconds = now.tv_sec - boot_time.tv_sec;
+  intptr_t useconds = now.tv_usec - boot_time.tv_usec;
   return seconds * 1000 + (useconds + 500) / 1000;
 }
 
