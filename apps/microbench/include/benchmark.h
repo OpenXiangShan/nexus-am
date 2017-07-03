@@ -17,10 +17,17 @@ extern "C" {
 #define REF_CPU    "i7-6700 @ 3.40GHz"
 #define REF_SCORE  100000
 
+
+#define SETTING 1
 // the list of benchmarks
-//       Name        |  Mem  | TRef | En  | Checksum  | Desc
+#define QSORT_SM {100,      1 KB,    0, 0x6a8e89a3}
+#define QSORT_LG {100000, 640 KB, 5519, 0x057fbc15}
+
 #define BENCHMARK_LIST(def) \
-  def(qsort, "qsort", 640 KB,  5519, true, 0x057fbc15, "Quick sort") \
+  def(qsort, "qsort", QSORT_SM, QSORT_LG, "Quick sort") \
+
+
+/*
   def(queen, "queen",   0 KB,  5159, true, 0x00003778, "Queen placement") \
   def(   bf,    "bf",  32 KB, 26209, true, 0x9221e2b3, "Brainf**k interpreter") \
   def(  fib,   "fib", 256 KB, 28575, true, 0xebdc5f80, "Fibonacci number") \
@@ -30,31 +37,37 @@ extern "C" {
   def( lzip,  "lzip",   4 MB, 26469, true, 0x60953409, "Lzip compression") \
   def(ssort, "ssort",   4 MB,  5915, true, 0x3f9f2439, "Suffix sort") \
   def(  md5,   "md5",  16 MB, 19593, true, 0x1391e488, "MD5 digest") \
+*/
 
 // Each benchmark will run REPEAT times
 #define REPEAT  1
 
-#define DECL(_name, _sname, _mlim, _ref, _en, _cs, _desc) \
+#define DECL(_name, _sname, _s1, _s2, _desc) \
   void bench_##_name##_prepare(); \
   void bench_##_name##_run(); \
-  const char* bench_##_name##_validate();
+  int bench_##_name##_validate();
 
 BENCHMARK_LIST(DECL)
+
+typedef struct Setting {
+  int size;
+  unsigned long mlim, ref;
+  uint32_t checksum;
+} Setting;
 
 typedef struct Benchmark {
   void (*prepare)();
   void (*run)();
-  const char* (*validate)();
+  int (*validate)();
   const char *name, *desc;
-  unsigned long mlim, ref;
-  int enabled;
-  uint32_t checksum;
+  Setting settings[2];
 } Benchmark;
 
 extern Benchmark *current;
+extern Setting *setting;
+
 typedef struct Result {
   int pass;
-  const char *msg;
   unsigned long tsc, msec;
 } Result;
 

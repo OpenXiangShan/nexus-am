@@ -1,10 +1,11 @@
 #include <benchmark.h>
 
-#define N 100000
-int *data;
+int N, *data;
 
 void bench_qsort_prepare() {
   bench_srand(1);
+
+  N = setting->size;
 
   data = bench_alloc(N * sizeof(int));
   for (int i = 0; i < N; i ++) {
@@ -36,6 +37,6 @@ void bench_qsort_run() {
   myqsort(data, 0, N);
 }
 
-const char * bench_qsort_validate() {
-  return checksum(data, data + N) == current->checksum ? NULL : "wrong answer";
+int bench_qsort_validate() {
+  return checksum(data, data + N) == setting->checksum;
 }
