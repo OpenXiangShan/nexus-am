@@ -106,14 +106,14 @@ int main() {
 
 
 void* bench_alloc(size_t size) {
-  if ((unsigned long)start % 16 != 0) {
-    start = start + 16 - ((unsigned long)start % 16);
+  if ((uintptr_t)start % 16 != 0) {
+    start = start + 16 - ((uintptr_t)start % 16);
   }
   char *old = start;
   start += size;
-  assert((unsigned long)_heap.start <= (unsigned long)start && (unsigned long)start < (unsigned long)_heap.end);
+  assert((uintptr_t)_heap.start <= (uintptr_t)start && (uintptr_t)start < (uintptr_t)_heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  assert((unsigned long)start - (unsigned long)_heap.start <= setting->mlim);
+  assert((uintptr_t)start - (uintptr_t)_heap.start <= setting->mlim);
   return old;
 }
 

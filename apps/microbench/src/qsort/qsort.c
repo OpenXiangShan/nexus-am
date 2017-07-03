@@ -1,6 +1,6 @@
 #include <benchmark.h>
 
-int N, *data;
+static int N, *data;
 
 void bench_qsort_prepare() {
   bench_srand(1);
