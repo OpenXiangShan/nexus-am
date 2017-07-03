@@ -18,19 +18,21 @@ extern "C" {
 #define REF_SCORE  100000
 
 
-#define SETTING 0
+#define SETTING 1
 
 // the list of benchmarks
 
 //                 size |  heap | time |  checksum   
-#define QSORT_SM {   100,   1 KB,     0, 0x6a8e89a3}
-#define QSORT_LG {100000, 640 KB,  5519, 0x057fbc15}
-#define QUEEN_SM {     8,   0 KB,     0, 0x0000005c}
-#define QUEEN_LG {    12,   0 KB,  5159, 0x00003778}
-#define    BF_SM {     4,  32 KB,     0, 0xa6f0079e}
-#define    BF_LG {   180,  32 KB, 26209, 0x9221e2b3}
-#define   FIB_SM {     2,   1 KB,     0, 0x7cfeddf0}
-#define   FIB_LG {    91, 256 KB, 28575, 0xebdc5f80}
+#define QSORT_SM {     100,   1 KB,     0, 0x6a8e89a3}
+#define QSORT_LG {  100000, 640 KB,  5519, 0x057fbc15}
+#define QUEEN_SM {       8,   0 KB,     0, 0x0000005c}
+#define QUEEN_LG {      12,   0 KB,  5159, 0x00003778}
+#define    BF_SM {       4,  32 KB,     0, 0xa6f0079e}
+#define    BF_LG {     180,  32 KB, 26209, 0x9221e2b3}
+#define   FIB_SM {       2,   1 KB,     0, 0x7cfeddf0}
+#define   FIB_LG {      91, 256 KB, 28575, 0xebdc5f80}
+#define SIEVE_SM {     100,   1 KB,     0, 0x00000019}
+#define SIEVE_LG {10000000,   2 MB, 42406, 0x000a2403}
 
 
 #define BENCHMARK_LIST(def) \
@@ -38,9 +40,9 @@ extern "C" {
   def(queen, "queen", QUEEN_SM, QUEEN_LG, "Queen placement") \
   def(   bf,    "bf",    BF_SM,    BF_LG, "Brainf**k interpreter") \
   def(  fib,   "fib",   FIB_SM,   FIB_LG, "Fibonacci number") \
+  def(sieve, "sieve", SIEVE_SM, SIEVE_LG, "Eratosthenes sieve") \
 
 /*
-  def(sieve, "sieve",   2 MB, 42406, true, 0x000a2403, "Eratosthenes sieve") \
   def( 15pz,  "15pz",   8 MB,  5792, true, 0x00068b8c, "A* 15-puzzle search") \
   def(dinic, "dinic",   1 MB, 13536, true, 0x0000c248, "Dinic's maxflow algorithm") \
   def( lzip,  "lzip",   4 MB, 26469, true, 0x60953409, "Lzip compression") \
