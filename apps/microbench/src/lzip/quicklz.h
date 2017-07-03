@@ -4,6 +4,24 @@
 #include <am.h>
 #include <klib.h>
 
+static inline void* bench_memcpy(void* dst, const void* src, size_t n){
+  assert(dst&&src);
+  const char* s;
+  char* d;
+  if(src+n>dst&&src<dst){
+    s=src+n;
+    d=dst+n;
+    while(n-->0)*--d=*--s;
+  }
+  else{
+    s=src;
+    d=dst;
+    while(n-->0)*d++=*s++;
+  }
+  return dst;
+}
+
+
 // Fast data compression library
 // Copyright (C) 2006-2011 Lasse Mikkel Reinhold
 // lar@quicklz.com
