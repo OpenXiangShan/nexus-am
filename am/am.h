@@ -8,6 +8,7 @@
 #define __AM_H__
 
 #include <stdint.h>
+#include <sys/types.h>
 #include <arch.h>
 
 #ifndef NULL
