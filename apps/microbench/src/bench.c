@@ -86,7 +86,11 @@ int main() {
       pass &= succ;
 
       unsigned long cur = score(bench, 0, msec);
-      printk("\n  min time: %d ms [%d]\n", (unsigned int)msec, (unsigned int)cur);
+
+      printk("\n");
+      if (SETTING != 0) {
+        printk("  min time: %d ms [%d]\n", (unsigned int)msec, (unsigned int)cur);
+      }
 
       bench_score += cur;
     }
@@ -95,9 +99,13 @@ int main() {
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
   printk("==================================================\n");
-  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", (unsigned int)bench_score);
-  printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
-
+  printk("MicroBench %s", pass ? "PASS" : "FAIL");
+  if (SETTING != 0) {
+    printk("        %d Marks\n", (unsigned int)bench_score);
+    printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
+  } else {
+    printk("\n");
+  }
   _halt(0);
   return 0;
 }
