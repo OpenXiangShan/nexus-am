@@ -65,6 +65,6 @@ DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
 # Dependent AM and libraries
 .PHONY: $(LIBS) am
 am:
-	cd $(AM_HOME) && make
+	$(MAKE) -C $(AM_HOME)
 $(LIBS): %:
-	cd $(AM_HOME)/libs/$* && make
+	$(MAKE) -C $(AM_HOME)/libs/$*

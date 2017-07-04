@@ -5,8 +5,8 @@ AM_HOME ?= $(shell pwd)
 .PHONY: all clean
 
 all:
-	@cd am && make
+	@$(MAKE) -C am
 
 # TODO: clean everything
 clean:
-	@cd am && make clean
+	@$(MAKE) -C am clean
