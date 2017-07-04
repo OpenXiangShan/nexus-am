@@ -1,15 +1,3 @@
 NAME = microbench
-SRCS = src/bench.c \
-       src/qsort/qsort.c \
-       src/queen/queen.c \
-       src/bf/bf.c \
-       src/fib/fib.c \
-       src/sieve/sieve.c \
-       src/15pz/15pz.cpp \
-       src/dinic/dinic.cpp \
-       src/lzip/lzip.c \
-       src/lzip/quicklz.c \
-       
-       # $(shell find -L ./src/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
-LIBS = klib
+SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp")
 include $(AM_HOME)/Makefile.app

@@ -2,7 +2,7 @@
 
 #include <benchmark.h>
 
-const int N = 100000;
+static int N;
 
 inline bool leq(int a1, int a2,   int b1, int b2) { // lexic. order for pairs
   return(a1 < b1 || (a1 == b1 && a2 <= b2)); 
@@ -89,6 +89,7 @@ extern "C" {
 static int *s, *sa;
 
 void bench_ssort_prepare() {
+  N = setting->size;
   bench_srand(1);
   s = (int*)bench_alloc(sizeof(int)*(N+10));
   sa = (int*)bench_alloc(sizeof(int)*(N+10));
@@ -102,10 +103,8 @@ void bench_ssort_run() {
   suffixArray(s, sa, N, 26);
 }
 
-const char *bench_ssort_validate() {
-  //printk("%x\n", checksum(sa, sa + N));
-  return (checksum(sa, sa + N) == current->checksum) ?
-    (const char *)NULL : "wrong answer";
+int bench_ssort_validate() {
+  return checksum(sa, sa + N) == setting->checksum;
 }
 
 }

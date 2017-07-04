@@ -17,10 +17,8 @@ extern "C" {
 #define REF_CPU    "i7-6700 @ 3.40GHz"
 #define REF_SCORE  100000
 
-
-#define SETTING 1
-
-// the list of benchmarks
+#define SETTING 0
+#define REPEAT  1
 
 //                 size |  heap | time |  checksum   
 #define QSORT_SM {     100,   1 KB,     0, 0x6a8e89a3}
@@ -39,6 +37,10 @@ extern "C" {
 #define DINIC_LG {     128,   1 MB, 13536, 0x0000c248}
 #define  LZIP_SM {     128,   1 MB,     0, 0xc240e63a}
 #define  LZIP_LG { 1048576,   4 MB, 26469, 0x60953409}
+#define SSORT_SM {     100,   4 KB,     0, 0x4c555e09}
+#define SSORT_LG {  100000,   4 MB,  5915, 0x3f9f2439}
+#define   MD5_SM {     100,   1 KB,     0, 0xb460c623}
+#define   MD5_LG {10000000,  16 MB, 19593, 0x1391e488}
 
 #define BENCHMARK_LIST(def) \
   def(qsort, "qsort", QSORT_SM, QSORT_LG, "Quick sort") \
@@ -49,14 +51,10 @@ extern "C" {
   def( 15pz,  "15pz",  PZ15_SM,  PZ15_LG, "A* 15-puzzle search") \
   def(dinic, "dinic", DINIC_SM, DINIC_LG, "Dinic's maxflow algorithm") \
   def( lzip,  "lzip",  LZIP_SM,  LZIP_LG, "Lzip compression") \
-
-/*
-  def(ssort, "ssort",   4 MB,  5915, true, 0x3f9f2439, "Suffix sort") \
-  def(  md5,   "md5",  16 MB, 19593, true, 0x1391e488, "MD5 digest") \
-*/
+  def(ssort, "ssort", SSORT_SM, SSORT_LG, "Suffix sort") \
+  def(  md5,   "md5",   MD5_SM,   MD5_LG, "MD5 digest") \
 
 // Each benchmark will run REPEAT times
-#define REPEAT  1
 
 #define DECL(_name, _sname, _s1, _s2, _desc) \
   void bench_##_name##_prepare(); \

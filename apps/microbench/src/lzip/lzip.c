@@ -1,7 +1,7 @@
 #include "quicklz.h"
 #include <benchmark.h>
 
-int SIZE;
+static int SIZE;
 
 static qlz_state_compress *state;
 static char *blk;
