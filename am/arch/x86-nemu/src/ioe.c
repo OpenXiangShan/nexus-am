@@ -18,7 +18,7 @@ uintptr_t _uptime() {
 
 // -------------------- video --------------------
 
-#define fb ((uint32_t *)0x40000)
+uint32_t* const fb = (uint32_t *)0x40000;
 #define SCREEN_W 320
 #define SCREEN_H 200
 
