@@ -1,6 +1,7 @@
 #include "common.h"
 #include "memory.h"
 #include <elf.h>
+#include "fs.h"
 
 #define ELF_OFFSET_IN_DISK 0
 
@@ -19,7 +20,9 @@ uint32_t loader(_Protect *p) {
   Elf32_Phdr *ph = NULL, *eph;
 
   uint8_t buf[4096];
-  driver_read(buf, ELF_OFFSET_IN_DISK, 4096);
+  int fd = fs_open("/bin/pal", 0, 0);
+  fs_read(fd, buf, 4096);
+//  driver_read(buf, ELF_OFFSET_IN_DISK, 4096);
 
   elf = (void*)buf;
 
@@ -45,7 +48,9 @@ uint32_t loader(_Protect *p) {
         _map(p, va_align + i, pa + i);
       }
 
-      driver_read((void *)pa, ELF_OFFSET_IN_DISK + ph->p_offset, ph->p_filesz);
+      //driver_read((void *)pa, ELF_OFFSET_IN_DISK + ph->p_offset, ph->p_filesz);
+      fs_lseek(fd, ph->p_offset, SEEK_SET);
+      fs_read(fd, pa, ph->p_filesz);
 
 
       /* TODO: zero the memory region
@@ -62,6 +67,8 @@ uint32_t loader(_Protect *p) {
 #endif
     }
   }
+
+  fs_close(fd);
 
 #ifdef __PAGE
   void *va = (void *)(0xc0000000 - STACK_SIZE);
