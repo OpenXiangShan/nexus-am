@@ -23,7 +23,8 @@ int main() {
 
   extern uint8_t ramdisk_start;
   extern uint8_t ramdisk_end;
-  Log("ramdisk.start = %p, ramdisk.size = %d bytes", &ramdisk_start, &ramdisk_end - &ramdisk_start);
+  Log("ramdisk info: start = %p, end = %p, size = %d bytes",
+      &ramdisk_start, &ramdisk_end, &ramdisk_end - &ramdisk_start);
 
   static uint32_t entry;
 
