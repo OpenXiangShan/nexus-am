@@ -1,6 +1,8 @@
-.PHONY: all clean
-all:
-	@echo "Use make -f to specify a file"
+NAME = microbench
+SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp")
 
-clean:
-	@rm -rf build/
+INPUT ?= REF
+CFLAGS += -DSETTING_$(INPUT)
+CXXFLAGS += -DSETTING_$(INPUT)
+
+include $(AM_HOME)/Makefile.app
