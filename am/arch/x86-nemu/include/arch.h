@@ -4,6 +4,7 @@
 #include <am.h>
 
 #define PMEM_SIZE (64 * 1024 * 1024)
+#define PGSIZE    4096    // Bytes mapped by a page
 
 typedef uint32_t size_t;
 

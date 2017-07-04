@@ -24,8 +24,6 @@
 #define CR0_PG    0x80000000  // Paging
 
 // Page directory and page table constants
-#define PGSIZE    4096    // Bytes mapped by a page
-#define PGMASK    4095    // Mask for bit ops
 #define NR_PDE    1024    // # directory entries per page directory
 #define NR_PTE    1024    // # PTEs per page table
 #define PGSHFT    12      // log2(PGSIZE)
@@ -81,9 +79,6 @@ typedef uint32_t PDE;
 
 // construct virtual address from indexes and offset
 #define PGADDR(d, t, o) ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
-
-#define PGROUNDUP(sz)   (((sz)+PGSIZE-1) & ~(PGSIZE-1))
-#define PGROUNDDOWN(a)  (((a)) & ~(PGSIZE-1))
 
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   ((uint32_t)(pte) & ~0xfff)
