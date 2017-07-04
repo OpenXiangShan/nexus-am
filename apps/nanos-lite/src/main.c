@@ -1,5 +1,6 @@
 #include "common.h"
 
+_Protect* get_user_as(void);
 uint32_t loader(_Protect *);
 void init_mm(void);
 void init_irq(void);
@@ -36,15 +37,15 @@ int main() {
   Log("Initializing interrupt/exception handler...");
   init_irq();
 
-  _Protect user_as;  // user process address space
+  _Protect *p = get_user_as();  // user process address space
 
-  _protect(&user_as);
+  _protect(p);
 
   Log("Loading user program...");
-  entry = loader(&user_as);
+  entry = loader(p);
 
   Log("Switching to user address space...");
-  _switch(&user_as);
+  _switch(p);
 
   /* Set the %esp for user program */
   asm volatile("movl %0, %%esp" : : "i"(0xc0000000));

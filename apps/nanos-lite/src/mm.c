@@ -1,5 +1,10 @@
 #include "memory.h"
 
+static void *pf = NULL;
+static _Protect user_as;  // user process address space
+_Protect* get_user_as(void) {
+  return &user_as;
+}
 
 void* new_page(void) {
   assert(pf < (void *)PMEM_SIZE);
@@ -24,28 +29,29 @@ void* kmalloc(uint32_t size) {
   return pa;
 }
 
-uint32_t cur_brk = 0;
+static uintptr_t cur_brk = 0;
 // we do not free memory, so use `max_brk' to determine whether to call mm_malloc()
-uint32_t max_brk = 0;
+static uintptr_t max_brk = 0;
 
 /* The brk() system call handler. */
-uint32_t mm_brk(uint32_t new_brk) {
-  panic("not implement yet");
-	if(new_brk != 0) {
-		if(new_brk > max_brk) {
-#ifdef IA32_PAGE
-//			mm_malloc(max_brk, new_brk - max_brk);
-#endif
+bool mm_brk(uint32_t new_brk) {
+	if(cur_brk == 0) {
+    cur_brk = max_brk = new_brk;
+  }
+  else {
+		if (new_brk > max_brk) {
+      uintptr_t page_start = PGROUNDUP(max_brk);
+      uintptr_t page_end = PGROUNDUP(new_brk);
+      for (; page_start <= page_end; page_start += PGSIZE) {
+        _map(&user_as, (void *)page_start, new_page());
+      }
 			max_brk = new_brk;
 		}
-
 		cur_brk = new_brk;
 	}
 
-	// If new_brk == 0, the brk() syscall should fail and return
-	// the current break. See the NOTE of `man 2 brk' for details.
-
-	return cur_brk;
+  // success
+  return 0;
 }
 
 void init_mm() {
