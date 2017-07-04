@@ -1,0 +1,10 @@
+#!/bin/bash
+
+DIR=${AM_HOME}/am/arch/riscv64-rocket/img
+DEST=$1
+shift
+
+bash -c "cd $DIR/boot && make"
+
+riscv64-unknown-linux-gnu-ld --gc-sections -T $DIR/loader.ld -e _start -o $DEST $DIR/boot/start.o --start-group $@ --end-group
+riscv64-unknown-linux-gnu-objdump -d $DEST > $DEST.txt

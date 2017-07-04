@@ -7,6 +7,10 @@ ifeq ($(ISA), mips32)
 CROSS_COMPILE = mips-linux-gnu-
 endif
 
+ifeq ($(ISA), riscv64)
+CROSS_COMPILE = riscv64-unknown-linux-gnu-
+endif
+
 AS = $(CROSS_COMPILE)gcc
 CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
@@ -26,6 +30,12 @@ CFLAGS_COMMON = -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-pr
 CFLAGS   += $(CFLAGS_COMMON)
 CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
 ASFLAGS  += -march=mips32 -EL -mno-check-zero-division -O0 -mno-abicalls -fno-pic -fno-delayed-branch
+endif
+
+ifeq ($(ISA), riscv64)
+CFLAGS_COMMON = -fno-pic -static -mcmodel=medany -fno-delete-null-pointer-checks -mabi=lp64 -march=rv64imac
+CFLAGS   += $(CFLAGS_COMMON)
+CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
 endif
 
 ifeq ($(ISA), x86)
