@@ -1,7 +1,7 @@
 #include "quicklz.h"
 #include <benchmark.h>
 
-#define SIZE (1<<20)
+static int SIZE;
 
 static qlz_state_compress *state;
 static char *blk;
@@ -9,6 +9,7 @@ static char *compress;
 static int len;
 
 void bench_lzip_prepare() {
+  SIZE = setting->size;
   bench_srand(1);
   state = bench_alloc(sizeof(qlz_state_compress));
   blk = bench_alloc(SIZE);
@@ -22,9 +23,7 @@ void bench_lzip_run() {
   len = qlz_compress(blk, compress, SIZE, state);
 }
 
-const char* bench_lzip_validate() {
-  return (checksum(compress, compress + len) == current->checksum) ? 
-    NULL :
-    "wrong answer";
+int bench_lzip_validate() {
+  return checksum(compress, compress + len) == setting->checksum;
 }
 

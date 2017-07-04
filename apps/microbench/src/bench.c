@@ -3,22 +3,21 @@
 #include <limits.h>
 
 Benchmark *current;
+Setting *setting;
+
 static char *start;
 
 #define ARR_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
 
 // The benchmark list
 
-#define ENTRY(_name, _sname, _mlim, _ref, _en, _cs, _desc) \
+#define ENTRY(_name, _sname, _s1, _s2, _desc) \
   { .prepare = bench_##_name##_prepare, \
     .run = bench_##_name##_run, \
     .validate = bench_##_name##_validate, \
     .name = _sname, \
     .desc = _desc, \
-    .mlim = _mlim, \
-    .ref = _ref, \
-    .enabled = _en, \
-    .checksum = _cs, },
+    .settings = {_s1, _s2}, },
 
 Benchmark benchmarks[] = {
   BENCHMARK_LIST(ENTRY)
@@ -34,11 +33,8 @@ static void bench_done(Result *res) {
 }
 
 static const char *bench_check(Benchmark *bench) {
-  if (!bench->enabled) {
-    return "";
-  }
   unsigned long freesp = (unsigned long)_heap.end - (unsigned long)_heap.start;
-  if (freesp < bench->mlim) {
+  if (freesp < setting->mlim) {
     return "(insufficient memory)";
   }
   return NULL;
@@ -46,20 +42,18 @@ static const char *bench_check(Benchmark *bench) {
 
 Result run_once(Benchmark *b) {
   Result res;
-  current = b;
   bench_reset();       // reset malloc state
   current->prepare();  // call bechmark's prepare function
   bench_prepare(&res); // clean everything, start timer
   current->run();      // run it
   bench_done(&res);    // collect results
-  res.msg = current->validate();
-  res.pass = res.msg == NULL;
+  res.pass = current->validate();
   return res;
 }
 
 unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
   if (msec == 0) return 0;
-  return (REF_SCORE / 1000) * b->ref / msec;
+  return (REF_SCORE / 1000) * setting->ref / msec;
 }
 
 int main() {
@@ -70,6 +64,8 @@ int main() {
 
   for (int i = 0; i < ARR_SIZE(benchmarks); i ++) {
     Benchmark *bench = &benchmarks[i];
+    current = bench;
+    setting = &bench->settings[SETTING];
     const char *msg = bench_check(bench);
     printk("[%s] %s: ", bench->name, bench->desc);
     if (msg != NULL) {
@@ -90,7 +86,11 @@ int main() {
       pass &= succ;
 
       unsigned long cur = score(bench, 0, msec);
-      printk("\n  min time: %d ms [%d]\n", (unsigned int)msec, (unsigned int)cur);
+
+      printk("\n");
+      if (SETTING != 0) {
+        printk("  min time: %d ms [%d]\n", (unsigned int)msec, (unsigned int)cur);
+      }
 
       bench_score += cur;
     }
@@ -99,9 +99,13 @@ int main() {
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
   printk("==================================================\n");
-  printk("MicroBench %s        %d Marks\n", pass ? "PASS" : "FAIL", (unsigned int)bench_score);
-  printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
-
+  printk("MicroBench %s", pass ? "PASS" : "FAIL");
+  if (SETTING != 0) {
+    printk("        %d Marks\n", (unsigned int)bench_score);
+    printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
+  } else {
+    printk("\n");
+  }
   _halt(0);
   return 0;
 }
@@ -110,14 +114,14 @@ int main() {
 
 
 void* bench_alloc(size_t size) {
-  if ((unsigned long)start % 16 != 0) {
-    start = start + 16 - ((unsigned long)start % 16);
+  if ((uintptr_t)start % 16 != 0) {
+    start = start + 16 - ((uintptr_t)start % 16);
   }
   char *old = start;
   start += size;
-  assert((unsigned long)_heap.start <= (unsigned long)start && (unsigned long)start < (unsigned long)_heap.end);
+  assert((uintptr_t)_heap.start <= (uintptr_t)start && (uintptr_t)start < (uintptr_t)_heap.end);
   for (char *p = old; p != start; p ++) *p = '\0';
-  assert((unsigned long)start - (unsigned long)_heap.start <= current->mlim);
+  assert((uintptr_t)start - (uintptr_t)_heap.start <= setting->mlim);
   return old;
 }
 

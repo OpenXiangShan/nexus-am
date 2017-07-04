@@ -17,44 +17,76 @@ extern "C" {
 #define REF_CPU    "i7-6700 @ 3.40GHz"
 #define REF_SCORE  100000
 
-// the list of benchmarks
-//       Name        |  Mem  | TRef | En  | Checksum  | Desc
-#define BENCHMARK_LIST(def) \
-  def(qsort, "qsort", 640 KB,  5519, true, 0x057fbc15, "Quick sort") \
-  def(queen, "queen",   0 KB,  5159, true, 0x00003778, "Queen placement") \
-  def(   bf,    "bf",  32 KB, 26209, true, 0x9221e2b3, "Brainf**k interpreter") \
-  def(  fib,   "fib", 256 KB, 28575, true, 0xebdc5f80, "Fibonacci number") \
-  def(sieve, "sieve",   2 MB, 42406, true, 0x000a2403, "Eratosthenes sieve") \
-  def( 15pz,  "15pz",   8 MB,  5792, true, 0x00068b8c, "A* 15-puzzle search") \
-  def(dinic, "dinic",   1 MB, 13536, true, 0x0000c248, "Dinic's maxflow algorithm") \
-  def( lzip,  "lzip",   4 MB, 26469, true, 0x60953409, "Lzip compression") \
-  def(ssort, "ssort",   4 MB,  5915, true, 0x3f9f2439, "Suffix sort") \
-  def(  md5,   "md5",  16 MB, 19593, true, 0x1391e488, "MD5 digest") \
+#ifdef SMALL
+#define SETTING 0
+#else
+#define SETTING 1
+#endif
 
-// Each benchmark will run REPEAT times
 #define REPEAT  1
 
-#define DECL(_name, _sname, _mlim, _ref, _en, _cs, _desc) \
+//                 size |  heap | time |  checksum   
+#define QSORT_SM {     100,   1 KB,     0, 0x6a8e89a3}
+#define QSORT_LG {  100000, 640 KB,  5519, 0x057fbc15}
+#define QUEEN_SM {       8,   0 KB,     0, 0x0000005c}
+#define QUEEN_LG {      12,   0 KB,  5159, 0x00003778}
+#define    BF_SM {       4,  32 KB,     0, 0xa6f0079e}
+#define    BF_LG {     180,  32 KB, 26209, 0x9221e2b3}
+#define   FIB_SM {       2,   1 KB,     0, 0x7cfeddf0}
+#define   FIB_LG {      91, 256 KB, 28575, 0xebdc5f80}
+#define SIEVE_SM {     100,   1 KB,     0, 0x00000019}
+#define SIEVE_LG {10000000,   2 MB, 42406, 0x000a2403}
+#define  PZ15_SM {       0,   2 MB,     0, 0x00000006}
+#define  PZ15_LG {       1,   8 MB,  5792, 0x00068b8c}
+#define DINIC_SM {      10,   1 MB,     0, 0x0000019c}
+#define DINIC_LG {     128,   1 MB, 13536, 0x0000c248}
+#define  LZIP_SM {     128,   1 MB,     0, 0xc240e63a}
+#define  LZIP_LG { 1048576,   4 MB, 26469, 0x60953409}
+#define SSORT_SM {     100,   4 KB,     0, 0x4c555e09}
+#define SSORT_LG {  100000,   4 MB,  5915, 0x3f9f2439}
+#define   MD5_SM {     100,   1 KB,     0, 0xb460c623}
+#define   MD5_LG {10000000,  16 MB, 19593, 0x1391e488}
+
+#define BENCHMARK_LIST(def) \
+  def(qsort, "qsort", QSORT_SM, QSORT_LG, "Quick sort") \
+  def(queen, "queen", QUEEN_SM, QUEEN_LG, "Queen placement") \
+  def(   bf,    "bf",    BF_SM,    BF_LG, "Brainf**k interpreter") \
+  def(  fib,   "fib",   FIB_SM,   FIB_LG, "Fibonacci number") \
+  def(sieve, "sieve", SIEVE_SM, SIEVE_LG, "Eratosthenes sieve") \
+  def( 15pz,  "15pz",  PZ15_SM,  PZ15_LG, "A* 15-puzzle search") \
+  def(dinic, "dinic", DINIC_SM, DINIC_LG, "Dinic's maxflow algorithm") \
+  def( lzip,  "lzip",  LZIP_SM,  LZIP_LG, "Lzip compression") \
+  def(ssort, "ssort", SSORT_SM, SSORT_LG, "Suffix sort") \
+  def(  md5,   "md5",   MD5_SM,   MD5_LG, "MD5 digest") \
+
+// Each benchmark will run REPEAT times
+
+#define DECL(_name, _sname, _s1, _s2, _desc) \
   void bench_##_name##_prepare(); \
   void bench_##_name##_run(); \
-  const char* bench_##_name##_validate();
+  int bench_##_name##_validate();
 
 BENCHMARK_LIST(DECL)
+
+typedef struct Setting {
+  int size;
+  unsigned long mlim, ref;
+  uint32_t checksum;
+} Setting;
 
 typedef struct Benchmark {
   void (*prepare)();
   void (*run)();
-  const char* (*validate)();
+  int (*validate)();
   const char *name, *desc;
-  unsigned long mlim, ref;
-  int enabled;
-  uint32_t checksum;
+  Setting settings[2];
 } Benchmark;
 
 extern Benchmark *current;
+extern Setting *setting;
+
 typedef struct Result {
   int pass;
-  const char *msg;
   unsigned long tsc, msec;
 } Result;
 

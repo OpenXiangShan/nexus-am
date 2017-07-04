@@ -1,6 +1,6 @@
 #include <benchmark.h>
 
-#define N 10000000
+static int N;
 
 static int ans;
 static uint32_t *primes;
@@ -14,6 +14,7 @@ static inline void clear(int n) {
 }
 
 void bench_sieve_prepare() {
+  N = setting->size;
   primes = (uint32_t*)bench_alloc(N / 8 + 128);
   for (int i = 0; i <= N / 32; i ++) {
     primes[i] = 0xffffffff;
@@ -36,6 +37,6 @@ void bench_sieve_run() {
     }
 }
 
-const char * bench_sieve_validate() {
-  return ans == current->checksum ? NULL : "wrong answer";
+int bench_sieve_validate() {
+  return ans == setting->checksum;
 }

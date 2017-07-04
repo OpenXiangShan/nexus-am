@@ -3,41 +3,50 @@
 // f(n) = (f(n-1) + f(n-2) + .. f(n-m)) mod 2^32
 
 #define N 2147483603
-#define M 91
-#define DIM M
+static int M;
 
-typedef uint32_t Matrix[DIM][DIM];
+static void put(uint32_t *m, int i, int j, uint32_t data) {
+  m[i * M + j] = data;
+}
 
-static inline void mult(Matrix *c, Matrix *a, Matrix *b) {
-  for (int i = 0; i < DIM; i ++)
-    for (int j = 0; j < DIM; j ++) {
-      (*c)[i][j] = 0;
-      for (int k = 0; k < DIM; k ++) {
-        (*c)[i][j] += (*a)[i][k] * (*b)[k][j];
+static uint32_t get(uint32_t *m, int i, int j) {
+  return m[i * M + j];
+}
+
+static inline void mult(uint32_t *c, uint32_t *a, uint32_t *b) {
+  for (int i = 0; i < M; i ++)
+    for (int j = 0; j < M; j ++) {
+      put(c, i, j, 0);
+      for (int k = 0; k < M; k ++) {
+        put(c, i, j, get(c, i, j) + get(a, i, k) * get(b, k, j));
       }
     }
 }
 
-static inline void assign(Matrix *a, Matrix *b) {
-  for (int i = 0; i < DIM; i ++)
-    for (int j = 0; j < DIM; j ++)
-      (*a)[i][j] = (*b)[i][j];
+static inline void assign(uint32_t *a, uint32_t *b) {
+  for (int i = 0; i < M; i ++)
+    for (int j = 0; j < M; j ++)
+      put(a, i, j, get(b, i, j));
 }
 
-static Matrix *A, *ans, *T, *tmp;
+static uint32_t *A, *ans, *T, *tmp;
 
 void bench_fib_prepare() {
-  A = bench_alloc(sizeof(Matrix));
-  T = bench_alloc(sizeof(Matrix));
-  ans = bench_alloc(sizeof(Matrix));
-  tmp = bench_alloc(sizeof(Matrix));
+  M = setting->size;
+  int sz = sizeof(uint32_t) * M * M;
+  A = bench_alloc(sz);
+  T = bench_alloc(sz);
+  ans = bench_alloc(sz);
+  tmp = bench_alloc(sz);
 }
 
 void bench_fib_run() {
-  for (int i = 0; i < DIM; i ++)
-    for (int j = 0; j < DIM; j ++) {
-      (*T)[i][j] = (*A)[i][j] = (i == DIM - 1 || j == i + 1);
-      (*ans)[i][j] = (i == j);
+  for (int i = 0; i < M; i ++)
+    for (int j = 0; j < M; j ++) {
+      uint32_t x = (i == M - 1 || j == i + 1);
+      put(A, i, j, x);
+      put(T, i, j, x);
+      put(ans, i, j, i == j);
     }
 
   for (int n = N; n > 0; n >>= 1) {
@@ -50,6 +59,6 @@ void bench_fib_run() {
   }
 }
 
-const char * bench_fib_validate() {
-  return (*ans)[DIM-1][DIM-1] == (uint32_t)current->checksum ? NULL : "wrong answer";
+int bench_fib_validate() {
+  return get(ans, M-1, M-1) == setting->checksum;
 }

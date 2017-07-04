@@ -5,7 +5,7 @@
 
 #include <benchmark.h>
 
-#define N 10000000
+static int N;
 
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
 const uint32_t k[64] = {
@@ -141,6 +141,7 @@ static uint8_t *str;
 static uint8_t *digest;
 
 void bench_md5_prepare() {
+  N = setting->size;
   bench_srand(1);
   str = bench_alloc(N);
   for (int i = 0; i < N; i ++) {
@@ -153,7 +154,6 @@ void bench_md5_run() {
   md5(str, N, digest);
 }
 
-const char *bench_md5_validate() {
-  return (checksum(digest, digest + 16) == current->checksum) ?
-    NULL : "wrong answer";
+int bench_md5_validate() {
+  return checksum(digest, digest + 16) == setting->checksum;
 }

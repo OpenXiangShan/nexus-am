@@ -23,7 +23,8 @@
 
 #include <benchmark.h>
 
-#define ARR_SIZE        180
+static int ARR_SIZE;
+
 #define CODE            ">>+>>>>>,[>+>>,]>+[--[+<<<-]<[<+>-]<[<[->[<<<+>>>>+<-]<<[>>+>[->]<<[<]" \
                         "<-]>]>>>+<[[-]<[>+<-]<]>[[>>>]+<<<-<[<<[<<<]>>+>[>>>]<-]<<[<<<]>[>>[>>" \
                         ">]<+<<[<<<]>-]]+<<<]+[->>>]>>]>>[.>>>]"
@@ -123,6 +124,7 @@ void execute_bf() {
 }
 
 void bench_bf_prepare() {
+  ARR_SIZE = setting->size;
   SP = 0;
   PROGRAM = bench_alloc(sizeof(PROGRAM[0]) * PROGRAM_SIZE);
   STACK = bench_alloc(sizeof(STACK[0]) * STACK_SIZE);
@@ -143,8 +145,7 @@ void bench_bf_run() {
   execute_bf();
 }
 
-const char * bench_bf_validate() {
+int bench_bf_validate() {
   uint32_t cs = checksum(output, output + noutput);
-  return ((noutput == ARR_SIZE && cs == current->checksum) ? \
-            NULL : "wrong answer");
+  return noutput == ARR_SIZE && cs == setting->checksum;
 }
