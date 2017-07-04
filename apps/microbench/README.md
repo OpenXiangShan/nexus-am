@@ -11,7 +11,7 @@ CPU正确性和性能测试用基准程序。对AbstractMachine的要求：
 
 同一组程序分成两组：test和ref。test数据规模很小，作为测试用。ref测试规模较大，作为衡量CPU性能用。
 
-使用`make -f Makefile.SETTING`编译 (`SETTING`为`test`或`ref`)。
+默认编译ref数据规模，使用`make INPUT=TEST`编译test数据规模。
 
 ## 评分根据
 
