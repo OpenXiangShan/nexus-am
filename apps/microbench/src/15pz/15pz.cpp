@@ -5,7 +5,14 @@
 const int N = 4;
 const int MAXN = 65536;
 
-static int PUZZLE[N*N] = {
+static int PUZZLE_SM[N*N] = {
+  1, 2, 3, 4,
+  5, 6, 7, 8,
+  9, 10, 0, 11,
+  13, 14, 15, 12,
+};
+
+static int PUZZLE_LG[N*N] = {
   0, 2, 3, 4,
   9, 6, 7, 8,
   5, 11, 10, 12,
@@ -20,7 +27,13 @@ void bench_15pz_prepare() {
 }
 
 void bench_15pz_run() {
-  N_puzzle<N> puzzle(PUZZLE);
+  N_puzzle<N> puzzle;
+  
+  if (setting->size == 0) {
+    puzzle = N_puzzle<N>(PUZZLE_SM);
+  } else {
+    puzzle = N_puzzle<N>(PUZZLE_LG);
+  }
   assert(puzzle.solvable());
 
   auto *heap = (Updatable_heap<N_puzzle<N>,MAXN> *) bench_alloc(sizeof(Updatable_heap<N_puzzle<N>, MAXN>));
@@ -59,8 +72,8 @@ void bench_15pz_run() {
 }
 
 
-const char * bench_15pz_validate() {
-  return ((uint32_t)ans == current->checksum) ? (const char*)NULL : "wrong answer";
+int bench_15pz_validate() {
+  return (uint32_t)ans == setting->checksum;
 }
 
 }

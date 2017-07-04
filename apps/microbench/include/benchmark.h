@@ -33,7 +33,8 @@ extern "C" {
 #define   FIB_LG {      91, 256 KB, 28575, 0xebdc5f80}
 #define SIEVE_SM {     100,   1 KB,     0, 0x00000019}
 #define SIEVE_LG {10000000,   2 MB, 42406, 0x000a2403}
-
+#define  PZ15_SM {       0,   2 MB,     0, 0x00000006}
+#define  PZ15_LG {       1,   8 MB,  5792, 0x00068b8c}
 
 #define BENCHMARK_LIST(def) \
   def(qsort, "qsort", QSORT_SM, QSORT_LG, "Quick sort") \
@@ -41,9 +42,9 @@ extern "C" {
   def(   bf,    "bf",    BF_SM,    BF_LG, "Brainf**k interpreter") \
   def(  fib,   "fib",   FIB_SM,   FIB_LG, "Fibonacci number") \
   def(sieve, "sieve", SIEVE_SM, SIEVE_LG, "Eratosthenes sieve") \
+  def( 15pz,  "15pz",  PZ15_SM,  PZ15_LG, "A* 15-puzzle search") \
 
 /*
-  def( 15pz,  "15pz",   8 MB,  5792, true, 0x00068b8c, "A* 15-puzzle search") \
   def(dinic, "dinic",   1 MB, 13536, true, 0x0000c248, "Dinic's maxflow algorithm") \
   def( lzip,  "lzip",   4 MB, 26469, true, 0x60953409, "Lzip compression") \
   def(ssort, "ssort",   4 MB,  5915, true, 0x3f9f2439, "Suffix sort") \
