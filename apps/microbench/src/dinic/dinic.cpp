@@ -1,7 +1,8 @@
 #include <benchmark.h>
 
-#define N 128
-#define M (N * N + N * 2) * 2
+static int N;
+#define MAXN 128
+#define MAXM (MAXN * MAXN + MAXN * 2) * 2
 
 const int INF = 0x3f3f3f;
 
@@ -23,11 +24,11 @@ static inline T min(T x, T y) {
 
 struct Dinic {
   int n, m, s, t;
-  Edge edges[M];
-  int head[N*2 + 2];
-  int nxt[M];
-  bool vis[N*2 + 2];
-  int d[N*2 + 2], cur[N*2 + 2], queue[N*2 + 2];
+  Edge edges[MAXM];
+  int head[MAXN*2 + 2];
+  int nxt[MAXM];
+  bool vis[MAXN*2 + 2];
+  int d[MAXN*2 + 2], cur[MAXN*2 + 2], queue[MAXN*2 + 2];
 
   void init(int n) {
     this->n = n;
@@ -103,6 +104,7 @@ static Dinic *G;
 static int ans;
 
 void bench_dinic_prepare() {
+  N = setting->size;
   bench_srand(1);
   int s = 2 * N, t = 2 * N + 1;
   G = (Dinic*)bench_alloc(sizeof(Dinic));
@@ -121,8 +123,9 @@ void bench_dinic_prepare() {
 void bench_dinic_run() {
   ans = G->Maxflow(2 * N, 2 * N + 1);
 }
-const char* bench_dinic_validate() {
-  return ((uint32_t)ans == current->checksum) ? (const char*)NULL : "wrong answer";
+
+int bench_dinic_validate() {
+  return (uint32_t)ans == setting->checksum;
 }
 }
 
