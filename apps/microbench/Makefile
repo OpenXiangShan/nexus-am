@@ -1,3 +1,6 @@
-NAME = microbench
-SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp")
-include $(AM_HOME)/Makefile.app
+.PHONY: all clean
+all:
+	@echo "Use make -f to specify a file"
+
+clean:
+	@rm -rf build/
