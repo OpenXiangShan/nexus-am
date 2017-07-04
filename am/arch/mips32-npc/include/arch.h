@@ -1,8 +1,6 @@
 #ifndef __ARCH_H__
 #define __ARCH_H__
 
-typedef uint32_t size_t;
-
 struct _RegSet {
 	uint32_t at,
 	v0,v1,
