@@ -1,7 +1,5 @@
 #include "memory.h"
 
-/* allocating physical pages starting above KMEM */
-static void *pf = (void *)KMEM_SIZE;	
 
 void* new_page(void) {
   assert(pf < (void *)PMEM_SIZE);
@@ -52,7 +50,8 @@ uint32_t mm_brk(uint32_t new_brk) {
 
 void init_mm() {
   extern char _end;
-  assert((void *)&_end < pf);
+  pf = (void *)PGROUNDUP((uintptr_t)&_end);
+  Log("free physical pages starting from %p", pf);
 
   _pte_init(new_page, free_page);
 }
