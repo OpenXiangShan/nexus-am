@@ -17,7 +17,12 @@ extern "C" {
 #define REF_CPU    "i7-6700 @ 3.40GHz"
 #define REF_SCORE  100000
 
+#ifdef SMALL
 #define SETTING 0
+#else
+#define SETTING 1
+#endif
+
 #define REPEAT  1
 
 //                 size |  heap | time |  checksum   
