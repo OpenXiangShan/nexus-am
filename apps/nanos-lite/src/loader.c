@@ -10,7 +10,7 @@
 # define driver_read ramdisk_read
 #endif
 
-void driver_read(uint8_t *, uint32_t, uint32_t);
+void driver_read(void *, off_t, size_t);
 
 #define STACK_SIZE (2 * PGSIZE)
 
