@@ -6,9 +6,6 @@
 /* the maxinum loader size is 16MB */
 #define KMEM_SIZE      (16 * 1024 * 1024)
 
-/* NEMU has 128MB physical memory  */
-#define PMEM_SIZE      (128 * 1024 * 1024)
-
 #define PGSIZE  4096
 #define PGMASK  (PGSIZE - 1)
 

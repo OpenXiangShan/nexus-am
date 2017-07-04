@@ -3,7 +3,7 @@
 
 #include <am.h>
 
-#define PMEM_SIZE (128 * 1024 * 1024)
+#define PMEM_SIZE (64 * 1024 * 1024)
 
 typedef uint32_t size_t;
 

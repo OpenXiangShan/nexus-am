@@ -9,7 +9,7 @@ void* (*palloc_f)();
 void (*pfree_f)(void*);
 
 _Area segments[] = {      // Kernel memory mappings
-    {.start = (void*)0,          .end = (void*)0x8000000},  //   Low memory: kernel data
+    {.start = (void*)0,          .end = (void*)PMEM_SIZE},  //   Low memory: kernel data
 };
 
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
