@@ -1,0 +1,5 @@
+NAME = microbench
+SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp")
+CFLAGS += -DSETTING_TEST
+CXXFLAGS += -DSETTING_TEST
+include $(AM_HOME)/Makefile.app
