@@ -17,6 +17,9 @@ SECTIONS {
   .bss : {
     *(.bss*)
   }
+  .sbss : {
+    *(.sbss*)
+  }
   end = .;
   _end = .;
 }

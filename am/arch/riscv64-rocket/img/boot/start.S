@@ -7,7 +7,7 @@
 _start:
   la sp, stack_end
   la t0, fdt
-  sw x11, (t0)
+  sd x11, (t0)
   tail _trm_init
 
 stack:
