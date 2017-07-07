@@ -13,7 +13,7 @@
 
 void driver_read(void *, off_t, size_t);
 
-#define STACK_SIZE (2 * PGSIZE)
+#define STACK_SIZE (128 * PGSIZE)
 
 uint32_t loader(_Protect *p) {
   Elf32_Ehdr *elf;
