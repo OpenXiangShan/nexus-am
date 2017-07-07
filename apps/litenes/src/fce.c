@@ -130,6 +130,7 @@ static const uint32_t palette[64] = {
 byte canvas[H][W];
 
 static int xmap[1024];
+static uint32_t row[1024];
 
 void fce_update_screen()
 {
@@ -146,8 +147,9 @@ void fce_update_screen()
     if ( (y & 1) != (frame & 1) ) continue;
     int y1 = y * H / h;
     for (int x = pad; x < w - pad; x ++) {
-      _draw_p(x, y, palette[canvas[y1][xmap[x]]]);
+      row[x] = palette[canvas[y1][xmap[x]]];
     }
+    _draw_rect(row + pad, pad, y, w - 2 * pad, 1);
   }
 
   _draw_sync();
