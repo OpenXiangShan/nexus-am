@@ -5,8 +5,9 @@
 目录组织：
 
 * `am/`：AM头文件、每个体系结构分别实现的AM代码。
-* `klib/`：建立在AM上、体系结构无关的基础运行库，提供诸如`memcpy`等基础功能。
+* `libs/`：建立在AM上、体系结构无关的运行库，如软件模拟浮点数、基础libc功能等。
 * `apps/`：一些运行在AM上应用程序示例。
+* `tests/`: 用来测试AM实现的简单测试程序。
 
 ## AM Specification
 
@@ -34,22 +35,3 @@ include $(AM_HOME)/Makefile.app
 * 环境变量`AM_HOME`需要包含**nexus-am项目的根目录的绝对路径**。
 
 编译时，首先确保`AM_HOME`正确设置，然后执行`make ARCH=体系结构名`编译。例如`make ARCH=native`将会编译成本地可运行的项目，`make ARCH=mips32-minimal`生成用于仿真的MIPS32程序。`ARCH`缺省时默认编译到本地。
-
-## 体系结构相关说明
-
-### native
-
-只支持TRM和IOE。
-
-### x86-qemu
-
-完整支持。（部分特性仍待重构）。
-
-### mips32-minimal
-
-只支持TRM和部分IOE。
-
-### mips32-npc
-
-持续开发中。
-

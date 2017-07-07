@@ -58,9 +58,9 @@ void redraw_screen() {
   draw_string("FPS", 0, strlen(fps) * 8, 0xf3f781);
 
   int w = _screen.width, h = _screen.height;
-  for (int y = 0; y < w; y ++)
-    for (int x = 0; x < h; x ++) {
-      _draw_p(y, x, canvas[y * W / w][x * H / h]);
+  for (int x = 0; x < w; x ++)
+    for (int y = 0; y < h; y ++) {
+      _draw_rect(&canvas[x * W / w][y * H / h], x, y, 1, 1);
     }
 
   _draw_sync();

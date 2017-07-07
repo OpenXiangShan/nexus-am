@@ -42,8 +42,16 @@ void gui_init() {
   key_queue_lock = SDL_CreateMutex();
 }
 
-void _draw_p(int x, int y, uint32_t p) {
-  fb[y * W + x] = p;
+static inline int min(int x, int y) {
+  return (x < y) ? x : y;
+}
+
+void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
+  int cp_bytes = sizeof(uint32_t) * min(w, _screen.width - x);
+  for (int j = 0; j < h && y + j < _screen.height; j ++) {
+    memcpy(&fb[(y + j) * W + x], pixels, cp_bytes);
+    pixels += w;
+  }
 }
 
 void _draw_sync() {

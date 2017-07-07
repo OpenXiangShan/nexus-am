@@ -15,14 +15,7 @@ uint32_t canvas[N][N];
 bool used[N][N];
 
 void redraw() {
-  int w = _screen.width;
-  int h = _screen.height;
-
-  for (int x = 0; x < w; x ++) {
-    for (int y = 0; y < h; y ++) {
-      _draw_p(x, y, canvas[x * N / w][y * N / h]);
-    }
-  }
+  _draw_rect(&canvas[0][0], 0, 0, N, N);
    _draw_sync();
 }
 
