@@ -27,6 +27,8 @@ int main() {
   Log("ramdisk info: start = %p, end = %p, size = %d bytes",
       &ramdisk_start, &ramdisk_end, &ramdisk_end - &ramdisk_start);
 
+  _ioe_init();
+
   static uint32_t entry;
 
 #ifdef __PAGE
