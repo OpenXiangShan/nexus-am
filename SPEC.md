@@ -33,6 +33,7 @@
 * `uintptr_t _uptime();` 返回系统启动后的毫秒数。溢出后归零。
 * `int _read_key();` 返回按键。如果没有按键返回`_KEY_NONE`。
 * `void _draw_p(int x, int y, u32 p);` 在(`x`, `y`)坐标绘制像素`p`（非立即生效）像素颜色由32位整数确定，从高位到低位是`00rrggbb`（不论大小端），红绿蓝各8位。
+* `void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h);`绘制`pixels`指定的矩形，其中按行存储了w*h的矩形像素，绘制到(x, y)坐标。
 * `void _draw_sync();` 保证之前绘制的内容显示在屏幕上。
 * `extern _Screen _screen;` 屏幕的描述信息。在`_ioe_init`后调用后可用。
 
