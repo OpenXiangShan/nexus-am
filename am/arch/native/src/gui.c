@@ -42,10 +42,6 @@ void gui_init() {
   key_queue_lock = SDL_CreateMutex();
 }
 
-void _draw_p(int x, int y, uint32_t p) {
-  fb[y * W + x] = p;
-}
-
 static inline int min(int x, int y) {
   return (x < y) ? x : y;
 }

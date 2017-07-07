@@ -59,13 +59,6 @@ static void vga_init() {
   fb = reinterpret_cast<FBPixel*>(info->framebuffer);
 }
 
-void _draw_p(int x, int y, uint32_t p) {
-  FBPixel &v = fb[x + y * _screen.width];
-  v.r = R(p);
-  v.g = G(p);
-  v.b = B(p);
-}
-
 void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
   int len = (x + w >= _screen.width) ? _screen.width - x : w;
   FBPixel *v;

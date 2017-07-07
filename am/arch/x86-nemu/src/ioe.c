@@ -27,11 +27,6 @@ _Screen _screen = {
   .height = SCREEN_H,
 };
 
-
-void _draw_p(int x, int y, uint32_t p) {
-  fb[y * SCREEN_W + x] = p;
-}
-
 void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
   int len = sizeof(uint32_t) * ( (x + w >= _screen.width) ? _screen.width - x : w );
   for (int j = 0; j < h; j ++) {

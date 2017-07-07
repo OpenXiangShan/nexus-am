@@ -33,6 +33,8 @@ asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
 #define _VAL(x) #x
 
 
+// TODO: these symbols should *NOT* be visible to any code
+//       that include "am.h"
 static inline uint8_t R(_Pixel p) { return p >> 16; }
 static inline uint8_t G(_Pixel p) { return p >> 8; }
 static inline uint8_t B(_Pixel p) { return p; }
