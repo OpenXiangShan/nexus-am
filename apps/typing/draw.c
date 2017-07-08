@@ -58,10 +58,15 @@ void redraw_screen() {
   draw_string("FPS", 0, strlen(fps) * 8, 0xf3f781);
 
   int w = _screen.width, h = _screen.height;
-  for (int x = 0; x < w; x ++)
-    for (int y = 0; y < h; y ++) {
-      _draw_rect(&canvas[x * W / w][y * H / h], x, y, 1, 1);
-    }
+  if (w == W && h == H) {
+    _draw_rect((void *)canvas, 0, 0, _screen.width, _screen.height);
+  }
+  else {
+    for (int x = 0; x < w; x ++)
+      for (int y = 0; y < h; y ++) {
+        _draw_rect(&canvas[x * W / w][y * H / h], x, y, 1, 1);
+      }
+  }
 
   _draw_sync();
   for (int y = 0; y < W; y ++)
