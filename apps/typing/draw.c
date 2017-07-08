@@ -48,7 +48,7 @@ void redraw_screen() {
 
   /* 绘制命中数、miss数、最后一次按键扫描码和fps */
   const char *key = itoa(last_key_code());
-  draw_string(key, W - 8, 0, 0xffffffff);
+  draw_string(key, H - 8, 0, 0xffffffff);
   hit = itoa(get_hit());
   draw_string(hit, 0, W - strlen(hit) * 8, 0x00ff00);
   miss = itoa(get_miss());
