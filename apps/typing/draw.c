@@ -1,6 +1,6 @@
 #include "game.h"
 
-static uint32_t canvas[W][H];
+static uint32_t canvas[H][W];
 
 extern char font8x8_basic[128][8];
 
@@ -21,7 +21,7 @@ static inline void draw_character(char ch, int x, int y, int color) {
     for (j = 0; j < 8; j ++) 
       if ((p[i] >> j) & 1)
         if (y + j < W && x + i < H)
-          canvas[y + j][x + i] = color;
+          canvas[x + i][y + j] = color;
 }
 
 static inline void draw_string(const char *str, int x, int y, int color) {
@@ -64,12 +64,12 @@ void redraw_screen() {
   else {
     for (int x = 0; x < w; x ++)
       for (int y = 0; y < h; y ++) {
-        _draw_rect(&canvas[x * W / w][y * H / h], x, y, 1, 1);
+        _draw_rect(&canvas[y * H / h][x * W / w], x, y, 1, 1);
       }
   }
 
   _draw_sync();
   for (int y = 0; y < W; y ++)
     for (int x = 0; x < H; x ++) 
-      canvas[y][x] = 0x2a0a29;
+      canvas[x][y] = 0x2a0a29;
 }
