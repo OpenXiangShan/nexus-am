@@ -80,7 +80,7 @@ static void uart_prop(const struct fdt_scan_prop *prop, void *extra)
 static void uart_done(const struct fdt_scan_node *node, void *extra)
 {
   struct uart_scan *scan = (struct uart_scan *)extra;
-  if (!scan->compat || !scan->reg || uart_base_ptr) return;
+  if (!scan->compat || !scan->reg) return;
 
   // Enable Rx/Tx channels
   uart_base_ptr = (void*)scan->reg;
