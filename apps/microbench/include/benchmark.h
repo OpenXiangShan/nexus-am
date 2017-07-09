@@ -30,8 +30,8 @@ extern "C" {
 #define REPEAT  1
 
 //                 size |  heap | time |  checksum   
-#define QSORT_SM {     100,   1 KB,     0, 0x6a8e89a3}
-#define QSORT_LG {  100000, 640 KB,  5519, 0x057fbc15}
+#define QSORT_SM {     100,   1 KB,     0, 0x08467105}
+#define QSORT_LG {  100000, 640 KB,  5519, 0xed8cff89}
 #define QUEEN_SM {       8,   0 KB,     0, 0x0000005c}
 #define QUEEN_LG {      12,   0 KB,  5159, 0x00003778}
 #define    BF_SM {       4,  32 KB,     0, 0xa6f0079e}
@@ -44,12 +44,12 @@ extern "C" {
 #define  PZ15_LG {       1,   8 MB,  5792, 0x00068b8c}
 #define DINIC_SM {      10,   1 MB,     0, 0x0000019c}
 #define DINIC_LG {     128,   1 MB, 13536, 0x0000c248}
-#define  LZIP_SM {     128,   1 MB,     0, 0xc240e63a}
-#define  LZIP_LG { 1048576,   4 MB, 26469, 0x60953409}
+#define  LZIP_SM {     128,   1 MB,     0, 0x03e9fa7d}
+#define  LZIP_LG { 1048576,   4 MB, 26469, 0x43601310}
 #define SSORT_SM {     100,   4 KB,     0, 0x4c555e09}
-#define SSORT_LG {  100000,   4 MB,  5915, 0x3f9f2439}
-#define   MD5_SM {     100,   1 KB,     0, 0xb460c623}
-#define   MD5_LG {10000000,  16 MB, 19593, 0x1391e488}
+#define SSORT_LG {  100000,   4 MB,  5915, 0x4f0ab431}
+#define   MD5_SM {     100,   1 KB,     0, 0xf902f28f}
+#define   MD5_LG {10000000,  16 MB, 19593, 0x27286a42}
 
 #define BENCHMARK_LIST(def) \
   def(qsort, "qsort", QSORT_SM, QSORT_LG, "Quick sort") \
