@@ -41,15 +41,19 @@ void printk_test() {
   //d u
   reset_src();
   printk("2147483647,-2147483648,0,102030,-1412505855,4294967295,0\n");
-  printk("%d,%d,%d,%d,%d,%u,%u\n", MAX_INT, MIN_INT, 0, 102030, -1412505855, MAX_UINT, 0);
+  int t=printk("%d,%d,%d,%d,%d,%u,%u\n", MAX_INT, MIN_INT, 0, 102030, -1412505855, MAX_UINT, 0);
   sprintf(src,"%d,%d,%d,%d,%d,%u,%u\n", MAX_INT, MIN_INT, 0, 102030, -1412505855, MAX_UINT, 0);
+  assert(t==strlen("2147483647,-2147483648,0,102030,-1412505855,4294967295,0\n"));
+  //printk("%d\n",t);
   check_src("2147483647,-2147483648,0,102030,-1412505855,4294967295,0\n");
 
   //x
   reset_src();
   printk("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n");
-  printk("%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
+  t=printk("%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
   sprintf(src,"%x, %x, %x, %x, %x, %x\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
+  //printk("%d\n",strlen("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n");
+  assert(t==strlen("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n"));
   check_src("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n");
   
   //p
