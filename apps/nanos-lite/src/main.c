@@ -43,7 +43,6 @@ int main() {
 
   _protect(p);
 
-  Log("Loading user program...");
   entry = loader(p);
 
   Log("Switching to user address space...");
