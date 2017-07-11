@@ -21,7 +21,7 @@ uintptr_t _uptime(){
   do {
     TCR0 = get_TCR(0);
   }while(TCR1 != get_TCR(1));
-  //0.5MHZ
+  //50MHZ
   // time (ms) = HIGH * 1000 * (2^32) / HZ + LOW * 1000 / HZ
   // ** be careful of overflow **
   npc_time = TCR1 * 1000 * ((1ul << 31) / HZ) * 2 + TCR0 / (HZ / 1000);
