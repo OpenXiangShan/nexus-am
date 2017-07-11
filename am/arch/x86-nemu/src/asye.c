@@ -55,31 +55,31 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
 
   // init IDT
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
-    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
+    idt[i] = GATE(0, 0, irqall, 0);
   }
 
   // --------------------- exceptions --------------------------
-  idt[0]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec0,   DPL_KERN);
-  idt[1]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec1,   DPL_KERN);
-  idt[2]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec2,   DPL_KERN);
-  idt[3]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec3,   DPL_KERN);
-  idt[4]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec4,   DPL_KERN);
-  idt[5]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec5,   DPL_KERN);
-  idt[6]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec6,   DPL_KERN);
-  idt[7]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec7,   DPL_KERN);
-  idt[8]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec8,   DPL_KERN);
-  idt[9]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec9,   DPL_KERN);
-  idt[10]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec10,  DPL_KERN);
-  idt[11]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec11,  DPL_KERN);
-  idt[12]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec12,  DPL_KERN);
-  idt[13]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec13,  DPL_KERN);
-  idt[14]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec14,  DPL_KERN);
+  idt[0]    = GATE(0, 0, vec0,   0);
+  idt[1]    = GATE(0, 0, vec1,   0);
+  idt[2]    = GATE(0, 0, vec2,   0);
+  idt[3]    = GATE(0, 0, vec3,   0);
+  idt[4]    = GATE(0, 0, vec4,   0);
+  idt[5]    = GATE(0, 0, vec5,   0);
+  idt[6]    = GATE(0, 0, vec6,   0);
+  idt[7]    = GATE(0, 0, vec7,   0);
+  idt[8]    = GATE(0, 0, vec8,   0);
+  idt[9]    = GATE(0, 0, vec9,   0);
+  idt[10]   = GATE(0, 0, vec10,  0);
+  idt[11]   = GATE(0, 0, vec11,  0);
+  idt[12]   = GATE(0, 0, vec12,  0);
+  idt[13]   = GATE(0, 0, vec13,  0);
+  idt[14]   = GATE(0, 0, vec14,  0);
   // --------------------- interrupts --------------------------
-  idt[32]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq0,   DPL_KERN);
-  idt[33]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq1,   DPL_KERN);
-  idt[46]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq14,  DPL_KERN);
+  idt[32]   = GATE(0, 0, irq0,   0);
+  idt[33]   = GATE(0, 0, irq1,   0);
+  idt[46]   = GATE(0, 0, irq14,  0);
   // -------------------- system call --------------------------
-  idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
+  idt[0x80] = GATE(0, 0, vecsys, 0);
   set_idt(idt, sizeof(idt));
   H = h;
 }
@@ -89,7 +89,7 @@ _RegSet *_make(_Area stack, void *entry, void *arg) {
   /*
   _RegSet *regs = (_RegSet*)stack.start;
   regs->esp0 = reinterpret_cast<uint32_t>(stack.end);
-  regs->cs = KSEL(SEG_KCODE);
+  regs->cs = 0;
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
   regs->eip = (uint32_t)entry;
   regs->eflags = FL_IF;
