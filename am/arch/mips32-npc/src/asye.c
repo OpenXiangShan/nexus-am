@@ -22,13 +22,13 @@ void SetCompare(uint32_t compare){
 void _time_event(){
 }
 
-void _asye_init(){
+void _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
 }
 
 void _listen(_RegSet* (*l)(_Event ex, _RegSet *regs)){
 }
 
-_RegSet *_make(_Area kstack, void *entry){
+_RegSet *_make(_Area kstack, void *entry, void *arg){
   _RegSet *r = (void *)0;
   return r;
 }
@@ -39,29 +39,42 @@ void _trap(){
 void _idle(){
 }
 
-void _idisable(){
+/*void _idisable(){
   int status = 0;
   MFC0(status, cp0_status, 0);
   status = status | 0x2;
   MTC0(cp0_status, status, 0);  
-}
+}*/
 
-void _ienable(){
+/*void _ienable(){
   int status = 0;
   MFC0(status, cp0_status, 0);
   status = status & 0xfffffffd;
   MTC0(cp0_status, status, 0);  
-}
+}*/
 
-int _istatus(){
+int _istatus(int enable){
   int status = 0;
-  MFC0(status, cp0_status, 0);
-  if((status & 0x2) >> 1){
+  int new_status = 0;
+  if(enable) {
+    MFC0(status, cp0_status, 0);
+    new_status = status & 0xfffffffd;
+    MTC0(cp0_status, new_status, 0);  
+  }
+  else {
+    MFC0(status, cp0_status, 0);
+    new_status = status | 0x2;
+    MTC0(cp0_status, new_status, 0); 
+  }
+/*if((status & 0x2) >> 1){
     return 0;
   }
   else{
     return 1;
   }
+*/
+  return !((status & 0x2) >> 1);
+
 }
 
 void irq_handle(struct TrapFrame *tf){

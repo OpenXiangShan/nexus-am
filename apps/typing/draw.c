@@ -1,6 +1,6 @@
 #include "game.h"
 
-static uint32_t canvas[W][H];
+static uint32_t canvas[H][W];
 
 extern char font8x8_basic[128][8];
 
@@ -20,17 +20,17 @@ static inline void draw_character(char ch, int x, int y, int color) {
   for (i = 0; i < 8; i ++) 
     for (j = 0; j < 8; j ++) 
       if ((p[i] >> j) & 1)
-        if (y + j < W && x + i < H)
-          canvas[y + j][x + i] = color;
+        if (x + j < W && y + i < H)
+          canvas[y + i][x + j] = color;
 }
 
 static inline void draw_string(const char *str, int x, int y, int color) {
   while (*str) {
     draw_character(*str ++, x, y, color);
-    if (y + 8 >= W) {
-      x += 8; y = 0;
+    if (x + 8 >= W) {
+      y += 8; x = 0;
     } else {
-      y += 8;
+      x += 8;
     }
   }
 }
@@ -48,23 +48,28 @@ void redraw_screen() {
 
   /* 绘制命中数、miss数、最后一次按键扫描码和fps */
   const char *key = itoa(last_key_code());
-  draw_string(key, W - 8, 0, 0xffffffff);
+  draw_string(key, 0, H - 8, 0xffffffff);
   hit = itoa(get_hit());
-  draw_string(hit, 0, W - strlen(hit) * 8, 0x00ff00);
+  draw_string(hit, W - strlen(hit) * 8, 0, 0x00ff00);
   miss = itoa(get_miss());
-  draw_string(miss, H - 8, W - strlen(miss) * 8, 0xfa5858);
+  draw_string(miss, W - strlen(miss) * 8, H - 8, 0xfa5858);
   const char *fps = itoa(get_fps());
   draw_string(fps, 0, 0, 0xf3f781);
-  draw_string("FPS", 0, strlen(fps) * 8, 0xf3f781);
+  draw_string("FPS", strlen(fps) * 8, 0, 0xf3f781);
 
   int w = _screen.width, h = _screen.height;
-  for (int x = 0; x < w; x ++)
-    for (int y = 0; y < h; y ++) {
-      _draw_rect(&canvas[x * W / w][y * H / h], x, y, 1, 1);
-    }
+  if (w == W && h == H) {
+    _draw_rect((void *)canvas, 0, 0, _screen.width, _screen.height);
+  }
+  else {
+    for (int x = 0; x < w; x ++)
+      for (int y = 0; y < h; y ++) {
+        _draw_rect(&canvas[y * H / h][x * W / w], x, y, 1, 1);
+      }
+  }
 
   _draw_sync();
-  for (int y = 0; y < W; y ++)
-    for (int x = 0; x < H; x ++) 
+  for (int y = 0; y < H; y ++)
+    for (int x = 0; x < W; x ++)
       canvas[y][x] = 0x2a0a29;
 }

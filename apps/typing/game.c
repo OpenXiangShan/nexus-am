@@ -74,8 +74,8 @@ void create_new_letter(){
     head = now;
   }
   
-  head->x = 0;
-  head->y = rand() % (W / 8 - 2) * 8 + 8;
+  head->y = 0;
+  head->x = rand() % (W / 8 - 2) * 8 + 8;
   head->v = (rand() % 1000)/(2000) + 1;
   head->text = rand() % 26;
   release_key(head->text);
@@ -85,9 +85,9 @@ void update_letter_pos() {
   fly_t it;
   for(it = head;it != NULL;){
     fly_t next = it->_next;
-    it->x += it->v;
-    if (it->x < 0 || it->x + 8 > H){
-      if(it->x < 0)
+    it->y += it->v;
+    if (it->y < 0 || it->y + 8 > H){
+      if(it->y < 0)
         hit++;
       else
         miss++;
@@ -104,8 +104,8 @@ bool update_keypress() {
   fly_t it,target = NULL;
   int min = -100;
   for(it = head; it != NULL; it = it->_next){
-    if(it->v > 0 && it->x > min && query_key(it->text)){
-      min = it->x;
+    if(it->v > 0 && it->y > min && query_key(it->text)){
+      min = it->y;
       target = it;
     }
   }

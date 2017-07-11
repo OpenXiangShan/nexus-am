@@ -11,7 +11,7 @@ void _trm_init() {
 
 // -------------------- memory --------------------
 
-extern unsigned int heap_start, _heap_end; // symbols
+extern unsigned int _heap_start, _heap_end; // symbols
 
 _Area _heap = {
   .start = &_heap_start,

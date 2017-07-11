@@ -4,9 +4,8 @@
 //static char* s_h=0;
 
 char* printch(char ch,char** s);
-char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s);
+int  printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s);
 int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,int count);
-//char* printstr(char* str,int width,char flagc,char* s);
 char* printstr(char* str,char** s);
 void myputc(char c,char** s_h){
   if(*s_h==0)_putc(c);
@@ -17,6 +16,7 @@ void myputc(char c,char** s_h){
 
 
 int vprintk(char* out,const char* fmt,va_list ap){
+  unsigned int rewid=0;
   char** s_v=&out;
   int vargint=0;
   unsigned int varguint=0;
@@ -31,8 +31,6 @@ int vprintk(char* out,const char* fmt,va_list ap){
       width=-1;
       abs='+';
       reswitch:
-      //flagc=' ';
-      //width=-1;
       switch(*(++pfmt)){
 	case '-':flagc='-';goto reswitch;
         case '0':flagc='0';goto reswitch;
@@ -51,41 +49,36 @@ int vprintk(char* out,const char* fmt,va_list ap){
 	  char ch;
 	  while( (ch=*pfmt++)>='0'&&ch<='9'){
             width=width*10+ch-'0';
-            //_putc(width+'0');
           }
           pfmt-=2;
-          //_putc(*(pfmt));
           goto reswitch;
         case '*':width=va_arg(ap,int);goto reswitch;
-	//case '.':if(width<0)width=0;goto reswitch;
-	case 'c':vargch=va_arg(ap,int);printch(vargch,s_v);break;
-	case '%':printch('%',s_v);break;
+	case 'c':vargch=va_arg(ap,int);printch(vargch,s_v);rewid++;break;
+	case '%':printch('%',s_v);rewid++;break;
 	case 'd':vargint=va_arg(ap,int);base=10;if(vargint<0){
-		 //_putc('-');
 		 abs='-';
 		 varguint=-vargint;
 	         }
 		 else {varguint=vargint;}
-		   //else if(flagc=='+'){flagc=' ';_putc('+');}
 		   goto nump;
-	//case 'o':vargint=va_arg(ap,unsigned int);base=8;goto nump;
 	case 'u':varguint=va_arg(ap,unsigned int);base=10;goto nump;
 	case 'x':
 	case 'X':varguint=va_arg(ap,int);base=16;goto nump;
 	case 'p':myputc('0',s_v);myputc('x',s_v);varguint=(long)va_arg(ap,void*);base=16;goto nump;
       nump:
-	printdec(varguint,base,width,abs,flagc,s_v);break;
-	case 's':vargpch=va_arg(ap,char*);printstr(vargpch,s_v);break;
+	rewid+=printdec(varguint,base,width,abs,flagc,s_v);break;
+	case 's':vargpch=va_arg(ap,char*);printstr(vargpch,s_v);rewid+=strlen(vargpch);break;
 	default:;
       }
       pfmt++;
     }
     else{
       out=printch(*pfmt++,s_v);
+      rewid++;
     }
   }
-  if(out!=0)printch('\0',s_v);
-  return 0;
+  if(out!=0){printch('\0',s_v);rewid++;}
+  return rewid;
 }
 
 int printk(const char* fmt,...){
@@ -119,16 +112,20 @@ char* printch(char ch,char** s){
   myputc(ch,s);
   return *s;
 }
-//char* printdec(int dec,char* s){
-char* printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s){
-  //int c=0;
-  //if(abs=='-'||flagc=='+')c++;
+int printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s){
+  int rewid=0;
+  if(abs=='-')rewid++;
   if(dec==0){
     myputc('0',s);
+    rewid++;
   }
   else vprintdec(dec,base,width,abs,flagc,s,0);
-  //_putc(c+'0');
-  return *s;
+  while(dec>0){
+	  dec=dec/base;
+	  rewid++;
+  }
+  if(width>0&&rewid>width)rewid=width;
+  return rewid;
 }
 int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,int count){
   if(dec==0){
@@ -148,7 +145,7 @@ int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,i
       else{
         if(width>0)myputc(flagc,s);
       }
-      return 0;
+      return width;
     }
     else if(abs=='-'){myputc('-',s);width--;}
     return width;
