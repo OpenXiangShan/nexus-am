@@ -28,6 +28,7 @@ Fstate files[FD_NORMAL + NR_FILES];
 
 void ramdisk_read(void *, uint32_t, uint32_t);
 void ramdisk_write(const void *, uint32_t, uint32_t);
+size_t read_events(void *buf);
 
 int fs_open(const char *pathname, int flags, int mode) {
 	int i, fd;
@@ -52,6 +53,10 @@ int fs_open(const char *pathname, int flags, int mode) {
 
 ssize_t fs_read(int fd, void *buf, size_t len) {
 	assert(fd > 2);
+  if (fd == FD_EVENTS) {
+    return read_events(buf);
+  }
+
 	int remain_bytes = file_table[ files[fd].index ].size - files[fd].offset;
 	int bytes_to_read = (remain_bytes > len ? len : remain_bytes);
 
@@ -69,6 +74,7 @@ ssize_t fs_write(int fd, const void *buf, size_t len) {
       for(int i = 0; i < len; i ++) {
         _putc( ((char *)buf)[i] );
       }
+    case FD_EVENTS:
       return len;
 
     case FD_FB:

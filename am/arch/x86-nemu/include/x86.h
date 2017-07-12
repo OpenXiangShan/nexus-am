@@ -1,20 +1,6 @@
 #ifndef __X86_H__
 #define __X86_H__
 
-// CPU rings
-#define DPL_KERN  0x0     // Kernel (ring 0)
-#define DPL_USER  0x3     // User (ring 3)
-
-// Application segment type bits
-#define STA_X     0x8     // Executable segment
-#define STA_W     0x2     // Writeable (non-executable segments)
-#define STA_R     0x2     // Readable (executable segments)
-
-// System segment type bits
-#define STS_T32A  0x9     // Available 32-bit TSS
-#define STS_IG32  0xE     // 32-bit Interrupt Gate
-#define STS_TG32  0xF     // 32-bit Trap Gate
-
 // Eflags register
 #define FL_TF     0x00000100  // Trap Flag
 #define FL_IF     0x00000200  // Interrupt Enable
@@ -38,17 +24,6 @@
 #define PTE_PCD   0x010     // Cache-Disable
 #define PTE_A     0x020     // Accessed
 #define PTE_D     0x040     // Dirty
-
-// GDT entries
-#define NR_SEG    6       // GDT size
-#define SEG_KCODE   1       // Kernel code
-#define SEG_KDATA   2       // Kernel data/stack
-#define SEG_UCODE   3       // User code
-#define SEG_UDATA   4       // User data/stack
-#define SEG_TSS   5       // Global unique task state segement
-
-#define KSEL(desc) (((desc) << 3) | DPL_KERN)
-#define USEL(desc) (((desc) << 3) | DPL_USER)
 
 // IDT size
 #define NR_IRQ    256     // IDT size
@@ -83,33 +58,6 @@ typedef uint32_t PDE;
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   ((uint32_t)(pte) & ~0xfff)
 
-// Segment Descriptor
-typedef struct SegDesc {
-  uint32_t lim_15_0 : 16;  // Low bits of segment limit
-  uint32_t base_15_0 : 16; // Low bits of segment base address
-  uint32_t base_23_16 : 8; // Middle bits of segment base address
-  uint32_t type : 4;     // Segment type (see STS_ constants)
-  uint32_t s : 1;      // 0 = system, 1 = application
-  uint32_t dpl : 2;    // Descriptor Privilege Level
-  uint32_t p : 1;      // Present
-  uint32_t lim_19_16 : 4;  // High bits of segment limit
-  uint32_t avl : 1;    // Unused (available for software use)
-  uint32_t rsv1 : 1;     // Reserved
-  uint32_t db : 1;     // 0 = 16-bit segment, 1 = 32-bit segment
-  uint32_t g : 1;      // Granularity: limit scaled by 4K when set
-  uint32_t base_31_24 : 8; // High bits of segment base address
-} SegDesc;
-
-#define SEG(type, base, lim, dpl) (SegDesc)           \
-{  ((lim) >> 12) & 0xffff, (uint32_t)(base) & 0xffff,    \
-  ((uint32_t)(base) >> 16) & 0xff, type, 1, dpl, 1,     \
-  (uint32_t)(lim) >> 28, 0, 0, 1, 1, (uint32_t)(base) >> 24 }
-
-#define SEG16(type, base, lim, dpl) (SegDesc)         \
-{  (lim) & 0xffff, (uint32_t)(base) & 0xffff,        \
-  ((uint32_t)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
-  (uint32_t)(lim) >> 16, 0, 0, 1, 0, (uint32_t)(base) >> 24 }
-
 // Gate descriptors for interrupts and traps
 typedef struct GateDesc {
   uint32_t off_15_0 : 16;   // Low 16 bits of offset in segment
@@ -126,15 +74,6 @@ typedef struct GateDesc {
 #define GATE(type, cs, entry, dpl) (GateDesc)         \
 {  (uint32_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
   1, (uint32_t)(entry) >> 16 }
-
-
-// Task state segment format
-struct TSS {
-  uint32_t link;     // Unused
-  uint32_t esp0;     // Stack pointers and segment selectors
-  uint32_t ss0;      //   after an increase in privilege level
-  char dontcare[88];
-};
 
 static inline void cli() {
   asm volatile("cli");
@@ -173,18 +112,6 @@ static inline void set_idt(GateDesc *idt, int size) {
   asm volatile("lidt (%0)" : : "r"(data));
 }
 
-static inline void set_gdt(SegDesc *gdt, int size) {
-  volatile static uint16_t data[3];
-  data[0] = size - 1;
-  data[1] = (uint32_t)gdt;
-  data[2] = (uint32_t)gdt >> 16;
-  asm volatile("lgdt (%0)" : : "r"(data));
-}
-
-static inline void set_tr(int selector) {
-  asm volatile("ltr %0" : : "r"((uint16_t)selector));
-}
-
 static inline uint32_t get_cr2() {
   volatile uint32_t val;
   asm volatile("movl %%cr2, %0" : "=r"(val));
@@ -199,4 +126,3 @@ static inline void set_cr3(void *pdir) {
 #endif
 
 #endif
-

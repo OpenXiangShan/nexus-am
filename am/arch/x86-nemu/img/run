@@ -1,3 +1,4 @@
 #!/bin/bash
 
+make -C $NEMU_HOME
 $NEMU_HOME/build/nemu $1

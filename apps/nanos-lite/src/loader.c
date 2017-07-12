@@ -11,16 +11,20 @@
 # define driver_read ramdisk_read
 #endif
 
+#define INIT_FILE "/bin/pal"
+
 void driver_read(void *, off_t, size_t);
 
-#define STACK_SIZE (2 * PGSIZE)
+#define STACK_SIZE (128 * PGSIZE)
 
 uint32_t loader(_Protect *p) {
   Elf32_Ehdr *elf;
   Elf32_Phdr *ph = NULL, *eph;
 
+  Log("Loading user program %s...", INIT_FILE);
+
   uint8_t buf[4096];
-  int fd = fs_open("/bin/pal", 0, 0);
+  int fd = fs_open(INIT_FILE, 0, 0);
   fs_read(fd, buf, 4096);
 //  driver_read(buf, ELF_OFFSET_IN_DISK, 4096);
 
