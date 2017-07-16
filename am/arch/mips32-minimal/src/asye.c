@@ -109,15 +109,15 @@ void irq_handle(struct TrapFrame *tf){
       tf->epc += 4;
       ev.event = _EVENT_TRAP;
 	    printk("Syscall\n");
-      printk("$epc = 0x%x\n", regs.epc);
+      // printk("$epc = 0x%x\n", regs.epc);
+      // printk("$status = 0x%x\n", regs.status);
       // _halt(0); 
       break;
     }
     case 9:{ // breakpoint
-      tf->epc += 4;
       printk("Break\n");
       printk("$epc = 0x%x\n", regs.epc);
-     // _halt(0); 
+     _halt(0); 
       break;
     }
     case 10:{ // invalid instruction

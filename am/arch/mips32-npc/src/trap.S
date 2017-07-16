@@ -1,7 +1,5 @@
 .globl intr
 .type intr, @function
-.globl Dismiss
-.type Dismiss, @function
 .globl do_irq
 .type do_irq, @function
 .extern irq_handle
@@ -17,18 +15,6 @@ _trap_entry:
 intr:
 	la	$k0, 0x1000ff03
 	mtc0	$k0, $12
-	mfc0	$k0, $13
-	#exceptions
-	#$k0 = 0x00 00 IP(0) ExcCode
-	andi	$k0, 0x000000ff
-	bne	$k0, $zero, do_irq
-	#interruptions
-	#$k0 = 0x00 00 IP ExcCode(0)
-	mfc0	$k0, $13
-	mfc0	$k1, $12
-	andi	$k0, $k0, 0x0000ff00
-	and	$k0, $k0, $k1
-	beq	$k0, $zero, Dismiss
 	la	$k1, do_irq
 	jr	$k1
 
@@ -37,7 +23,7 @@ Dismiss:
 
 do_irq:
 #pusha
-	addiu		$sp,$sp,-160
+	addiu	$sp,$sp,-176
 	sw 		$at, 0x4($sp)
 	sw 		$v0, 0x8($sp)
 	sw 		$v1, 0xc($sp)
@@ -69,11 +55,18 @@ do_irq:
 	sw		$sp, 0x74($sp)
 	sw 		$fp, 0x78($sp)
 	sw 		$ra, 0x7c($sp)
+	mfc0	$k0, $14
+	sw		$k0, 0x80($sp)
+	mfc0	$k0, $13
+	sw		$k0, 0x84($sp)
+	mfc0	$k0, $12
+	sw		$k0, 0x88($sp)
+	mfc0	$k0, $8
+	sw		$k0, 0x8c($sp)
 #k0 for irq code
 #jmp to irq_handle
 #give trapframe pointer to k1
-
-	lw		$k1, 0x4($sp)
+	addiu   $a0, $sp, 0x4
 	jal		irq_handle
 #popa
 
@@ -108,6 +101,16 @@ do_irq:
 	lw 		$fp, 0x78($sp)
 	lw 		$ra, 0x7c($sp)
 	lw 		$sp, 0x74($sp)
-	addiu		$sp,$sp,160
+	# cp0 regs
+	lw		$k0, 0x80($sp)
+	mtc0	$k0, $14
+	lw		$k0, 0x84($sp)
+	mtc0	$k0, $13
+	lw		$k0, 0x88($sp)
+	mtc0	$k0, $12
+	lw		$k0, 0x8c($sp)
+	mtc0	$k0, $8
+	lw 		$k0, 0x68($sp)
+	addiu	$sp,$sp,176
 
 	eret

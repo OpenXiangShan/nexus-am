@@ -13,7 +13,7 @@
 #define GPIO_TRAP ((char *)0x40000000)
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
-#define INTERVAL 1000
+#define INTERVAL 30000
 #define TIMER_BASE ((volatile char *)0x41c00000)
    
 #define cp0_badvaddr 8
@@ -50,11 +50,24 @@ struct TrapFrame{
   t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,
   s0,s1,s2,s3,s4,s5,s6,s7,
   k0,k1,
-  gp,sp,fp,ra;
+  gp,sp,fp,ra,
+  epc, cause, status, badvaddr;
 };
 
-uint32_t GetCount(int sel);
-void SetCompare(uint32_t compare);
+uint32_t inline GetCount(int sel){
+  uint32_t tick = 0;
+  if(sel == 0)
+    MFC0(tick, cp0_count, 0);
+  else if(sel == 1)
+    MFC0(tick, cp0_count, 1);
+  else
+    _halt(1);
+  return tick;
+}
+
+void inline SetCompare(uint32_t compare){
+  MTC0(cp0_compare, compare, 0);
+}
 
 char in_byte();
 void out_byte(char);
