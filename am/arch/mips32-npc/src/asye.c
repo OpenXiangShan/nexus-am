@@ -8,12 +8,17 @@ static uint32_t args[4];
 
 void _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
   H = l;
-  volatile uint32_t init = 0x10000;
-  SetCompare(init);
+  // volatile uint32_t init = 0x10000;
+  // SetCompare(init);
 }
 
 _RegSet *_make(_Area kstack, void *entry, void *arg){
   _RegSet *r = (void *)0;
+  int status = 0;
+  int new_status = 0;
+  MFC0(status, cp0_status, 0);
+  new_status = status | 0x1;
+  MTC0(cp0_status, new_status, 0);  
   return r;
 }
 
@@ -40,15 +45,15 @@ int _istatus(int enable){
   int new_status = 0;
   if(enable) {
     MFC0(status, cp0_status, 0);
-    new_status = status & 0xfffffffd;
+    new_status = status | 0x1;
     MTC0(cp0_status, new_status, 0);  
   }
   else {
     MFC0(status, cp0_status, 0);
-    new_status = status | 0x2;
+    new_status = status & 0xfffffffe;
     MTC0(cp0_status, new_status, 0); 
   }
-  return !((status & 0x2) >> 1);
+  return status & 0x1;
 }
 
 void irq_handle(struct TrapFrame *tf){
@@ -64,7 +69,7 @@ void irq_handle(struct TrapFrame *tf){
     .s4 = tf->s4, .s5 = tf->s5, .s6 = tf->s6, .s7 = tf->s7, 
     .k0 = tf->k0, .k1 = tf->k1,
     .gp = tf->gp, .sp = tf->sp, .fp = tf->fp, .ra = tf->ra,
-    .epc = tf->epc, .cause = tf->cause, .status = tf->status, .badvaddr = tf->status,
+    .epc = tf->epc, .cause = tf->cause, .status = tf->status, .badvaddr = tf->badvaddr,
   };
   uint32_t ipcode, exccode;
   exccode = (regs.cause & 0xff) >> 2;
@@ -95,7 +100,7 @@ void irq_handle(struct TrapFrame *tf){
       printk("AdEL\n");
       printk("$epc = 0x%x\n", regs.epc);
       printk("$BadVaddr = 0x%x\n", regs.badvaddr);
-      _halt(0);
+      _halt(-1);
       break;
     }
     case 5:{ //AdES

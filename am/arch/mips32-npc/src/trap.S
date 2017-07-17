@@ -13,13 +13,12 @@ _trap_entry:
   j intr
 
 intr:
-	la	$k0, 0x1000ff03
+	#cli
+	mfc0	$k0, $12
+	ori		$k0, $k0, 0x2
 	mtc0	$k0, $12
-	la	$k1, do_irq
-	jr	$k1
-
-Dismiss:
-	j	Dismiss
+	la		$k1, do_irq
+	jr		$k1
 
 do_irq:
 #pusha
@@ -63,13 +62,46 @@ do_irq:
 	sw		$k0, 0x88($sp)
 	mfc0	$k0, $8
 	sw		$k0, 0x8c($sp)
-#k0 for irq code
-#jmp to irq_handle
-#give trapframe pointer to k1
+#give trapframe pointer to a0
 	addiu   $a0, $sp, 0x4
-	jal		irq_handle
-#popa
+#disable the appropriate IM bit to prevent an interrupt loop
+	mfc0	$k0, $12
+	mfc0	$k1, $13
+	andi	$k0, $k0, 0xff00
+	and 	$k0, $k0, $k1
+	beq		$k0, $zero, SetMaskDone
+	# it is interruption, instead of exception
+	srl		$k0, $k0, 8
+	addiu	$k1, $zero, 0x0
+	# clz is used to get the interruption which contains highest priority
+	# but we don't have clz instruction
+	# thus use loop to simulate it
+GetInterruptPriority:
+	srl		$k0, $k0, 1
+	addiu	$k1, $k1, 0x1
+	beq		$k0, $zero, GetInterruptPriority
 
+	#set mask
+	addiu	$k0, $zero, 1
+	sllv	$k0, $k0, $k1
+	srl		$k0, $k0, 1
+	mfc0	$k1, $12
+	xor		$k1, $k1, $k0
+	mtc0	$k1, $12 
+SetMaskDone:
+	#clear exl to enable nested exception & sti
+	mfc0	$k0, $12
+	xori	$k0, $k0, 0x2
+	mtc0	$k0, $12
+
+
+	jal		irq_handle
+
+	#cli
+	mfc0	$k0, $12
+	ori		$k0, $k0, 0x2
+	mtc0	$k0, $12
+#popa	
 	lw 		$at, 0x4($sp)
 	lw 		$v0, 0x8($sp)
 	lw 		$v1, 0xc($sp)
@@ -107,10 +139,12 @@ do_irq:
 	lw		$k0, 0x84($sp)
 	mtc0	$k0, $13
 	lw		$k0, 0x88($sp)
+	ori		$k0, $k0, 0x2
 	mtc0	$k0, $12
 	lw		$k0, 0x8c($sp)
 	mtc0	$k0, $8
 	lw 		$k0, 0x68($sp)
 	addiu	$sp,$sp,176
-
+	nop
+	
 	eret

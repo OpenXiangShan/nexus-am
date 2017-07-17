@@ -13,7 +13,7 @@
 #define GPIO_TRAP ((char *)0x40000000)
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
-#define INTERVAL 30000
+#define INTERVAL 300000
 #define TIMER_BASE ((volatile char *)0x41c00000)
    
 #define cp0_badvaddr 8
