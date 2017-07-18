@@ -113,29 +113,15 @@ char* printch(char ch,char** s){
   return *s;
 }
 int printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s){
-  int rewid=0;
+  int rewid=0,twid=width;
   if(abs=='-')rewid++;
   if(dec==0){
-    if(width>0){
-      if(flagc != '-'){
-        while(--width>0){
-	  if(flagc == '+')myputc(' ',s);
-	  else myputc(flagc,s);
-	}
-      }
-      myputc('0',s);
-      if(flagc == '-'){
-        while(--width>0){
-	  myputc(' ',s);
-	}
-      }
-    }
-    else{
-      myputc('0',s);
-    }
+    //myputc('0',s);
+    //dec=-1;
     rewid++;
+    twid--;
   }
-  else vprintdec(dec,base,width,abs,flagc,s,0);
+  vprintdec(dec,base,twid,abs,flagc,s,0);
   while(dec>0){
 	  dec=dec/base;
 	  rewid++;
@@ -144,7 +130,7 @@ int printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s){
   return rewid;
 }
 int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,int count){
-  if(dec==0){
+  if(dec == 0){
     if(flagc!='-'){
       width++;
       if(abs=='-')width--;
@@ -161,12 +147,14 @@ int vprintdec(unsigned int dec,int base,int width,char abs,char flagc,char** s,i
       else{
         if(width>0)myputc(flagc,s);
       }
-      return width;
+      //return width;
     }
     else if(abs=='-'){myputc('-',s);width--;}
+    if(count == 0)myputc('0',s);
     return width;
   }
-  int re;//vprintdec(dec/base,base,width-1,flagc,s+1);
+  //_putc('0');
+  int re=0;//vprintdec(dec/base,base,width-1,flagc,s+1);
   re=vprintdec(dec/base,base,width-1,abs,flagc,s,count+1);
   if(dec%base>9)myputc(dec%base+'a'-10,s);
   else myputc((char)(dec%base+'0'),s);
