@@ -6,7 +6,7 @@
 .set noat
 
 .globl _trap_entry
-.type _trapPentry function
+.type _trap_entry function
 
 # TODO: this should be the real entry
 _trap_entry:
