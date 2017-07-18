@@ -62,7 +62,7 @@ void printk_test() {
   printk("%p, %p, %p, %p, %p, %p\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
   sprintf(src,"%p, %p, %p, %p, %p, %p\n", 0, 0xffffffff, 0x80000000, 0xabcdef01, -32768, 102030);
   check_src("0x0, 0xffffffff, 0x80000000, 0xabcdef01, 0xffff8000, 0x18e8e\n");
-  //TODO flags - 0 ' ' +
+  // flags - 0 ' ' +
   char stdstr[1024]="%  d\n";
   char flag[FLAGNUM]={' ','0','-','+'};
   //int width=0;
