@@ -32,17 +32,6 @@ asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
 #define _STR(x) _VAL(x)
 #define _VAL(x) #x
 
-
-// TODO: these symbols should *NOT* be visible to any code
-//       that include "am.h"
-static inline uint8_t R(uint32_t p) { return p >> 16; }
-static inline uint8_t G(uint32_t p) { return p >> 8; }
-static inline uint8_t B(uint32_t p) { return p; }
-
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
-
 struct TrapFrame{
   uint32_t at,
   v0,v1,

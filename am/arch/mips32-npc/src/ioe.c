@@ -45,15 +45,30 @@ unsigned long _cycles(){
 
 // -------------------- video --------------------
 
+volatile static uint8_t * const fb = VMEM_ADDR;
 _Screen _screen = {
   .width = SCR_WIDTH,
   .height = SCR_HEIGHT,
 };
 
-static uint8_t *fb = VMEM_ADDR;
 
-void _draw_p(int x, int y, uint32_t p) {
-  fb[x + y * _screen.width] = (R(p) & 0xc0) | ((G(p) & 0xf0) >> 2) | ((B(p) & 0xc0) >> 6);
+static inline uint8_t R(uint32_t p) { return p >> 16; }
+static inline uint8_t G(uint32_t p) { return p >> 8; }
+static inline uint8_t B(uint32_t p) { return p; }
+static inline uint8_t pixel(uint32_t p){
+	return (R(p) & 0xc0) | ((G(p) & 0xf0) >> 2) | ((B(p) & 0xc0) >> 6);
+}
+
+void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h){
+  int limit_h = (y + h >= _screen.height) ? _screen.height - y : h;
+  int limit_w = (x + w >= _screen.width) ? _screen.width - x : w;
+  volatile uint8_t *p_fb = &fb[y * _screen.width + x];
+
+  for(int i = 0; i < limit_h; i ++){
+    for(int j = 0; j < limit_w; j ++){
+	 p_fb[j + i * _screen.width] = pixel(pixels[j + i * w]);
+	}
+  }
 }
 
 void _draw_sync() {
