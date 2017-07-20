@@ -1,5 +1,5 @@
 include $(AM_HOME)/Makefile.check
-.PHONY: all clean latest $(ALL)
+.PHONY: all run clean latest $(ALL)
 
 ALL = $(basename $(notdir $(shell find tests/. -name "*.c")))
 
@@ -11,8 +11,10 @@ $(ALL): %: Makefile.%
 Makefile.%: tests/%.c latest
 	@echo "Build $*"
 	@echo "NAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile.app" > $@
-	-make -f $@ ARCH=$(ARCH)
+	-make -f $@ ARCH=$(ARCH) $(MAKECMDGOALS)
 	-rm -f Makefile.$*
+
+run: all
 
 clean: 
 	rm -rf Makefile.* build/

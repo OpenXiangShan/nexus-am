@@ -13,7 +13,9 @@
 
 使用`make ARCH=native`用`native`体系结构编译所有测试程序。
 
-如果需要单独测试一个程序，可以使用`make ARCH=mips32-minimal sum`，单独测试`sum`。
+如果需要单独编译一个程序，可以使用`make ARCH=mips32-minimal ALL=sum`，单独编译`sum`。
+
+可以通过`make ARCH=x86-nemu run`进行批量测试，需要相应arch中的run脚本在一个测试成功后可以自动退出。
 
 ## 添加新的测试程序
 
