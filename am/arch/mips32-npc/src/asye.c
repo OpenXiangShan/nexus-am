@@ -8,6 +8,7 @@ static uint32_t args[4];
 
 void _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
   H = l;
+  int_timer0_init(50000000, 0);
   // volatile uint32_t init = 0x10000;
   // SetCompare(init);
 }
@@ -87,8 +88,10 @@ void irq_handle(struct TrapFrame *tf){
     case 0:{ // interruption
       switch(ipcode){
         case 0x80:{ // time interrupt
-          uint32_t count = GetCount(0);
-          SetCompare(count + INTERVAL);
+          // uint32_t count = GetCount(0);
+          // SetCompare(count + INTERVAL);
+          set_int_timer(0, 0, 1, 1);
+          set_int_timer(0, 1, 0, 0);
           ev.event = _EVENT_IRQ_TIME;
           break;
         }

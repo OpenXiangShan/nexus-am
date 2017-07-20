@@ -2,16 +2,23 @@
 #define __NPC_H__
 
 #define EX_ENTRY 0x20
-#define SERIAL_PORT ((volatile char *)0x40001000)
+#define VMEM_ADDR ((void *)0x40010000)
+#define SCR_WIDTH 320
+#define SCR_HEIGHT 200
+#define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
+#define SERIAL_PORT ((char *)0x40001000)
 #define Rx 0x0
 #define Tx 0x04
 #define STAT 0x08
 #define CTRL 0x0c
-#define GPIO_TRAP ((volatile char *)0x40000000)
+#define GPIO_TRAP ((char *)0x40000000)
 #define HZ 50000000
-#define INTERVAL 0x10000
-#ifndef __ASSEMBLER__
+#define MAX_MEMORY_SIZE 0x4000000
+#define INTERVAL 300000
+#define REAL_TIMER_BASE ((volatile char *)0x41c00000)
+#define INT_TIMER_BASE ((volatile char *)0x41c10000)
 
+#ifndef __ASSEMBLER__
 #include <arch.h>
 
 #define cp0_badvaddr 8
@@ -30,7 +37,6 @@ asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
 #define _STR(x) _VAL(x)
 #define _VAL(x) #x
 
-
 struct TrapFrame{
   uint32_t at,
   v0,v1,
@@ -41,8 +47,6 @@ struct TrapFrame{
   gp,sp,fp,ra,
   epc, cause, status, badvaddr;
 };
-
-void serial_init();
 
 uint32_t inline GetCount(int sel){
   uint32_t tick = 0;
@@ -58,6 +62,15 @@ uint32_t inline GetCount(int sel){
 void inline SetCompare(uint32_t compare){
   MTC0(cp0_compare, compare, 0);
 }
-#endif
 
+char in_byte();
+void out_byte(char);
+
+
+void real_timer_init();
+uint32_t real_timer_get_counter_reg(int sel);
+void int_timer0_init(uint32_t count_down_cycle, int auto_load);
+void int_timer1_init(uint32_t count_down_cycle, int auto_load);
+void set_int_timer(int timer_no, int enable, int clear_int, int load);
+#endif
 #endif

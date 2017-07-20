@@ -32,6 +32,6 @@ int main(){
   _asye_init(handler);
   assert(!_istatus(1));
   _make(_heap, main, 0);
-  while (1) _trap();
+  while (1); _trap();
   return 0;
 }

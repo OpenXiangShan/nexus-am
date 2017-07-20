@@ -14,8 +14,9 @@
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
 #define INTERVAL 300000
-#define TIMER_BASE ((volatile char *)0x41c00000)
-   
+#define REAL_TIMER_BASE ((volatile char *)0x41c00000)
+#define INT_TIMER_BASE ((volatile char *)0x41c10000)
+
 #define cp0_badvaddr 8
 #define cp0_count    9
 #define cp0_compare  11
@@ -62,7 +63,10 @@ char in_byte();
 void out_byte(char);
 
 
-void timer_init();
-uint32_t get_TCR(int sel);
+void real_timer_init();
+uint32_t real_timer_get_counter_reg(int sel);
+void int_timer0_init(uint32_t count_down_cycle, int auto_load);
+void int_timer1_init(uint32_t count_down_cycle, int auto_load);
+void set_int_timer(int timer_no, int enable, int clear_int, int load);
 
 #endif
