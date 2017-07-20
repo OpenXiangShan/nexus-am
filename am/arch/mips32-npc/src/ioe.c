@@ -91,26 +91,38 @@ unsigned char ascii2key[128] = {
 };
 
 int pre_key = _KEY_NONE;
+// q w \0 :pre up, q down, q up, w down, none
+#define KEYUP   1
+#define KEYDOWN 2
+#define FIFO_MAX 30
+#define fifo_plus(a) ((a + 1) % FIFO_MAX)
+unsigned char keyfifo[FIFO_MAX] = {'a', 0};
+int fifo_start = 1, fifo_end = 0;
+int keystate = KEYDOWN;
 
 int _read_key(){
-  int ascii = in_byte();
-  int key = ascii2key[ascii];
-  printk("read key = %c\n", ascii);
-  if(key == _KEY_NONE){
-    if(pre_key != _KEY_NONE){
-      pre_key = _KEY_NONE;
-      return upevent(pre_key);
-    }
-    return _KEY_NONE;
+  int ascii;
+  unsigned char curkey;
+  while( fifo_plus(fifo_start) != fifo_end && (ascii = in_byte()) != '\0'){
+    curkey = ascii2key[ascii];
+    keyfifo[fifo_start] = curkey;
+    fifo_start = fifo_plus(fifo_start);
   }
-  if(pre_key != key){
-    int t = pre_key;
-    pre_key = key;
-    return upevent(t);
+
+  if(fifo_plus(fifo_end) == fifo_start)
+    if(keystate == KEYDOWN)
+      return _KEY_NONE;
+
+  if(keystate == KEYUP){
+    keystate = KEYDOWN;
+    return downevent(keyfifo[fifo_end]);
   }
   else{
-    pre_key = key;
-    return downevent(key);
+    int tmp;
+    keystate = KEYUP;
+    tmp = upevent(keyfifo[fifo_end]);
+    fifo_end = fifo_plus(fifo_end);
+    return tmp;
   }
 }
 
