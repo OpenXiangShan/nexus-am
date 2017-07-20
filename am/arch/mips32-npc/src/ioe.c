@@ -92,10 +92,17 @@ unsigned char ascii2key[128] = {
 
 int pre_key = _KEY_NONE;
 
-// TODO: refactor
 int _read_key(){
   int ascii = in_byte();
   int key = ascii2key[ascii];
+  printk("read key = %c\n", ascii);
+  if(key == _KEY_NONE){
+    if(pre_key != _KEY_NONE){
+      pre_key = _KEY_NONE;
+      return upevent(pre_key);
+    }
+    return _KEY_NONE;
+  }
   if(pre_key != key){
     int t = pre_key;
     pre_key = key;
