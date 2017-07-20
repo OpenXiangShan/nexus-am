@@ -11,10 +11,10 @@
 #define Tx 0x04
 #define STAT 0x08
 #define CTRL 0x0c
-#define GPIO_TRAP ((char *)0x40000000)
+#define GPIO_TRAP ((volatile char *)0x40000000)
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
-#define INTERVAL 300000
+#define INTERVAL 0x10000
 #define REAL_TIMER_BASE ((volatile char *)0x41c00000)
 #define INT_TIMER_BASE ((volatile char *)0x41c10000)
 
@@ -62,10 +62,6 @@ uint32_t inline GetCount(int sel){
 void inline SetCompare(uint32_t compare){
   MTC0(cp0_compare, compare, 0);
 }
-
-char in_byte();
-void out_byte(char);
-
 
 void real_timer_init();
 uint32_t real_timer_get_counter_reg(int sel);
