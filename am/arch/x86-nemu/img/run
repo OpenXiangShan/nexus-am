@@ -2,4 +2,4 @@
 
 objcopy -S -O binary $1 $1.bin
 
-$NEMU_HOME/build/nemu $1.bin
+make -C $NEMU_HOME && $NEMU_HOME/build/nemu $1.bin
