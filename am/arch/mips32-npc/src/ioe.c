@@ -66,8 +66,8 @@ void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h){
 
   for(int i = 0; i < limit_h; i ++){
     for(int j = 0; j < limit_w; j ++){
-	 p_fb[j + i * _screen.width] = pixel(pixels[j + i * w]);
-	}
+	    p_fb[j + i * _screen.width] = pixel(pixels[j + i * w]);
+	  }
   }
 }
 
@@ -78,38 +78,32 @@ void _draw_sync() {
 
 static inline int upevent(int e) { return e; }
 static inline int downevent(int e) { return e | 0x8000; }
+#define _ascci2key(_, __) \
+  _(1) _(2) _(3) _(4) _(5) _(6) _(7) _(8) _(9) _(0) \
+  __('q', Q) __('w', W) __('e', E) __('r', R) __('t', T) __('y', Y) __('u', U) __('i', I) __('o', O) __('p', P) \
+  __('a', A) __('s', S) __('d', D) __('f', F) __('g', G) __('h', H) __('j', J) __('k', K) __('l', L) \
+  __('z', Z) __('x', X) __('c', C) __('v', V) __('b', B) __('n', N) __('m', M) 
+#define _n2k(n) [n + '0'] = _KEY_NAME(n)
+#define _a2k(n1, n2) [n1] =  _KEY_NAME(n2)
+
+unsigned char ascii2key[128] = {
+  _ascci2key(_n2k, _a2k)
+};
 
 int pre_key = _KEY_NONE;
 
 // TODO: refactor
 int _read_key(){
-  int key_code = in_byte();
-  switch(key_code){
-    case 'a':{
-      if(pre_key != _KEY_A) { int t = pre_key; pre_key = _KEY_A; return upevent(t);}
-      else { pre_key = _KEY_A; return downevent(_KEY_A);}
-    }
-    case 's':{
-      if(pre_key != _KEY_S) { int t = pre_key; pre_key = _KEY_S; return upevent(t);}
-      else { pre_key = _KEY_S; return downevent(_KEY_S);}
-    }
-    case 'w':{
-      if(pre_key != _KEY_W) { int t = pre_key; pre_key = _KEY_W; return upevent(t);}
-      else { pre_key = _KEY_W; return downevent(_KEY_W);}
-    }
-    case 'd':{
-      if(pre_key != _KEY_D) { int t = pre_key; pre_key = _KEY_D; return upevent(t);}
-      else { pre_key = _KEY_D; return downevent(_KEY_D);}
-    }
-    case 'y':{
-      if(pre_key != _KEY_Y) { int t = pre_key; pre_key = _KEY_Y; return upevent(t);}
-      else { pre_key = _KEY_Y; return downevent(_KEY_Y);}
-    }
-    case 'g':{
-      if(pre_key != _KEY_G) { int t = pre_key; pre_key = _KEY_G; return upevent(t);}
-      else { pre_key = _KEY_G; return downevent(_KEY_G);}
-    }
-    default:{int t = pre_key; pre_key = _KEY_NONE; return upevent(t);}
+  int ascii = in_byte();
+  int key = ascii2key[ascii];
+  if(pre_key != key){
+    int t = pre_key;
+    pre_key = key;
+    return upevent(t);
+  }
+  else{
+    pre_key = key;
+    return downevent(key);
   }
 }
 
