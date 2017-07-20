@@ -41,8 +41,8 @@ bool keyboard_event() {
   if (keycode == _KEY_NONE) return false;
 
   if((keycode & KEYDOWN_MASK) != 0){
-    key_code = keycode;
-    press_key((key_code) & ~KEYDOWN_MASK);
+    key_code = keycode & ~KEYDOWN_MASK;
+    press_key(key_code);
     return true;
   }
   else{
