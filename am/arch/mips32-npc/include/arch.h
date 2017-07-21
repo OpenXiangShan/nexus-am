@@ -8,7 +8,13 @@ struct _RegSet {
 	t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,
 	s0,s1,s2,s3,s4,s5,s6,s7,
 	k0,k1,
-	gp,sp,fp,ra;
+	gp,sp,fp,ra,
+	epc, cause, status, badvaddr;
 };
+
+#define REG1(regs) ((regs)->a0)
+#define REG2(regs) ((regs)->a1)
+#define REG3(regs) ((regs)->a2)
+#define REG4(regs) ((regs)->a3)
 
 #endif

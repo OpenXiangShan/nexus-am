@@ -116,7 +116,23 @@ int printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s){
   int rewid=0;
   if(abs=='-')rewid++;
   if(dec==0){
-    myputc('0',s);
+    if(width>0){
+      if(flagc != '-'){
+        while(--width>0){
+	  if(flagc == '+')myputc(' ',s);
+	  else myputc(flagc,s);
+	}
+      }
+      myputc('0',s);
+      if(flagc == '-'){
+        while(--width>0){
+	  myputc(' ',s);
+	}
+      }
+    }
+    else{
+      myputc('0',s);
+    }
     rewid++;
   }
   else vprintdec(dec,base,width,abs,flagc,s,0);
