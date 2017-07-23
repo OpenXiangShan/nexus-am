@@ -3,7 +3,7 @@
 #include <x86.h>
 
 #define RTC_PORT 0x48   // Note that this is not standard
-static uint32_t boot_time;
+static unsigned long boot_time;
 
 void _ioe_init() {
   boot_time = inl(RTC_PORT);
@@ -11,7 +11,7 @@ void _ioe_init() {
 
 // -------------------- cycles and uptime --------------------
 
-uintptr_t _uptime() {
+unsigned long _uptime() {
   return inl(RTC_PORT) - boot_time;
   //return 0;
 }
