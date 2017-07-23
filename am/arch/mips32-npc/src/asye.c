@@ -8,7 +8,11 @@ static uint32_t args[4];
 
 void _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
   H = l;
-  int_timer0_init(50000000, 0);
+
+	// set axi timer interrupt cycles & up counter or down counter
+  // int_timer0_init(50000000, 0);
+
+	// set cp0 time interrupt initial compare
   // volatile uint32_t init = 0x10000;
   // SetCompare(init);
 }
