@@ -29,11 +29,11 @@ static inline uint32_t inl(int port) {
   return data;
 }
 
-static inline void outb(int port, int data) {
+static inline void outb(int port, uint8_t data) {
   asm volatile("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
-static inline void outl(int port, int data) {
+static inline void outl(int port, uint32_t data) {
   asm volatile("outl %%eax, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
