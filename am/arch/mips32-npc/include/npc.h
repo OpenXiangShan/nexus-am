@@ -14,8 +14,9 @@
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
 #define INTERVAL 300000
-#define TIMER_BASE ((volatile char *)0x41c00000)
-   
+#define REAL_TIMER_BASE ((volatile char *)0x41c00000)
+#define INT_TIMER_BASE ((volatile char *)0x41c10000)
+
 #define cp0_badvaddr 8
 #define cp0_count    9
 #define cp0_compare  11
@@ -31,17 +32,6 @@ asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
 
 #define _STR(x) _VAL(x)
 #define _VAL(x) #x
-
-
-// TODO: these symbols should *NOT* be visible to any code
-//       that include "am.h"
-static inline uint8_t R(uint32_t p) { return p >> 16; }
-static inline uint8_t G(uint32_t p) { return p >> 8; }
-static inline uint8_t B(uint32_t p) { return p; }
-
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
 
 struct TrapFrame{
   uint32_t at,
@@ -73,7 +63,10 @@ char in_byte();
 void out_byte(char);
 
 
-void timer_init();
-uint32_t get_TCR(int sel);
+void real_timer_init();
+uint32_t real_timer_get_counter_reg(int sel);
+void int_timer0_init(uint32_t count_down_cycle, int auto_load);
+void int_timer1_init(uint32_t count_down_cycle, int auto_load);
+void set_int_timer(int timer_no, int enable, int clear_int, int load);
 
 #endif
