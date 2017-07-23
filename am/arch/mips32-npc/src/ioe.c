@@ -7,17 +7,17 @@ void _ioe_init() {
 
 // -------------------- cycles and uptime --------------------
 
-static uintptr_t npc_time = 0;
+static unsigned long npc_time = 0;
 static unsigned long npc_cycles = 0;
 
-uintptr_t _uptime(){
+unsigned long _uptime(){
   //1. Read the upper 32-bit timer/counter register (TCR1).
   //2. Read the lower 32-bit timer/counter register (TCR0).
   //3. Read the upper 32-bit timer/counter register (TCR1) again. If the value is different from
   //the 32-bit upper value read previously, go back to previous step (reading TCR0).
   //Otherwise 64-bit timer counter value is correct. 
-  uintptr_t TCR1 = get_TCR(1);
-  uintptr_t TCR0 = 0;
+  unsigned long TCR1 = get_TCR(1);
+  unsigned long TCR0 = 0;
   do {
     TCR0 = get_TCR(0);
   }while(TCR1 != get_TCR(1));
