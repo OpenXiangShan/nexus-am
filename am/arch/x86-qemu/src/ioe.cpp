@@ -118,9 +118,9 @@ void _ioe_init() {
   vga_init();
 }
 
-uintptr_t i386_uptime = 0;
+unsigned long i386_uptime = 0;
 
-uintptr_t _uptime() {
+unsigned long _uptime() {
   // TODO: this is not precise.
   return i386_uptime ++;
 }

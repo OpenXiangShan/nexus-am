@@ -22,13 +22,12 @@ extern "C" {
 #endif
 
 void _ioe_init();
-uintptr_t _uptime();
+unsigned long _uptime();
 void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h);
 void _draw_sync();
 
 #ifdef __cplusplus
 }
-
 
 #endif
 #endif

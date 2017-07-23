@@ -40,15 +40,13 @@ static const char *bench_check(Benchmark *bench) {
   return NULL;
 }
 
-Result run_once(Benchmark *b) {
-  Result res;
+void run_once(Benchmark *b, Result *res) {
   bench_reset();       // reset malloc state
   current->prepare();  // call bechmark's prepare function
-  bench_prepare(&res); // clean everything, start timer
+  bench_prepare(res); // clean everything, start timer
   current->run();      // run it
-  bench_done(&res);    // collect results
-  res.pass = current->validate();
-  return res;
+  bench_done(res);    // collect results
+  res->pass = current->validate();
 }
 
 unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
@@ -74,7 +72,8 @@ int main() {
       unsigned long msec = ULONG_MAX;
       int succ = 1;
       for (int i = 0; i < REPEAT; i ++) {
-        Result res = run_once(bench);
+        Result res;
+        run_once(bench, &res);
         printk(res.pass ? "*" : "X");
         succ &= res.pass;
         if (res.msec < msec) msec = res.msec;
