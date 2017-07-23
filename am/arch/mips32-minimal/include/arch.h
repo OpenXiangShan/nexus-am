@@ -17,17 +17,4 @@ struct _RegSet {
 #define REG3(regs) ((regs)->a2)
 #define REG4(regs) ((regs)->a3)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void _ioe_init();
-unsigned long _uptime();
-void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h);
-void _draw_sync();
-
-#ifdef __cplusplus
-}
-
-#endif
 #endif
