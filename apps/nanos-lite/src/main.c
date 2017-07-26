@@ -40,11 +40,7 @@ int main() {
 
 #endif
 
-  /* Keep the `bt' command happy. */
-  asm volatile("movl $0, %ebp");
-  asm volatile("subl $16, %esp");
+  _trap();
 
-  ((void(*)(void))entry)();
-
-  _halt(0);
+  panic("Should not reach here");
 }
