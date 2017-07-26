@@ -16,15 +16,15 @@ int main() {
 
   _ioe_init();
 
-  static uint32_t entry;
+  Log("Initializing interrupt/exception handler...");
+  init_irq();
+
+  //uint32_t entry = loader(NULL);
 
 #ifdef __PAGE
 
   Log("Initializing memory manager...");
   init_mm();
-
-  Log("Initializing interrupt/exception handler...");
-  init_irq();
 
   _Protect *p = get_user_as();  // user process address space
 
@@ -37,10 +37,6 @@ int main() {
 
   /* Set the %esp for user program */
   asm volatile("movl %0, %%esp" : : "i"(0xc0000000));
-
-#else
-
-  entry = loader(NULL);
 
 #endif
 
