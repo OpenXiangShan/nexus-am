@@ -5,25 +5,9 @@ static _RegSet* (*H)(_Event, _RegSet*) = NULL;
 static uint32_t args[4];
 
 void irq0();
-void irq1();
-void irq14();
-void vec0();
-void vec1();
-void vec2();
-void vec3();
-void vec4();
-void vec5();
-void vec6();
-void vec7();
-void vec8();
-void vec9();
-void vec10();
-void vec11();
-void vec12();
-void vec13();
-void vec14();
 void vecsys();
-void irqall();
+void vectrap();
+void vecnull();
 
 void irq_handle(TrapFrame *tf) {
   _RegSet *regs = tf;
@@ -50,36 +34,17 @@ void irq_handle(TrapFrame *tf) {
 
 static GateDesc idt[NR_IRQ];
 
-
 void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
-
-  // init IDT
+  // initialize IDT
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
-    idt[i] = GATE(0, 0, irqall, 0);
+    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), vecnull, DPL_KERN);
   }
 
-  // --------------------- exceptions --------------------------
-  idt[0]    = GATE(0, 0, vec0,   0);
-  idt[1]    = GATE(0, 0, vec1,   0);
-  idt[2]    = GATE(0, 0, vec2,   0);
-  idt[3]    = GATE(0, 0, vec3,   0);
-  idt[4]    = GATE(0, 0, vec4,   0);
-  idt[5]    = GATE(0, 0, vec5,   0);
-  idt[6]    = GATE(0, 0, vec6,   0);
-  idt[7]    = GATE(0, 0, vec7,   0);
-  idt[8]    = GATE(0, 0, vec8,   0);
-  idt[9]    = GATE(0, 0, vec9,   0);
-  idt[10]   = GATE(0, 0, vec10,  0);
-  idt[11]   = GATE(0, 0, vec11,  0);
-  idt[12]   = GATE(0, 0, vec12,  0);
-  idt[13]   = GATE(0, 0, vec13,  0);
-  idt[14]   = GATE(0, 0, vec14,  0);
   // --------------------- interrupts --------------------------
-  idt[32]   = GATE(0, 0, irq0,   0);
-  idt[33]   = GATE(0, 0, irq1,   0);
-  idt[46]   = GATE(0, 0, irq14,  0);
+  idt[32]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq0,   DPL_KERN);
   // -------------------- system call --------------------------
-  idt[0x80] = GATE(0, 0, vecsys, 0);
+  idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
+  idt[0x81] = GATE(STS_TG32, KSEL(SEG_KCODE), vectrap, DPL_KERN);
   set_idt(idt, sizeof(idt));
   H = h;
 }
@@ -99,7 +64,7 @@ _RegSet *_make(_Area stack, void *entry, void *arg) {
 }
 
 void _trap() {
-  asm volatile("int $0x80");
+  asm volatile("int $0x81");
 }
 
 int _istatus(int enable) {
