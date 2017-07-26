@@ -240,3 +240,8 @@ void set_int_timer(int timer_no, int enable, int clear_int, int load){
     flags |= T_LOAD;
   timer[clr] = flags;
 }
+
+uint32_t get_perf_counter(int sel) {
+  volatile uint32_t *base = (uint32_t *)PERF_COUNTER_BASE;
+  return *(base + sel);
+}

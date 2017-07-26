@@ -49,9 +49,43 @@ void _putc(char ch) {
 // -------------------- halting --------------------
 
 void _halt(int code) {
+  uint32_t cycles_low = get_perf_counter(12);
+  uint32_t cycles_high = get_perf_counter(13);
+
+  uint32_t icache_access_low = get_perf_counter(0);
+  uint32_t icache_access_high = get_perf_counter(1);
+
+  uint32_t icache_miss_low = get_perf_counter(2);
+  uint32_t icache_miss_high = get_perf_counter(3);
+
+  uint32_t load_low = get_perf_counter(4);
+  uint32_t load_high = get_perf_counter(5);
+
+  uint32_t store_low = get_perf_counter(6);
+  uint32_t store_high = get_perf_counter(7);
+ 
+  uint32_t time = _uptime();
+
+  printk("cycles(low) = 0x%08x\t%u\n", cycles_low, cycles_low);
+  printk("cycles(high) = 0x%08x\t%u\n", cycles_high, cycles_high);
+
+  printk("icache access(low) = 0x%08x\t%u\n", icache_access_low, icache_access_low);
+  printk("icache access(high) = 0x%08x\t%u\n", icache_access_high, icache_access_high);
+
+  printk("icache miss(low) = 0x%08x\t%u\n", icache_miss_low, icache_miss_low);
+  printk("icache miss(high) = 0x%08x\t%u\n", icache_miss_high, icache_miss_high);
+
+  printk("load(low) = 0x%08x\t%u\n", load_low, load_low);
+  printk("load(high) = 0x%08x\t%u\n", load_high, load_high);
+
+  printk("store(low) = 0x%08x\t%u\n", store_low, store_low);
+  printk("store(high) = 0x%08x\t%u\n", store_high, store_high);
+
+  printk("time = 0x%08x\t%u\n", time, time);
+
   const char *msg = (code == 0) ?
-    "Exited (0)." :
-    "Exited (error).";
+    "Exited (0).\n" :
+    "Exited (error).\n";
 
   for (; *msg; msg ++) {
     _putc(*msg);
