@@ -2,34 +2,40 @@
 #include <x86.h>
 
 static _RegSet* (*H)(_Event, _RegSet*) = NULL;
-static uint32_t args[4];
 
 void irq0();
 void vecsys();
 void vectrap();
 void vecnull();
 
-void irq_handle(TrapFrame *tf) {
-  _RegSet *regs = tf;
-  _Event ev;
-
-  args[0] = regs->eax;
-  args[1] = regs->edx;
-  args[2] = regs->ecx;
-  args[3] = regs->ebx;
-
-  ev.event = _EVENT_NULL;
-  if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
-  else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
-  else if (tf->irq == 0x80) {
-    ev.event = _EVENT_TRAP;
-  }
-  else if (tf->irq < 32) ev.event = _EVENT_ERROR;
-
+uintptr_t irq_handle(_RegSet *r) {
+  _RegSet *next = r;
   if (H) {
-    H(ev, regs);
+    _Event ev;
+    switch (r->irq) {
+      case 32: ev.event = _EVENT_IRQ_TIME; break;
+      case 0x80: {
+        ev.event = _EVENT_SYSCALL;
+        intptr_t args[4];
+        args[0] = r->eax;
+        args[1] = r->edx;
+        args[2] = r->ecx;
+        args[3] = r->ebx;
+        ev.cause = (intptr_t)&args;
+        break;
+      }
+      case 0x81: ev.event = _EVENT_TRAP; break;
+      default: ev.event = _EVENT_ERROR; break;
+    }
+
+    r->esp = (uintptr_t)r;
+    r = H(ev, r);
+    if (r != NULL) {
+      next = r;
+    }
   }
 
+  return next->esp;
 }
 
 static GateDesc idt[NR_IRQ];
