@@ -63,6 +63,18 @@ void _halt(int code) {
 
   uint32_t store_low = get_perf_counter(6);
   uint32_t store_high = get_perf_counter(7);
+
+  uint32_t load_cycles_low = get_perf_counter(14);
+  uint32_t load_cycles_high = get_perf_counter(15);
+
+  uint32_t store_cycles_low = get_perf_counter(16);
+  uint32_t store_cycles_high = get_perf_counter(17);
+
+  uint32_t mul_low = get_perf_counter(18);
+  uint32_t mul_high = get_perf_counter(19);
+
+  uint32_t div_low = get_perf_counter(20);
+  uint32_t div_high = get_perf_counter(21);
  
   uint32_t time = _uptime();
 
@@ -80,6 +92,19 @@ void _halt(int code) {
 
   printk("store(low) = 0x%08x\t%u\n", store_low, store_low);
   printk("store(high) = 0x%08x\t%u\n", store_high, store_high);
+
+  printk("load cycles(low) = 0x%08x\t%u\n", load_cycles_low, load_cycles_low);
+  printk("load cycles(high) = 0x%08x\t%u\n", load_cycles_high, load_cycles_high);
+
+  printk("store cycles(low) = 0x%08x\t%u\n", store_cycles_low, store_cycles_low);
+  printk("store cycles(high) = 0x%08x\t%u\n", store_cycles_high, store_cycles_high);
+
+  printk("mul(low) = 0x%08x\t%u\n", mul_low, mul_low);
+  printk("mul(high) = 0x%08x\t%u\n", mul_high, mul_high);
+
+  printk("div(low) = 0x%08x\t%u\n", div_low, div_low);
+  printk("div(high) = 0x%08x\t%u\n", div_high, div_high);
+  
 
   printk("time = 0x%08x\t%u\n", time, time);
 
