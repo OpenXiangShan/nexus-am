@@ -9,10 +9,10 @@
 typedef uint32_t size_t;
 
 struct _RegSet {
-  uint32_t edi, esi, ebp, esp_;
-  uint32_t ebx, edx, ecx, eax;   // Register saved by pushal
-  int      irq;                  // # of irq
-  uint32_t err, eip, eflags;     // Execution state before trap
+  uintptr_t edi, esi, ebp, esp;
+  uintptr_t ebx, edx, ecx, eax;      // Register saved by pushal
+  int       irq;                     // # of irq
+  uintptr_t err, eip, cs, eflags;    // Execution state before trap
 };
 
 typedef struct _RegSet TrapFrame;
