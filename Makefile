@@ -2,11 +2,14 @@ include Makefile.check
 
 AM_HOME ?= $(shell pwd)
 
-.PHONY: all clean
-
 all:
 	@$(MAKE) -C am
 
-# TODO: clean everything
-clean:
-	@$(MAKE) -C am clean
+# clean everything
+ALLMAKE = $(dir $(shell find . -mindepth 2 -name "Makefile"))
+$(ALLMAKE):
+	-@$(MAKE) -C $@ clean
+
+clean: $(ALLMAKE)
+
+.PHONY: all clean $(ALLMAKE)
