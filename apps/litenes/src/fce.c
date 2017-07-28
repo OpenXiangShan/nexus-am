@@ -4,9 +4,10 @@
 #include <ppu.h>
 #include <klib.h>
 
-//#define NOGUI
+#define NOGUI
 
 int key_state[256];
+int frame_cnt;
 static byte *buf;
 
 typedef struct {
@@ -138,18 +139,17 @@ static uint32_t row[1024];
 
 void fce_update_screen()
 {
-  static int frame = 0;
   int idx = ppu_ram_read(0x3F00);
 
   int w = _screen.width;
   int h = _screen.height;
 
-  frame ++;
+  frame_cnt ++;
 #ifdef NOGUI
-  if (frame % 1000 == 0) printf("Frame %d (%d FPS)\n", frame, frame * 1000 / _uptime());
+  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / _uptime());
   return;
 #endif
-  if (frame % 2 != 0) return;
+  if (frame_cnt % 3 != 0) return;
 
   int pad = (w - h) / 2;
   for (int y = 0; y < h; y ++) {

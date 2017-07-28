@@ -3,6 +3,7 @@
 #include <fce.h>
 #include <memory.h>
 #include <klib.h>
+#include <stdint.h>
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
@@ -14,11 +15,13 @@ byte ppu_addr_latch;
 PPU_STATE ppu;
 byte ppu_latch;
 bool ppu_sprite_hit_occured = false;
-byte ppu_screen_background[264][248];
+byte ppu_screen_background[264][264];
 
 
 // preprocess tables
 static byte XHL[8][256][256];
+static uint64_t XHL64[256][256];
+static uint64_t XHLmask[256][256];
 static word ppu_ram_map[0x4000];
 
 static inline void draw(int col, int row, int idx) {
@@ -140,11 +143,17 @@ inline void ppu_ram_write(word address, byte data)
 
 // Rendering
 static void table_init() {
-  for (int x = 0; x < 8; x ++)
+  for (int x = 0; x < 8; x ++) {
     for (int h = 0; h < 256; h ++)
       for (int l = 0; l < 256; l ++) {
-        XHL[x][h][l] = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
+        int col = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
+        XHL[x][h][l] = col;
+        XHL64[h][l] |= (uint64_t)col << (x * 8);
+        if (col == 0) {
+          XHLmask[h][l] |= (uint64_t)0xff << (x * 8);
+        }
       }
+  }
 
   for (int x = 0; x < 0x4000; x ++) {
     ppu_ram_map[x] = ppu_get_real_ram_address(x);
@@ -157,6 +166,9 @@ void ppu_draw_background_scanline(bool mirror)
     int taddr = ppu_base_nametable_address() + (tile_y << 5) + (mirror ? 0x400 : 0);
     int y_in_tile = ppu.scanline & 0x7;
     int scroll_base = - ppu.PPUSCROLL_X + (mirror ? 256 : 0);
+
+    int palette_cache[4], do_update = frame_cnt % 3 == 0;
+
     word attribute_address = (ppu_base_nametable_address() + (mirror ? 0x400 : 0) + 0x3C0 +  -1 + ((ppu.scanline >> 5) << 3));
 
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < 32; tile_x++) {
@@ -183,15 +195,22 @@ void ppu_draw_background_scanline(bool mirror)
         palette_attribute &= 3;
         word palette_address = 0x3F00 + (palette_attribute << 2);
 
-        for (int x = 0; x < 8; x ++) {
-            byte color = XHL[x][h][l];
-//            byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-            if (color != 0) {
-                int idx = ppu_ram_read(palette_address + color);
-                draw(scroll_base + x, ppu.scanline + 1, idx);
-                ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color;
+        palette_cache[1] = ppu_ram_read(palette_address + 1);
+        palette_cache[2] = ppu_ram_read(palette_address + 2);
+        palette_cache[3] = ppu_ram_read(palette_address + 3);
+
+        if (do_update) {
+            for (int x = 0; x < 8; x ++) {
+                byte color = XHL[x][h][l];
+                // lookup-table is much faster on x86.
+                // byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
+                if (color != 0) {
+                    draw(scroll_base + x, ppu.scanline + 1, palette_cache[color]);
+                }
             }
         }
+        uint64_t *ptr = (uint64_t*)&ppu_screen_background[ppu.scanline][(tile_x << 3)];
+        *ptr = (XHL64[h][l]) | (XHLmask[h][l] & (*ptr)) ;
 
         taddr ++;
         scroll_base += 8;
@@ -245,7 +264,7 @@ void ppu_draw_sprite_scanline()
                 }
 
                 // Checking sprite 0 hit
-                if (ppu_shows_background() && !ppu_sprite_hit_occured && n == 0 && ppu_screen_background[screen_x][sprite_y + y_in_tile] == color) {
+                if (ppu_shows_background() && !ppu_sprite_hit_occured && n == 0 && ppu_screen_background[sprite_y + y_in_tile][screen_x] == color) {
                     ppu_set_sprite_0_hit(true);
                     ppu_sprite_hit_occured = true;
                 }

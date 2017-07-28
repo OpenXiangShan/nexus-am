@@ -14,6 +14,7 @@ void fce_run();
 void fce_update_screen();
 
 extern byte canvas[257][520];
+extern int frame_cnt;
 
 extern char rom_mario_nes[];
 
