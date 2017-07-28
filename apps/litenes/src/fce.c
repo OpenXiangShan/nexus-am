@@ -2,6 +2,7 @@
 #include <cpu.h>
 #include <memory.h>
 #include <ppu.h>
+#include <klib.h>
 
 int key_state[256];
 static byte *buf;
@@ -127,7 +128,7 @@ static const uint32_t palette[64] = {
   0xB3EEFF, 0xDDDDDD, 0x111111, 0x111111
 }; 
 
-byte canvas[H][W];
+byte canvas[256][512];
 
 static int xmap[1024];
 static uint32_t row[1024];
@@ -147,16 +148,15 @@ void fce_update_screen()
     if ( (y & 1) != (frame & 1) ) continue;
     int y1 = y * H / h;
     for (int x = pad; x < w - pad; x ++) {
-      row[x] = palette[canvas[y1][xmap[x]]];
+      row[x] = palette[canvas[y1][xmap[x] + 0xff]];
     }
     _draw_rect(row + pad, pad, y, w - 2 * pad, 1);
   }
 
   _draw_sync();
 
-  for (int y = 0; y < H; y ++)
-    for (int x = 0; x < W; x ++)
-      canvas[y][x] = idx;
+  assert(sizeof(byte) == 1);
+  memset(canvas, idx, sizeof(canvas));
 }
 
 void xmap_init() {

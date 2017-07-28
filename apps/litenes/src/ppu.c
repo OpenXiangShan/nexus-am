@@ -2,6 +2,7 @@
 #include <cpu.h>
 #include <fce.h>
 #include <memory.h>
+#include <klib.h>
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
@@ -15,11 +16,8 @@ byte ppu_latch;
 bool ppu_sprite_hit_occured = false;
 byte ppu_screen_background[264][248];
 
-void draw(int x, int y, int idx) {
-  if (x >= 0 && y >= 0 && x < W && y < H) {
-//    _draw_p(x, y, palette[idx]);
-    canvas[y][x] = idx;
-  }
+static inline void draw(int col, int row, int idx) {
+  canvas[row & 0xff][(col + 0xff) & 0x1ff] = idx;
 }
 
 // PPUCTRL Functions

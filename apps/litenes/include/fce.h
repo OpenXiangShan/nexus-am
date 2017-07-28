@@ -13,7 +13,7 @@ void fce_init();
 void fce_run();
 void fce_update_screen();
 
-extern byte canvas[H][W];
+extern byte canvas[256][512];
 
 extern char rom_mario_nes[];
 
