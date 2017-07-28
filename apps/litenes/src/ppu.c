@@ -22,9 +22,8 @@ static byte XHL[8][256][256];
 static word ppu_ram_map[0x4000];
 
 static inline void draw(int col, int row, int idx) {
-  canvas[row & 0xff][(col + 0xff) & 0x1ff] = idx;
+  canvas[row][col + 0xff] = idx;
 }
-
 
 // PPUCTRL Functions
 

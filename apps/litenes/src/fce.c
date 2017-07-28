@@ -4,6 +4,8 @@
 #include <ppu.h>
 #include <klib.h>
 
+#define NOGUI
+
 int key_state[256];
 static byte *buf;
 
@@ -80,14 +82,15 @@ void fce_init()
 static unsigned long gtime;
 
 void wait_for_frame() {
+#ifdef NOGUI
+  return;
+#endif
   unsigned long cur = _uptime();
   while (cur - gtime < 1000 / FPS) {
     cur = _uptime();
   }
   gtime = cur;
 }
-
-
 
 void fce_run()
 {
@@ -128,7 +131,7 @@ static const uint32_t palette[64] = {
   0xB3EEFF, 0xDDDDDD, 0x111111, 0x111111
 }; 
 
-byte canvas[256][512];
+byte canvas[257][520];
 
 static int xmap[1024];
 static uint32_t row[1024];
@@ -142,7 +145,10 @@ void fce_update_screen()
   int h = _screen.height;
 
   frame ++;
-//  if (frame % 10 == 0) printf("Frame %d (%d FPS)\n", frame, frame * 1000 / _uptime());
+#ifdef NOGUI
+  if (frame % 1000 == 0) printf("Frame %d (%d FPS)\n", frame, frame * 1000 / _uptime());
+  return;
+#endif
   if (frame % 2 != 0) return;
 
   int pad = (w - h) / 2;
