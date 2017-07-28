@@ -2,8 +2,12 @@
 #include <cpu.h>
 #include <memory.h>
 #include <ppu.h>
+#include <klib.h>
+
+//#define NOGUI
 
 int key_state[256];
+int frame_cnt;
 static byte *buf;
 
 typedef struct {
@@ -79,14 +83,15 @@ void fce_init()
 static unsigned long gtime;
 
 void wait_for_frame() {
+#ifdef NOGUI
+  return;
+#endif
   unsigned long cur = _uptime();
   while (cur - gtime < 1000 / FPS) {
     cur = _uptime();
   }
   gtime = cur;
 }
-
-
 
 void fce_run()
 {
@@ -127,36 +132,38 @@ static const uint32_t palette[64] = {
   0xB3EEFF, 0xDDDDDD, 0x111111, 0x111111
 }; 
 
-byte canvas[H][W];
+byte canvas[257][520];
 
 static int xmap[1024];
 static uint32_t row[1024];
 
 void fce_update_screen()
 {
-  static int frame = 0;
   int idx = ppu_ram_read(0x3F00);
 
   int w = _screen.width;
   int h = _screen.height;
 
-  frame ++;
+  frame_cnt ++;
+#ifdef NOGUI
+  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / _uptime());
+  return;
+#endif
+  if (frame_cnt % 3 != 0) return;
 
   int pad = (w - h) / 2;
   for (int y = 0; y < h; y ++) {
-    if ( (y & 1) != (frame & 1) ) continue;
-    int y1 = y * H / h;
+    int y1 = y * (H - 1) / h + 1;
     for (int x = pad; x < w - pad; x ++) {
-      row[x] = palette[canvas[y1][xmap[x]]];
+      row[x] = palette[canvas[y1][xmap[x] + 0xff]];
     }
     _draw_rect(row + pad, pad, y, w - 2 * pad, 1);
   }
 
   _draw_sync();
 
-  for (int y = 0; y < H; y ++)
-    for (int x = 0; x < W; x ++)
-      canvas[y][x] = idx;
+  assert(sizeof(byte) == 1);
+  memset(canvas, idx, sizeof(canvas));
 }
 
 void xmap_init() {

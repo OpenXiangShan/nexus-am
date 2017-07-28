@@ -56,7 +56,6 @@ typedef struct {
 extern PPU_STATE ppu;
 extern byte ppu_latch;
 extern bool ppu_sprite_hit_occured;
-extern byte ppu_screen_background[264][248];
 
 word ppu_get_real_ram_address(word address);
 
