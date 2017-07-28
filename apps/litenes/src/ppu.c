@@ -182,24 +182,23 @@ void ppu_draw_background_scanline(bool mirror)
         byte l = ppu_ram_read(tile_address + y_in_tile);
         byte h = ppu_ram_read(tile_address + y_in_tile + 8);
 
-        attribute_address += (tile_x & 3) == 0;
-        bool top = (ppu.scanline & 31) < 16;
-        bool left = ((tile_x & 31) < 16);
-        byte palette_attribute = ppu_ram_read(attribute_address);
-        if (!top) {
-            palette_attribute >>= 4;
-        }
-        if (!left) {
-            palette_attribute >>= 2;
-        }
-        palette_attribute &= 3;
-        word palette_address = 0x3F00 + (palette_attribute << 2);
-
-        palette_cache[1] = ppu_ram_read(palette_address + 1);
-        palette_cache[2] = ppu_ram_read(palette_address + 2);
-        palette_cache[3] = ppu_ram_read(palette_address + 3);
-
         if (do_update) {
+            attribute_address += (tile_x & 3) == 0;
+            bool top = (ppu.scanline & 31) < 16;
+            bool left = ((tile_x & 31) < 16);
+            byte palette_attribute = ppu_ram_read(attribute_address);
+            if (!top) {
+                palette_attribute >>= 4;
+            }
+            if (!left) {
+                palette_attribute >>= 2;
+            }
+            palette_attribute &= 3;
+
+            word palette_address = 0x3F00 + (palette_attribute << 2);
+            palette_cache[1] = ppu_ram_read(palette_address + 1);
+            palette_cache[2] = ppu_ram_read(palette_address + 2);
+            palette_cache[3] = ppu_ram_read(palette_address + 3);
             for (int x = 0; x < 8; x ++) {
                 byte color = XHL[x][h][l];
                 // lookup-table is much faster on x86.
