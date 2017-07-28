@@ -1,8 +1,8 @@
 #include <am.h>
 #include <SDL2/SDL.h>
 
-#define W 320
-#define H 200
+#define W 400
+#define H 300
 
 _Screen _screen;
 
