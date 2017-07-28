@@ -4,7 +4,7 @@
 #include <ppu.h>
 #include <klib.h>
 
-#define NOGUI
+//#define NOGUI
 
 int key_state[256];
 static byte *buf;

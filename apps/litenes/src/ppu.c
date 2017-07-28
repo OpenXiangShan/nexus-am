@@ -188,8 +188,8 @@ void ppu_draw_background_scanline(bool mirror)
 //            byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
             if (color != 0) {
                 int idx = ppu_ram_read(palette_address + color);
-                ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color;
                 draw(scroll_base + x, ppu.scanline + 1, idx);
+                ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color;
             }
         }
 
