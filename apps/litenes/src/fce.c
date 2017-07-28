@@ -142,11 +142,12 @@ void fce_update_screen()
   int h = _screen.height;
 
   frame ++;
+//  if (frame % 10 == 0) printf("Frame %d (%d FPS)\n", frame, frame * 1000 / _uptime());
+  if (frame % 2 != 0) return;
 
   int pad = (w - h) / 2;
   for (int y = 0; y < h; y ++) {
-    if ( (y & 1) != (frame & 1) ) continue;
-    int y1 = y * H / h;
+    int y1 = y * (H - 1) / h + 1;
     for (int x = pad; x < w - pad; x ++) {
       row[x] = palette[canvas[y1][xmap[x] + 0xff]];
     }

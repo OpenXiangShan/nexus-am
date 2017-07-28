@@ -16,9 +16,15 @@ byte ppu_latch;
 bool ppu_sprite_hit_occured = false;
 byte ppu_screen_background[264][248];
 
+
+// preprocess tables
+static byte XHL[8][256][256];
+static word ppu_ram_map[0x4000];
+
 static inline void draw(int col, int row, int idx) {
   canvas[row & 0xff][(col + 0xff) & 0x1ff] = idx;
 }
+
 
 // PPUCTRL Functions
 
@@ -66,6 +72,7 @@ inline void ppu_set_in_vblank(bool yesno)                           { common_mod
 
 // RAM
 
+
 inline word ppu_get_real_ram_address(word address)
 {
     if (address < 0x2000) {
@@ -91,12 +98,12 @@ inline word ppu_get_real_ram_address(word address)
 
 inline byte ppu_ram_read(word address)
 {
-    return PPU_RAM[ppu_get_real_ram_address(address)];
+    return PPU_RAM[ppu_ram_map[address]];
 }
 
 inline void ppu_ram_write(word address, byte data)
 {
-    PPU_RAM[ppu_get_real_ram_address(address)] = data;
+    PPU_RAM[ppu_ram_map[address]] = data;
 }
 
 // 3F01 = 0F (00001111)
@@ -133,16 +140,17 @@ inline void ppu_ram_write(word address, byte data)
 
 
 // Rendering
+static void table_init() {
+  for (int x = 0; x < 8; x ++)
+    for (int h = 0; h < 256; h ++)
+      for (int l = 0; l < 256; l ++) {
+        XHL[x][h][l] = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
+      }
 
-#define LOOP(x) \
-    { \
-        byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1); \
-        if (color != 0) { \
-            int idx = ppu_ram_read(palette_address + color); \
-            ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color; \
-            draw(scroll_base + x, ppu.scanline + 1, idx); \
-        } \
-    }
+  for (int x = 0; x < 0x4000; x ++) {
+    ppu_ram_map[x] = ppu_get_real_ram_address(x);
+  }
+}
 
 void ppu_draw_background_scanline(bool mirror)
 {
@@ -176,14 +184,15 @@ void ppu_draw_background_scanline(bool mirror)
         palette_attribute &= 3;
         word palette_address = 0x3F00 + (palette_attribute << 2);
 
-        LOOP(0)
-        LOOP(1)
-        LOOP(2)
-        LOOP(3)
-        LOOP(4)
-        LOOP(5)
-        LOOP(6)
-        LOOP(7)
+        for (int x = 0; x < 8; x ++) {
+            byte color = XHL[x][h][l];
+//            byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
+            if (color != 0) {
+                int idx = ppu_ram_read(palette_address + color);
+                ppu_screen_background[(tile_x << 3) + x][ppu.scanline] = color;
+                draw(scroll_base + x, ppu.scanline + 1, idx);
+            }
+        }
 
         taddr ++;
         scroll_base += 8;
@@ -222,9 +231,7 @@ void ppu_draw_sprite_scanline()
         word palette_address = 0x3F10 + (palette_attribute << 2);
         int x;
         for (x = 0; x < 8; x++) {
-            int color = hflip ? 
-                ((((h >> x) & 1) << 1) | ((l >> x) & 1)):
-                ((((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1));
+            int color = hflip ? XHL[7 - x][h][l] : XHL[x][h][l];
 
             // Color 0 is transparent
             if (color != 0) {
@@ -387,6 +394,7 @@ void ppu_init()
     ppu.PPUSTATUS |= 0xA0;
     ppu.PPUDATA = 0;
     ppu_2007_first_read = true;
+    table_init();
 }
 
 void ppu_sprram_write(byte data)
