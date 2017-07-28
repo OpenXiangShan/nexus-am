@@ -218,6 +218,7 @@ void ppu_draw_background_scanline(bool mirror)
 
 void ppu_draw_sprite_scanline()
 {
+    int do_update = frame_cnt % 3 == 0;
     int scanline_sprite_count = 0;
     int n;
     for (n = 0; n < 0x100; n += 4) {
@@ -253,13 +254,15 @@ void ppu_draw_sprite_scanline()
             // Color 0 is transparent
             if (color != 0) {
                 int screen_x = sprite_x + x;
-                int idx = ppu_ram_read(palette_address + color);
-                
-                if (PPU_SPRRAM[n + 2] & 0x20) {
-                    draw(screen_x, sprite_y + y_in_tile + 1, idx); // bbg
-                }
-                else {
-                    draw(screen_x, sprite_y + y_in_tile + 1, idx); // fg
+
+                if (do_update) {
+                    int idx = ppu_ram_read(palette_address + color);
+                    if (PPU_SPRRAM[n + 2] & 0x20) {
+                        draw(screen_x, sprite_y + y_in_tile + 1, idx); // bbg
+                    }
+                    else {
+                        draw(screen_x, sprite_y + y_in_tile + 1, idx); // fg
+                    }
                 }
 
                 // Checking sprite 0 hit
