@@ -15,6 +15,7 @@ AS = $(CROSS_COMPILE)gcc
 CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
+OBJCOPY = $(CROSS_COMPILE)objcopy
 
 ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
 
