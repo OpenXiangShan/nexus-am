@@ -8,7 +8,7 @@ FSIMG_PATH = $(NAVY_HOME)/fsimg
 FSIMG_FILES = $(shell find $(FSIMG_PATH) -type f)
 RAMDISK_FILE = build/ramdisk.img
 
-.PHONY: fsimg
+.PHONY: fsimg update
 
 fsimg:
 	$(MAKE) -C $(NAVY_HOME) ISA=$(ISA)
@@ -29,3 +29,5 @@ src/syscall.h: $(NAVY_HOME)/libs/libos/src/syscall.h
 
 $(RAMDISK_FILE): $(NAVY_HOME)/tests/hello/build/hello-x86
 	$(OBJCOPY) --set-section-flags .bss=alloc,contents -O binary $^ $@
+
+update: src/initrd.S src/syscall.h
