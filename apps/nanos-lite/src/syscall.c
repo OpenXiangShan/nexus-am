@@ -1,5 +1,5 @@
 #include "common.h"
-#include <sys/syscall.h>
+#include "syscall.h"
 
 bool mm_brk(uint32_t new_brk);
 int fs_open(const char *pathname, int flags, int mode);
