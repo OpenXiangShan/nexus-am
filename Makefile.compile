@@ -25,7 +25,6 @@ CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -fn
 ASFLAGS  +=                -MMD                     $(INCLUDES) -D$(ISA_DEF)
 
 ifeq ($(ISA), mips32)
-CXX = $(CROSS_COMPILE)g++-5
 CFLAGS_COMMON = -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL -mno-llsc -mno-imadd -mno-mad
 CFLAGS   += $(CFLAGS_COMMON)
 CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
