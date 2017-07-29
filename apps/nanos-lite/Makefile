@@ -8,18 +8,26 @@ FSIMG_PATH = $(NAVY_HOME)/fsimg
 FSIMG_FILES = $(shell find $(FSIMG_PATH) -type f)
 RAMDISK_FILE = build/ramdisk.img
 
-.PHONY: fsimg
+.PHONY: fsimg update
 
 fsimg:
 	$(MAKE) -C $(NAVY_HOME) ISA=$(ISA)
 
 $(FSIMG_FILES): fsimg
 
-src/files.h: $(FSIMG_FILES)
-	wc -c $(FSIMG_FILES) | grep -v 'total$$' | sed -e 's+ $(FSIMG_PATH)+ +' | awk -v sum=$(NANOS_MAX_SIZE) '{print "\x7b\x22" $$2 "\x22\x2c " $$1 "\x2c " sum "\x7d\x2c";sum += $$1}' > $@
+#src/files.h: $(FSIMG_FILES)
+#	wc -c $(FSIMG_FILES) | grep -v 'total$$' | sed -e 's+ $(FSIMG_PATH)+ +' | awk -v sum=$(NANOS_MAX_SIZE) '{print "\x7b\x22" $$2 "\x22\x2c " $$1 "\x2c " sum "\x7d\x2c";sum += $$1}' > $@
 
 src/initrd.S: $(RAMDISK_FILE)
 	touch $@
 
-$(RAMDISK_FILE): $(FSIMG_FILES)
-	cat $^ > $@
+src/syscall.h: $(NAVY_HOME)/libs/libos/src/syscall.h
+	ln -sf $^ $@
+
+#$(RAMDISK_FILE): $(FSIMG_FILES)
+#	cat $^ > $@
+
+$(RAMDISK_FILE): $(NAVY_HOME)/tests/hello/build/hello-x86
+	$(OBJCOPY) --set-section-flags .bss=alloc,contents -O binary $^ $@
+
+update: src/initrd.S src/syscall.h

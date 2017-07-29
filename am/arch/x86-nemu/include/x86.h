@@ -1,9 +1,18 @@
 #ifndef __X86_H__
 #define __X86_H__
 
+// CPU rings
+#define DPL_KERN  0x0     // Kernel (ring 0)
+#define DPL_USER  0x3     // User (ring 3)
+
 // Eflags register
 #define FL_TF     0x00000100  // Trap Flag
 #define FL_IF     0x00000200  // Interrupt Enable
+
+// System segment type bits
+#define STS_T32A  0x9     // Available 32-bit TSS
+#define STS_IG32  0xE     // 32-bit Interrupt Gate
+#define STS_TG32  0xF     // 32-bit Trap Gate
 
 // Control Register flags
 #define CR0_PE    0x00000001  // Protection Enable
@@ -24,6 +33,17 @@
 #define PTE_PCD   0x010     // Cache-Disable
 #define PTE_A     0x020     // Accessed
 #define PTE_D     0x040     // Dirty
+
+// GDT entries
+#define NR_SEG    6       // GDT size
+#define SEG_KCODE   1       // Kernel code
+#define SEG_KDATA   2       // Kernel data/stack
+#define SEG_UCODE   3       // User code
+#define SEG_UDATA   4       // User data/stack
+#define SEG_TSS   5       // Global unique task state segement
+
+#define KSEL(desc) (((desc) << 3) | DPL_KERN)
+#define USEL(desc) (((desc) << 3) | DPL_USER)
 
 // IDT size
 #define NR_IRQ    256     // IDT size
