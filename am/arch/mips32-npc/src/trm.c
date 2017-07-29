@@ -75,7 +75,22 @@ void _halt(int code) {
 
   uint32_t div_low = get_perf_counter(20);
   uint32_t div_high = get_perf_counter(21);
+
+  uint32_t dcache_r_access_low = get_perf_counter(22);
+  uint32_t dcache_r_access_high = get_perf_counter(23);
  
+  uint32_t dcache_w_access_low = get_perf_counter(24);
+  uint32_t dcache_w_access_high = get_perf_counter(25);
+  
+  uint32_t dcache_r_miss_low = get_perf_counter(26);
+  uint32_t dcache_r_miss_high = get_perf_counter(27);
+  
+  uint32_t dcache_w_miss_low = get_perf_counter(28);
+  uint32_t dcache_w_miss_high = get_perf_counter(29);
+
+  uint32_t dcache_r_miss_cycles_low = get_perf_counter(30);
+  uint32_t dcache_r_miss_cycles_high = get_perf_counter(31);
+
   uint32_t time = _uptime();
 
   printk("cycles(low) = 0x%08x\t%u\n", cycles_low, cycles_low);
@@ -104,7 +119,21 @@ void _halt(int code) {
 
   printk("div(low) = 0x%08x\t%u\n", div_low, div_low);
   printk("div(high) = 0x%08x\t%u\n", div_high, div_high);
+
+  printk("dcache read access(low) = 0x%08x\t%u\n", dcache_r_access_low, dcache_r_access_low);
+  printk("dcache read access(high) = 0x%08x\t%u\n", dcache_r_access_high, dcache_r_access_high);
   
+  printk("dcache write access(low) = 0x%08x\t%u\n", dcache_w_access_low, dcache_w_access_low);
+  printk("dcache write access(high) = 0x%08x\t%u\n", dcache_w_access_high, dcache_w_access_high);
+  
+  printk("dcache read miss(low) = 0x%08x\t%u\n", dcache_r_miss_low, dcache_r_miss_low);
+  printk("dcache read miss(high) = 0x%08x\t%u\n", dcache_r_miss_high, dcache_r_miss_high);
+  
+  printk("dcache write miss(low) = 0x%08x\t%u\n", dcache_w_miss_low, dcache_w_miss_low);
+  printk("dcache write miss(high) = 0x%08x\t%u\n", dcache_w_miss_high, dcache_w_miss_high);
+
+  printk("dcache read miss cycles(low) = 0x%08x\t%u\n", dcache_r_miss_cycles_low, dcache_r_miss_cycles_low);
+  printk("dcache read miss cycles(high) = 0x%08x\t%u\n", dcache_r_miss_cycles_high, dcache_r_miss_cycles_high);
 
   printk("time = 0x%08x\t%u\n", time, time);
 
