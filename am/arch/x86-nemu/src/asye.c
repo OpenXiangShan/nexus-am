@@ -57,16 +57,13 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
 
 _RegSet *_make(_Area stack, void *entry, void *arg) {
   // TODO: pass arg
-  /*
-  _RegSet *regs = (_RegSet*)stack.start;
-  regs->esp0 = reinterpret_cast<uint32_t>(stack.end);
-  regs->cs = 0;
-  regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
-  regs->eip = (uint32_t)entry;
-  regs->eflags = FL_IF;
-  return regs;
-  */
-  return NULL;
+  stack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
+  _RegSet *r = (_RegSet*)stack.end - 1;
+  r->esp = (uintptr_t)r;
+  r->cs = 0x8;
+  r->eip = (uintptr_t)entry;
+  r->eflags = 0;
+  return r;
 }
 
 void _trap() {
