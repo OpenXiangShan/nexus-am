@@ -16,3 +16,8 @@ void load_first_prog() {
 
   pcb[0] = _make(stack, (void *)entry, NULL);
 }
+
+_RegSet* schedule() {
+  Log("schedule");
+  return pcb[0];
+}
