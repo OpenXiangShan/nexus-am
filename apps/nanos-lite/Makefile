@@ -21,5 +21,8 @@ src/files.h: $(FSIMG_FILES)
 src/initrd.S: $(RAMDISK_FILE)
 	touch $@
 
+src/syscall.h: $(NAVY_HOME)/libs/libos/src/syscall.h
+	ln -sf $^ $@
+
 $(RAMDISK_FILE): $(FSIMG_FILES)
 	cat $^ > $@
