@@ -15,8 +15,8 @@ fsimg:
 
 $(FSIMG_FILES): fsimg
 
-src/files.h: $(FSIMG_FILES)
-	wc -c $(FSIMG_FILES) | grep -v 'total$$' | sed -e 's+ $(FSIMG_PATH)+ +' | awk -v sum=$(NANOS_MAX_SIZE) '{print "\x7b\x22" $$2 "\x22\x2c " $$1 "\x2c " sum "\x7d\x2c";sum += $$1}' > $@
+#src/files.h: $(FSIMG_FILES)
+#	wc -c $(FSIMG_FILES) | grep -v 'total$$' | sed -e 's+ $(FSIMG_PATH)+ +' | awk -v sum=$(NANOS_MAX_SIZE) '{print "\x7b\x22" $$2 "\x22\x2c " $$1 "\x2c " sum "\x7d\x2c";sum += $$1}' > $@
 
 src/initrd.S: $(RAMDISK_FILE)
 	touch $@
@@ -24,5 +24,8 @@ src/initrd.S: $(RAMDISK_FILE)
 src/syscall.h: $(NAVY_HOME)/libs/libos/src/syscall.h
 	ln -sf $^ $@
 
-$(RAMDISK_FILE): $(FSIMG_FILES)
-	cat $^ > $@
+#$(RAMDISK_FILE): $(FSIMG_FILES)
+#	cat $^ > $@
+
+$(RAMDISK_FILE): $(NAVY_HOME)/tests/hello/build/hello-x86
+	$(OBJCOPY) --set-section-flags .bss=alloc,contents -O binary $^ $@
