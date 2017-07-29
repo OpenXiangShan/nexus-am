@@ -55,10 +55,5 @@ int _read_key() {
   int status = inb(0x64);
   if ((status & 0x1) == 0) return _KEY_NONE;
 
-  int code = inb(0x60) & 0xff;
-  int keydown_mask = code & 0x80;
-  code &= 0x7f;
-  keydown_mask = (keydown_mask && (code != _KEY_NONE) ? KEYDOWN_MASK : 0);
-
-  return code | keydown_mask;
+  return inl(0x60);
 }

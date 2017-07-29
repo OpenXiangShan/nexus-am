@@ -2,6 +2,9 @@
 #include <x86-nemu.h>
 #include <x86.h>
 
+// Define this macro after serial has been implemented
+#define HAS_SERIAL
+
 #define SERIAL_PORT 0x3f8
 
 extern char _heap_start;
@@ -14,7 +17,7 @@ _Area _heap = {
 };
 
 static void serial_init() {
-#ifdef HAS_DEVICE
+#ifdef HAS_SERIAL
   outb(SERIAL_PORT + 1, 0x00);
   outb(SERIAL_PORT + 3, 0x80);
   outb(SERIAL_PORT + 0, 0x01);
@@ -26,11 +29,9 @@ static void serial_init() {
 }
 
 void _putc(char ch) {
-#ifdef HAS_DEVICE
+#ifdef HAS_SERIAL
   while ((inb(SERIAL_PORT + 5) & 0x20) == 0);
   outb(SERIAL_PORT, ch);
-#else
-  asm volatile(".byte 0xd6" : :"a"(2), "b"((uint8_t)ch));
 #endif
 }
 

@@ -1,4 +1,5 @@
 #!/bin/bash
 
-make -C $NEMU_HOME
-$NEMU_HOME/build/nemu $1
+objcopy -S -O binary $1 $1.bin
+
+make -C $NEMU_HOME && $NEMU_HOME/build/nemu $1.bin
