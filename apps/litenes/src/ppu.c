@@ -140,6 +140,19 @@ inline void ppu_ram_write(word address, byte data)
 // 3F1F = 11 (00010001)
 // 3F20 = 2B (00101011)
 
+static inline uint64_t int_shl(int n, int s) {
+  // compute (uint64_t)n << s without generating shld instruction in x86
+  int hi, lo;
+  if (s < 32) {
+    lo = n << s;
+    hi = n >> (32 - s);
+  }
+  else {
+    lo = 0;
+    hi = n << (s - 32);
+  }
+  return ((uint64_t)hi << 32) | lo;
+}
 
 // Rendering
 static void table_init() {
@@ -148,9 +161,9 @@ static void table_init() {
       for (int l = 0; l < 256; l ++) {
         int col = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
         XHL[x][h][l] = col;
-        XHL64[h][l] |= (uint64_t)col << (x * 8);
+        XHL64[h][l] |= int_shl(col, x * 8);
         if (col == 0) {
-          XHLmask[h][l] |= (uint64_t)0xff << (x * 8);
+          XHLmask[h][l] |= int_shl(0xff,x * 8);
         }
       }
   }
