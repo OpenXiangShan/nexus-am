@@ -8,3 +8,7 @@ bash -c "cd $DIR/boot && make"
 
 mips-linux-gnu-ld --gc-sections -EL -T $DIR/loader.ld -e _start -o ${DEST} $DIR/boot/start.o --start-group $@ --end-group &&  \
 python $DIR/instr_check.py ${DEST}
+
+mips-linux-gnu-objcopy --set-section-flags .bss=alloc,contents -O binary ${DEST} ${DEST}.bin
+truncate -s %8 ${DEST}.bin
+hexdump -ve '2/ "%08x " "\n"' ${DEST}.bin | awk '{print $2$1}' > ${DEST}.bin.txt
