@@ -1,13 +1,10 @@
 MEMORY {
-  bram : ORIGIN = 0x0, LENGTH = 8K
   ddr : ORIGIN = 0x10000000, LENGTH = 128M
 }
 
 SECTIONS {
-  loader : {
-    *(loader)
-  } > bram
   .text : {
+    *(loader)
     *(.text)
     etext = .;
     _etext = .;
