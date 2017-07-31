@@ -16,6 +16,7 @@
 #define INTERVAL 300000
 #define REAL_TIMER_BASE ((volatile char *)0x41c00000)
 #define INT_TIMER_BASE ((volatile char *)0x41c10000)
+#define PERF_COUNTER_BASE ((volatile char *)0xc0000000)
 
 #define cp0_badvaddr 8
 #define cp0_count    9
@@ -68,5 +69,7 @@ uint32_t real_timer_get_counter_reg(int sel);
 void int_timer0_init(uint32_t count_down_cycle, int auto_load);
 void int_timer1_init(uint32_t count_down_cycle, int auto_load);
 void set_int_timer(int timer_no, int enable, int clear_int, int load);
+
+uint32_t get_perf_counter(int sel);
 
 #endif
