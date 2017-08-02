@@ -1,3 +1,0 @@
-#!/bin/bash
-
-echo "one-button simulation $1"
