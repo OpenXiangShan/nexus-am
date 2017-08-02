@@ -1,9 +1,9 @@
 #ifndef __NPC_H__
 #define __NPC_H__
 
-#define VMEM_ADDR ((volatile void *)0x40010000)
-#define SCR_WIDTH 320
-#define SCR_HEIGHT 200
+#define VMEM_ADDR ((volatile void *)0x50000000)
+#define SCR_WIDTH 400
+#define SCR_HEIGHT 300
 #define SCR_SIZE (SCR_WIDTH * SCR_HEIGHT)
 #define SERIAL_PORT ((volatile char *)0x40001000)
 #define Rx 0x0
