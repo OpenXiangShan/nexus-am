@@ -76,8 +76,7 @@ void loader(char *file) {
 	uint32_t *p_magic = (void *)buf;
 	// check the magic number
 	assert(*p_magic == elf_magic);
-
-  assert(elf->e_entry == 0x0);
+	 assert(elf->e_entry == 0x10000000);
 
 	for(i = 0, ph = (void *)buf + elf->e_phoff; i < elf->e_phnum; i ++) {
 		// scan the program header table, load each segment into memory
