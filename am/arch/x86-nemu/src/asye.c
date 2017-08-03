@@ -19,9 +19,9 @@ uintptr_t irq_handle(_RegSet *r) {
         ev.event = _EVENT_SYSCALL;
         intptr_t args[4];
         args[0] = r->eax;
-        args[1] = r->edx;
+        args[1] = r->ebx;
         args[2] = r->ecx;
-        args[3] = r->ebx;
+        args[3] = r->edx;
         ev.cause = (intptr_t)&args;
         break;
       }
