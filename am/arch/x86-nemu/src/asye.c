@@ -13,11 +13,11 @@ uintptr_t irq_handle(_RegSet *r) {
   _RegSet *next = r;
   if (H) {
     _Event ev;
+    intptr_t args[4];
     switch (r->irq) {
       case 32: ev.event = _EVENT_IRQ_TIME; break;
       case 0x80: {
         ev.event = _EVENT_SYSCALL;
-        intptr_t args[4];
         args[0] = r->eax;
         args[1] = r->ebx;
         args[2] = r->ecx;
@@ -30,6 +30,10 @@ uintptr_t irq_handle(_RegSet *r) {
     }
 
     next = H(ev, r);
+    if (ev.event == _EVENT_SYSCALL) {
+      r->eax = args[0];
+    }
+
     if (next == NULL) {
       next = r;
     }
