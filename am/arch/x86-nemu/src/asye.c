@@ -29,8 +29,8 @@ uintptr_t irq_handle(_RegSet *r) {
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    r = H(ev, r);
-    if (r != NULL) {
+    next = H(ev, r);
+    if (next == NULL) {
       next = r;
     }
   }
