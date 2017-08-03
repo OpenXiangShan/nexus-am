@@ -9,6 +9,7 @@ void vectrap();
 void vecnull();
 
 uintptr_t irq_handle(_RegSet *r) {
+  r->esp = (uintptr_t)r;
   _RegSet *next = r;
   if (H) {
     _Event ev;
@@ -28,7 +29,6 @@ uintptr_t irq_handle(_RegSet *r) {
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    r->esp = (uintptr_t)r;
     r = H(ev, r);
     if (r != NULL) {
       next = r;
