@@ -35,6 +35,7 @@ static uintptr_t max_brk = 0;
 
 /* The brk() system call handler. */
 bool mm_brk(uint32_t new_brk) {
+  return 0;
 	if(cur_brk == 0) {
     cur_brk = max_brk = new_brk;
   }
