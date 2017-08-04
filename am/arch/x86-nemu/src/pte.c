@@ -1,4 +1,3 @@
-#include <x86-nemu.h>
 #include <x86.h>
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
@@ -9,7 +8,7 @@ void* (*palloc_f)();
 void (*pfree_f)(void*);
 
 _Area segments[] = {      // Kernel memory mappings
-    {.start = (void*)0,          .end = (void*)PMEM_SIZE},  //   Low memory: kernel data
+    {.start = (void*)0,          .end = (void*)PMEM_SIZE}
 };
 
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
@@ -46,16 +45,11 @@ void _protect(_Protect *p) {
   for (int i = 0; i < 1024; i ++)
     updir[i] = kpdir[i];
 
-  // exact copy of kernel page table
-  // no user memory is mapped
-
   p->area.start = (void*)0x8000000;
   p->area.end = (void*)0xc0000000;
-  // return [ULOW, UHIGH)
 }
 
 void _release(_Protect *p) {
-  // free all spaces
 }
 
 void _switch(_Protect *p) {

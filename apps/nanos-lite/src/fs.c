@@ -7,7 +7,6 @@ typedef struct {
 } file_info;
 
 typedef struct {
-	bool used;
 	uint32_t index;
 	off_t offset;
 } Fstate;
@@ -56,8 +55,6 @@ int fs_open(const char *pathname, int flags, int mode) {
         case 2: fd = FD_DISPINFO; break;
         default: fd = FD_NORMAL + i; break;
       }
-			assert(files[fd].used == false);
-			files[fd].used = true;
 			files[fd].index = i;
 			files[fd].offset = 0;
 			return fd;
@@ -134,9 +131,5 @@ off_t fs_lseek(int fd, off_t offset, int whence) {
 }
 
 int fs_close(int fd) {
-	if(fd >= 0 && fd <= 2) return 0;
-
-	assert(files[fd].used == true);
-	files[fd].used = false;
 	return 0;
 }

@@ -7,6 +7,8 @@
 #define PGSIZE 4096
 #endif
 
+#define PG_ALIGN __attribute((aligned(PGSIZE)))
+
 #ifndef PMEM_SIZE
 #define PMEM_SIZE (128 * 1024 * 1024)
 #endif
@@ -16,6 +18,5 @@
 #define PGROUNDDOWN(a)  (((a)) & ~PGMASK)
 
 void* new_page(void);
-void* kmalloc(uint32_t);
 
 #endif

@@ -1,5 +1,4 @@
 #include <am.h>
-#include <x86-nemu.h>
 #include <x86.h>
 
 #define RTC_PORT 0x48   // Note that this is not standard
@@ -9,14 +8,9 @@ void _ioe_init() {
   boot_time = inl(RTC_PORT);
 }
 
-// -------------------- cycles and uptime --------------------
-
 unsigned long _uptime() {
   return inl(RTC_PORT) - boot_time;
-  //return 0;
 }
-
-// -------------------- video --------------------
 
 uint32_t* const fb = (uint32_t *)0x40000;
 
@@ -44,10 +38,6 @@ void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
 
 void _draw_sync() {
 }
-
-// -------------------- keyboard --------------------
-
-#define KEYDOWN_MASK 0x8000
 
 int _read_key() {
   int status = inb(0x64);

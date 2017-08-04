@@ -9,7 +9,6 @@ void vectrap();
 void vecnull();
 
 uintptr_t irq_handle(_RegSet *r) {
-  r->esp = (uintptr_t)r;
   _RegSet *next = r;
   if (H) {
     _Event ev;
@@ -39,7 +38,7 @@ uintptr_t irq_handle(_RegSet *r) {
     }
   }
 
-  return next->esp;
+  return (uintptr_t)next;
 }
 
 static GateDesc idt[NR_IRQ];
@@ -60,13 +59,12 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
 }
 
 _RegSet *_make(_Area stack, void *entry, void *arg) {
-  // TODO: pass arg
   stack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
   _RegSet *r = (_RegSet*)stack.end - 1;
   r->esp = (uintptr_t)r;
   r->cs = 0x8;
   r->eip = (uintptr_t)entry;
-  r->eflags = 0;
+  r->eflags = 0x2 | FL_IF;
   return r;
 }
 
@@ -75,11 +73,5 @@ void _trap() {
 }
 
 int _istatus(int enable) {
-  int ret = (get_efl() & FL_IF) != 0;
-  if (enable) {
-    sti();
-  } else {
-    cli();
-  }
-  return ret;
+  return 0;
 }

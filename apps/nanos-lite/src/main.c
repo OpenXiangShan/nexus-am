@@ -1,11 +1,14 @@
 #include "common.h"
 
+void init_mm(void);
 void init_device(void);
 void init_irq(void);
 void init_fs(void);
-void load_first_prog(void);
+void load_prog(const char *);
 
 int main() {
+  init_mm();
+
   Log("'Hello World!' from Nanos-lite");
   Log("Build time: %s, %s", __TIME__, __DATE__);
 
@@ -21,7 +24,9 @@ int main() {
 
   init_fs();
 
-  load_first_prog();
+  load_prog("/bin/pal");
+  load_prog("/bin/hello");
+  load_prog("/bin/litenes");
 
   _trap();
 

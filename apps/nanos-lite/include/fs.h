@@ -11,4 +11,6 @@ ssize_t fs_write(int, const void *, size_t);
 off_t fs_lseek(int, off_t, int);
 int fs_close(int);
 
+size_t fs_filesz(int);
+
 #endif
