@@ -3,7 +3,7 @@
 #define NR_PROC 4
 
 PCB pcb[NR_PROC];
-PCB *current;
+PCB *current = NULL;
 
 uintptr_t loader(_Protect *as);
 
@@ -19,9 +19,12 @@ void load_first_prog() {
   pcb[0].tf = _make(stack, (void *)entry, NULL);
 }
 
-_RegSet* schedule() {
+_RegSet* schedule(_RegSet *prev) {
   Log("schedule");
+  // when current == NULL at the very beginning, it will not cover
+  // any valid data, so it will be safe to write to memory near NULL
+  current->tf = prev;
   current = &pcb[0];
   _switch(&current->as);
-  return pcb[0].tf;
+  return current->tf;
 }
