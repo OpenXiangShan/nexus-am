@@ -14,25 +14,21 @@ void free_page(void *p) {
   panic("not implement yet");
 }
 
-static uintptr_t cur_brk = 0;
-// we do not free memory, so use `max_brk' to determine whether to call mm_malloc()
-static uintptr_t max_brk = 0;
-
 /* The brk() system call handler. */
 bool mm_brk(uint32_t new_brk) {
-	if(cur_brk == 0) {
-    cur_brk = max_brk = new_brk;
+	if(current->cur_brk == 0) {
+    current->cur_brk = current->max_brk = new_brk;
   }
   else {
-		if (new_brk > max_brk) {
-      uintptr_t page_start = PGROUNDUP(max_brk);
+		if (new_brk > current->max_brk) {
+      uintptr_t page_start = PGROUNDUP(current->max_brk);
       uintptr_t page_end = PGROUNDUP(new_brk);
       for (; page_start <= page_end; page_start += PGSIZE) {
         _map(&current->as, (void *)page_start, new_page());
       }
-			max_brk = new_brk;
+			current->max_brk = new_brk;
 		}
-		cur_brk = new_brk;
+		current->cur_brk = new_brk;
 	}
 
   // success

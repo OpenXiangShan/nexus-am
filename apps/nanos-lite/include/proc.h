@@ -11,6 +11,9 @@ typedef union {
   struct {
     _RegSet *tf;
     _Protect as;
+    uintptr_t cur_brk;
+    // we do not free memory, so use `max_brk' to determine whether to call mm_malloc()
+    uintptr_t max_brk;
   };
 } PCB;
 
