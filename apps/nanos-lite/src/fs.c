@@ -13,8 +13,8 @@ typedef struct {
 } Fstate;
 
 /* This is the information about all files in disk. */
-static const file_info file_table[] __attribute__((used)) = {
-  {"/dev/fb", 400 * 300 * sizeof(uint32_t), 0},
+static file_info file_table[] __attribute__((used)) = {
+  {"/dev/fb", 0, 0},
   {"/dev/events", 0, 0},
   {"/proc/dispinfo", 128, 0},
 #include "files.h"
@@ -24,6 +24,17 @@ static const file_info file_table[] __attribute__((used)) = {
 enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB, FD_EVENTS, FD_DISPINFO, FD_NORMAL};
 
 Fstate files[FD_NORMAL + NR_FILES];
+
+void init_fs() {
+  int i;
+	for (i = 0; i < NR_FILES; i ++) {
+		if (strcmp(file_table[i].name, "/dev/fb") == 0) {
+      file_table[i].size = _screen.width * _screen.height * sizeof(uint32_t);
+      return;
+		}
+  }
+}
+
 
 size_t fs_filesz(int fd) {
   return file_table[ files[fd].index ].size;
