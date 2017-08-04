@@ -1,28 +1,27 @@
-#include "memory.h"
+#include "proc.h"
 
 #define NR_PROC 4
-#define STACK_SIZE (128 * PGSIZE)
 
-static _RegSet* pcb[NR_PROC] = {};
-_Protect as[NR_PROC] = {};
-static uint8_t stacks[NR_PROC][STACK_SIZE] = {};
+PCB pcb[NR_PROC];
+PCB *current;
 
 uintptr_t loader(_Protect *as);
 
 void load_first_prog() {
-  _protect(&as[0]);
+  _protect(&pcb[0].as);
 
-  uintptr_t entry = loader(&as[0]);
+  uintptr_t entry = loader(&pcb[0].as);
 
   _Area stack;
-  stack.start = stacks[0];
-  stack.end = stack.start + STACK_SIZE;
+  stack.start = pcb[0].stack;
+  stack.end = stack.start + sizeof(pcb[0].stack);
 
-  pcb[0] = _make(stack, (void *)entry, NULL);
+  pcb[0].tf = _make(stack, (void *)entry, NULL);
 }
 
 _RegSet* schedule() {
   Log("schedule");
-  _switch(&as[0]);
-  return pcb[0];
+  current = &pcb[0];
+  _switch(&current->as);
+  return pcb[0].tf;
 }
