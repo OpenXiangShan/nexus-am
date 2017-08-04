@@ -48,14 +48,6 @@
 // IDT size
 #define NR_IRQ    256     // IDT size
 
-// interrupts
-#define T_IRQ0 32
-#define IRQ_TIMER 0
-#define IRQ_KBD   1
-#define IRQ_SPURIOUS 31
-#define IRQ_ERROR 19
-
-
 // The following macros will not be seen by the assembler
 #ifndef __ASSEMBLER__
 
@@ -95,24 +87,6 @@ typedef struct GateDesc {
 {  (uint32_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
   1, (uint32_t)(entry) >> 16 }
 
-static inline void cli() {
-  asm volatile("cli");
-}
-
-static inline void sti() {
-  asm volatile("sti");
-}
-
-static inline void hlt() {
-  asm volatile("hlt");
-}
-
-static inline uint32_t get_efl() {
-  volatile uint32_t efl;
-  asm volatile("pushf; pop %0": "=r"(efl));
-  return efl;
-}
-
 static inline uint32_t get_cr0(void) {
   volatile uint32_t val;
   asm volatile("movl %%cr0, %0" : "=r"(val));
@@ -132,16 +106,29 @@ static inline void set_idt(GateDesc *idt, int size) {
   asm volatile("lidt (%0)" : : "r"(data));
 }
 
-static inline uint32_t get_cr2() {
-  volatile uint32_t val;
-  asm volatile("movl %%cr2, %0" : "=r"(val));
-  return val;
-}
-
 static inline void set_cr3(void *pdir) {
   asm volatile("movl %0, %%cr3" : : "r"(pdir));
 }
 
+static inline uint8_t inb(int port) {
+  char data;
+  asm volatile("inb %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  return data;
+}
+
+static inline uint32_t inl(int port) {
+  long data;
+  asm volatile("inl %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  return data;
+}
+
+static inline void outb(int port, uint8_t data) {
+  asm volatile("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
+}
+
+static inline void outl(int port, uint32_t data) {
+  asm volatile("outl %%eax, %%dx" : : "a"(data), "d"((uint16_t)port));
+}
 
 #endif
 

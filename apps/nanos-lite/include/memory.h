@@ -18,6 +18,5 @@
 #define PGROUNDDOWN(a)  (((a)) & ~PGMASK)
 
 void* new_page(void);
-void* kmalloc(uint32_t);
 
 #endif

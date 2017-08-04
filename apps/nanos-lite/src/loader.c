@@ -3,7 +3,6 @@
 #include "fs.h"
 
 void ramdisk_read(void *, off_t, size_t);
-size_t fs_filesz(int fd);
 
 #define DEFAULT_ENTRY ((void *)0x8048000)
 
