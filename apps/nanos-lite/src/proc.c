@@ -1,4 +1,4 @@
-#include "common.h"
+#include "memory.h"
 
 #define NR_PROC 4
 #define STACK_SIZE (128 * PGSIZE)

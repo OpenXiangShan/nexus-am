@@ -9,28 +9,32 @@ void vectrap();
 void vecnull();
 
 uintptr_t irq_handle(_RegSet *r) {
+  r->esp = (uintptr_t)r;
   _RegSet *next = r;
   if (H) {
     _Event ev;
+    intptr_t args[4];
     switch (r->irq) {
       case 32: ev.event = _EVENT_IRQ_TIME; break;
       case 0x80: {
         ev.event = _EVENT_SYSCALL;
-        intptr_t args[4];
         args[0] = r->eax;
-        args[1] = r->edx;
+        args[1] = r->ebx;
         args[2] = r->ecx;
-        args[3] = r->ebx;
-        ev.cause = (intptr_t)&args;
+        args[3] = r->edx;
+        ev.cause = (intptr_t)args;
         break;
       }
       case 0x81: ev.event = _EVENT_TRAP; break;
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    r->esp = (uintptr_t)r;
-    r = H(ev, r);
-    if (r != NULL) {
+    next = H(ev, r);
+    if (ev.event == _EVENT_SYSCALL) {
+      r->eax = args[0];
+    }
+
+    if (next == NULL) {
       next = r;
     }
   }

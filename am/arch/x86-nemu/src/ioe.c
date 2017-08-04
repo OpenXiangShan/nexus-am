@@ -19,12 +19,10 @@ unsigned long _uptime() {
 // -------------------- video --------------------
 
 uint32_t* const fb = (uint32_t *)0x40000;
-#define SCREEN_W 320
-#define SCREEN_H 200
 
 _Screen _screen = {
-  .width  = SCREEN_W,
-  .height = SCREEN_H,
+  .width  = 400,
+  .height = 300,
 };
 
 extern void* memcpy(void *, const void *, int);
