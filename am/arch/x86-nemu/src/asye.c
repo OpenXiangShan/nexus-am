@@ -22,7 +22,7 @@ uintptr_t irq_handle(_RegSet *r) {
         args[1] = r->ebx;
         args[2] = r->ecx;
         args[3] = r->edx;
-        ev.cause = (intptr_t)&args;
+        ev.cause = (intptr_t)args;
         break;
       }
       case 0x81: ev.event = _EVENT_TRAP; break;
