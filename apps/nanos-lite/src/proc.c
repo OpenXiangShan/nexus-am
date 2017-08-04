@@ -29,7 +29,7 @@ _RegSet* schedule(_RegSet *prev) {
   current->tf = prev;
   if (current == &pcb[0]) {
     cnt ++;
-    if (cnt == 1000) {
+    if (cnt == 200) {
       current = &pcb[1];
       cnt = 0;
     }
