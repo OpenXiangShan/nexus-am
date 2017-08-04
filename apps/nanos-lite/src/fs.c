@@ -27,6 +27,10 @@ enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB, FD_EVENTS, FD_DISPINFO, FD_NORMAL};
 
 Fstate files[FD_NORMAL + NR_FILES];
 
+size_t fs_filesz(int fd) {
+  return file_table[ files[fd].index ].size;
+}
+
 void ramdisk_read(void *, uint32_t, uint32_t);
 void ramdisk_write(const void *, uint32_t, uint32_t);
 size_t read_events(void *buf);
