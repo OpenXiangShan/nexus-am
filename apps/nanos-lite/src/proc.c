@@ -3,12 +3,15 @@
 #define NR_PROC 4
 #define STACK_SIZE (128 * PGSIZE)
 
-_RegSet* pcb[NR_PROC];
+static _RegSet* pcb[NR_PROC] = {};
+_Protect as[NR_PROC] = {};
 
-uintptr_t loader(void);
+uintptr_t loader(_Protect *as);
 
 void load_first_prog() {
-  uintptr_t entry = loader();
+  _protect(&as[0]);
+
+  uintptr_t entry = loader(&as[0]);
 
   _Area stack;
   stack.end = _heap.end;
