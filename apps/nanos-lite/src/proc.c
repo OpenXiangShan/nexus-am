@@ -22,12 +22,18 @@ void load_prog(const char *filename) {
 }
 
 static int cnt = 0;
+static PCB* game_pcb = &pcb[0];
+
+void change_game() {
+  Log("game change!");
+  game_pcb = (game_pcb == &pcb[0] ? &pcb[2] : &pcb[0]);
+}
 
 _RegSet* schedule(_RegSet *prev) {
   // when current == NULL at the very beginning, it will not cover
   // any valid data, so it will be safe to write to memory near NULL
   current->tf = prev;
-  if (current == &pcb[0]) {
+  if (current == game_pcb) {
     cnt ++;
     if (cnt == 200) {
       current = &pcb[1];
@@ -35,7 +41,7 @@ _RegSet* schedule(_RegSet *prev) {
     }
   }
   else {
-    current = &pcb[0];
+    current = game_pcb;
   }
   _switch(&current->as);
   return current->tf;
