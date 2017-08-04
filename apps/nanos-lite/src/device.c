@@ -16,3 +16,14 @@ size_t read_events(void *buf) {
 
   return sprintf(buf, "t %d\nk%c %s ", time_ms, keydown_char, names[key]);
 }
+
+static char dispinfo[128];
+
+void dispinfo_read(void *buf, off_t offset, size_t len) {
+  memcpy(buf, dispinfo + offset, len);
+}
+
+void init_device() {
+  _ioe_init();
+  sprintf(dispinfo, "WIDTH: %d\nHEIGHT: %d", _screen.width, _screen.height);
+}
