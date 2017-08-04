@@ -1,22 +1,24 @@
 #include "proc.h"
 
-#define NR_PROC 4
+#define MAX_NR_PROC 4
 
-PCB pcb[NR_PROC];
+PCB pcb[MAX_NR_PROC];
 PCB *current = NULL;
+int nr_proc = 0;
 
-uintptr_t loader(_Protect *as);
+uintptr_t loader(_Protect *as, const char *filename);
 
-void load_first_prog() {
-  _protect(&pcb[0].as);
+void load_prog(const char *filename) {
+  int i = nr_proc ++;
+  _protect(&pcb[i].as);
 
-  uintptr_t entry = loader(&pcb[0].as);
+  uintptr_t entry = loader(&pcb[i].as, filename);
 
   _Area stack;
-  stack.start = pcb[0].stack;
-  stack.end = stack.start + sizeof(pcb[0].stack);
+  stack.start = pcb[i].stack;
+  stack.end = stack.start + sizeof(pcb[i].stack);
 
-  pcb[0].tf = _make(stack, (void *)entry, NULL);
+  pcb[i].tf = _make(stack, (void *)entry, NULL);
 }
 
 _RegSet* schedule(_RegSet *prev) {

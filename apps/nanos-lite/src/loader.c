@@ -2,17 +2,15 @@
 #include "memory.h"
 #include "fs.h"
 
-#define INIT_FILE "/bin/pal"
-
 void ramdisk_read(void *, off_t, size_t);
 size_t fs_filesz(int fd);
 
 #define DEFAULT_ENTRY ((void *)0x8048000)
 
-uintptr_t loader(_Protect *as) {
-  Log("Loading user program %s...", INIT_FILE);
+uintptr_t loader(_Protect *as, const char *filename) {
+  Log("Loading user program %s...", filename);
 
-  int fd = fs_open(INIT_FILE, 0, 0);
+  int fd = fs_open(filename, 0, 0);
 
   size_t size = fs_filesz(fd);
   size_t i;

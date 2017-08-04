@@ -4,7 +4,7 @@ void init_mm(void);
 void init_device(void);
 void init_irq(void);
 void init_fs(void);
-void load_first_prog(void);
+void load_prog(const char *);
 
 int main() {
   init_mm();
@@ -24,7 +24,7 @@ int main() {
 
   init_fs();
 
-  load_first_prog();
+  load_prog("/bin/pal");
 
   _trap();
 
