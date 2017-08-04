@@ -33,9 +33,10 @@ static uintptr_t cur_brk = 0;
 // we do not free memory, so use `max_brk' to determine whether to call mm_malloc()
 static uintptr_t max_brk = 0;
 
+extern _Protect as[];
+
 /* The brk() system call handler. */
 bool mm_brk(uint32_t new_brk) {
-  return 0;
 	if(cur_brk == 0) {
     cur_brk = max_brk = new_brk;
   }
@@ -44,7 +45,7 @@ bool mm_brk(uint32_t new_brk) {
       uintptr_t page_start = PGROUNDUP(max_brk);
       uintptr_t page_end = PGROUNDUP(new_brk);
       for (; page_start <= page_end; page_start += PGSIZE) {
-        _map(&user_as, (void *)page_start, new_page());
+        _map(&as[0], (void *)page_start, new_page());
       }
 			max_brk = new_brk;
 		}
