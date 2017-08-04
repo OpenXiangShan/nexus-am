@@ -5,6 +5,7 @@
 
 static _RegSet* pcb[NR_PROC] = {};
 _Protect as[NR_PROC] = {};
+static uint8_t stacks[NR_PROC][STACK_SIZE] = {};
 
 uintptr_t loader(_Protect *as);
 
@@ -14,8 +15,8 @@ void load_first_prog() {
   uintptr_t entry = loader(&as[0]);
 
   _Area stack;
-  stack.end = _heap.end;
-  stack.start = stack.end - STACK_SIZE;
+  stack.start = stacks[0];
+  stack.end = stack.start + STACK_SIZE;
 
   pcb[0] = _make(stack, (void *)entry, NULL);
 }
