@@ -12,11 +12,9 @@ typedef struct {
 	off_t offset;
 } Fstate;
 
-extern uint32_t* const fb;
-
 /* This is the information about all files in disk. */
 static const file_info file_table[] __attribute__((used)) = {
-  {"/dev/fb", 320 * 200 * sizeof(*fb), 0},
+  {"/dev/fb", 400 * 300 * sizeof(uint32_t), 0},
   {"/dev/events", 0, 0},
   {"/proc/dispinfo", 128, 0},
 #include "files.h"
@@ -35,6 +33,7 @@ void ramdisk_read(void *, uint32_t, uint32_t);
 void ramdisk_write(const void *, uint32_t, uint32_t);
 size_t read_events(void *buf);
 void dispinfo_read(void *buf, off_t offset, size_t len);
+void fb_write(const void *buf, off_t offset, size_t len);
 
 int fs_open(const char *pathname, int flags, int mode) {
 	int i, fd;
@@ -90,7 +89,7 @@ ssize_t fs_write(int fd, const void *buf, size_t len) {
       return len;
 
     case FD_FB:
-      memcpy((void *)fb + files[fd].offset, buf, bytes_to_write);
+      fb_write(buf, files[fd].offset, bytes_to_write);
       break;
 
     default:

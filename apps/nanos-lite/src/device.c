@@ -23,6 +23,11 @@ void dispinfo_read(void *buf, off_t offset, size_t len) {
   memcpy(buf, dispinfo + offset, len);
 }
 
+void fb_write(const void *buf, off_t offset, size_t len) {
+  offset /= sizeof(uint32_t);
+  _draw_rect(buf, offset % _screen.width, offset / _screen.width, len / sizeof(uint32_t), 1);
+}
+
 void init_device() {
   _ioe_init();
   sprintf(dispinfo, "WIDTH: %d\nHEIGHT: %d", _screen.width, _screen.height);
