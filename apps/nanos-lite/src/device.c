@@ -8,8 +8,9 @@ const char *names[256] = {
   _KEYS(NAME)
 };
 
+static unsigned long last_time_ms = 0;
+
 size_t read_events(void *buf) {
-  uint32_t time_ms = _uptime();
   int key = _read_key();
   char keydown_char = (key & 0x8000 ? 'd' : 'u');
   key &= ~0x8000;
@@ -17,6 +18,9 @@ size_t read_events(void *buf) {
     return sprintf(buf, "k%c %s\n", keydown_char, names[key]) - 1;
   }
   else {
+    unsigned long time_ms;
+    while ( (time_ms = _uptime()) - last_time_ms < 33 );
+    last_time_ms = time_ms;
     return sprintf(buf, "t %d\n", time_ms) - 1;
   }
 }
