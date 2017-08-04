@@ -13,8 +13,12 @@ size_t read_events(void *buf) {
   int key = _read_key();
   char keydown_char = (key & 0x8000 ? 'd' : 'u');
   key &= ~0x8000;
-
-  return sprintf(buf, "t %d\nk%c %s ", time_ms, keydown_char, names[key]);
+  if (key != _KEY_NONE) {
+    return sprintf(buf, "k%c %s\n", keydown_char, names[key]) - 1;
+  }
+  else {
+    return sprintf(buf, "t %d\n", time_ms) - 1;
+  }
 }
 
 static char dispinfo[128];
