@@ -56,9 +56,9 @@ bool mm_brk(uint32_t new_brk) {
 }
 
 void init_mm() {
+  _pte_init(new_page, free_page);
+
   extern char _end;
   pf = (void *)PGROUNDUP((uintptr_t)&_end);
   Log("free physical pages starting from %p", pf);
-
-  _pte_init(new_page, free_page);
 }

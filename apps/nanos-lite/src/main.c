@@ -1,11 +1,14 @@
 #include "common.h"
 
+void init_mm(void);
 void init_device(void);
 void init_irq(void);
 void init_fs(void);
 void load_first_prog(void);
 
 int main() {
+  init_mm();
+
   Log("'Hello World!' from Nanos-lite");
   Log("Build time: %s, %s", __TIME__, __DATE__);
 
