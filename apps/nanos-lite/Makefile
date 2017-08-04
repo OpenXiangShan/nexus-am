@@ -17,19 +17,11 @@ update-fsimg:
 		fi \
 	done
 
-src/files.h: update-fsimg
-	@wc -c $(FSIMG_FILES) | grep -v 'total$$' | sed -e 's+ $(FSIMG_PATH)+ +' | awk -v sum=0 '{print "\x7b\x22" $$2 "\x22\x2c " $$1 "\x2c " sum "\x7d\x2c";sum += $$1}' > $@
-
-src/initrd.S: $(RAMDISK_FILE)
-	touch $@
-
 src/syscall.h: $(NAVY_HOME)/libs/libos/src/syscall.h
 	ln -sf $^ $@
 
-$(RAMDISK_FILE): update-fsimg
-	@cat $(FSIMG_FILES) > $@
-
-#$(RAMDISK_FILE): $(NAVY_HOME)/tests/hello/build/hello-x86
-#	$(OBJCOPY) --set-section-flags .bss=alloc,contents -O binary $^ $@
-
-update: src/initrd.S src/syscall.h src/files.h
+update: update-fsimg src/syscall.h
+	@cat $(FSIMG_FILES) > $(RAMDISK_FILE)
+	#	$(OBJCOPY) --set-section-flags .bss=alloc,contents -O binary $(NAVY_HOME)/tests/hello/build/hello-x86 $(RAMDISK_FILE)
+	@touch src/initrd.S
+	@wc -c $(FSIMG_FILES) | grep -v 'total$$' | sed -e 's+ $(FSIMG_PATH)+ +' | awk -v sum=0 '{print "\x7b\x22" $$2 "\x22\x2c " $$1 "\x2c " sum "\x7d\x2c";sum += $$1}' > src/files.h
