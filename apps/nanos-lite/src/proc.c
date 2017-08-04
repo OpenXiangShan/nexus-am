@@ -23,5 +23,6 @@ void load_first_prog() {
 
 _RegSet* schedule() {
   Log("schedule");
+  _switch(&as[0]);
   return pcb[0];
 }
