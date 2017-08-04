@@ -1,10 +1,6 @@
 #include "memory.h"
 
 static void *pf = NULL;
-static _Protect user_as;  // user process address space
-_Protect* get_user_as(void) {
-  return &user_as;
-}
 
 void* new_page(void) {
   assert(pf < (void *)PMEM_SIZE);
@@ -15,18 +11,6 @@ void* new_page(void) {
 
 void free_page(void *p) {
   panic("not implement yet");
-}
-
-void* kmalloc(uint32_t size) {
-  assert(size > 0);
-
-  void *pa = new_page();
-  uint32_t alloc_size = PGSIZE;
-  for (; alloc_size < size; alloc_size += PGSIZE) {
-    new_page();
-  }
-
-  return pa;
 }
 
 static uintptr_t cur_brk = 0;
