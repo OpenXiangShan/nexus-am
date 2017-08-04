@@ -26,9 +26,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define BRAM_TOTAL_SIZE		(1 << 13)
-#define BRAM_BASE_ADDR		0x40002000
-
 #define DDR_TOTAL_SIZE		(1 << 28)
 #define DDR_BASE_ADDR		0x10000000
 
@@ -39,17 +36,13 @@
 #define GPIO_TRAP_BASE_ADDR	0x40000000
 #define GPIO_TRAP_INIT		0xff
 
-void *bram_base;
 void *ddr_base;
 volatile uint32_t *gpio_reset_base;
 volatile uint32_t *gpio_trap_base;
 int	fd;
 
 void* mips_addr(uintptr_t p) {
-	if(p < BRAM_TOTAL_SIZE) {
-		return bram_base + p;
-	}
-	else if(p >= DDR_BASE_ADDR && p < DDR_BASE_ADDR + DDR_TOTAL_SIZE) {
+	if(p >= DDR_BASE_ADDR && p < DDR_BASE_ADDR + DDR_TOTAL_SIZE) {
 		return ddr_base + (p - DDR_BASE_ADDR);
 	}
 	else {
@@ -76,7 +69,7 @@ void loader(char *file) {
 	uint32_t *p_magic = (void *)buf;
 	// check the magic number
 	assert(*p_magic == elf_magic);
-	 assert(elf->e_entry == 0x10000000);
+	assert(elf->e_entry == 0x10000000);
 
 	for(i = 0, ph = (void *)buf + elf->e_phoff; i < elf->e_phnum; i ++) {
 		// scan the program header table, load each segment into memory
@@ -116,7 +109,6 @@ void init_map() {
 		exit(1);
 	} 
 
-	bram_base = create_map(BRAM_TOTAL_SIZE, fd, BRAM_BASE_ADDR);
 	gpio_reset_base = create_map(GPIO_RESET_TOTAL_SIZE, fd, GPIO_RESET_BASE_ADDR);
 	gpio_trap_base = create_map(GPIO_TRAP_TOTAL_SIZE, fd, GPIO_TRAP_BASE_ADDR);
 	ddr_base = create_map(DDR_TOTAL_SIZE, fd, DDR_BASE_ADDR);
@@ -141,7 +133,6 @@ uint8_t wait_for_finish() {
 }
 
 void finish_map() {
-	munmap((void *)bram_base, BRAM_TOTAL_SIZE);
 	munmap((void *)gpio_reset_base, GPIO_RESET_TOTAL_SIZE);
 	munmap((void *)gpio_trap_base, GPIO_TRAP_TOTAL_SIZE);
 	munmap((void *)ddr_base, DDR_TOTAL_SIZE);
@@ -165,7 +156,7 @@ int main(int argc, char *argv[]) {
 	resetn(1);
 
 	/* start timing */
-  start = time(NULL);
+	start = time(NULL);
 
 	/* wait for MIPS CPU finish  */
 	printf("Waiting MIPS CPU to finish...\n");
