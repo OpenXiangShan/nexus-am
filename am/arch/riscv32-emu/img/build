@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DIR=${AM_HOME}/am/arch/riscv32-emu/img
+DEST=$1
+shift
+
+bash -c "cd $DIR/boot && make"
+
+# if we use riscv32-unknown-elf-ld here, we will not be able to use -lgcc
+# if we can not use -lgcc
+# there will be strange linker errors
+riscv32-unknown-elf-gcc -T $DIR/loader.ld -o $DEST $DIR/boot/start.o $@ -static -nostdlib -nostartfiles -lgcc
+riscv32-unknown-elf-objdump -d $DEST > $DEST.txt
