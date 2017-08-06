@@ -7,28 +7,43 @@ typedef struct {
 } file_info;
 
 typedef struct {
-	bool used;
 	uint32_t index;
 	off_t offset;
 } Fstate;
 
-extern uint32_t* const fb;
-
 /* This is the information about all files in disk. */
-static const file_info file_table[] __attribute__((used)) = {
-  {"/dev/fb", 320 * 200 * sizeof(*fb), 0},
+static file_info file_table[] __attribute__((used)) = {
+  {"/dev/fb", 0, 0},
   {"/dev/events", 0, 0},
+  {"/proc/dispinfo", 128, 0},
 #include "files.h"
 };
 
 #define NR_FILES (sizeof(file_table) / sizeof(file_table[0]))
-enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB, FD_EVENTS, FD_NORMAL};
+enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB, FD_EVENTS, FD_DISPINFO, FD_NORMAL};
 
 Fstate files[FD_NORMAL + NR_FILES];
+
+void init_fs() {
+  int i;
+	for (i = 0; i < NR_FILES; i ++) {
+		if (strcmp(file_table[i].name, "/dev/fb") == 0) {
+      file_table[i].size = _screen.width * _screen.height * sizeof(uint32_t);
+      return;
+		}
+  }
+}
+
+
+size_t fs_filesz(int fd) {
+  return file_table[ files[fd].index ].size;
+}
 
 void ramdisk_read(void *, uint32_t, uint32_t);
 void ramdisk_write(const void *, uint32_t, uint32_t);
 size_t read_events(void *buf);
+void dispinfo_read(void *buf, off_t offset, size_t len);
+void fb_write(const void *buf, off_t offset, size_t len);
 
 int fs_open(const char *pathname, int flags, int mode) {
 	int i, fd;
@@ -37,10 +52,9 @@ int fs_open(const char *pathname, int flags, int mode) {
       switch (i) {
         case 0: fd = FD_FB; break;
         case 1: fd = FD_EVENTS; break;
+        case 2: fd = FD_DISPINFO; break;
         default: fd = FD_NORMAL + i; break;
       }
-			assert(files[fd].used == false);
-			files[fd].used = true;
 			files[fd].index = i;
 			files[fd].offset = 0;
 			return fd;
@@ -60,7 +74,12 @@ ssize_t fs_read(int fd, void *buf, size_t len) {
 	int remain_bytes = file_table[ files[fd].index ].size - files[fd].offset;
 	int bytes_to_read = (remain_bytes > len ? len : remain_bytes);
 
-	ramdisk_read(buf, file_table[files[fd].index].disk_offset + files[fd].offset, bytes_to_read);
+  if (fd == FD_DISPINFO) {
+    dispinfo_read(buf, file_table[files[fd].index].disk_offset + files[fd].offset, bytes_to_read);
+  }
+  else {
+    ramdisk_read(buf, file_table[files[fd].index].disk_offset + files[fd].offset, bytes_to_read);
+  }
 	files[fd].offset += bytes_to_read;
 	return bytes_to_read;
 }
@@ -78,7 +97,7 @@ ssize_t fs_write(int fd, const void *buf, size_t len) {
       return len;
 
     case FD_FB:
-      memcpy((void *)fb + files[fd].offset, buf, bytes_to_write);
+      fb_write(buf, files[fd].offset, bytes_to_write);
       break;
 
     default:
@@ -112,9 +131,5 @@ off_t fs_lseek(int fd, off_t offset, int whence) {
 }
 
 int fs_close(int fd) {
-	if(fd >= 0 && fd <= 2) return 0;
-
-	assert(files[fd].used == true);
-	files[fd].used = false;
 	return 0;
 }

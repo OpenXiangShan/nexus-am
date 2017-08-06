@@ -1,5 +1,4 @@
 #include <am.h>
-#include <x86-nemu.h>
 #include <x86.h>
 
 // Define this macro after serial has been implemented

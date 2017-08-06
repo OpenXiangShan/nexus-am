@@ -1,23 +1,48 @@
-#include "common.h"
+#include "proc.h"
 
-#define NR_PROC 4
-#define STACK_SIZE (128 * PGSIZE)
+#define MAX_NR_PROC 4
 
-_RegSet* pcb[NR_PROC];
+PCB pcb[MAX_NR_PROC];
+PCB *current = NULL;
+int nr_proc = 0;
 
-uintptr_t loader(void);
+uintptr_t loader(_Protect *as, const char *filename);
 
-void load_first_prog() {
-  uintptr_t entry = loader();
+void load_prog(const char *filename) {
+  int i = nr_proc ++;
+  _protect(&pcb[i].as);
+
+  uintptr_t entry = loader(&pcb[i].as, filename);
 
   _Area stack;
-  stack.end = _heap.end;
-  stack.start = stack.end - STACK_SIZE;
+  stack.start = pcb[i].stack;
+  stack.end = stack.start + sizeof(pcb[i].stack);
 
-  pcb[0] = _make(stack, (void *)entry, NULL);
+  pcb[i].tf = _make(stack, (void *)entry, NULL);
 }
 
-_RegSet* schedule() {
-  Log("schedule");
-  return pcb[0];
+static int cnt = 0;
+static PCB* game_pcb = &pcb[0];
+
+void change_game() {
+  Log("game change!");
+  game_pcb = (game_pcb == &pcb[0] ? &pcb[2] : &pcb[0]);
+}
+
+_RegSet* schedule(_RegSet *prev) {
+  // when current == NULL at the very beginning, it will not cover
+  // any valid data, so it will be safe to write to memory near NULL
+  current->tf = prev;
+  if (current == game_pcb) {
+    cnt ++;
+    if (cnt == 200) {
+      current = &pcb[1];
+      cnt = 0;
+    }
+  }
+  else {
+    current = game_pcb;
+  }
+  _switch(&current->as);
+  return current->tf;
 }

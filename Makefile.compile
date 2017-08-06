@@ -20,6 +20,7 @@ CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
 OBJCOPY = $(CROSS_COMPILE)objcopy
+READELF = $(CROSS_COMPILE)readelf
 
 ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
 
