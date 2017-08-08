@@ -14,7 +14,7 @@ OBJCOPY_FILE = $(NAVY_HOME)/tests/hello/build/hello-x86
 
 update-fsimg:
 	$(MAKE) -C $(NAVY_HOME) ISA=$(ISA)
-	for f in $(FSIMG_FILES); do \
+	@for f in $(FSIMG_FILES); do \
 		if $(READELF) -h $$f 2> /dev/null > /dev/null; then \
 			$(OBJCOPY) --set-section-flags .bss=alloc,contents -O binary $$f; \
 		fi \
