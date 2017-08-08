@@ -15,7 +15,6 @@ struct _RegSet {
   uintptr_t err, eip, cs, eflags;    // Execution state before trap
 };
 
-typedef struct _RegSet TrapFrame;
 #define SYSCALL_ARG1(r) ((r)->eax)
 #define SYSCALL_ARG2(r) ((r)->ebx)
 #define SYSCALL_ARG3(r) ((r)->ecx)
