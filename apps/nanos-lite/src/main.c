@@ -6,6 +6,7 @@
 #define HAS_PTE
 
 void init_mm(void);
+void init_ramdisk(void);
 void init_device(void);
 void init_irq(void);
 void init_fs(void);
@@ -19,10 +20,7 @@ int main() {
   Log("'Hello World!' from Nanos-lite");
   Log("Build time: %s, %s", __TIME__, __DATE__);
 
-  extern uint8_t ramdisk_start;
-  extern uint8_t ramdisk_end;
-  Log("ramdisk info: start = %p, end = %p, size = %d bytes",
-      &ramdisk_start, &ramdisk_end, &ramdisk_end - &ramdisk_start);
+  init_ramdisk();
 
   init_device();
 
