@@ -4,7 +4,7 @@
 static void *pf = NULL;
 
 void* new_page(void) {
-  assert(pf < (void *)PMEM_SIZE);
+  assert(pf < (void *)_heap.end);
   void *p = pf;
   pf += PGSIZE;
   return p;

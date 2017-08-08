@@ -9,10 +9,6 @@
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-#ifndef PMEM_SIZE
-#define PMEM_SIZE (128 * 1024 * 1024)
-#endif
-
 #define PGMASK          (PGSIZE - 1)    // Mask for bit ops
 #define PGROUNDUP(sz)   (((sz)+PGSIZE-1) & ~PGMASK)
 #define PGROUNDDOWN(a)  (((a)) & ~PGMASK)
