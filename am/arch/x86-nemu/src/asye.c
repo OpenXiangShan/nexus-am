@@ -8,7 +8,7 @@ void vecsys();
 void vectrap();
 void vecnull();
 
-uintptr_t irq_handle(_RegSet *r) {
+_RegSet* irq_handle(_RegSet *tf) {
   _RegSet *next = tf;
   if (H) {
     _Event ev;
@@ -25,7 +25,7 @@ uintptr_t irq_handle(_RegSet *r) {
     }
   }
 
-  return (uintptr_t)next;
+  return next;
 }
 
 static GateDesc idt[NR_IRQ];
