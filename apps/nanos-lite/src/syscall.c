@@ -37,19 +37,27 @@ int sys_brk(uintptr_t brk) {
   return mm_brk(brk);
 }
 
-_RegSet* do_syscall(uintptr_t *args) {
+_RegSet* do_syscall(_RegSet *r) {
   int ret = 0;
-  switch (args[0]) {
-    case SYS_exit: sys_exit(args[1]); break;
-    case SYS_read: ret = sys_read(args[1], (void *)args[2], args[3]); break;
-    case SYS_write: ret = sys_write(args[1], (const void *)args[2], args[3]); break;
-    case SYS_open: ret = sys_open((const char *)args[1], args[2], args[3]); break;
-    case SYS_lseek: ret = sys_lseek(args[1], args[2], args[3]); break;
-    case SYS_close: ret = sys_close(args[1]); break;
-    case SYS_brk: ret = sys_brk(args[1]); break;
-    default: panic("Unhandled syscall ID = %d", args[0]);
+  uintptr_t a[4];
+  a[0] = SYSCALL_ARG1(r);
+  a[1] = SYSCALL_ARG2(r);
+  a[2] = SYSCALL_ARG3(r);
+  a[3] = SYSCALL_ARG4(r);
+  Log("syscall = %d", a[0]);
+
+  switch (a[0]) {
+    case SYS_none: break;
+    case SYS_exit: sys_exit(a[1]); break;
+    case SYS_read: ret = sys_read(a[1], (void *)a[2], a[3]); break;
+    case SYS_write: ret = sys_write(a[1], (const void *)a[2], a[3]); break;
+    case SYS_open: ret = sys_open((const char *)a[1], a[2], a[3]); break;
+    case SYS_lseek: ret = sys_lseek(a[1], a[2], a[3]); break;
+    case SYS_close: ret = sys_close(a[1]); break;
+    case SYS_brk: ret = sys_brk(a[1]); break;
+    default: panic("Unhandled syscall ID = %d", a[0]);
   }
 
-  args[0] = ret;
+  SYSCALL_ARG1(r) = ret;
   return NULL;
 }

@@ -46,7 +46,8 @@
   * `_EVENT_BUS_ERROR`:总线错误(cause: 产生错误的地址)
   * `_EVENT_NUMERIC`:数值错误(无cause)
   * `_EVENT_TRAP`:内核态自陷(无cause)
-  * `_EVENT_SYSCALL`: 系统调用(无cause)，系统调用参数将`_RegSet`转换为`intptr_t*`后按次序排列。第一个参数为返回值。
+  * `_EVENT_SYSCALL`: 系统调用(无cause)
+* `SYSCALL_ARGx(reg);`从寄存器现场中获取系统调用的参数。其中`x`为`1`~`4`。
 * `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
 * `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
 * `int _istatus(int enable);`设置中断状态(enable非0时打开)。返回设置前的中断状态(0/1)。
