@@ -14,9 +14,25 @@ static inline uint8_t B(uint32_t p) { return p; }
 uint32_t canvas[N][N];
 bool used[N][N];
 
+uint32_t color_buf[32 * 32];
+
 void redraw() {
-  _draw_rect(&canvas[0][0], 0, 0, N, N);
-   _draw_sync();
+  int w = _screen.width / N;
+  int h = _screen.height / N;
+  int block_size = w * h;
+  assert(block_size <= sizeof(color_buf) / sizeof(color_buf[0]));
+
+  int x, y, k;
+  for (y = 0; y < N; y ++) {
+    for (x = 0; x < N; x ++) {
+      for (k = 0; k < block_size; k ++) {
+        color_buf[k] = canvas[y][x];
+      }
+      _draw_rect(color_buf, x * w, y * h, w, h);
+    }
+  }
+
+  _draw_sync();
 }
 
 static uint32_t p(int tsc) {
