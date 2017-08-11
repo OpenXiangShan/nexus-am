@@ -49,13 +49,7 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
 }
 
 _RegSet *_make(_Area stack, void *entry, void *arg) {
-  stack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
-  _RegSet *r = (_RegSet*)stack.end - 1;
-  r->esp = (uintptr_t)r;
-  r->cs = 0x8;
-  r->eip = (uintptr_t)entry;
-  r->eflags = 0x2 | FL_IF;
-  return r;
+  return NULL;
 }
 
 void _trap() {

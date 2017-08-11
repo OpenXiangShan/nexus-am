@@ -18,7 +18,7 @@ void load_prog(const char *filename) {
   stack.start = pcb[i].stack;
   stack.end = stack.start + sizeof(pcb[i].stack);
 
-  pcb[i].tf = _make(stack, (void *)entry, NULL);
+  pcb[i].tf = _umake(&pcb[i].as, stack, stack, (void *)entry, NULL, NULL);
 }
 
 static int cnt = 0;
