@@ -10,7 +10,7 @@ const char *names[256] = {
 
 static unsigned long last_time_ms = 0;
 
-size_t read_events(void *buf) {
+size_t events_read(void *buf, size_t len) {
   int key = _read_key();
   char keydown_char = (key & 0x8000 ? 'd' : 'u');
   key &= ~0x8000;
@@ -19,13 +19,13 @@ size_t read_events(void *buf) {
       extern void change_game(void);
       change_game();
     }
-    return sprintf(buf, "k%c %s\n", keydown_char, names[key]) - 1;
+    return snprintf(buf, len, "k%c %s\n", keydown_char, keyname[key]) - 1;
   }
   else {
     unsigned long time_ms;
     while ( (time_ms = _uptime()) - last_time_ms < 33 );
     last_time_ms = time_ms;
-    return sprintf(buf, "t %d\n", time_ms) - 1;
+    return snprintf(buf, len, "t %d\n", time_ms) - 1;
   }
 }
 
