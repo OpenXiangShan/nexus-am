@@ -8,7 +8,7 @@ static void* (*palloc_f)();
 static void (*pfree_f)(void*);
 
 _Area segments[] = {      // Kernel memory mappings
-    {.start = (void*)0,          .end = (void*)PMEM_SIZE}
+  {.start = (void*)0,          .end = (void*)PMEM_SIZE}
 };
 
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
@@ -41,7 +41,7 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
       }
     }
   }
-  
+
   set_cr3(kpdirs);
   set_cr0(get_cr0() | CR0_PG);
 }
