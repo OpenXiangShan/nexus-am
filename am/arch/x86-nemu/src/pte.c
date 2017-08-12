@@ -2,13 +2,13 @@
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-PDE kpdirs[NR_PDE] PG_ALIGN;
-PDE kptabs[PMEM_SIZE / PGSIZE] PG_ALIGN;
-void* (*palloc_f)();
-void (*pfree_f)(void*);
+static PDE kpdirs[NR_PDE] PG_ALIGN;
+static PTE kptabs[PMEM_SIZE / PGSIZE] PG_ALIGN;
+static void* (*palloc_f)();
+static void (*pfree_f)(void*);
 
 _Area segments[] = {      // Kernel memory mappings
-    {.start = (void*)0,          .end = (void*)PMEM_SIZE}
+  {.start = (void*)0,          .end = (void*)PMEM_SIZE}
 };
 
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
@@ -17,33 +17,42 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   palloc_f = palloc;
   pfree_f = pfree;
 
-  PDE *kpdir = kpdirs;
-  PDE *alloc = kptabs;
-
   int i;
+
+  // make all PDEs invalid
+  for (i = 0; i < NR_PDE; i ++) {
+    kpdirs[i] = 0;
+  }
+
+  PTE *ptab = kptabs;
   for (i = 0; i < NR_KSEG_MAP; i ++) {
-    PTE *ptab = NULL;
-    for (uint32_t pa = (uint32_t)segments[i].start; pa != (uint32_t)segments[i].end; pa += PGSIZE) {
-      if (!(kpdir[PDX(pa)] & PTE_P)) {
-          ptab = alloc;
-          alloc += NR_PDE;
-          kpdir[PDX(pa)] = PTE_P | PTE_W | (uint32_t)ptab;
+    uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
+    uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
+    for (; pdir_idx < pdir_idx_end; pdir_idx ++) {
+      // fill PDE
+      kpdirs[pdir_idx] = (uintptr_t)ptab | PTE_P;
+
+      // fill PTE
+      PTE pte = PGADDR(pdir_idx, 0, 0) | PTE_P;
+      PTE pte_end = PGADDR(pdir_idx + 1, 0, 0) | PTE_P;
+      for (; pte < pte_end; pte += PGSIZE) {
+        *ptab = pte;
+        ptab ++;
       }
-      ptab[PTX(pa)] = PTE_P | PTE_W | pa;
     }
   }
-  
-  set_cr3(kpdir);
+
+  set_cr3(kpdirs);
   set_cr0(get_cr0() | CR0_PG);
 }
 
 void _protect(_Protect *p) {
-  PDE *kpdir = kpdirs;
   PDE *updir = (PDE*)(palloc_f());
   p->ptr = updir;
   // map kernel space
-  for (int i = 0; i < 1024; i ++)
-    updir[i] = kpdir[i];
+  for (int i = 0; i < NR_PDE; i ++) {
+    updir[i] = kpdirs[i];
+  }
 
   p->area.start = (void*)0x8000000;
   p->area.end = (void*)0xc0000000;
@@ -72,5 +81,11 @@ void _unmap(_Protect *p, void *va) {
 }
 
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
-  return NULL;
+  ustack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
+  _RegSet *r = (_RegSet*)ustack.end - 1;
+
+  r->cs = 0x8;
+  r->eip = (uintptr_t)entry;
+  r->eflags = 0x2 | FL_IF;
+  return r;
 }

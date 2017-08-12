@@ -1,7 +1,7 @@
 #include "common.h"
 #include "syscall.h"
 
-bool mm_brk(uint32_t new_brk);
+int mm_brk(uint32_t new_brk);
 int fs_open(const char *pathname, int flags, int mode);
 ssize_t fs_read(int fd, void *buf, int count);
 ssize_t fs_write(int fd, const void *buf, int count);
@@ -44,7 +44,6 @@ _RegSet* do_syscall(_RegSet *r) {
   a[1] = SYSCALL_ARG2(r);
   a[2] = SYSCALL_ARG3(r);
   a[3] = SYSCALL_ARG4(r);
-  Log("syscall = %d", a[0]);
 
   switch (a[0]) {
     case SYS_none: break;

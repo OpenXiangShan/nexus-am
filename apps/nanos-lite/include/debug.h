@@ -13,7 +13,7 @@
   do { \
     Log("\33[1;31msystem panic: " format, ## __VA_ARGS__); \
     _halt(1); \
-  } while(0)
+  } while (0)
 
 #ifdef assert
 # undef assert
@@ -21,10 +21,10 @@
 
 #define assert(cond) \
   do { \
-    if(!(cond)) { \
+    if (!(cond)) { \
       panic("Assertion failed: %s", #cond); \
     } \
-  } while(0)
+  } while (0)
 
 #define TODO() panic("please implement me")
 
