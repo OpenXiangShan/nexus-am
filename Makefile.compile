@@ -62,14 +62,17 @@ OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
 
 # Compilation patterns
 $(DST_DIR)/%.o: %.cpp
+	@echo + CXX $<
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(DST_DIR)/%.o: %.c
+	@echo + CC $<
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 $(DST_DIR)/%.o: %.S
+	@echo + AS $<
 	@mkdir -p $(dir $@)
-	$(AS) $(ASFLAGS) -c -o $@ $<
+	@$(AS) $(ASFLAGS) -c -o $@ $<
 
 # Depencies
 DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
