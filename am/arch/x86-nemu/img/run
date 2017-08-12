@@ -1,5 +1,3 @@
 #!/bin/bash
 
-objcopy -S --set-section-flags .bss=alloc,contents -O binary $1 $1.bin
-
-make -C $NEMU_HOME && $NEMU_HOME/build/nemu $1.bin
+make -C $NEMU_HOME && cd `dirname $1` && $NEMU_HOME/build/nemu $1.bin
