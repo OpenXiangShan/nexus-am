@@ -8,7 +8,7 @@ all:
 # clean everything
 ALLMAKE = $(dir $(shell find . -mindepth 2 -name "Makefile"))
 $(ALLMAKE):
-	-@$(MAKE) -C $@ clean
+	-@$(MAKE) -s -C $@ clean
 
 clean: $(ALLMAKE)
 
