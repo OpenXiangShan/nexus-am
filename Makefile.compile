@@ -79,5 +79,5 @@ DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
 .PHONY: $(LIBS) am
 am:
 	$(MAKE) -C $(AM_HOME)
-$(LIBS): %:
+$(sort $(LIBS)): %:
 	$(MAKE) -C $(AM_HOME)/libs/$*
