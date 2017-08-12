@@ -1,7 +1,7 @@
 .DEFAULT_GOAL = lib
 
-$(info Building $(NAME) [$(ARCH)])
 include $(AM_HOME)/Makefile.check
+$(info Building $(NAME) [$(ARCH)])
 
 LIB_DIR ?= $(shell pwd)
 INC_DIR += $(LIB_DIR)/include/

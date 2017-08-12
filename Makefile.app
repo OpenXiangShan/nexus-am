@@ -1,7 +1,7 @@
 .DEFAULT_GOAL = app
 
-$(info Building $(NAME) [$(ARCH)])
 include $(AM_HOME)/Makefile.check
+$(info Building $(NAME) [$(ARCH)])
 
 APP_DIR ?= $(shell pwd)
 INC_DIR += $(APP_DIR)/include/
