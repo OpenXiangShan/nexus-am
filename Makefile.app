@@ -30,9 +30,9 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
 
 .PHONY: app run clean
 app: $(OBJS) am $(LIBS)
-	@$(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
+	@bash $(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
 run: app
-	@$(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
+	@bash $(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
 
 clean: 
 	rm -rf $(APP_DIR)/build/
