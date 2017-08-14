@@ -1,5 +1,7 @@
 #include "game.h"
 
+//#define SCREEN_STRETCH
+
 static uint32_t canvas[H][W];
 
 extern char font8x8_basic[128][8];
@@ -57,16 +59,19 @@ void redraw_screen() {
   draw_string(fps, 0, 0, 0xf3f781);
   draw_string("FPS", strlen(fps) * 8, 0, 0xf3f781);
 
+#ifdef SCREEN_STRETCH
   int w = _screen.width, h = _screen.height;
-  if (w == W && h == H) {
-    _draw_rect((void *)canvas, 0, 0, _screen.width, _screen.height);
-  }
-  else {
-    for (int x = 0; x < w; x ++)
-      for (int y = 0; y < h; y ++) {
-        _draw_rect(&canvas[y * H / h][x * W / w], x, y, 1, 1);
-      }
-  }
+  for (int x = 0; x < w; x ++)
+    for (int y = 0; y < h; y ++) {
+      _draw_rect(&canvas[y * H / h][x * W / w], x, y, 1, 1);
+    }
+#else
+  assert(_screen.width >= W);
+  assert(_screen.height >= H);
+  int x = (_screen.width - W) / 2;
+  int y = (_screen.height - H) / 2;
+  _draw_rect(&canvas[0][0], x, y, W, H);
+#endif
 
   _draw_sync();
   for (int y = 0; y < H; y ++)
