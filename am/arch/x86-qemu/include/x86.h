@@ -152,19 +152,33 @@ struct TrapFrame {
 };
 
 static inline uint8_t inb(int port) {
-  char data;
+  uint8_t data;
   asm volatile("inb %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
+static inline uint32_t inw(int port) {
+  uint16_t data;
+  asm volatile("inw %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  return data;
+}
+
 static inline uint32_t inl(int port) {
-  long data;
+  uint32_t data;
   asm volatile("inl %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
-static inline void outb(int port, int data) {
+static inline void outb(int port, uint8_t data) {
   asm volatile("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
+}
+
+static inline void outw(int port, uint16_t data) {
+  asm volatile("outw %%ax, %%dx" : : "a"(data), "d"((uint16_t)port));
+}
+
+static inline void outl(int port, uint32_t data) {
+  asm volatile("outl %%eax, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 static inline void cli() {

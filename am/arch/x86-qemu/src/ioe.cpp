@@ -127,4 +127,59 @@ unsigned long _uptime() {
 
 _Screen _screen;
 
+static intptr_t port_read(int port, size_t nmemb) {
+  switch (nmemb) {
+    case 1: return inb(port);
+    case 2: return inw(port);
+    case 4: return inl(port);
+  }
+  return 0;
+}
+
+static void port_write(int port, size_t nmemb, intptr_t data) {
+  switch (nmemb) {
+    case 1: return outb(port, data);
+    case 2: return outw(port, data);
+    case 4: return outl(port, data);
+  }
+}
+
+#include <klib.h>
+
+static intptr_t pci_conf_read(intptr_t reg, size_t nmemb) {
+  outl(0xcf8, reg);
+  switch (nmemb) {
+    case 1: return inb(0xcfc + (reg & 3));
+    case 2: return inw(0xcfc + (reg & 2));
+    case 4: return inl(0xcfc);
+  }
+  return 0;
+}
+
+static void pci_conf_write(intptr_t reg, size_t nmemb, intptr_t data) {
+  outl(0xcf8, reg);
+  switch (nmemb) {
+    case 1: outb(0xcfc + (reg & 3), data);
+    case 2: outw(0xcfc + (reg & 2), data);
+    case 4: outl(0xcfc, data);
+  }
+}
+
+static intptr_t hd_read(intptr_t reg, size_t nmemb) {
+  return port_read(0x1f0 + reg, nmemb);
+}
+
+static void hd_write(intptr_t reg, size_t nmemb, intptr_t data) {
+  port_write(0x1f0 + reg, nmemb, data);
+}
+
+
+static _Device x86_dev[] = {
+  { 0x00010001, "PCI Configuration", pci_conf_read, pci_conf_write },
+  { 0x00010002, "Primary Parallel ATA Hard Disk Controller", hd_read, hd_write },
+  { 0x00000000, nullptr, nullptr, nullptr },
+};
+
+_Device *_devices = x86_dev;
+
 }

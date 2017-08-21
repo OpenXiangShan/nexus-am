@@ -60,6 +60,13 @@ typedef struct _Screen {
   int width, height;
 } _Screen;
 
+typedef struct _Device {
+  uint32_t id;
+  const char *name;
+  intptr_t (*read)(intptr_t reg, size_t nmemb);
+  void (*write)(intptr_t reg, size_t nmemb, intptr_t data);
+} _Device;
+
 typedef struct _Protect {
   _Area area; 
   void *ptr;
@@ -87,6 +94,7 @@ int _read_key();
 void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h);
 void _draw_sync();
 extern _Screen _screen;
+extern _Device *_devices;
 
 // =======================================================================
 // [2] Asynchronous Extension (ASYE)
