@@ -15,27 +15,39 @@
 # define NULL ((void *)0)
 #endif
 
-#define MAX_CPU 8
-
 typedef struct _Area {
   void *start, *end;
 } _Area; 
 
-#define _KEYS(_) \
-  _(ESCAPE) _(F1) _(F2) _(F3) _(F4) _(F5) _(F6) _(F7) _(F8) _(F9) _(F10) _(F11) _(F12) \
-  _(GRAVE) _(1) _(2) _(3) _(4) _(5) _(6) _(7) _(8) _(9) _(0) _(MINUS) _(EQUALS) _(BACKSPACE) \
-  _(TAB) _(Q) _(W) _(E) _(R) _(T) _(Y) _(U) _(I) _(O) _(P) _(LEFTBRACKET) _(RIGHTBRACKET) _(BACKSLASH) \
-  _(CAPSLOCK) _(A) _(S) _(D) _(F) _(G) _(H) _(J) _(K) _(L) _(SEMICOLON) _(APOSTROPHE) _(RETURN) \
-  _(LSHIFT) _(Z) _(X) _(C) _(V) _(B) _(N) _(M) _(COMMA) _(PERIOD) _(SLASH) _(RSHIFT) \
-  _(LCTRL) _(APPLICATION) _(LALT) _(SPACE) _(RALT) _(RCTRL) \
-  _(UP) _(DOWN) _(LEFT) _(RIGHT) _(INSERT) _(DELETE) _(HOME) _(END) _(PAGEUP) _(PAGEDOWN)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define _KEY_NAME(k) _KEY_##k,
+// =======================================================================
+// [0] Turing Machine: code execution & a heap memory
+// =======================================================================
 
-enum {
-  _KEY_NONE = 0,
-  _KEYS(_KEY_NAME)
-};
+void _putc(char ch);
+void _halt(int code);
+extern _Area _heap;
+
+// =======================================================================
+// [1] IO Extension (IOE)
+// =======================================================================
+
+typedef struct _Device {
+  uint32_t id;
+  const char *name;
+  intptr_t (*read)(intptr_t reg, size_t nmemb);
+  void (*write)(intptr_t reg, size_t nmemb, intptr_t data);
+} _Device;
+
+void _ioe_init();
+_Device *_device(int n);
+
+// =======================================================================
+// [2] Asynchronous Extension (ASYE)
+// =======================================================================
 
 #define _EVENTS(_) \
   _(IRQ_TIME) _(IRQ_IODEV) \
@@ -56,50 +68,6 @@ typedef struct _Event {
   intptr_t cause;
 } _Event;
 
-typedef struct _Screen {
-  int width, height;
-} _Screen;
-
-typedef struct _Device {
-  uint32_t id;
-  const char *name;
-  intptr_t (*read)(intptr_t reg, size_t nmemb);
-  void (*write)(intptr_t reg, size_t nmemb, intptr_t data);
-} _Device;
-
-typedef struct _Protect {
-  _Area area; 
-  void *ptr;
-} _Protect;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// =======================================================================
-// [0] Turing Machine: code execution & a heap memory
-// =======================================================================
-
-void _putc(char ch);
-void _halt(int code);
-extern _Area _heap;
-
-// =======================================================================
-// [1] IO Extension (IOE)
-// =======================================================================
-
-void _ioe_init();
-unsigned long _uptime();
-int _read_key();
-void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h);
-void _draw_sync();
-extern _Screen _screen;
-extern _Device *_devices;
-
-// =======================================================================
-// [2] Asynchronous Extension (ASYE)
-// =======================================================================
-
 void _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs));
 _RegSet *_make(_Area kstack, void *entry, void *arg);
 void _trap();
@@ -108,6 +76,11 @@ int _istatus(int enable);
 // =======================================================================
 // [3] Protection Extension (PTE)
 // =======================================================================
+
+typedef struct _Protect {
+  _Area area; 
+  void *ptr;
+} _Protect;
 
 void _pte_init(void*(*palloc)(), void (*pfree)(void*));
 void _protect(_Protect *p);

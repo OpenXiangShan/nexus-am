@@ -29,6 +29,7 @@ void check_dev(uint8_t bus, uint8_t slot) {
 }
 
 int main() {
+/*
   for (_Device *dev = _devices; dev->id != 0; dev ++) {
     printk("Detected device: %s\n", dev->name);
 
@@ -60,5 +61,6 @@ int main() {
       }
     }
   }
+  */
   return 0;
 }
