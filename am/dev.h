@@ -1,6 +1,20 @@
 #ifndef __DEV_H__
 #define __DEV_H__
 
+
+// Device list
+
+#define _DEV_AM_PERFCNT   0x0000ac01
+#define _DEV_AM_CONSOLE   0x0000ac00
+#define _DEV_AM_TIMER     0x0000ac00
+#define _DEV_AM_VIDEO     0x0000ac00
+
+#define _DEV_PCI_CONF     0x00000080
+#define _DEV_ATA0         0x00000dd0
+#define _DEV_ATA1         0x00000dd1
+
+
+
 #define _KEYS(_) \
   _(ESCAPE) _(F1) _(F2) _(F3) _(F4) _(F5) _(F6) _(F7) _(F8) _(F9) _(F10) _(F11) _(F12) \
   _(GRAVE) _(1) _(2) _(3) _(4) _(5) _(6) _(7) _(8) _(9) _(0) _(MINUS) _(EQUALS) _(BACKSPACE) \

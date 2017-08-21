@@ -1,5 +1,6 @@
 #include <am.h>
 #include <x86.h>
+#include <dev.h>
 
 extern "C" {
 
