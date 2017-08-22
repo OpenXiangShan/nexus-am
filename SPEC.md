@@ -47,21 +47,6 @@
 * `void _ioe_init();` 初始化Extension。
 * `_Device *device(int n);`返回系统中编号为n的设备。系统中从1开始连续的设备可用(返回非NULL)。
 
-### 支持的设备
-
-设备相关的宏定义在`dev.h`。设备id为32位十六进制数。
-
-| 设备ID      | 设备功能                                     | 设备描述    |
-| --------- | ---------------------------------------- | ------- |
-| 0000 0001 | 若干32位寄存器，编号从0开始                          | AM性能计数器 |
-| 0000 0002 | 向0号寄存器写入字节输出                             | AM调试输出  |
-| 0000 0003 | 从0号寄存器读出系统启动到当前的毫秒数(32bit)               | AM定时器   |
-| 0000 0004 | 从0号寄存器读取，全0表示无事件，第16位=1表示是keydown事件      | AM键盘控制器 |
-| 0000 0005 | 向1 2 3 4 5写入参数，向0写入非0数值绘图。向0写入0重绘屏幕      | AM显示控制器 |
-| 0000 0080 | 寄存器为configuration space地址(bus, slot, func, offset组成) | PCI控制器  |
-| 0000 0dd0 | ?                                        | ATA控制器0 |
-| 0000 0dd1 | ?                                        | ATA控制器1 |
-
 ## Asynchronous Extension (异步执行扩展)
 
 ### 数据结构与静态数据
@@ -98,7 +83,7 @@
 * `void _pte_init(void*(*palloc)(), void (*pfree)(void*));`初始化Extension。传入两个函数，分别代表分配/释放一个物理页(分配需保证多线程/多处理器安全)。
 * `void _protect(_Protect *p);` 创建一个保护的地址空间。
 * `void _release(_Protect *p);` 释放一个保护的地址空间。
-* `void _map(_Protect *p, void *va, void *pa);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
+* `void _map(_Protect *p, void *va, void *pa, uint8_t mode);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
 * `void _unmap(_Protect *p, void *va);`释放虚拟地址空间va的一页。
 * `void _switch(_Protect *p);`切换到一个保护的地址空间。注意在内核态下，内核代码将始终可用。
 * `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]);`创建一个用户进程(地址空间p，用户栈地址ustack，内核栈地址kstack，入口地址entry，参数argv，环境变量envp，argv和envp均以NULL结束).

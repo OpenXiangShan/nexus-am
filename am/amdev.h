@@ -1,19 +1,20 @@
 #ifndef __DEV_H__
 #define __DEV_H__
 
-
-// Device list
-
-#define _DEV_AM_PERFCNT   0x0000ac01
-#define _DEV_AM_CONSOLE   0x0000ac00
-#define _DEV_AM_TIMER     0x0000ac00
-#define _DEV_AM_VIDEO     0x0000ac00
-
-#define _DEV_PCI_CONF     0x00000080
-#define _DEV_ATA0         0x00000dd0
-#define _DEV_ATA1         0x00000dd1
+#define _DEV_PERFCNT 0x0000ac01
+#define _DEV_CONSOLE 0x0000ac02
+#define _DEV_TIMER   0x0000ac03
+#define _DEV_VIDEO   0x0000ac04
+#define _DEV_PCICONF 0x00000080
+#define _DEV_ATA0    0x00000dd0
+#define _DEV_ATA1    0x00000dd1
 
 
+// performance counter (0000ac01)
+
+// console (0000ac02)
+
+#define _DEV_CONSOLE_REG_KBD  1
 
 #define _KEYS(_) \
   _(ESCAPE) _(F1) _(F2) _(F3) _(F4) _(F5) _(F6) _(F7) _(F8) _(F9) _(F10) _(F11) _(F12) \
@@ -30,5 +31,21 @@ enum {
   _KEY_NONE = 0,
   _KEYS(_KEY_NAME)
 };
+
+// timer (0000ac01)
+
+#define _DEV_TIMER_REG_UPTIME  1
+
+// video (0000ac01)
+
+#define _DEV_VIDEO_REG_WIDTH   1
+#define _DEV_VIDEO_REG_HEIGHT  2
+#define _DEV_VIDEO_REG_PIXELS  3
+#define _DEV_VIDEO_REG_X       4
+#define _DEV_VIDEO_REG_Y       5
+#define _DEV_VIDEO_REG_W       6
+#define _DEV_VIDEO_REG_H       7
+#define _DEV_VIDEO_REG_DRAW    8
+#define _DEV_VIDEO_REG_SYNC    9
 
 #endif

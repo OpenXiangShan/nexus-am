@@ -46,7 +46,7 @@ unsigned long start_time_val, stop_time_val;
 	or zeroing some system parameters - e.g. setting the cpu clocks cycles to 0.
 */
 void start_time(void) {
-  start_time_val = _uptime();
+  start_time_val = uptime();
 }
 /* Function : stop_time
 	This function will be called right after ending the timed portion of the benchmark.
@@ -55,7 +55,7 @@ void start_time(void) {
 	or other system parameters - e.g. reading the current value of cpu cycles counter.
 */
 void stop_time(void) {
-  stop_time_val = _uptime();
+  stop_time_val = uptime();
 }
 /* Function : get_time
 	Return an abstract "ticks" number that signifies time on the system.

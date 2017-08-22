@@ -38,8 +38,8 @@ extern _Area _heap;
 typedef struct _Device {
   uint32_t id;
   const char *name;
-  intptr_t (*read)(intptr_t reg, size_t nmemb);
-  void (*write)(intptr_t reg, size_t nmemb, intptr_t data);
+  uintptr_t (*read)(uintptr_t reg, size_t nmemb);
+  void (*write)(uintptr_t reg, size_t nmemb, uintptr_t data);
 } _Device;
 
 void _ioe_init();
@@ -85,7 +85,7 @@ typedef struct _Protect {
 void _pte_init(void*(*palloc)(), void (*pfree)(void*));
 void _protect(_Protect *p);
 void _release(_Protect *p);
-void _map(_Protect *p, void *va, void *pa);
+void _map(_Protect *p, void *va, void *pa, uint8_t mode);
 void _unmap(_Protect *p, void *va);
 void _switch(_Protect *p);
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]);

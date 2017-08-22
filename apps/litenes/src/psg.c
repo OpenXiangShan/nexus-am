@@ -1,4 +1,5 @@
 #include <psg.h>
+#include <amdev.h>
 
 static byte prev_write;
 static int p = 10;
