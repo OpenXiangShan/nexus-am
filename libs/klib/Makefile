@@ -1,3 +1,6 @@
 NAME = klib
-SRCS = printk.c string.c cpp.c io.c
+SRCS = src/printk.c \
+       src/string.c \
+       src/cpp.c \
+       src/io.c
 include $(AM_HOME)/Makefile.lib
