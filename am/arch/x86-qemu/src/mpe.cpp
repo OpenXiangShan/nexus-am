@@ -38,7 +38,7 @@ struct MPDesc {
 };
 typedef struct MPDesc MPDesc;
 
-int _NR_CPU = 0;
+int numcpu = 0;
 extern uint32_t *lapic;
 
 static MPDesc *search() {
@@ -66,13 +66,17 @@ void smp_init() {
     switch (*p) {
       case MP_PROC: {
         p += 20; // CPU desc has 20 bytes
-        _NR_CPU ++;
+        numcpu ++;
         break;
       }
       default:
         p += 8;
     }
   }
+}
+
+int _ncpu() {
+  return numcpu;
 }
 
 static void (* volatile _entry)();
@@ -91,7 +95,7 @@ static void mp_entry() {
 void _mpe_init(void (*entry)()) {
   _entry = entry;
 
-  for (int cpu = 1; cpu < _NR_CPU; cpu ++) {
+  for (int cpu = 1; cpu < numcpu; cpu ++) {
     *(uint16_t*)(0x7c00 + 510) = 0x55aa;
     *reinterpret_cast<uint32_t*>(0x7000) = 0x007c00ea;  // code for ljmp
     *reinterpret_cast<uint32_t*>(0x7004) = 0x00000000;
@@ -111,7 +115,8 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   return result;
 }
 
+/*
 void _barrier() {
   asm volatile("":::"memory");
 }
-
+*/

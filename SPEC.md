@@ -86,17 +86,13 @@
 * `void _map(_Protect *p, void *va, void *pa, uint8_t mode);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
 * `void _unmap(_Protect *p, void *va);`释放虚拟地址空间va的一页。
 * `void _switch(_Protect *p);`切换到一个保护的地址空间。注意在内核态下，内核代码将始终可用。
-* `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]);`创建一个用户进程(地址空间p，用户栈地址ustack，内核栈地址kstack，入口地址entry，参数argv，环境变量envp，argv和envp均以NULL结束).
+* `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *arg);`创建一个用户进程(地址空间p，用户栈地址ustack，内核栈地址kstack，入口地址entry，参数arg).
 
 ## Multi-Processor Extension (多处理器扩展)
-
-### 数据结构与静态数据
-
-* `extern int _NR_CPU;`处理器数量。
 
 ### MPE API
 
 * `void _mpe_init(void (*entry)());`启动多处理器。
+* `int _ncpu();`返回number of CPU。
 * `int _cpu();`返回当前CPU的编号(从0开始)。
-* `intptr_t _atomic_xchg(volatile void *addr, intptr_t newval);`原子交换两数。
-* `void _barrier();`保证内存顺序一致性。
+* `intptr_t _atomic_xchg(volatile void *addr, intptr_t newval);`原子交换两数。保证内存顺序一致性。

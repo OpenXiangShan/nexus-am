@@ -1,5 +1,5 @@
-#ifndef __DEV_H__
-#define __DEV_H__
+#ifndef __AMDEV_H__
+#define __AMDEV_H__
 
 #define _DEV_PERFCNT 0x0000ac01
 #define _DEV_INPUT   0x0000ac02
@@ -9,10 +9,9 @@
 #define _DEV_ATA0    0x00000dd0
 #define _DEV_ATA1    0x00000dd1
 
+// Performance Counter (0000ac01)
 
-// performance counter (0000ac01)
-
-// console (0000ac02)
+// Input (0000ac02)
 
 #define _DEV_INPUT_REG_KBD   1
 
@@ -32,11 +31,11 @@ enum {
   _KEYS(_KEY_NAME)
 };
 
-// timer (0000ac01)
+// Timer (0000ac03)
 
 #define _DEV_TIMER_REG_UPTIME  1
 
-// video (0000ac01)
+// Video (0000ac04)
 
 #define _DEV_VIDEO_REG_WIDTH   1
 #define _DEV_VIDEO_REG_HEIGHT  2
@@ -47,5 +46,22 @@ enum {
 #define _DEV_VIDEO_REG_H       7
 #define _DEV_VIDEO_REG_DRAW    8
 #define _DEV_VIDEO_REG_SYNC    9
+
+// PCI Configuration (00000080)
+
+static inline uint32_t _DEV_PCICONF_REG(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
+  return ((uint32_t)1 << 31) | ((uint32_t)bus << 16) | ((uint32_t)slot << 11) | ((uint32_t)func << 8) | offset;
+}
+
+// ATA (00000dd0 -- 00000dd1)
+
+#define _DEV_ATA_REG_DATA      0
+#define _DEV_ATA_REG_FEATURE   1
+#define _DEV_ATA_REG_NSECT     2
+#define _DEV_ATA_REG_SECT      3
+#define _DEV_ATA_REG_CYLOW     4
+#define _DEV_ATA_REG_CYHIGH    5
+#define _DEV_ATA_REG_DRIVE     6
+#define _DEV_ATA_REG_STATUS    7
 
 #endif
