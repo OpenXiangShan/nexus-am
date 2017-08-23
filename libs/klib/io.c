@@ -15,7 +15,7 @@ static _Device *getdev(_Device **ptr, uint32_t id) {
   return NULL;
 }
 
-static _Device *console_dev;
+static _Device *input_dev;
 static _Device *video_dev;
 static _Device *timer_dev;
 
@@ -25,8 +25,8 @@ uint32_t uptime() {
 }
 
 int read_key() {
-  _Device *dev = getdev(&console_dev, _DEV_CONSOLE);
-  return dev->read(_DEV_CONSOLE_REG_KBD, 2);
+  _Device *dev = getdev(&input_dev, _DEV_INPUT);
+  return dev->read(_DEV_INPUT_REG_KBD, 2);
 }
 
 void draw_rect(uint32_t *pixels, int x, int y, int w, int h) {

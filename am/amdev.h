@@ -2,7 +2,7 @@
 #define __DEV_H__
 
 #define _DEV_PERFCNT 0x0000ac01
-#define _DEV_CONSOLE 0x0000ac02
+#define _DEV_INPUT   0x0000ac02
 #define _DEV_TIMER   0x0000ac03
 #define _DEV_VIDEO   0x0000ac04
 #define _DEV_PCICONF 0x00000080
@@ -14,7 +14,7 @@
 
 // console (0000ac02)
 
-#define _DEV_CONSOLE_REG_KBD  1
+#define _DEV_INPUT_REG_KBD   1
 
 #define _KEYS(_) \
   _(ESCAPE) _(F1) _(F2) _(F3) _(F4) _(F5) _(F6) _(F7) _(F8) _(F9) _(F10) _(F11) _(F12) \

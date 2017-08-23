@@ -105,7 +105,7 @@ static inline int keydown(int e) { return (e & 0x8000) != 0; }
 static inline int upevent(int e) { return e; }
 static inline int downevent(int e) { return e | 0x8000; }
 
-static uintptr_t console_read(uintptr_t reg, size_t nmemb) {
+static uintptr_t input_read(uintptr_t reg, size_t nmemb) {
   static int scan_code[] = {
     0,
     1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
@@ -134,10 +134,6 @@ static uintptr_t console_read(uintptr_t reg, size_t nmemb) {
     }
     return _KEY_NONE;
   }
-}
-
-static void console_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
-  _putc(data);
 }
 
 static uintptr_t timer_read(uintptr_t reg, size_t nmemb) {
@@ -190,9 +186,9 @@ static void hd_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
 }
 
 static _Device x86_dev[] = {
-  {_DEV_CONSOLE, "QEMU Console", console_read, console_write},
-  {_DEV_TIMER, "Dummy Timer", timer_read, nullptr},
-  {_DEV_VIDEO, "Standard VGA Controller", video_read, video_write},
+  {_DEV_INPUT,   "8259 Keyboard Controller", input_read, nullptr},
+  {_DEV_TIMER,   "Dummy Timer", timer_read, nullptr},
+  {_DEV_VIDEO,   "Standard VGA Controller", video_read, video_write},
   {_DEV_PCICONF, "PCI Configuration", pciconf_read, pciconf_write},
   {_DEV_ATA0,    "Primary Parallel ATA Hard Disk Controller", hd_read, hd_write},
 };

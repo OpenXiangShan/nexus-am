@@ -82,7 +82,7 @@ void video_init() {
   texture_sync();
 }
 
-uintptr_t console_read(uintptr_t reg, size_t nmemb) {
+uintptr_t input_read(uintptr_t reg, size_t nmemb) {
   int ret = _KEY_NONE;
   SDL_LockMutex(key_queue_lock);
   if (key_f != key_r) {
@@ -91,10 +91,6 @@ uintptr_t console_read(uintptr_t reg, size_t nmemb) {
   }
   SDL_UnlockMutex(key_queue_lock);
   return ret;
-}
-
-void console_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
-  _putc(data);
 }
 
 uintptr_t video_read(uintptr_t reg, size_t nmemb) {
