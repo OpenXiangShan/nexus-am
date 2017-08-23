@@ -1,4 +1,5 @@
 #include <am.h>
+#include <amdev.h>
 #include <klib.h>
 
 _Device *pci;
@@ -29,11 +30,10 @@ void check_dev(uint8_t bus, uint8_t slot) {
 }
 
 int main() {
-/*
-  for (_Device *dev = _devices; dev->id != 0; dev ++) {
-    printk("Detected device: %s\n", dev->name);
-
-    if (dev->id == 0x10001) {
+  for (int n = 1; ; n ++) {
+    _Device *dev = _device(n);
+    if (!dev) break;
+    if (dev->id == _DEV_PCICONF) {
       pci = dev;
       for (int i = 0; i < 256; i ++)
         for (int j = 0; j < 32; j ++) {
@@ -41,8 +41,7 @@ int main() {
         }
       printk("Get e1000 at %d:%d\n", e1000.bus, e1000.slot);
     }
-    if (dev->id == 0x10002) {
-      continue;
+    if (dev->id == _DEV_ATA0) {
       while ((dev->read(7, 1) & 0xc0) != 0x40);
       int offset = 0;
       dev->write(2, 1, 1);
@@ -61,6 +60,5 @@ int main() {
       }
     }
   }
-  */
   return 0;
 }

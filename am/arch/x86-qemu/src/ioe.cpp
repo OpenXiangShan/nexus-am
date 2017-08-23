@@ -1,6 +1,6 @@
 #include <am.h>
+#include <amdev.h>
 #include <x86.h>
-#include <dev.h>
 
 extern "C" {
 
@@ -52,53 +52,74 @@ static uint8_t B(uint32_t p) { return p; }
 static struct FBPixel {
   uint8_t b, g, r;
 } __attribute__ ((packed)) *fb;
+static int W, H;
 
 static void vga_init() {
   VBEInfo *info = reinterpret_cast<VBEInfo*>(0x00004000);
-  _screen.width = info->width;
-  _screen.height = info->height;
+  W = info->width;
+  H = info->height;
   fb = reinterpret_cast<FBPixel*>(info->framebuffer);
 }
 
-void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
-  int len = (x + w >= _screen.width) ? _screen.width - x : w;
-  FBPixel *v;
-  for (int j = 0; j < h; j ++) {
-    if (y + j < _screen.height) {
-      v = &fb[x + (j + y) * _screen.width];
-      for (int i = 0; i < len; i ++, v ++) {
-        uint32_t p = pixels[i];
-        v->r = R(p); v->g = G(p); v->b = B(p);
-      }
-    }
-    pixels += w;
+void _ioe_init() {
+  vga_init();
+}
+
+static uintptr_t port_read(int port, size_t nmemb) {
+  switch (nmemb) {
+    case 1: return inb(port);
+    case 2: return inw(port);
+    case 4: return inl(port);
+  }
+  return 0;
+}
+
+static void port_write(int port, size_t nmemb, uintptr_t data) {
+  switch (nmemb) {
+    case 1: return outb(port, data);
+    case 2: return outw(port, data);
+    case 4: return outl(port, data);
   }
 }
 
+static uintptr_t pciconf_read(uintptr_t reg, size_t nmemb) {
+  outl(0xcf8, reg);
+  switch (nmemb) {
+    case 1: return inb(0xcfc + (reg & 3));
+    case 2: return inw(0xcfc + (reg & 2));
+    case 4: return inl(0xcfc);
+  }
+  return 0;
+}
 
-void _draw_sync() {
+static void pciconf_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
+  outl(0xcf8, reg);
+  switch (nmemb) {
+    case 1: outb(0xcfc + (reg & 3), data);
+    case 2: outw(0xcfc + (reg & 2), data);
+    case 4: outl(0xcfc, data);
+  }
 }
 
 static inline int keydown(int e) { return (e & 0x8000) != 0; }
 static inline int upevent(int e) { return e; }
 static inline int downevent(int e) { return e | 0x8000; }
 
-int scan_code[] = {
-  0,
-  1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
-  41, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 43,
-  58, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 28,
-  42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-  29, 91, 56, 57, 56, 29, 
-  72, 80, 75, 77, 0, 0, 0, 0, 0, 0
-};
+static uintptr_t console_read(uintptr_t reg, size_t nmemb) {
+  static int scan_code[] = {
+    0,
+    1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
+    41, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 43,
+    58, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 28,
+    42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+    29, 91, 56, 57, 56, 29, 
+    72, 80, 75, 77, 0, 0, 0, 0, 0, 0
+  };
 
-int _read_key() {
   int status = inb(0x64);
   if ((status & 0x1) == 0) return upevent(_KEY_NONE);
-  if (status & 0x20) {
-    // mouse
+  if (status & 0x20) { // mouse
     return upevent(_KEY_NONE);
   } else {
     int code = inb(0x60) & 0xff;
@@ -115,72 +136,74 @@ int _read_key() {
   }
 }
 
-void _ioe_init() {
-  vga_init();
+static void console_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
+  _putc(data);
 }
 
-unsigned long i386_uptime = 0;
-
-unsigned long _uptime() {
-  // TODO: this is not precise.
-  return i386_uptime ++;
+static uintptr_t timer_read(uintptr_t reg, size_t nmemb) {
+  static uint32_t tsc = 0;
+  return tsc ++;
 }
 
-_Screen _screen;
-
-static intptr_t port_read(int port, size_t nmemb) {
-  switch (nmemb) {
-    case 1: return inb(port);
-    case 2: return inw(port);
-    case 4: return inl(port);
+static uintptr_t video_read(uintptr_t reg, size_t nmemb) {
+  switch(reg) {
+    case _DEV_VIDEO_REG_WIDTH: return W;
+    case _DEV_VIDEO_REG_HEIGHT: return H;
   }
   return 0;
 }
 
-static void port_write(int port, size_t nmemb, intptr_t data) {
-  switch (nmemb) {
-    case 1: return outb(port, data);
-    case 2: return outw(port, data);
-    case 4: return outl(port, data);
+static void video_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
+  static int x, y, w, h;
+  static uint32_t *pixels;
+  switch(reg) {
+    case _DEV_VIDEO_REG_PIXELS: pixels = (uint32_t*)data; break;
+    case _DEV_VIDEO_REG_X: x = data; break;
+    case _DEV_VIDEO_REG_Y: y = data; break;
+    case _DEV_VIDEO_REG_W: w = data; break;
+    case _DEV_VIDEO_REG_H: h = data; break;
+    case _DEV_VIDEO_REG_DRAW: {
+      int len = (x + w >= W) ? W - x : w;
+      FBPixel *v;
+      for (int j = 0; j < h; j ++) {
+        if (y + j < H) {
+          v = &fb[x + (j + y) * W];
+          for (int i = 0; i < len; i ++, v ++) {
+            uint32_t p = pixels[i];
+            v->r = R(p); v->g = G(p); v->b = B(p);
+          }
+        }
+        pixels += w;
+      }
+      break;
+    }
+    case _DEV_VIDEO_REG_SYNC: break;
   }
 }
 
-#include <klib.h>
-
-static intptr_t pci_conf_read(intptr_t reg, size_t nmemb) {
-  outl(0xcf8, reg);
-  switch (nmemb) {
-    case 1: return inb(0xcfc + (reg & 3));
-    case 2: return inw(0xcfc + (reg & 2));
-    case 4: return inl(0xcfc);
-  }
-  return 0;
-}
-
-static void pci_conf_write(intptr_t reg, size_t nmemb, intptr_t data) {
-  outl(0xcf8, reg);
-  switch (nmemb) {
-    case 1: outb(0xcfc + (reg & 3), data);
-    case 2: outw(0xcfc + (reg & 2), data);
-    case 4: outl(0xcfc, data);
-  }
-}
-
-static intptr_t hd_read(intptr_t reg, size_t nmemb) {
+static uintptr_t hd_read(uintptr_t reg, size_t nmemb) {
   return port_read(0x1f0 + reg, nmemb);
 }
 
-static void hd_write(intptr_t reg, size_t nmemb, intptr_t data) {
+static void hd_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
   port_write(0x1f0 + reg, nmemb, data);
 }
 
-
 static _Device x86_dev[] = {
-  { 0x00010001, "PCI Configuration", pci_conf_read, pci_conf_write },
-  { 0x00010002, "Primary Parallel ATA Hard Disk Controller", hd_read, hd_write },
-  { 0x00000000, nullptr, nullptr, nullptr },
+  {_DEV_CONSOLE, "QEMU Console", console_read, console_write},
+  {_DEV_TIMER, "Dummy Timer", timer_read, nullptr},
+  {_DEV_VIDEO, "Standard VGA Controller", video_read, video_write},
+  {_DEV_PCICONF, "PCI Configuration", pciconf_read, pciconf_write},
+  {_DEV_ATA0,    "Primary Parallel ATA Hard Disk Controller", hd_read, hd_write},
 };
 
-_Device *_devices = x86_dev;
+_Device *_device(int n) {
+  n --;
+  if (n >= 0 && (unsigned int)n < sizeof(x86_dev) / sizeof(x86_dev[0])) {
+    return &x86_dev[n];
+  } else {
+    return nullptr;
+  }
+}
 
 }
