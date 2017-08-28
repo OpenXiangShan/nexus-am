@@ -186,7 +186,7 @@ static void hd_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
 }
 
 static _Device x86_dev[] = {
-  {_DEV_INPUT,   "8259 Keyboard Controller", input_read, nullptr},
+  {_DEV_INPUT,   "8279 Keyboard Controller", input_read, nullptr},
   {_DEV_TIMER,   "Dummy Timer", timer_read, nullptr},
   {_DEV_VIDEO,   "Standard VGA Controller", video_read, video_write},
   {_DEV_PCICONF, "PCI Configuration", pciconf_read, pciconf_write},
