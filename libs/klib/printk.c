@@ -80,7 +80,10 @@ int vprintk(char* out,int limit,const char* fmt,va_list ap){
       rewid++;
     }
   }
-  if(out!=0){printch('\0',s_v,limit_n);rewid++;}
+  if(out!=0){
+	  printch('\0',s_v,limit_n);
+	  //rewid++;结尾的\0不算在返回值中
+  }
   return rewid;
 }
 
