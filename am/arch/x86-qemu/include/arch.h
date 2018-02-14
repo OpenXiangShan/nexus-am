@@ -2,15 +2,14 @@
 #define __X86_ARCH_H__
 
 #include <am.h>
-
-#include <sys/types.h>
+#include <stdint.h>
 
 struct _RegSet {
   uint32_t eax, ebx, ecx, edx,
-      esi, edi, ebp, esp3,
-      eip, eflags,
-      cs, ds, es, ss,
-      ss0, esp0;
+           esi, edi, ebp, esp3,
+           eip, eflags,
+           cs, ds, es, ss,
+           ss0, esp0;
 };
 
 #define REG1(regs) ((regs)->eax)
