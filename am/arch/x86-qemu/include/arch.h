@@ -4,6 +4,8 @@
 #include <am.h>
 #include <stdint.h>
 
+typedef int off_t;
+
 struct _RegSet {
   uint32_t eax, ebx, ecx, edx,
            esi, edi, ebp, esp3,
