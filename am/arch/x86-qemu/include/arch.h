@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 typedef int off_t;
+typedef int ssize_t;
 
 struct _RegSet {
   uint32_t eax, ebx, ecx, edx,
