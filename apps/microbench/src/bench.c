@@ -25,11 +25,11 @@ Benchmark benchmarks[] = {
 
 // Running a benchmark
 static void bench_prepare(Result *res) {
-  res->msec = _uptime();
+  res->msec = uptime();
 }
 
 static void bench_done(Result *res) {
-  res->msec = _uptime() - res->msec;
+  res->msec = uptime() - res->msec;
 }
 
 static const char *bench_check(Benchmark *bench) {

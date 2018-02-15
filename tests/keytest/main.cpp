@@ -1,5 +1,6 @@
 #include <am.h>
 #include <klib.h>
+#include <amdev.h>
 
 #define NAME(key) \
   [_KEY_##key] = #key,
@@ -12,7 +13,7 @@ int main() {
   _ioe_init();
 
   while (1) {
-    int key = _read_key();
+    int key = read_key();
     bool down = false;
     if (key & 0x8000) {
       key ^= 0x8000;

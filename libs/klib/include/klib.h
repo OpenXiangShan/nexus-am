@@ -12,12 +12,14 @@
 extern "C" {
 #endif
 
-#ifndef NULL
-#define NULL  ((void*)0)
-#endif
+// am devices
 
-void *kalloc(size_t);
-void kfree(void*);
+uint32_t uptime();
+int read_key();
+void draw_rect(uint32_t *pixels, int x, int y, int w, int h);
+void draw_sync();
+int screen_width();
+int screen_height();
 
 // string.h
 void* memset(void* v, int c, size_t n);
@@ -65,33 +67,6 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, co
       } \
     } while (0)
 #endif
-
-// math.h
-float sqrtf(float);
-float fabsf(float);
-float floorf(float);
-float ceilf(float);
-float sinf(float);
-float cosf(float);
-float powf(float, float);
-float fmodf(float, float);
-float sqrtf(float);
-
-// types.h
-int toupper(int);
-int tolower(int);
-
-int isalnum(int c);
-int isalpha(int c);
-int iscntrl(int c);
-int isdigit(int c);
-int isgraph(int c);
-int islower(int c);
-int isprint(int c);
-int ispunct(int c);
-int isspace(int c);
-int isupper(int c);
-int isxdigit(int c);
 
 #ifdef __cplusplus
 }

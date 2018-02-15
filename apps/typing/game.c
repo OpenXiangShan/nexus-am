@@ -19,7 +19,7 @@ int main (){
     bool redraw = false;
 
     while (1) {
-      time = _uptime();
+      time = uptime();
       if (time >= next_frame) break;
     }
     frames ++;

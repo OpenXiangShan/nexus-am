@@ -1,7 +1,7 @@
 #include"klib.h"
 #include<stdarg.h>
 
-//static char* s_h=0;
+#ifndef __ISA_NATIVE__
 
 char* printch(char ch,char** s);
 int  printdec(unsigned int dec,int base,int width,char abs,char flagc,char** s);
@@ -186,3 +186,5 @@ char* printstr(char* str,char** s){
   //*s++='\0';
   return *s;
 }
+
+#endif

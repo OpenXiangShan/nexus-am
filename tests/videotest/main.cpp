@@ -17,8 +17,8 @@ bool used[N][N];
 uint32_t color_buf[32 * 32];
 
 void redraw() {
-  int w = _screen.width / N;
-  int h = _screen.height / N;
+  int w = screen_width() / N;
+  int h = screen_height() / N;
   int block_size = w * h;
   assert((uint32_t)block_size <= sizeof(color_buf) / sizeof(color_buf[0]));
 
@@ -28,11 +28,11 @@ void redraw() {
       for (k = 0; k < block_size; k ++) {
         color_buf[k] = canvas[y][x];
       }
-      _draw_rect(color_buf, x * w, y * h, w, h);
+      draw_rect(color_buf, x * w, y * h, w, h);
     }
   }
 
-  _draw_sync();
+  draw_sync();
 }
 
 static uint32_t p(int tsc) {
@@ -76,7 +76,7 @@ int main() {
   unsigned long last = 0;
 
   while (true) {
-    unsigned long upt = _uptime();
+    unsigned long upt = uptime();
     if (upt - last > 1000 / FPS) {
       update();
       redraw();

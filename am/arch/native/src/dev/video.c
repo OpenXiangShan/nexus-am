@@ -1,10 +1,9 @@
 #include <am.h>
+#include <amdev.h>
 #include <SDL2/SDL.h>
 
 #define W 400
 #define H 300
-
-_Screen _screen;
 
 #define KEYDOWN_MASK 0x8000
 
@@ -28,48 +27,15 @@ static SDL_mutex *key_queue_lock;
 static SDL_Texture *texture;
 static uint32_t fb[W * H];
 
-void gui_init() {
-  _screen.width = W;
-  _screen.height = H;
-  SDL_Init(SDL_INIT_VIDEO);
-  SDL_CreateWindowAndRenderer(W * 2, H * 2, 0, &window, &renderer);
-  SDL_SetWindowTitle(window, "Native Application");
-  SDL_CreateThread(event_thread, "event thread", NULL);
-  texture = SDL_CreateTexture(renderer,
-    SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, W, H);
-  memset(fb, 0, W * H * sizeof(uint32_t));
-  _draw_sync();
-  key_queue_lock = SDL_CreateMutex();
-}
-
 static inline int min(int x, int y) {
   return (x < y) ? x : y;
 }
 
-void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
-  int cp_bytes = sizeof(uint32_t) * min(w, _screen.width - x);
-  for (int j = 0; j < h && y + j < _screen.height; j ++) {
-    memcpy(&fb[(y + j) * W + x], pixels, cp_bytes);
-    pixels += w;
-  }
-}
-
-void _draw_sync() {
+static void texture_sync() {
   SDL_UpdateTexture(texture, NULL, fb, W * sizeof(Uint32));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
-}
-
-int _read_key() {
-  int ret = _KEY_NONE;
-  SDL_LockMutex(key_queue_lock);
-  if (key_f != key_r) {
-    ret = key_queue[key_f];
-    key_f = (key_f + 1) % KEY_QUEUE_LEN;
-  }
-  SDL_UnlockMutex(key_queue_lock);
-  return ret;
 }
 
 #define XX(k) [SDL_SCANCODE_##k] = _KEY_##k,
@@ -104,3 +70,54 @@ static int event_thread(void *args) {
   }
 }
 
+void video_init() {
+  key_queue_lock = SDL_CreateMutex();
+  SDL_Init(SDL_INIT_VIDEO);
+  SDL_CreateWindowAndRenderer(W * 2, H * 2, 0, &window, &renderer);
+  SDL_SetWindowTitle(window, "Native Application");
+  SDL_CreateThread(event_thread, "event thread", NULL);
+  texture = SDL_CreateTexture(renderer,
+    SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, W, H);
+  memset(fb, 0, W * H * sizeof(uint32_t));
+  texture_sync();
+}
+
+uintptr_t input_read(uintptr_t reg, size_t nmemb) {
+  int ret = _KEY_NONE;
+  SDL_LockMutex(key_queue_lock);
+  if (key_f != key_r) {
+    ret = key_queue[key_f];
+    key_f = (key_f + 1) % KEY_QUEUE_LEN;
+  }
+  SDL_UnlockMutex(key_queue_lock);
+  return ret;
+}
+
+uintptr_t video_read(uintptr_t reg, size_t nmemb) {
+  switch(reg) {
+    case _DEV_VIDEO_REG_WIDTH: return W;
+    case _DEV_VIDEO_REG_HEIGHT: return H;
+  }
+  return 0;
+}
+
+void video_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
+  static int x, y, w, h;
+  static void *pixels;
+  switch(reg) {
+    case _DEV_VIDEO_REG_PIXELS: pixels = (void*)data; break;
+    case _DEV_VIDEO_REG_X: x = data; break;
+    case _DEV_VIDEO_REG_Y: y = data; break;
+    case _DEV_VIDEO_REG_W: w = data; break;
+    case _DEV_VIDEO_REG_H: h = data; break;
+    case _DEV_VIDEO_REG_DRAW: {
+      int cp_bytes = sizeof(uint32_t) * min(w, W - x);
+      for (int j = 0; j < h && y + j < H; j ++) {
+        memcpy(&fb[(y + j) * W + x], pixels, cp_bytes);
+        pixels += w;
+      }
+      break;
+    }
+    case _DEV_VIDEO_REG_SYNC: texture_sync(); break;
+  }
+}

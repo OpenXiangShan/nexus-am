@@ -1,5 +1,7 @@
 #include "klib.h"
 
+#ifndef __ISA_NATIVE__
+
 size_t strlen(const char *s) {
   size_t sz = 0;
   for (; *s; s ++) {
@@ -8,9 +10,9 @@ size_t strlen(const char *s) {
   return sz;
 }
 
-char* strcpy(char* dst,const char* src){
-  char* ret;
-  ret=dst;
+char *strcpy(char* dst,const char* src) {
+  char *ret;
+  ret = dst;
   while((*dst++=*src++)!='\0');
   return ret;
 }
@@ -75,6 +77,7 @@ void* memmove(void* dst,const void* src,size_t n){
   }
   return dst;
 }
+
 void* memcpy(void* dst, const void* src, size_t n){
 
   int n_align = n & ~0xf;
@@ -95,3 +98,4 @@ int memcmp(const void* s1, const void* s2, size_t n){
   return strncmp(s1,s2,n);
 }
 
+#endif

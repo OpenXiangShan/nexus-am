@@ -64,7 +64,7 @@ void irq_handle(TrapFrame *tf) {
   args[3] = regs.ebx;
 
   ev.event = _EVENT_NULL;
-  if (tf->irq == 32) ev.event = _EVENT_IRQ_TIME;
+  if (tf->irq == 32) ev.event = _EVENT_IRQ_TIMER;
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
     ev.event = _EVENT_TRAP;
@@ -168,10 +168,9 @@ void irq_handle(TrapFrame *tf) {
 
 }
 
-static GateDesc idt[NR_IRQ];
-
 
 void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
+  static GateDesc idt[NR_IRQ];
   smp_init();
   lapic_init();
   ioapic_enable(IRQ_KBD, 0);
@@ -208,13 +207,16 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
 }
 
 _RegSet *_make(_Area stack, void *entry, void *arg) {
-  // TODO: pass arg
   _RegSet *regs = (_RegSet*)stack.start;
   regs->esp0 = reinterpret_cast<uint32_t>(stack.end);
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
   regs->eip = (uint32_t)entry;
   regs->eflags = FL_IF;
+  regs->esp0 -= 4;
+  *((void**)(regs->esp0)) = arg; // argument
+  regs->esp0 -= 4;
+  *((void**)(regs->esp0)) = NULL; // return address
   return regs;
 }
 
