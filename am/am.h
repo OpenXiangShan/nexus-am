@@ -78,6 +78,9 @@ int _istatus(int enable);
 // [3] Protection Extension (PTE)
 // =======================================================================
 
+#define _PG_R 1
+#define _PG_W 2
+#define _PG_X 4
 void _pte_init(void*(*palloc)(), void (*pfree)(void*));
 void _protect(_Protect *p);
 void _release(_Protect *p);

@@ -70,15 +70,16 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-void _map(_Protect *p, void *va, void *pa) {
+void _map(_Protect *p, void *va, void *pa, uint8_t mode) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
+  uint32_t wflag = (mode & _PG_W) ? PTE_W : 0;
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | PTE_W | PTE_U | reinterpret_cast<uint32_t>(palloc_f());
+    *pde = PTE_P | wflag | PTE_U | reinterpret_cast<uint32_t>(palloc_f());
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
-    *pte = PTE_P | PTE_W | PTE_U | reinterpret_cast<uint32_t>(pa);
+    *pte = PTE_P | wflag | PTE_U | reinterpret_cast<uint32_t>(pa);
   }
 }
 
