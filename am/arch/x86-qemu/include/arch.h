@@ -15,9 +15,10 @@ struct _RegSet {
            ss0, esp0;
 };
 
-#define REG1(regs) ((regs)->eax)
-#define REG2(regs) ((regs)->ebx)
-#define REG3(regs) ((regs)->ecx)
-#define REG4(regs) ((regs)->edx)
+#define GPR1 eax
+#define GPR2 ebx
+#define GPR3 ecx
+#define GPR4 edx
+#define GPRx eax
 
 #endif

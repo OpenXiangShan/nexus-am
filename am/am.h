@@ -87,7 +87,7 @@ void _map(_Protect *p, void *va, void *pa, int mode);
 void *_query(_Protect *p, void *va, int *mode);
 void _unmap(_Protect *p, void *va);
 void _switch(_Protect *p);
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *arg);
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **envp);
 
 // =======================================================================
 // [4] Multi-Processor Extension (MPE)

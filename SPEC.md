@@ -7,7 +7,7 @@
 ## AM中用到的数据结构
 
 * `_Area`代表一段连续的内存，组成`[start, end)`的左闭右开区间。
-* `_RegSet`代表体系结构相关的寄存器组。`GPR`系列寄存器定义了一些可以用来使用的寄存器。`GPR1`—`GPR4`为可读寄存器，`GPRx`为可写寄存器。
+* `_RegSet`代表体系结构相关的寄存器组。`GPR`系列寄存器定义了一些可以用来使用的寄存器(用于ABI)。`GPR1`—`GPR4`为可读寄存器，`GPRx`为可写寄存器。例如在x86中，`#define GPR1 eax`。使用`regs->GPR1`来读取寄存器的数值。
 
 ## 体系结构相关代码规范
 
@@ -17,7 +17,7 @@
 * `include/`存放相关的头文件。
 * `include/arch.h`描述体系结构相关的信息，包括：
   * 整数类型`size_t`, `off_t`的定义。
-  * `typedef struct _RegSet {}`代表所有体系结构寄存器。
+  * `typedef struct _RegSet {} _Regset;`代表所有体系结构寄存器。
 * `src/`存放相关的源代码文件。
 * `img/`存放制作镜像必要的文件。执行`img/burn target files`能将`files`对应的文件列表(.a)链接，并烧录成名为`target`的镜像。
 
@@ -29,7 +29,7 @@
 
 ### TRM API
 
-* `void _putc(char ch);` 调试输出一个字符。对qemu输出到串口，对Linux native输出到本地控制台。
+* `void _putc(char ch);` 调试输出一个字符。输出到何处由具体平台决定(例如qemu将输出到串口，因此使用`serial=stdio`就能在终端接收到调试信息；对Linux native输出到本地控制台)。
 * `void _halt(int code);` 终止运行并报告返回代码。`code`为0表示正常终止。
 
 ## IO Extension (输入/输出扩展)
@@ -61,7 +61,7 @@
   * `_EVENT_IRQ_TIMER`:时钟中断(无cause)
   * `_EVENT_IRQ_IODEV`:I/O设备中断(无cause)
   * `_EVENT_ERROR`:一般错误(无cause)
-  * `_EVENT_PAGENP/_EVENT_PAGEPROT`:缺页/页保护错(cuase: `_PG_R`/`_PG_W`, ref: 产生缺页的地址)
+  * `_EVENT_PAGENP/_EVENT_PAGEPROT`:缺页/页保护错(cuase = `_PG_R`/`_PG_W`表示发生页错误的是读/写操作；ref存放产生缺页的地址)
   * `_EVENT_TRAP`:内核态自陷(无cause)
   * `_EVENT_SYSCALL`: 系统调用(无cause)
 * `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
@@ -82,10 +82,10 @@
 * `void _protect(_Protect *p);` 创建一个保护的地址空间。
 * `void _release(_Protect *p);` 释放一个保护的地址空间。
 * `void _map(_Protect *p, void *va, void *pa, int mode);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
-* `void *_query(_Protect *p, void *va, int *mode);` (writes to `mode` if non-NULL)
-* `void _unmap(_Protect *p, void *va);`释放虚拟地址空间va的一页。
+* `void *_query(_Protect *p, void *va, int *mode);` 获取虚拟地址va所对应的物理页。相应的权限(`_PG_R`/`_PG_W`/`_PG_X`保存在`mode`中，如果`mode==NULL`则不保存)。
+* `void _unmap(_Protect *p, void *va);`释放虚拟地址空间va对应的映射页。
 * `void _switch(_Protect *p);`切换到一个保护的地址空间。注意在内核态下，内核代码将始终可用。
-* `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *arg);`创建一个用户进程(地址空间p，用户栈地址ustack，内核栈地址kstack，入口地址entry，参数arg).
+* `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **envp);`创建一个在低权限运行的地址空间。`p`必须被`_protect`，`argv`, `envp`必须指向用户栈中的内容。(地址空间p，用户栈地址ustack，内核栈地址kstack，入口地址entry, 其余为用户进程参数).
 
 ## Multi-Processor Extension (多处理器扩展)
 
