@@ -67,7 +67,11 @@ void irq_handle(TrapFrame *tf) {
   if (tf->irq == 32) ev.event = _EVENT_IRQ_TIMER;
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
-    ev.event = _EVENT_TRAP;
+    if ((int32_t)tf->eax == -1) {
+      ev.event = _EVENT_TRAP;
+    } else {
+      ev.event = _EVENT_SYSCALL;
+    }
   } else if (tf->irq == 14) {
     uint32_t err = tf->err, cause = 0;
     if (err & 0x1) {
@@ -234,7 +238,7 @@ _RegSet *_make(_Area stack, void *entry, void *arg) {
 }
 
 void _trap() {
-  asm volatile("int $0x80");
+  asm volatile("int $0x80" : : "a"(0));
 }
 
 int _istatus(int enable) {
