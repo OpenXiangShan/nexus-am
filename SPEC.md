@@ -75,6 +75,9 @@
 * `_Protect`描述一个被保护的地址空间，包含：
   * `_Area area`: 可以使用的地址空间
   * `ptr`: 体系结构相关的指针，供AM内部使用
+* Permissions:
+  * read: `_PG_R`
+  * write: `_PG_W`
 
 ### PTE API
 

@@ -95,7 +95,7 @@ void *_query(_Protect *p, void *va, int *mode) {
     return NULL;
   }
   if (mode) {
-    *mode = ((*pte & PTE_W) ? _PG_W : 0) | _PG_R | _PG_X;
+    *mode = ((*pte & PTE_W) ? _PG_W : 0) | _PG_R;
   }
   return (void*)PTE_ADDR(*pte);
 }
@@ -103,7 +103,7 @@ void *_query(_Protect *p, void *va, int *mode) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **enpv) {
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
@@ -115,7 +115,10 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *cons
 
   uint32_t esp = regs->esp3;
   regs->esp3 = esp;
-  // TODO: implement umake
+  // TODO:
+  // push (argc, argv, envp) to ustack
+  // prepare kstack
+  // make every register correct
 
   return regs;
 }
