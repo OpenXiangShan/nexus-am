@@ -70,7 +70,7 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-void _map(_Protect *p, void *va, void *pa, uint8_t mode) {
+void _map(_Protect *p, void *va, void *pa, int mode) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   uint32_t wflag = (mode & _PG_W) ? PTE_W : 0;
@@ -81,6 +81,23 @@ void _map(_Protect *p, void *va, void *pa, uint8_t mode) {
   if (!(*pte & PTE_P)) {
     *pte = PTE_P | wflag | PTE_U | reinterpret_cast<uint32_t>(pa);
   }
+}
+
+void *_query(_Protect *p, void *va, int *mode) {
+  if (mode) *mode = 0;
+  PDE *pt = (PDE*)p->ptr;
+  PDE *pde = &pt[PDX(va)];
+  if (!(*pde & PTE_P)) {
+    return NULL;
+  }
+  PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
+  if (!(*pte & PTE_P)) {
+    return NULL;
+  }
+  if (mode) {
+    *mode = ((*pte & PTE_W) ? _PG_W : 0) | _PG_R | _PG_X;
+  }
+  return (void*)PTE_ADDR(*pte);
 }
 
 void _unmap(_Protect *p, void *va) {

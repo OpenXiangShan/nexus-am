@@ -68,8 +68,21 @@ void irq_handle(TrapFrame *tf) {
   else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
     ev.event = _EVENT_TRAP;
-  }
-  else if (tf->irq < 32) ev.event = _EVENT_ERROR;
+  } else if (tf->irq == 14) {
+    uint32_t err = tf->err, cause = 0;
+    if (err & 0x1) {
+      ev.event = _EVENT_PAGEPROT;
+    } else {
+      ev.event = _EVENT_PAGENP;
+    }
+    if (err & 0x2) {
+      cause |= _PG_W;
+    } else {
+      cause |= _PG_R;
+    }
+    ev.cause = cause;
+    ev.ref = get_cr2();
+  } else if (tf->irq < 32) ev.event = _EVENT_ERROR;
 
   _RegSet *ret = &regs;
   if (H) {

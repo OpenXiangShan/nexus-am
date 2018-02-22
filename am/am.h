@@ -31,8 +31,7 @@ enum {
   _EVENT_NULL = 0,
   _EVENT_IRQ_TIMER, _EVENT_IRQ_IODEV,
   _EVENT_ERROR,
-  _EVENT_NUMERIC,
-  _EVENT_PAGE_FAULT,
+  _EVENT_PAGENP, _EVENT_PAGEPROT,
   _EVENT_TRAP, _EVENT_SYSCALL,
 };
 
@@ -84,7 +83,8 @@ int _istatus(int enable);
 void _pte_init(void*(*palloc)(), void (*pfree)(void*));
 void _protect(_Protect *p);
 void _release(_Protect *p);
-void _map(_Protect *p, void *va, void *pa, uint8_t mode);
+void _map(_Protect *p, void *va, void *pa, int mode);
+void *_query(_Protect *p, void *va, int *mode);
 void _unmap(_Protect *p, void *va);
 void _switch(_Protect *p);
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *arg);

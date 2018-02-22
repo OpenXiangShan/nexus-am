@@ -58,12 +58,10 @@
 ### ASYE API
 
 * `void _asye_init(_RegSet* (*l)(Event ev, _RegSet *regs));`初始化Extension。初始化后并不响应异步事件。`l`是监听中断/异常事件的回调函数。在中断/异常事件到来时调用l(ev, regs)。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。系统事件：
-  * `_EVENT_IRQ_TIME`:时钟中断(无cause)
+  * `_EVENT_IRQ_TIMER`:时钟中断(无cause)
   * `_EVENT_IRQ_IODEV`:I/O设备中断(无cause)
   * `_EVENT_ERROR`:一般错误(无cause)
-  * `_EVENT_PAGE_FAULT`:缺页/页保护错(cause: 产生缺页的地址)
-  * `_EVENT_BUS_ERROR`:总线错误(cause: 产生错误的地址)
-  * `_EVENT_NUMERIC`:数值错误(无cause)
+  * `_EVENT_PAGENP/_EVENT_PAGEPROT`:缺页/页保护错(cuase: `_PG_R`/`_PG_W`, ref: 产生缺页的地址)
   * `_EVENT_TRAP`:内核态自陷(无cause)
   * `_EVENT_SYSCALL`: 系统调用(无cause)
 * `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
@@ -83,7 +81,8 @@
 * `void _pte_init(void*(*palloc)(), void (*pfree)(void*));`初始化Extension。传入两个函数，分别代表分配/释放一个物理页(分配需保证多线程/多处理器安全)。
 * `void _protect(_Protect *p);` 创建一个保护的地址空间。
 * `void _release(_Protect *p);` 释放一个保护的地址空间。
-* `void _map(_Protect *p, void *va, void *pa, uint8_t mode);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
+* `void _map(_Protect *p, void *va, void *pa, int mode);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
+* `void *_query(_Protect *p, void *va, int *mode);` (writes to `mode` if non-NULL)
 * `void _unmap(_Protect *p, void *va);`释放虚拟地址空间va的一页。
 * `void _switch(_Protect *p);`切换到一个保护的地址空间。注意在内核态下，内核代码将始终可用。
 * `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *arg);`创建一个用户进程(地址空间p，用户栈地址ustack，内核栈地址kstack，入口地址entry，参数arg).
