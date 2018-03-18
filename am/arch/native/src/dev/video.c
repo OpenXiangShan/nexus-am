@@ -103,9 +103,9 @@ uintptr_t video_read(uintptr_t reg, size_t nmemb) {
 
 void video_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
   static int x, y, w, h;
-  static void *pixels;
+  static uint32_t *pixels;
   switch(reg) {
-    case _DEV_VIDEO_REG_PIXELS: pixels = (void*)data; break;
+    case _DEV_VIDEO_REG_PIXELS: pixels = (uint32_t*)data; break;
     case _DEV_VIDEO_REG_X: x = data; break;
     case _DEV_VIDEO_REG_Y: y = data; break;
     case _DEV_VIDEO_REG_W: w = data; break;
