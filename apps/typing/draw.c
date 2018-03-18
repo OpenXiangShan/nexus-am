@@ -60,20 +60,21 @@ void redraw_screen() {
   draw_string("FPS", strlen(fps) * 8, 0, 0xf3f781);
 
 #ifdef SCREEN_STRETCH
-  int w = _screen.width, h = _screen.height;
+  int w = screen_width();
+  int h = screen_height();
   for (int x = 0; x < w; x ++)
     for (int y = 0; y < h; y ++) {
-      _draw_rect(&canvas[y * H / h][x * W / w], x, y, 1, 1);
+      draw_rect(&canvas[y * H / h][x * W / w], x, y, 1, 1);
     }
 #else
-  assert(_screen.width >= W);
-  assert(_screen.height >= H);
-  int x = (_screen.width - W) / 2;
-  int y = (_screen.height - H) / 2;
-  _draw_rect(&canvas[0][0], x, y, W, H);
+  assert(screen_width() >= W);
+  assert(screen_height() >= H);
+  int x = (screen_width() - W) / 2;
+  int y = (screen_height() - H) / 2;
+  draw_rect(&canvas[0][0], x, y, W, H);
 #endif
 
-  _draw_sync();
+  draw_sync();
   for (int y = 0; y < H; y ++)
     for (int x = 0; x < W; x ++)
       canvas[y][x] = 0x2a0a29;
