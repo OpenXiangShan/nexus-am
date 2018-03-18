@@ -13,7 +13,7 @@ _RegSet* irq_handle(_RegSet *tf) {
   if (H) {
     _Event ev;
     switch (tf->irq) {
-      case 32: ev.event = _EVENT_IRQ_TIME; break;
+      case 32: ev.event = _EVENT_IRQ_TIMER; break;
       case 0x80: ev.event = _EVENT_SYSCALL; break;
       case 0x81: ev.event = _EVENT_TRAP; break;
       default: ev.event = _EVENT_ERROR; break;
