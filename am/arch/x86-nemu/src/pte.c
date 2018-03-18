@@ -65,7 +65,7 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-void _map(_Protect *p, void *va, void *pa) {
+void _map(_Protect *p, void *va, void *pa, int mode) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_P)) {
@@ -80,7 +80,7 @@ void _map(_Protect *p, void *va, void *pa) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **envp) {
   ustack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
   _RegSet *r = (_RegSet*)ustack.end - 1;
 
