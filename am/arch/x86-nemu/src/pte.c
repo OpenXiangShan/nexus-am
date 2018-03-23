@@ -81,7 +81,7 @@ void _map(_Protect *p, void *va, void *pa, int mode) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **envp) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   ustack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
   _RegSet *r = (_RegSet*)ustack.end - 1;
 
