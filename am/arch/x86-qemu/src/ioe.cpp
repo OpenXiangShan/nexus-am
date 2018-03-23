@@ -82,26 +82,25 @@ static void port_write(int port, size_t nmemb, uintptr_t data) {
   }
 }
 
-/*
-static uintptr_t pciconf_read(uintptr_t reg, size_t size) {
+static size_t pciconf_read(uintptr_t reg, void *buf, size_t size) {
   outl(0xcf8, reg);
   switch (size) {
-    case 1: return inb(0xcfc + (reg & 3));
-    case 2: return inw(0xcfc + (reg & 2));
-    case 4: return inl(0xcfc);
+    case 1: *(uint8_t *) buf = inb(0xcfc + (reg & 3));
+    case 2: *(uint16_t *)buf = inw(0xcfc + (reg & 2));
+    case 4: *(uint32_t *)buf = inl(0xcfc);
   }
-  return 0;
+  return size;
 }
 
-static void pciconf_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
+static size_t pciconf_write(uintptr_t reg, void *buf, size_t size) {
   outl(0xcf8, reg);
-  switch (nmemb) {
-    case 1: outb(0xcfc + (reg & 3), data);
-    case 2: outw(0xcfc + (reg & 2), data);
-    case 4: outl(0xcfc, data);
+  switch (size) {
+    case 1: outb(0xcfc + (reg & 3), *(uint8_t *) buf);
+    case 2: outw(0xcfc + (reg & 2), *(uint16_t *)buf);
+    case 4: outl(0xcfc            , *(uint32_t *)buf);
   }
+  return size;
 }
-*/
 
 static inline int keydown(int e) { return (e & 0x8000) != 0; }
 static inline int upevent(int e) { return e; }
@@ -208,7 +207,7 @@ static _Device x86_dev[] = {
   {_DEV_INPUT,   "8279 Keyboard Controller", input_read, nullptr},
   {_DEV_TIMER,   "Dummy Timer", timer_read, nullptr},
   {_DEV_VIDEO,   "Standard VGA Controller", video_read, video_write},
-  //{_DEV_PCICONF, "PCI Configuration", pciconf_read, pciconf_write},
+  {_DEV_PCICONF, "PCI Configuration", pciconf_read, pciconf_write},
   {_DEV_ATA0,    "Primary Parallel ATA Hard Disk Controller", hd_read, hd_write},
 };
 

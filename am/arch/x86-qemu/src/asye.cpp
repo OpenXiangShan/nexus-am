@@ -236,17 +236,18 @@ _RegSet *_make(_Area stack, void *entry, void *arg) {
   return regs;
 }
 
-void _trap() {
+void _yield() {
   asm volatile("int $0x80" : : "a"(-1));
 }
 
-int _istatus(int enable) {
-  int ret = (get_efl() & FL_IF) != 0;
+int _get_intr() {
+  return (get_efl() & FL_IF) != 0;
+}
+
+void _set_intr(int enable) {
   if (enable) {
     sti();
   } else {
     cli();
   }
-  return ret;
 }
-

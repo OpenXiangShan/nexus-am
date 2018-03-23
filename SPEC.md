@@ -42,7 +42,7 @@
   * `size_t (*read)(intptr_t reg, void *buf, size_t size)`: 从设备控制寄存器`reg`读取`size`字节；
   * `size_t (*write)(intptr_t reg, void *buf, size_t size)`: 向设备控制寄存器`reg`写入`size`字节。
 
-每个设备的数据格式不同，请参考AM设备手册。不支持读/写的设备相应`read`/`write`为`NULL`。
+每个设备支持的读/写规范不同，请参考AM设备手册。不支持读/写的设备相应`read`/`write`为`NULL`。
 
 ### IOE API
 
