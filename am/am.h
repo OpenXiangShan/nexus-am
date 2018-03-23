@@ -1,6 +1,6 @@
 /*
  * The Nexus Abstract Machine Architecture (AM)
- * A minimal architectural-independent library for implementing system software
+ * A portable abstraction of a bare-metal computer
  */
 
 #ifndef __AM_H__
@@ -44,7 +44,7 @@ typedef struct _Event {
 
 typedef struct _Protect {
   _Area area; 
-  uintptr_t pgsize;
+  size_t pgsize;
   void *ptr;
 } _Protect;
 
@@ -80,11 +80,11 @@ int _istatus(int enable);
 // [3] Protection Extension (PTE)
 // =======================================================================
 
-#define _PROT_NONE 1
-#define _PROT_READ 2
-#define _PROT_WRITE 4
-#define _PROT_EXEC 8
-void _pte_init(void*(*palloc)(), void (*pfree)(void*));
+#define _PROT_NONE   1
+#define _PROT_READ   2
+#define _PROT_WRITE  4
+#define _PROT_EXEC   8
+void _pte_init(void*(*pgalloc)(), void (*pgfree)(void*));
 void _protect(_Protect *p);
 void _release(_Protect *p);
 void _map(_Protect *p, void *va, void *pa, int prot);
