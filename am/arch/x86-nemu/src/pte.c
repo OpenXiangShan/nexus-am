@@ -48,6 +48,7 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
 
 void _protect(_Protect *p) {
   PDE *updir = (PDE*)(palloc_f());
+  p->pgsize = 4096;
   p->ptr = updir;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {
@@ -80,7 +81,7 @@ void _map(_Protect *p, void *va, void *pa, int mode) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **envp) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   ustack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
   _RegSet *r = (_RegSet*)ustack.end - 1;
 
