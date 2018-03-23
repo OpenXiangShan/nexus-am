@@ -48,6 +48,7 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
 
 void _protect(_Protect *p) {
   PDE *updir = (PDE*)(palloc_f());
+  p->pgsize = 4096;
   p->ptr = updir;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {

@@ -74,15 +74,14 @@ void irq_handle(TrapFrame *tf) {
     }
   } else if (tf->irq == 14) {
     uint32_t err = tf->err, cause = 0;
+    ev.event = _EVENT_PAGEFAULT;
     if (err & 0x1) {
-      ev.event = _EVENT_PAGEPROT;
-    } else {
-      ev.event = _EVENT_PAGENP;
+      cause |= _PROT_NONE;
     }
     if (err & 0x2) {
-      cause |= _PG_W;
+      cause |= _PROT_WRITE;
     } else {
-      cause |= _PG_R;
+      cause |= _PROT_READ;
     }
     ev.cause = cause;
     ev.ref = get_cr2();

@@ -50,6 +50,7 @@ void _protect(_Protect *p) {
   PDE *kpdir = kpdirs[_cpu()];
   PDE *updir = (PDE*)(palloc_f());
   p->ptr = updir;
+  p->pgsize = 4096;
   // map kernel space
   for (int i = 0; i < 1024; i ++)
     updir[i] = kpdir[i];
@@ -70,10 +71,10 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-void _map(_Protect *p, void *va, void *pa, int mode) {
+void _map(_Protect *p, void *va, void *pa, int prot) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
-  uint32_t wflag = (mode & _PG_W) ? PTE_W : 0;
+  uint32_t wflag = (prot & _PROT_WRITE) ? PTE_W : 0;
   if (!(*pde & PTE_P)) {
     *pde = PTE_P | wflag | PTE_U | reinterpret_cast<uint32_t>(palloc_f());
   }
@@ -83,8 +84,8 @@ void _map(_Protect *p, void *va, void *pa, int mode) {
   }
 }
 
-void *_query(_Protect *p, void *va, int *mode) {
-  if (mode) *mode = 0;
+void *_query(_Protect *p, void *va, int *prot) {
+  if (prot) *prot = 0;
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_P)) {
@@ -94,8 +95,8 @@ void *_query(_Protect *p, void *va, int *mode) {
   if (!(*pte & PTE_P)) {
     return NULL;
   }
-  if (mode) {
-    *mode = ((*pte & PTE_W) ? _PG_W : 0) | _PG_R;
+  if (prot) {
+    *prot = ((*pte & PTE_W) ? _PROT_WRITE : 0) | _PROT_READ;
   }
   return (void*)PTE_ADDR(*pte);
 }
@@ -103,7 +104,7 @@ void *_query(_Protect *p, void *va, int *mode) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **enpv) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
@@ -116,7 +117,7 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, 
   uint32_t esp = regs->esp3;
   regs->esp3 = esp;
   // TODO:
-  // push (argc, argv, envp) to ustack
+  // push args to ustack
   // prepare kstack
   // make every register correct
 

@@ -29,10 +29,12 @@ typedef struct _RegSet _RegSet;
 
 enum {
   _EVENT_NULL = 0,
-  _EVENT_IRQ_TIMER, _EVENT_IRQ_IODEV,
+  _EVENT_IRQ_TIMER,
+  _EVENT_IRQ_IODEV,
+  _EVENT_PAGEFAULT,
   _EVENT_ERROR,
-  _EVENT_PAGENP, _EVENT_PAGEPROT,
-  _EVENT_TRAP, _EVENT_SYSCALL,
+  _EVENT_TRAP,
+  _EVENT_SYSCALL,
 };
 
 typedef struct _Event {
@@ -42,6 +44,7 @@ typedef struct _Event {
 
 typedef struct _Protect {
   _Area area; 
+  uintptr_t pgsize;
   void *ptr;
 } _Protect;
 
@@ -77,16 +80,18 @@ int _istatus(int enable);
 // [3] Protection Extension (PTE)
 // =======================================================================
 
-#define _PG_R 1
-#define _PG_W 2
+#define _PROT_NONE 1
+#define _PROT_READ 2
+#define _PROT_WRITE 4
+#define _PROT_EXEC 8
 void _pte_init(void*(*palloc)(), void (*pfree)(void*));
 void _protect(_Protect *p);
 void _release(_Protect *p);
-void _map(_Protect *p, void *va, void *pa, int mode);
-void *_query(_Protect *p, void *va, int *mode);
+void _map(_Protect *p, void *va, void *pa, int prot);
+void *_query(_Protect *p, void *va, int *prot);
 void _unmap(_Protect *p, void *va);
 void _switch(_Protect *p);
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **envp);
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args);
 
 // =======================================================================
 // [4] Multi-Processor Extension (MPE)
