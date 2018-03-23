@@ -2,7 +2,7 @@
 
 注意事项：
 
-* 所有扩展的函数/数据结构需要在扩展初始化后调用。
+* 所有扩展的函数/数据结构需要在扩展初始化后调用(例如调用IOE中的函数，需在`_ioe_init()`之后)。
 
 ## AM中用到的数据结构
 
@@ -37,15 +37,17 @@
 ### 数据结构与静态数据
 
 * `_Device`代表一个设备描述结构体，包含：
-  * `uint32_t id`：设备编号
-  * `const char *name`：设备名称
-  * `intptr_t (*read)(intptr_t reg, size_t nmemb)`: 调用函数将读取设备控制寄存器，编号为reg，字节数为nmemb。
-  * `void (*write)(intptr_t reg, size_t nmemb, intptr_t data)`: 调用函数将写入设备控制寄存器，编号为reg，字节数为nmemb。
+  * `uint32_t id`：设备编号；
+  * `const char *name`：设备名称；
+  * `size_t (*read)(intptr_t reg, void *buf, size_t size)`: 从设备控制寄存器`reg`读取`size`字节；
+  * `size_t (*write)(intptr_t reg, void *buf, size_t size)`: 向设备控制寄存器`reg`写入`size`字节。
+
+每个设备的数据格式不同，请参考AM设备手册。不支持读/写的设备相应`read`/`write`为`NULL`。
 
 ### IOE API
 
 * `void _ioe_init();` 初始化Extension。
-* `_Device *device(int n);`返回系统中编号为n的设备。系统中从1开始连续的设备可用(返回非NULL)。
+* `_Device *_device(int n);`返回系统中编号为n的设备。系统中从1开始连续的设备可用(返回非`NULL`)。若系统中有10个设备，则`_device(1)`…`_device(10)`会返回非`NULL`指针，其他数值会返回空指针。
 
 ## Asynchronous Extension (异步执行扩展)
 
@@ -53,20 +55,21 @@
 
 * `_Event`表示一个异步(异常/中断)事件，包含：
   * `int event`: _EVENT_XXX指定的事件编号
-  * `inptr_t cause`: 产生异步事件的原因
+  * `intptr_t cause`: 产生异步事件的原因
 
 ### ASYE API
 
-* `void _asye_init(_RegSet* (*l)(Event ev, _RegSet *regs));`初始化Extension。初始化后并不响应异步事件。`l`是监听中断/异常事件的回调函数。在中断/异常事件到来时调用l(ev, regs)。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。系统事件：
+* `void _asye_init(_RegSet* (*l)(Event ev, _RegSet *regs));`初始化Extension。初始化后并不响应异步事件。`l`是监听中断/异常事件的回调函数。在中断/异常事件到来时调用`l(ev, regs)`。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。系统事件：
   * `_EVENT_IRQ_TIMER`:时钟中断(无cause)
   * `_EVENT_IRQ_IODEV`:I/O设备中断(无cause)
   * `_EVENT_ERROR`:一般错误(无cause)
-  * `_EVENT_PAGENP/_EVENT_PAGEPROT`:缺页/页保护错(cuase = `_PG_R`/`_PG_W`表示发生页错误的是读/写操作；ref存放产生缺页的地址)
+  * `_EVENT_PAGEFAULT`:页错误(cause是`_PROT_XXX`的值；ref是缺页的地址)
   * `_EVENT_TRAP`:内核态自陷(无cause)
   * `_EVENT_SYSCALL`: 系统调用(无cause)
-* `_RegSet *_make(_Area kstack, void *entry, void *arg);`创建一个内核上下文,参数arg。
-* `void _trap();`在内核态自陷。线程需要睡眠/让出CPU时使用。
-* `int _istatus(int enable);`设置中断状态(enable非0时打开)。返回设置前的中断状态(0/1)。
+* `_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg);`创建内核上下文，堆栈为`kstack`所描述的区域，内核上下文从`entry(arg)` 开始执行。
+* `void _yield();`：让出当前处理器的执行，使用自陷指令保存当前寄存器现场，并调用注册的`l`。
+* `int _set_intr(int enable)`：根据`enable == 0`关闭中断，否则打开中断。
+* `int _get_intr()`：返回当前处理器的中断状态(0关闭/1打开)。
 
 ## Protection Extension (存储保护扩展)
 
@@ -75,20 +78,10 @@
 * `_Protect`描述一个被保护的地址空间，包含：
   * `_Area area`: 可以使用的地址空间
   * `ptr`: 体系结构相关的指针，供AM内部使用
-* Permissions:
-  * read: `_PG_R`
-  * write: `_PG_W`
 
 ### PTE API
 
-* `void _pte_init(void*(*palloc)(), void (*pfree)(void*));`初始化Extension。传入两个函数，分别代表分配/释放一个物理页(分配需保证多线程/多处理器安全)。
-* `void _protect(_Protect *p);` 创建一个保护的地址空间。
-* `void _release(_Protect *p);` 释放一个保护的地址空间。
-* `void _map(_Protect *p, void *va, void *pa, int mode);`将地址空间的虚拟地址va映射到物理地址pa。单位为一页。
-* `void *_query(_Protect *p, void *va, int *mode);` 获取虚拟地址va所对应的物理页。相应的权限(`_PG_R`/`_PG_W`/`_PG_X`保存在`mode`中，如果`mode==NULL`则不保存)。
-* `void _unmap(_Protect *p, void *va);`释放虚拟地址空间va对应的映射页。
-* `void _switch(_Protect *p);`切换到一个保护的地址空间。注意在内核态下，内核代码将始终可用。
-* `_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, int argc, char **argv, char **envp);`创建一个在低权限运行的地址空间。`p`必须被`_protect`，`argv`, `envp`必须指向用户栈中的内容。(地址空间p，用户栈地址ustack，内核栈地址kstack，入口地址entry, 其余为用户进程参数).
+(调整中)
 
 ## Multi-Processor Extension (多处理器扩展)
 

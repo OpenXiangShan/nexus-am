@@ -82,7 +82,7 @@ void video_init() {
   texture_sync();
 }
 
-uintptr_t input_read(uintptr_t reg, size_t nmemb) {
+size_t input_read(uintptr_t reg, void *buf, size_t size) {
   int ret = _KEY_NONE;
   SDL_LockMutex(key_queue_lock);
   if (key_f != key_r) {
@@ -90,22 +90,24 @@ uintptr_t input_read(uintptr_t reg, size_t nmemb) {
     key_f = (key_f + 1) % KEY_QUEUE_LEN;
   }
   SDL_UnlockMutex(key_queue_lock);
-  return ret;
+  *(int32_t*)buf = ret;
+  return sizeof(int32_t);
 }
 
-uintptr_t video_read(uintptr_t reg, size_t nmemb) {
+size_t video_read(uintptr_t reg, void *buf, size_t size) {
   switch(reg) {
-    case _DEV_VIDEO_REG_WIDTH: return W;
-    case _DEV_VIDEO_REG_HEIGHT: return H;
+    case _DEV_VIDEO_REG_WIDTH: *(int32_t*)buf = W; break;
+    case _DEV_VIDEO_REG_HEIGHT: *(int32_t*)buf = H; break;
   }
-  return 0;
+  return sizeof(int32_t);
 }
 
-void video_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
+void video_write(uintptr_t reg, void *buf, size_t size) {
+  int data = *(int32_t*)buf;
   static int x, y, w, h;
   static uint32_t *pixels;
   switch(reg) {
-    case _DEV_VIDEO_REG_PIXELS: pixels = (uint32_t*)data; break;
+    case _DEV_VIDEO_REG_PIXELS: pixels = (uint32_t*)buf; break;
     case _DEV_VIDEO_REG_X: x = data; break;
     case _DEV_VIDEO_REG_Y: y = data; break;
     case _DEV_VIDEO_REG_W: w = data; break;

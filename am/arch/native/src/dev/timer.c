@@ -5,7 +5,8 @@
 
 static struct timeval boot_time;
 
-uintptr_t timer_read(uintptr_t reg, size_t nmemb) {
+
+size_t timer_read(uintptr_t reg, void *buf, size_t size) {
   struct timeval now;
   gettimeofday(&now, NULL);
   long seconds = now.tv_sec - boot_time.tv_sec;

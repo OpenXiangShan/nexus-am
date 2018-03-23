@@ -37,8 +37,8 @@ void _halt(int code);
 typedef struct _Device {
   uint32_t id;
   const char *name;
-  uintptr_t (*read)(uintptr_t reg, void *buf, size_t size);
-  void (*write)(uintptr_t reg, void *buf, size_t size);
+  size_t (*read)(uintptr_t reg, void *buf, size_t size);
+  size_t (*write)(uintptr_t reg, void *buf, size_t size);
 } _Device;
 
 void _ioe_init();
@@ -64,7 +64,7 @@ typedef struct _Event {
 typedef struct _RegSet _RegSet;
 
 void _asye_init(_RegSet *(*l)(_Event ev, _RegSet *regs));
-_RegSet *_make(_Area kstack, void *entry, void *arg);
+_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg);
 void _yield();
 void _set_intr(int enable);
 int _get_intr();
@@ -79,7 +79,6 @@ int _get_intr();
 #define _PROT_EXEC   8
 typedef struct _Protect {
   _Area area; 
-  size_t pgsize;
   void *ptr;
 } _Protect;
 

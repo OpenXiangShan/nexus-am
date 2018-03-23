@@ -4,11 +4,11 @@
 void timer_init();
 void video_init();
 
-uintptr_t input_read(uintptr_t, size_t);
-uintptr_t timer_read(uintptr_t, size_t);
-uintptr_t video_read(uintptr_t, size_t);
+size_t input_read(uintptr_t reg, void *buf, size_t size);
+size_t timer_read(uintptr_t reg, void *buf, size_t size);
+size_t video_read(uintptr_t reg, void *buf, size_t size);
 
-void video_write(uintptr_t, size_t, uintptr_t);
+size_t video_write(uintptr_t reg, void *buf, size_t size);
 
 static _Device devices[] = {
   {_DEV_INPUT,   "SDL Keyboard", input_read},
