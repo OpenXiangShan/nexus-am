@@ -20,37 +20,51 @@ static _Device *video_dev;
 static _Device *timer_dev;
 
 uint32_t uptime() {
+  _Dev_Timer_Uptime uptime;
   _Device *dev = getdev(&timer_dev, _DEV_TIMER);
-  return dev->read(_DEV_TIMER_REG_UPTIME, 4);
+  dev->read(_DEV_TIMER_REG_UPTIME, &uptime, sizeof(uptime));
+  return uptime.lo;
 }
 
 int read_key() {
   _Device *dev = getdev(&input_dev, _DEV_INPUT);
-  return dev->read(_DEV_INPUT_REG_KBD, 2);
+  int32_t key;
+  dev->read(_DEV_INPUT_REG_KBD, &key, sizeof(int32_t));
+  return key;
 }
 
 void draw_rect(uint32_t *pixels, int x, int y, int w, int h) {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  dev->write(_DEV_VIDEO_REG_PIXELS, 4, (uintptr_t)pixels);
-  dev->write(_DEV_VIDEO_REG_X, 4, x);
-  dev->write(_DEV_VIDEO_REG_Y, 4, y);
-  dev->write(_DEV_VIDEO_REG_W, 4, w);
-  dev->write(_DEV_VIDEO_REG_H, 4, h);
-  dev->write(_DEV_VIDEO_REG_DRAW, 4, 0);
+  _Dev_Video_FBCtl ctl;
+  ctl.pixels = pixels;
+  ctl.x = x;
+  ctl.y = y;
+  ctl.w = w;
+  ctl.h = h;
+  ctl.sync = 0;
+  dev->write(_DEV_VIDEO_REG_FBCTL, &ctl, sizeof(ctl));
 }
 
 void draw_sync() {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  dev->write(_DEV_VIDEO_REG_SYNC, 4, 0);
+  _Dev_Video_FBCtl ctl;
+  ctl.pixels = NULL;
+  ctl.x = ctl.y = ctl.w = ctl.h = 0;
+  ctl.sync = 1;
+  dev->write(_DEV_VIDEO_REG_FBCTL, &ctl, sizeof(ctl));
 }
 
 int screen_width() {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  return dev->read(_DEV_VIDEO_REG_WIDTH, 4);
+  _Dev_Video_Info info;
+  dev->read(_DEV_VIDEO_REG_INFO, &info, sizeof(info));
+  return info.width;
 }
 
 int screen_height() {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  return dev->read(_DEV_VIDEO_REG_HEIGHT, 4);
+  _Dev_Video_Info info;
+  dev->read(_DEV_VIDEO_REG_INFO, &info, sizeof(info));
+  return info.width;
 }
 

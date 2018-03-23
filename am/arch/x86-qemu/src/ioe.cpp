@@ -82,9 +82,10 @@ static void port_write(int port, size_t nmemb, uintptr_t data) {
   }
 }
 
-static uintptr_t pciconf_read(uintptr_t reg, size_t nmemb) {
+/*
+static uintptr_t pciconf_read(uintptr_t reg, size_t size) {
   outl(0xcf8, reg);
-  switch (nmemb) {
+  switch (size) {
     case 1: return inb(0xcfc + (reg & 3));
     case 2: return inw(0xcfc + (reg & 2));
     case 4: return inl(0xcfc);
@@ -100,12 +101,13 @@ static void pciconf_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
     case 4: outl(0xcfc, data);
   }
 }
+*/
 
 static inline int keydown(int e) { return (e & 0x8000) != 0; }
 static inline int upevent(int e) { return e; }
 static inline int downevent(int e) { return e | 0x8000; }
 
-static uintptr_t input_read(uintptr_t reg, size_t nmemb) {
+static size_t input_read(uintptr_t reg, void *buf, size_t size) {
   static int scan_code[] = {
     0,
     1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
@@ -117,48 +119,59 @@ static uintptr_t input_read(uintptr_t reg, size_t nmemb) {
     72, 80, 75, 77, 0, 0, 0, 0, 0, 0
   };
 
-  int status = inb(0x64);
-  if ((status & 0x1) == 0) return upevent(_KEY_NONE);
+  int status = inb(0x64), ret = _KEY_NONE;
+  if ((status & 0x1) == 0) ret = upevent(_KEY_NONE);
   if (status & 0x20) { // mouse
-    return upevent(_KEY_NONE);
+    ret = upevent(_KEY_NONE);
   } else {
     int code = inb(0x60) & 0xff;
 
     for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
       if (scan_code[i] == 0) continue;
       if (scan_code[i] == code) {
-        return downevent(i);
+        ret = downevent(i);
+        break;
       } else if (scan_code[i] + 128 == code) {
-        return upevent(i);
+        ret = upevent(i);
+        break;
       }
     }
-    return _KEY_NONE;
   }
+  *(int *)buf = ret;
+  return sizeof(int);
 }
 
-static uintptr_t timer_read(uintptr_t reg, size_t nmemb) {
+static size_t timer_read(uintptr_t reg, void *buf, size_t size) {
   static uint32_t tsc = 0;
-  return tsc ++;
-}
-
-static uintptr_t video_read(uintptr_t reg, size_t nmemb) {
-  switch(reg) {
-    case _DEV_VIDEO_REG_WIDTH: return W;
-    case _DEV_VIDEO_REG_HEIGHT: return H;
+  switch (reg) {
+    case _DEV_TIMER_REG_UPTIME: {
+      _Dev_Timer_Uptime *uptime = (_Dev_Timer_Uptime *)buf;
+      uptime->hi = 0;
+      uptime->lo = tsc++;
+      return sizeof(_Dev_Timer_Uptime);
+    }
   }
   return 0;
 }
 
-static void video_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
-  static int x, y, w, h;
-  static uint32_t *pixels;
+static size_t video_read(uintptr_t reg, void *buf, size_t size) {
   switch(reg) {
-    case _DEV_VIDEO_REG_PIXELS: pixels = (uint32_t*)data; break;
-    case _DEV_VIDEO_REG_X: x = data; break;
-    case _DEV_VIDEO_REG_Y: y = data; break;
-    case _DEV_VIDEO_REG_W: w = data; break;
-    case _DEV_VIDEO_REG_H: h = data; break;
-    case _DEV_VIDEO_REG_DRAW: {
+    case _DEV_VIDEO_REG_INFO: {
+      _Dev_Video_Info *info = (_Dev_Video_Info *)buf;
+      info->width = W;
+      info->height = H;
+      return sizeof(_Dev_Video_Info);
+    }
+  }
+  return 0;
+}
+
+static size_t video_write(uintptr_t reg, void *buf, size_t size) {
+  switch(reg) {
+    case _DEV_VIDEO_REG_FBCTL: {
+      _Dev_Video_FBCtl *ctl = (_Dev_Video_FBCtl *)buf;
+      int x = ctl->x, y = ctl->y, w = ctl->w, h = ctl->h;
+      uint32_t *pixels = ctl->pixels;
       int len = (x + w >= W) ? W - x : w;
       FBPixel *v;
       for (int j = 0; j < h; j ++) {
@@ -171,25 +184,31 @@ static void video_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
         }
         pixels += w;
       }
-      break;
+      if (ctl->sync) {
+        // do nothing, hardware syncs.
+      }
+      return sizeof(size);
     }
-    case _DEV_VIDEO_REG_SYNC: break;
   }
+  return 0;
 }
 
-static uintptr_t hd_read(uintptr_t reg, size_t nmemb) {
-  return port_read(0x1f0 + reg, nmemb);
+static size_t hd_read(uintptr_t reg, void *buf, size_t size) {
+  *(uint32_t *)buf = port_read(0x1f0 + reg, size);
+  return 0;
 }
 
-static void hd_write(uintptr_t reg, size_t nmemb, uintptr_t data) {
-  port_write(0x1f0 + reg, nmemb, data);
+static size_t hd_write(uintptr_t reg, void *buf, size_t size) {
+  uint32_t data = *((uint32_t *)buf);
+  port_write(0x1f0 + reg, size, data);
+  return 0;
 }
 
 static _Device x86_dev[] = {
   {_DEV_INPUT,   "8279 Keyboard Controller", input_read, nullptr},
   {_DEV_TIMER,   "Dummy Timer", timer_read, nullptr},
   {_DEV_VIDEO,   "Standard VGA Controller", video_read, video_write},
-  {_DEV_PCICONF, "PCI Configuration", pciconf_read, pciconf_write},
+  //{_DEV_PCICONF, "PCI Configuration", pciconf_read, pciconf_write},
   {_DEV_ATA0,    "Primary Parallel ATA Hard Disk Controller", hd_read, hd_write},
 };
 

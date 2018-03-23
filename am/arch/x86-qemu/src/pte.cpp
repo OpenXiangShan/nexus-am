@@ -50,7 +50,6 @@ void _protect(_Protect *p) {
   PDE *kpdir = kpdirs[_cpu()];
   PDE *updir = (PDE*)(palloc_f());
   p->ptr = updir;
-  p->pgsize = 4096;
   // map kernel space
   for (int i = 0; i < 1024; i ++)
     updir[i] = kpdir[i];
