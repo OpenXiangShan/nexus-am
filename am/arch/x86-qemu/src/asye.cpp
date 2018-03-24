@@ -46,7 +46,6 @@ void irq_handle(TrapFrame *tf) {
     lapic_eoi();
   }
 
-
   _Event ev;
   
   if (tf->cs & DPL_USER) { // interrupt at user code
