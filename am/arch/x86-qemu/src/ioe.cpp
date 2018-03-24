@@ -2,6 +2,8 @@
 #include <amdev.h>
 #include <x86.h>
 
+uint32_t x86_uptime = 0;
+
 extern "C" {
 
 struct VBEInfo {
@@ -119,20 +121,23 @@ static size_t input_read(uintptr_t reg, void *buf, size_t size) {
   };
 
   int status = inb(0x64), ret = _KEY_NONE;
-  if ((status & 0x1) == 0) ret = upevent(_KEY_NONE);
-  if (status & 0x20) { // mouse
-    ret = upevent(_KEY_NONE);
+  if ((status & 0x1) == 0) {
+    ret = _KEY_NONE;
   } else {
-    int code = inb(0x60) & 0xff;
+    if (status & 0x20) { // mouse
+      ret = upevent(_KEY_NONE);
+    } else {
+      int code = inb(0x60) & 0xff;
 
-    for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
-      if (scan_code[i] == 0) continue;
-      if (scan_code[i] == code) {
-        ret = downevent(i);
-        break;
-      } else if (scan_code[i] + 128 == code) {
-        ret = upevent(i);
-        break;
+      for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
+        if (scan_code[i] == 0) continue;
+        if (scan_code[i] == code) {
+          ret = downevent(i);
+          break;
+        } else if (scan_code[i] + 128 == code) {
+          ret = upevent(i);
+          break;
+        }
       }
     }
   }
@@ -141,12 +146,11 @@ static size_t input_read(uintptr_t reg, void *buf, size_t size) {
 }
 
 static size_t timer_read(uintptr_t reg, void *buf, size_t size) {
-  static uint32_t tsc = 0;
   switch (reg) {
     case _DEV_TIMER_REG_UPTIME: {
       _Dev_Timer_Uptime *uptime = (_Dev_Timer_Uptime *)buf;
       uptime->hi = 0;
-      uptime->lo = tsc++;
+      uptime->lo = x86_uptime;
       return sizeof(_Dev_Timer_Uptime);
     }
   }

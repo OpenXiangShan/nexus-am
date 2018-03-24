@@ -3,10 +3,11 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
+extern uint32_t x86_uptime;
+
 extern "C" { int printk(const char *, ...); }
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
-static uint32_t args[4];
 
 extern "C" {
 void irq0();
@@ -58,17 +59,14 @@ void irq_handle(TrapFrame *tf) {
     regs.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
   }
 
-  args[0] = regs.eax;
-  args[1] = regs.edx;
-  args[2] = regs.ecx;
-  args[3] = regs.ebx;
-
   ev.event = _EVENT_NULL;
-  if (tf->irq == 32) ev.event = _EVENT_IRQ_TIMER;
-  else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
+  if (tf->irq == 32) {
+    ev.event = _EVENT_IRQ_TIMER;
+    x86_uptime += 10;
+  } else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
     if ((int32_t)tf->eax == -1) {
-      ev.event = _EVENT_TRAP;
+      ev.event = _EVENT_YIELD;
     } else {
       ev.event = _EVENT_SYSCALL;
     }
@@ -92,7 +90,6 @@ void irq_handle(TrapFrame *tf) {
     _RegSet *next = H(ev, &regs);
     if (next != nullptr) {
       ret = next;
-      ret->eax = args[0];
     }
   }
 
