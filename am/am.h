@@ -54,7 +54,7 @@ enum {
   _EVENT_IRQ_IODEV,
   _EVENT_PAGEFAULT,
   _EVENT_ERROR,
-  _EVENT_TRAP,
+  _EVENT_YIELD,
   _EVENT_SYSCALL,
 };
 typedef struct _Event {
@@ -63,7 +63,7 @@ typedef struct _Event {
 } _Event;
 typedef struct _RegSet _RegSet;
 
-void _asye_init(_RegSet *(*l)(_Event ev, _RegSet *regs));
+void _asye_init(_RegSet *(*handler)(_Event ev, _RegSet *regs));
 _RegSet *_make(_Area kstack, void (*entry)(void *), void *arg);
 void _yield();
 void _set_intr(int enable);

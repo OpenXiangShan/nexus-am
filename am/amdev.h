@@ -42,6 +42,10 @@ typedef struct _Dev_Timer_Uptime {
   uint32_t hi, lo;
 } _Dev_Timer_Uptime;
 #define _DEV_TIMER_REG_UPTIME  1
+typedef struct _Dev_Timer_RTC {
+  int year, month, day, hour, minute, second;
+} _Dev_Timer_RTC;
+#define _DEV_TIMER_REG_RTC     2
 
 // Video (0000ac04)
 

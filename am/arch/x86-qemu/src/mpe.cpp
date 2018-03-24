@@ -114,9 +114,3 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
     "+m"(*addr), "=a"(result): "1"(newval): "cc");
   return result;
 }
-
-/*
-void _barrier() {
-  asm volatile("":::"memory");
-}
-*/

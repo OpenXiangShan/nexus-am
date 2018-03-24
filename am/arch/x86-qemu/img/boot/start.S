@@ -33,7 +33,7 @@ start32:
   movw    %ax, %ss
 
   movl    (0x7020), %esp # the core's ESP offset
-  addl    $0x8000, %esp
+  addl    $0x2000, %esp
   call    bootmain
 
 # GDT

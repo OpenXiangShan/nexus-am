@@ -2,6 +2,7 @@
 #include <amdev.h>
 #include <klib.h>
 
+int ntraps = 0;
 _RegSet* handler(_Event ev, _RegSet *regs) {
   switch (ev.event) {
     case _EVENT_IRQ_TIMER:
@@ -14,17 +15,16 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
         if (key & 0x8000) {
           printf("[D:%d]", key ^ 0x8000);
         } else {
-          int ntraps = regs->GPR4;
-          regs->GPR4 = 0;
           printf("[U:%d]/[TRAPS:%d]", key, ntraps);
+          ntraps = 0;
         }
       }
       break;
-    case _EVENT_TRAP:
-      regs->GPR4 ++;
+    case _EVENT_YIELD:
+      assert(_get_intr() == 0);
+      ntraps++;
       break;
   }
-  regs->GPR1 = 0;
   return regs;
 }
 
@@ -34,6 +34,8 @@ int main(){
   assert(!_get_intr());
   _set_intr(1);
   //_make(_heap, void*)main, 0);
-  while (1) _yield();
+  while (1) {
+    _yield();
+  }
   return 0;
 }

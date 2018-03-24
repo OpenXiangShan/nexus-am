@@ -2,6 +2,16 @@
 #include <amdev.h>
 #include <x86.h>
 
+extern "C" { int printf(const char *, ...); }
+static uint32_t freq_mhz;
+uint64_t uptsc;
+
+static inline uint64_t rdtsc() {
+  uint32_t lo, hi;
+  asm volatile ("rdtsc": "=a"(lo), "=d"(hi));
+  return ((uint64_t)hi << 32) | lo;
+}
+
 extern "C" {
 
 struct VBEInfo {
@@ -61,7 +71,58 @@ static void vga_init() {
   fb = reinterpret_cast<FBPixel*>(info->framebuffer);
 }
 
+static _Dev_Timer_RTC boot_date;
+static int read_rtc(int reg) {
+  outb(0x70, reg);
+  int ret = inb(0x71);
+  return (ret & 0xf) + (ret >> 4) * 10;
+}
+
+static void wait_sec() {
+  while (1) {
+    int volatile s1 = read_rtc(0);
+    int volatile s2 = read_rtc(0);
+    if (s1 != s2) {
+      return;
+    }
+  }
+}
+
+static uint32_t estimate_freq() {
+  int h, m, s, t1, t2;
+  uint64_t tsc1, tsc2;
+  wait_sec();
+  tsc1 = rdtsc();
+  h = read_rtc(4); m = read_rtc(2); s = read_rtc(0);
+  t1 = h * 3600 + m * 60 + s;
+  wait_sec();
+  tsc2 = rdtsc();
+  h = read_rtc(4); m = read_rtc(2); s = read_rtc(0);
+  t2 = h * 3600 + m * 60 + s;
+  if (t1 >= t2) return 0; // passed a day, unlikely to happen
+
+  uint32_t freq = (tsc2 - tsc1) >> 20;
+  freq /= (t2 - t1);
+  return freq;
+}
+
+static void timer_init() {
+  uptsc = rdtsc();
+  int tmp;
+  do {
+    boot_date.second = read_rtc(0);
+    boot_date.minute = read_rtc(2);
+    boot_date.hour   = read_rtc(4);
+    boot_date.day    = read_rtc(7);
+    boot_date.month  = read_rtc(8);
+    boot_date.year   = read_rtc(9) + 2000;
+    tmp              = read_rtc(0);
+  } while (tmp != boot_date.second);
+  freq_mhz = estimate_freq();
+}
+
 void _ioe_init() {
+  timer_init();
   vga_init();
 }
 
@@ -119,20 +180,23 @@ static size_t input_read(uintptr_t reg, void *buf, size_t size) {
   };
 
   int status = inb(0x64), ret = _KEY_NONE;
-  if ((status & 0x1) == 0) ret = upevent(_KEY_NONE);
-  if (status & 0x20) { // mouse
-    ret = upevent(_KEY_NONE);
+  if ((status & 0x1) == 0) {
+    ret = _KEY_NONE;
   } else {
-    int code = inb(0x60) & 0xff;
+    if (status & 0x20) { // mouse
+      ret = upevent(_KEY_NONE);
+    } else {
+      int code = inb(0x60) & 0xff;
 
-    for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
-      if (scan_code[i] == 0) continue;
-      if (scan_code[i] == code) {
-        ret = downevent(i);
-        break;
-      } else if (scan_code[i] + 128 == code) {
-        ret = upevent(i);
-        break;
+      for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
+        if (scan_code[i] == 0) continue;
+        if (scan_code[i] == code) {
+          ret = downevent(i);
+          break;
+        } else if (scan_code[i] + 128 == code) {
+          ret = upevent(i);
+          break;
+        }
       }
     }
   }
@@ -141,12 +205,14 @@ static size_t input_read(uintptr_t reg, void *buf, size_t size) {
 }
 
 static size_t timer_read(uintptr_t reg, void *buf, size_t size) {
-  static uint32_t tsc = 0;
   switch (reg) {
     case _DEV_TIMER_REG_UPTIME: {
+      uint64_t tsc = rdtsc() - uptsc;
+      uint32_t mticks = (tsc >> 20);
+      uint32_t ms = mticks * 1000 / freq_mhz;
       _Dev_Timer_Uptime *uptime = (_Dev_Timer_Uptime *)buf;
       uptime->hi = 0;
-      uptime->lo = tsc++;
+      uptime->lo = ms;
       return sizeof(_Dev_Timer_Uptime);
     }
   }
