@@ -2,6 +2,7 @@
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
+#if 0
 static PDE kpdirs[NR_PDE] PG_ALIGN;
 static PTE kptabs[PMEM_SIZE / PGSIZE] PG_ALIGN;
 static void* (*palloc_f)();
@@ -90,3 +91,4 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args
   r->eflags = 0x2 | FL_IF;
   return r;
 }
+#endif
