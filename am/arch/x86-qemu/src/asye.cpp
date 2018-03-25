@@ -3,8 +3,6 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
-extern uint32_t x86_uptime;
-
 extern "C" { int printk(const char *, ...); }
 
 static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
@@ -61,7 +59,6 @@ void irq_handle(TrapFrame *tf) {
   ev.event = _EVENT_NULL;
   if (tf->irq == 32) {
     ev.event = _EVENT_IRQ_TIMER;
-    x86_uptime += 10;
   } else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
   else if (tf->irq == 0x80) {
     if ((int32_t)tf->eax == -1) {
@@ -181,7 +178,7 @@ void irq_handle(TrapFrame *tf) {
 }
 
 
-void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
+int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   static GateDesc idt[NR_IRQ];
   smp_init();
   lapic_init();
@@ -215,7 +212,9 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
   // -------------------- system call --------------------------
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
   set_idt(idt, sizeof(idt));
-  H = h;
+  H = handler;
+
+  return 0;
 }
 
 _RegSet *_make(_Area stack, void *entry, void *arg) {
@@ -236,11 +235,11 @@ void _yield() {
   asm volatile("int $0x80" : : "a"(-1));
 }
 
-int _get_intr() {
+int _intr_read() {
   return (get_efl() & FL_IF) != 0;
 }
 
-void _set_intr(int enable) {
+void _intr_write(int enable) {
   if (enable) {
     sti();
   } else {

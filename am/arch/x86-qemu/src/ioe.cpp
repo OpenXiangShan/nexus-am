@@ -126,9 +126,10 @@ static void timer_init() {
   uptsc = rdtsc();
 }
 
-void _ioe_init() {
+int _ioe_init() {
   timer_init();
   vga_init();
+  return 0;
 }
 
 static uintptr_t port_read(int port, size_t nmemb) {

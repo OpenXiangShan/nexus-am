@@ -15,7 +15,7 @@ _Area segments[] = {      // Kernel memory mappings
     {.start = (void*)0xf0000000, .end = (void*)(0)}, //   High memory: APIC and VGA
 };
 
-void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
+int _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   palloc_f = palloc;
   pfree_f = pfree;
   SegDesc *gdt = gdts[_cpu()];
@@ -43,6 +43,7 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   
   set_cr3(kpdir);
   set_cr0(get_cr0() | CR0_PG);
+  return 0;
 }
 
 void _protect(_Protect *p) {

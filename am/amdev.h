@@ -38,22 +38,22 @@ enum {
 
 // Timer (0000ac03)
 
-typedef struct _Dev_Timer_Uptime {
+typedef struct _TimerUptime {
   uint32_t hi, lo;
 } _Dev_Timer_Uptime;
 #define _DEV_TIMER_REG_UPTIME  1
-typedef struct _Dev_Timer_RTC {
+typedef struct _TimerRTC {
   int year, month, day, hour, minute, second;
 } _Dev_Timer_RTC;
 #define _DEV_TIMER_REG_DATE    2
 
 // Video (0000ac04)
 
-typedef struct _Dev_Video_Info {
+typedef struct _VideoInfo {
   int32_t width, height;
 } _Dev_Video_Info;
 #define _DEV_VIDEO_REG_INFO    1
-typedef struct _Dev_Video_FBCtl {
+typedef struct _Video_FBCtl {
   int x, y, w, h, sync;
   uint32_t *pixels;
 } _Dev_Video_FBCtl;

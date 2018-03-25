@@ -92,7 +92,7 @@ static void mp_entry() {
   _entry();
 }
 
-void _mpe_init(void (*entry)()) {
+int _mpe_init(void (*entry)()) {
   _entry = entry;
 
   for (int cpu = 1; cpu < numcpu; cpu ++) {
@@ -106,6 +106,7 @@ void _mpe_init(void (*entry)()) {
   }
 
   mp_entry();
+  return 0; // never reaches here
 }
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
