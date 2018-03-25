@@ -18,35 +18,7 @@
 extern "C" {
 #endif
 
-// =======================================================================
-// [0] Turing Machine
-// =======================================================================
-
-typedef struct _Area {
-  void *start, *end;
-} _Area; 
-extern _Area _heap;
-
-void _putc(char ch);
-void _halt(int code);
-
-// =======================================================================
-// [1] I/O Extension (IOE)
-// =======================================================================
-
-typedef struct _Device {
-  uint32_t id;
-  const char *name;
-  size_t (*read)(uintptr_t reg, void *buf, size_t size);
-  size_t (*write)(uintptr_t reg, void *buf, size_t size);
-} _Device;
-
-void _ioe_init();
-_Device *_device(int n);
-
-// =======================================================================
-// [2] Asynchronous Extension (ASYE)
-// =======================================================================
+// ===================== Constants and Structs =======================
 
 enum {
   _EVENT_NULL = 0,
@@ -57,44 +29,73 @@ enum {
   _EVENT_YIELD,
   _EVENT_SYSCALL,
 };
+
+#define _PROT_NONE   1    // no access
+#define _PROT_READ   2    // can read
+#define _PROT_WRITE  4    // can write
+#define _PROT_EXEC   8    // can execute
+
+// A memory area of [@start, @end)
+typedef struct _Area {
+  void *start, *end;
+} _Area; 
+
+// A device (@id, @name) with @read/@write support
+// See <amdev.h> for device descriptions
+typedef struct _Device {
+  uint32_t id;
+  const char *name;
+  size_t (*read)(uintptr_t reg, void *buf, size_t size);
+  size_t (*write)(uintptr_t reg, void *buf, size_t size);
+} _Device;
+
+// An event of type @event, caused by @cause of pointer @ref
 typedef struct _Event {
   int event;
   uintptr_t cause, ref;
 } _Event;
 typedef struct _RegSet _RegSet;
 
-void _asye_init(_RegSet *(*handler)(_Event ev, _RegSet *regs));
-_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg);
-void _yield();
-void _set_intr(int enable);
-int _get_intr();
-
-// =======================================================================
-// [3] Protection Extension (PTE)
-// =======================================================================
-
-#define _PROT_NONE   1
-#define _PROT_READ   2
-#define _PROT_WRITE  4
-#define _PROT_EXEC   8
+// A protected address space with user memory @area
+// and arch-dependent @ptr
 typedef struct _Protect {
   _Area area; 
   void *ptr;
 } _Protect;
 
-void _pte_init(void*(*pgalloc)(), void (*pgfree)(void*));
+// ========================= Turing Machine ==========================
+
+extern _Area _heap;
+void _putc(char ch);
+void _halt(int code);
+
+// ======================= I/O Extension (IOE) =======================
+
+int _ioe_init();
+_Device *_device(int n);
+
+// ================== Asynchronous Extension (ASYE) ==================
+
+int _asye_init(_RegSet *(*handler)(_Event ev, _RegSet *regs));
+_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg);
+void _yield();
+int _intr_read();
+void _intr_write(int enable);
+
+// =================== Protection Extension (PTE) ====================
+
+int _pte_init(void*(*pgalloc)(), void (*pgfree)(void*));
 void _prot_create(_Protect *p);
 void _prot_destroy(_Protect *p);
 void _prot_switch(_Protect *p);
 void _map(_Protect *p, void *va, void *pa);
 void _protect(_Protect *p, void *va, int len, int prot);
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args);
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack,
+                void (*entry)(void *), void *args);
 
-// =======================================================================
-// [4] Multi-Processor Extension (MPE)
-// =======================================================================
+// ================= Multi-Processor Extension (MPE) =================
 
-void _mpe_init(void (*entry)());
+int _mpe_init(void (*entry)());
 int _ncpu();
 int _cpu();
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval);
@@ -104,4 +105,3 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval);
 #endif
 
 #endif
-

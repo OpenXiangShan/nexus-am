@@ -21,7 +21,7 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
       }
       break;
     case _EVENT_YIELD:
-      assert(_get_intr() == 0);
+      assert(_intr_read() == 0);
       ntraps++;
       break;
   }
@@ -31,8 +31,8 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
 int main(){
   _ioe_init();
   _asye_init(handler);
-  assert(!_get_intr());
-  _set_intr(1);
+  assert(!_intr_read());
+  _intr_write(1);
   //_make(_heap, void*)main, 0);
   while (1) {
     _yield();

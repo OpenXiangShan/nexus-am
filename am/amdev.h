@@ -3,82 +3,87 @@
 
 #include <stdint.h>
 
+// =========================== AM Devices ============================
+// ((_Device *)dev)->id
+
+// AM virtual devices
 #define _DEV_PERFCNT 0x0000ac01
 #define _DEV_INPUT   0x0000ac02
 #define _DEV_TIMER   0x0000ac03
 #define _DEV_VIDEO   0x0000ac04
+// Other physical devices
 #define _DEV_PCICONF 0x00000080
 #define _DEV_ATA0    0x00000dd0
 #define _DEV_ATA1    0x00000dd1
 
-// Performance Counter (0000ac01)
+// ================= Device Register Specifications ==================
 
-// Input (0000ac02)
+// ------------- _DEV_INPUT: AM Input Devices (0000ac02) -------------
+#define _DEVREG_INPUT_KBD     1
+  #define _KEYS(_) \
+    _(ESCAPE) \
+    _(F1) _(F2) _(F3) _(F4) _(F5) _(F6) _(F7) _(F8) _(F9) _(F10) _(F11) _(F12) \
+    _(GRAVE) _(1) _(2) _(3) _(4) _(5) _(6) _(7) _(8) _(9) _(0) \
+    _(MINUS) _(EQUALS) _(BACKSPACE) \
+    _(TAB) _(Q) _(W) _(E) _(R) _(T) _(Y) _(U) _(I) _(O) _(P) \
+    _(LEFTBRACKET) _(RIGHTBRACKET) _(BACKSLASH) \
+    _(CAPSLOCK) _(A) _(S) _(D) _(F) _(G) _(H) _(J) _(K) _(L) \
+    _(SEMICOLON) _(APOSTROPHE) _(RETURN) \
+    _(LSHIFT) _(Z) _(X) _(C) _(V) _(B) _(N) _(M) \
+    _(COMMA) _(PERIOD) _(SLASH) _(RSHIFT) \
+    _(LCTRL) _(APPLICATION) _(LALT) _(SPACE) _(RALT) _(RCTRL) \
+    _(UP) _(DOWN) _(LEFT) _(RIGHT) _(INSERT) _(DELETE) \
+    _(HOME) _(END) _(PAGEUP) _(PAGEDOWN)
+  #define _KEY_NAME(k) _KEY_##k,
+  enum {
+    _KEY_NONE = 0,
+    _KEYS(_KEY_NAME)
+  };
+  typedef struct {
+    int keydown; // is keydown ? 1 : 0
+    int keycode; // key code _KEY_XXX
+  } _KbdReg;
 
-#define _DEV_INPUT_REG_KBD   1
-#define _KEYS(_) \
-  _(ESCAPE) \
-  _(F1) _(F2) _(F3) _(F4) _(F5) _(F6) _(F7) _(F8) _(F9) _(F10) _(F11) _(F12) \
-  _(GRAVE) _(1) _(2) _(3) _(4) _(5) _(6) _(7) _(8) _(9) _(0) \
-  _(MINUS) _(EQUALS) _(BACKSPACE) \
-  _(TAB) _(Q) _(W) _(E) _(R) _(T) _(Y) _(U) _(I) _(O) _(P) \
-  _(LEFTBRACKET) _(RIGHTBRACKET) _(BACKSLASH) \
-  _(CAPSLOCK) _(A) _(S) _(D) _(F) _(G) _(H) _(J) _(K) _(L) \
-  _(SEMICOLON) _(APOSTROPHE) _(RETURN) \
-  _(LSHIFT) _(Z) _(X) _(C) _(V) _(B) _(N) _(M) \
-  _(COMMA) _(PERIOD) _(SLASH) _(RSHIFT) \
-  _(LCTRL) _(APPLICATION) _(LALT) _(SPACE) _(RALT) _(RCTRL) \
-  _(UP) _(DOWN) _(LEFT) _(RIGHT) _(INSERT) _(DELETE) \
-  _(HOME) _(END) _(PAGEUP) _(PAGEDOWN)
-#define _KEY_NAME(k) _KEY_##k,
-enum {
-  _KEY_NONE = 0,
-  _KEYS(_KEY_NAME)
-};
+// ----------- _DEV_TIMER: AM Real Time Clock (0000ac03) -------------
+#define _DEVREG_TIMER_UPTIME  1
+  typedef struct {
+    uint32_t hi; // high 32bit of uptime (ms)
+    uint32_t lo; //  low 32bit of uptime (ms)
+  } _UptimeReg;
 
-// Timer (0000ac03)
+#define _DEVREG_TIMER_DATE    2
+  typedef struct {
+    int year, month, day;     // date
+    int hour, minute, second; // time
+  } _RTCReg;
 
-typedef struct _Dev_Timer_Uptime {
-  uint32_t hi, lo;
-} _Dev_Timer_Uptime;
-#define _DEV_TIMER_REG_UPTIME  1
-typedef struct _Dev_Timer_RTC {
-  int year, month, day, hour, minute, second;
-} _Dev_Timer_RTC;
-#define _DEV_TIMER_REG_RTC     2
+// ----------- _DEV_VIDEO: AM Video Controller (0000ac04) ------------
+#define _DEVREG_VIDEO_INFO    1
+  typedef struct {
+    int32_t width, height; // screen size: @width * @height
+  } _VideoInfoReg;
 
-// Video (0000ac04)
+#define _DEVREG_VIDEO_FBCTL   2
+  typedef struct {
+    int x, y;         // draw to (@x, @y)
+    uint32_t *pixels; // @pixels: @w*@h pixels to draw
+    int w, h;         //   @pixels[i * w + j] is 00RRGGBB 
+    int sync;         // @sync ? sync screen : do nothing
+  } _FBCtlReg;
 
-typedef struct _Dev_Video_Info {
-  int32_t width, height;
-} _Dev_Video_Info;
-#define _DEV_VIDEO_REG_INFO    1
-typedef struct _Dev_Video_FBCtl {
-  int x, y, w, h, sync;
-  uint32_t *pixels;
-} _Dev_Video_FBCtl;
-#define _DEV_VIDEO_REG_FBCTL   2
+// -------- _DEV_PCICONF: PCI Configuration Space (00000080) ---------
+#define _DEVREG_PCICONF(bus, slot, func, offset) \
+  ((uint32_t)(   1) << 31) | ((uint32_t)( bus) << 16) | \
+  ((uint32_t)(slot) << 11) | ((uint32_t)(func) <<  8) | (offset)
 
-// PCI Configuration (00000080)
-
-static inline uint32_t
-_DEV_PCICONF_REG(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
-  return ((uint32_t)1 << 31)
-       | ((uint32_t)bus << 16)
-       | ((uint32_t)slot << 11)
-       | ((uint32_t)func << 8)
-       | offset;
-}
-
-// ATA (00000dd0 -- 00000dd1)
-
-#define _DEV_ATA_REG_DATA      0
-#define _DEV_ATA_REG_FEATURE   1
-#define _DEV_ATA_REG_NSECT     2
-#define _DEV_ATA_REG_SECT      3
-#define _DEV_ATA_REG_CYLOW     4
-#define _DEV_ATA_REG_CYHIGH    5
-#define _DEV_ATA_REG_DRIVE     6
-#define _DEV_ATA_REG_STATUS    7
+// ------ _DEV_ATAx: ATA Disk Controller (00000dd0 -- 00000dd1) ------
+#define _DEVREG_ATA_DATA      0
+#define _DEVREG_ATA_FEATURE   1
+#define _DEVREG_ATA_NSECT     2
+#define _DEVREG_ATA_SECT      3
+#define _DEVREG_ATA_CYLOW     4
+#define _DEVREG_ATA_CYHIGH    5
+#define _DEVREG_ATA_DRIVE     6
+#define _DEVREG_ATA_STATUS    7
 
 #endif

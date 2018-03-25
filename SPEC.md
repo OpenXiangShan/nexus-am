@@ -46,7 +46,7 @@
 
 ### IOE API
 
-* `void _ioe_init();` 初始化Extension。
+* `int _ioe_init();` 初始化Extension，若IOE存在返回0。
 * `_Device *_device(int n);`返回系统中编号为n的设备。系统中从1开始连续的设备可用(返回非`NULL`)。若系统中有10个设备，则`_device(1)`…`_device(10)`会返回非`NULL`指针，其他数值会返回空指针。
 
 ## Asynchronous Extension (异步执行扩展)
@@ -59,7 +59,7 @@
 
 ### ASYE API
 
-* `void _asye_init(_RegSet* (*l)(Event ev, _RegSet *regs));`初始化Extension。初始化后并不响应异步事件。`l`是监听中断/异常事件的回调函数。在中断/异常事件到来时调用`l(ev, regs)`。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。系统事件：
+* `int _asye_init(_RegSet* (*l)(Event ev, _RegSet *regs));`初始化Extension，若ASYE存在返回0。初始化后并不响应异步事件。`l`是监听中断/异常事件的回调函数。在中断/异常事件到来时调用`l(ev, regs)`。中断结束后将返回到返回值指定的寄存器现场(可以返回传入的参数或NULL)。系统事件：
   * `_EVENT_IRQ_TIMER`:时钟中断(无cause)
   * `_EVENT_IRQ_IODEV`:I/O设备中断(无cause)
   * `_EVENT_ERROR`:一般错误(无cause)
@@ -87,7 +87,7 @@
 
 ### MPE API
 
-* `void _mpe_init(void (*entry)());`启动多处理器。
+* `int _mpe_init(void (*entry)());`启动多处理器，若MPE存在则所有系统中的处理器都调用`entry()`且不再返回，否则MPE不存在，返回非0值。
 * `int _ncpu();`返回number of CPU。
 * `int _cpu();`返回当前CPU的编号(从0开始)。
 * `intptr_t _atomic_xchg(volatile void *addr, intptr_t newval);`原子交换两数。保证内存顺序一致性。

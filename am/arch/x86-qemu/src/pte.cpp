@@ -5,8 +5,8 @@
 
 TSS tss[MAX_CPU];
 SegDesc gdts[MAX_CPU][NR_SEG];
-PDE kpdirs[MAX_CPU][NR_PDE] PG_ALIGN;
-PDE kptabs[MAX_CPU][NR_PDE * NR_PTE] PG_ALIGN;
+PDE kpdir[NR_PDE] PG_ALIGN;
+PDE kptab[NR_PDE * NR_PTE] PG_ALIGN;
 void* (*palloc_f)();
 void (*pfree_f)(void*);
 
@@ -15,7 +15,7 @@ _Area segments[] = {      // Kernel memory mappings
     {.start = (void*)0xf0000000, .end = (void*)(0)}, //   High memory: APIC and VGA
 };
 
-void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
+int _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   palloc_f = palloc;
   pfree_f = pfree;
   SegDesc *gdt = gdts[_cpu()];
@@ -28,8 +28,7 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
   set_tr(KSEL(SEG_TSS));
 
-  PDE *kpdir = kpdirs[_cpu()];
-  PDE *alloc = kptabs[_cpu()];
+  PDE *alloc = kptab;
   for (auto &seg: segments) {
     PTE *ptab = nullptr;
     for (uint32_t pa = reinterpret_cast<uint32_t>(seg.start); pa != reinterpret_cast<uint32_t>(seg.end); pa += PGSIZE) {
@@ -44,10 +43,10 @@ void _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   
   set_cr3(kpdir);
   set_cr0(get_cr0() | CR0_PG);
+  return 0;
 }
 
 void _protect(_Protect *p) {
-  PDE *kpdir = kpdirs[_cpu()];
   PDE *updir = (PDE*)(palloc_f());
   p->ptr = updir;
   // map kernel space
@@ -103,7 +102,7 @@ void *_query(_Protect *p, void *va, int *prot) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), void *args) {
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);

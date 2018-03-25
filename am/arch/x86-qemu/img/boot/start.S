@@ -9,7 +9,7 @@ _start:
   movw    %ax, %es
   movw    %ax, %ss
 
-# VGA: 640 x 480 x 32b
+# Set a 640 x 480 x 32 video mode
   mov $0x4f01, %ax
   mov $0x0112, %cx
   mov $0x4000, %di
@@ -32,7 +32,8 @@ start32:
   movw    %ax, %es
   movw    %ax, %ss
 
-  movl    (0x7020), %esp # the core's ESP offset
+  movl    (0x7020), %esp # multi-core hack
+                         # M[0x7020] is the core's bootstrap stack offset
   addl    $0x2000, %esp
   call    bootmain
 
@@ -46,4 +47,3 @@ gdt:
 gdtdesc:
   .word   (gdtdesc - gdt - 1)
   .long   gdt
-

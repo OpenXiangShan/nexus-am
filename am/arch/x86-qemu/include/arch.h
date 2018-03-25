@@ -1,7 +1,6 @@
 #ifndef __X86_ARCH_H__
 #define __X86_ARCH_H__
 
-#include <am.h>
 #include <stdint.h>
 
 typedef int off_t;
