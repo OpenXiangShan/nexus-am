@@ -6,10 +6,12 @@
 // =========================== AM Devices ============================
 // ((_Device *)dev)->id
 
+// AM virtual devices
 #define _DEV_PERFCNT 0x0000ac01
 #define _DEV_INPUT   0x0000ac02
 #define _DEV_TIMER   0x0000ac03
 #define _DEV_VIDEO   0x0000ac04
+// Other physical devices
 #define _DEV_PCICONF 0x00000080
 #define _DEV_ATA0    0x00000dd0
 #define _DEV_ATA1    0x00000dd1
@@ -58,7 +60,7 @@
 // ----------- _DEV_VIDEO: AM Video Controller (0000ac04) ------------
 #define _DEVREG_VIDEO_INFO    1
   typedef struct {
-    int32_t width, height; // screen size
+    int32_t width, height; // screen size: @width * @height
   } _VideoInfoReg;
 
 #define _DEVREG_VIDEO_FBCTL   2

@@ -33,9 +33,11 @@ void gettimeofday(void *rtc) {
 
 int read_key() {
   _Device *dev = getdev(&input_dev, _DEV_INPUT);
-  int32_t key;
-  dev->read(_DEVREG_INPUT_KBD, &key, sizeof(int32_t));
-  return key;
+  _KbdReg key;
+  dev->read(_DEVREG_INPUT_KBD, &key, sizeof(_KbdReg));
+  int ret = key.keycode;
+  if (key.keydown) ret |= 0x8000;
+  return ret;
 }
 
 void draw_rect(uint32_t *pixels, int x, int y, int w, int h) {
