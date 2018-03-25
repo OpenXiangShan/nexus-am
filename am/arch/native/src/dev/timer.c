@@ -1,6 +1,7 @@
 #include <am.h>
 #include <amdev.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 static struct timeval boot_time;
@@ -19,8 +20,16 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
       return sizeof(_UptimeReg);
     }
     case _DEVREG_TIMER_DATE: {
-      // TODO: use gmtime() to get date
-      return 0;
+      time_t t = time(NULL);
+      struct tm *tm = gmtime(&t);
+      _RTCReg *rtc = (_RTCReg *)buf;
+      rtc->second = tm->tm_sec;
+      rtc->minute = tm->tm_min;
+      rtc->hour   = tm->tm_hour;
+      rtc->day    = tm->tm_mday;
+      rtc->month  = tm->tm_mon;
+      rtc->year   = tm->tm_year + 1900;
+      return sizeof(_RTCReg);
     }
   }
   return 0;
