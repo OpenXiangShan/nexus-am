@@ -3,6 +3,7 @@
 
 void timer_init();
 void video_init();
+void input_init();
 
 size_t input_read(uintptr_t reg, void *buf, size_t size);
 size_t timer_read(uintptr_t reg, void *buf, size_t size);
@@ -16,9 +17,11 @@ static _Device devices[] = {
   {_DEV_VIDEO,   "SDL Graphics", video_read, video_write},
 };
 
-void _ioe_init() {
+int _ioe_init() {
   timer_init();
   video_init();
+  input_init();
+  return 0;
 }
 
 _Device *_device(int n) {

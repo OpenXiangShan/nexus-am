@@ -3,12 +3,12 @@
 #include <klib.h>
 
 int main(){
-  _Dev_Timer_RTC rtc;
+  _RTCReg rtc;
   _ioe_init();
   int sec = 1;
   while (1) {
     while(uptime() < 1000 * sec) ;
-    gettimeofday(&rtc);
+    get_timeofday(&rtc);
     printf("%d-%d-%d %02d:%02d:%02d GMT (", rtc.year, rtc.month, rtc.day, rtc.hour, rtc.minute, rtc.second);
     if (sec == 1) {
       printf("%d second).\n", sec);
