@@ -6,6 +6,7 @@
 #define __KLIB_H__
 
 #include <am.h>
+#include <amdev.h>
 #include <stdarg.h>
 
 #ifdef __cplusplus
@@ -15,6 +16,7 @@ extern "C" {
 // am devices
 
 uint32_t uptime();
+void gettimeofday(_Dev_Timer_RTC *rtc);
 int read_key();
 void draw_rect(uint32_t *pixels, int x, int y, int w, int h);
 void draw_sync();

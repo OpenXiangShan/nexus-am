@@ -107,19 +107,23 @@ static uint32_t estimate_freq() {
   return freq;
 }
 
-static void timer_init() {
-  uptsc = rdtsc();
+static void get_date(_Dev_Timer_RTC *rtc) {
   int tmp;
   do {
-    boot_date.second = read_rtc(0);
-    boot_date.minute = read_rtc(2);
-    boot_date.hour   = read_rtc(4);
-    boot_date.day    = read_rtc(7);
-    boot_date.month  = read_rtc(8);
-    boot_date.year   = read_rtc(9) + 2000;
+    rtc->second = read_rtc(0);
+    rtc->minute = read_rtc(2);
+    rtc->hour   = read_rtc(4);
+    rtc->day    = read_rtc(7);
+    rtc->month  = read_rtc(8);
+    rtc->year   = read_rtc(9) + 2000;
     tmp              = read_rtc(0);
-  } while (tmp != boot_date.second);
+  } while (tmp != rtc->second);
+}
+
+static void timer_init() {
   freq_mhz = estimate_freq();
+  get_date(&boot_date);
+  uptsc = rdtsc();
 }
 
 void _ioe_init() {
@@ -215,6 +219,10 @@ static size_t timer_read(uintptr_t reg, void *buf, size_t size) {
       uptime->hi = 0;
       uptime->lo = ms;
       return sizeof(_Dev_Timer_Uptime);
+    }
+    case _DEV_TIMER_REG_DATE: {
+      get_date((_Dev_Timer_RTC *)buf);
+      return sizeof(_Dev_Timer_RTC);
     }
   }
   return 0;

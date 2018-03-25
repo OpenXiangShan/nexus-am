@@ -26,6 +26,11 @@ uint32_t uptime() {
   return uptime.lo;
 }
 
+void gettimeofday(_Dev_Timer_RTC *rtc) {
+  _Device *dev = getdev(&timer_dev, _DEV_TIMER);
+  dev->read(_DEV_TIMER_REG_DATE, rtc, sizeof(_DEV_TIMER_REG_DATE));
+}
+
 int read_key() {
   _Device *dev = getdev(&input_dev, _DEV_INPUT);
   int32_t key;
