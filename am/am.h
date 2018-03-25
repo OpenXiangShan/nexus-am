@@ -30,10 +30,10 @@ enum {
   _EVENT_SYSCALL,
 };
 
-#define _PROT_NONE   1
-#define _PROT_READ   2
-#define _PROT_WRITE  4
-#define _PROT_EXEC   8
+#define _PROT_NONE   1    // no access
+#define _PROT_READ   2    // can read
+#define _PROT_WRITE  4    // can write
+#define _PROT_EXEC   8    // can execute
 
 // A memory area of [@start, @end)
 typedef struct _Area {
@@ -91,7 +91,7 @@ void _prot_switch(_Protect *p);
 void _map(_Protect *p, void *va, void *pa);
 void _protect(_Protect *p, void *va, int len, int prot);
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack,
-                void *entry, void *args);
+                void (*entry)(void *), void *args);
 
 // ================= Multi-Processor Extension (MPE) =================
 

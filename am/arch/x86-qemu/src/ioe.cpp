@@ -14,64 +14,9 @@ static inline uint64_t rdtsc() {
 
 extern "C" {
 
-struct VBEInfo {
-  uint16_t attributes;
-  uint8_t window_a;
-  uint8_t window_b;
-  uint16_t granularity;
-  uint16_t window_size;
-  uint16_t segment_a;
-  uint16_t segment_b;
-  uint32_t win_func_ptr;
-  uint16_t pitch;
-  uint16_t width;
-  uint16_t height;
-  uint8_t w_char;
-  uint8_t y_char;
-  uint8_t planes;
-  uint8_t bpp;
-  uint8_t banks;
-  uint8_t memory_model;
-  uint8_t bank_size;
-  uint8_t image_pages;
-  uint8_t reserved0;
- 
-  uint8_t red_mask;
-  uint8_t red_position;
-  uint8_t green_mask;
-  uint8_t green_position;
-  uint8_t blue_mask;
-  uint8_t blue_position;
-  uint8_t reserved_mask;
-  uint8_t reserved_position;
-  uint8_t direct_color_attributes;
- 
-  uint32_t framebuffer;
-  uint32_t off_screen_mem_off;
-  uint16_t off_screen_mem_size;
-  uint8_t reserved1[206];
-} __attribute__ ((packed));
+extern void vga_init();
 
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
-static uint8_t R(uint32_t p) { return p >> 16; }
-static uint8_t G(uint32_t p) { return p >> 8; }
-static uint8_t B(uint32_t p) { return p; }
-
-static struct FBPixel {
-  uint8_t b, g, r;
-} __attribute__ ((packed)) *fb;
-static int W, H;
-
-static void vga_init() {
-  VBEInfo *info = reinterpret_cast<VBEInfo*>(0x00004000);
-  W = info->width;
-  H = info->height;
-  fb = reinterpret_cast<FBPixel*>(info->framebuffer);
-}
-
-static _Dev_Timer_RTC boot_date;
+static _RTCReg boot_date;
 static int read_rtc(int reg) {
   outb(0x70, reg);
   int ret = inb(0x71);
@@ -107,7 +52,7 @@ static uint32_t estimate_freq() {
   return freq;
 }
 
-static void get_date(_Dev_Timer_RTC *rtc) {
+static void get_date(_RTCReg *rtc) {
   int tmp;
   do {
     rtc->second = read_rtc(0);
@@ -116,7 +61,7 @@ static void get_date(_Dev_Timer_RTC *rtc) {
     rtc->day    = read_rtc(7);
     rtc->month  = read_rtc(8);
     rtc->year   = read_rtc(9) + 2000;
-    tmp              = read_rtc(0);
+    tmp         = read_rtc(0);
   } while (tmp != rtc->second);
 }
 
@@ -190,7 +135,7 @@ static size_t input_read(uintptr_t reg, void *buf, size_t size) {
     ret = _KEY_NONE;
   } else {
     if (status & 0x20) { // mouse
-      ret = upevent(_KEY_NONE);
+      ret = _KEY_NONE;
     } else {
       int code = inb(0x60) & 0xff;
 
@@ -212,57 +157,18 @@ static size_t input_read(uintptr_t reg, void *buf, size_t size) {
 
 static size_t timer_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
-    case _DEV_TIMER_REG_UPTIME: {
+    case _DEVREG_TIMER_UPTIME: {
       uint64_t tsc = rdtsc() - uptsc;
       uint32_t mticks = (tsc >> 20);
       uint32_t ms = mticks * 1000 / freq_mhz;
-      _Dev_Timer_Uptime *uptime = (_Dev_Timer_Uptime *)buf;
+      _UptimeReg *uptime = (_UptimeReg *)buf;
       uptime->hi = 0;
       uptime->lo = ms;
-      return sizeof(_Dev_Timer_Uptime);
+      return sizeof(_UptimeReg);
     }
-    case _DEV_TIMER_REG_DATE: {
-      get_date((_Dev_Timer_RTC *)buf);
-      return sizeof(_Dev_Timer_RTC);
-    }
-  }
-  return 0;
-}
-
-static size_t video_read(uintptr_t reg, void *buf, size_t size) {
-  switch(reg) {
-    case _DEV_VIDEO_REG_INFO: {
-      _Dev_Video_Info *info = (_Dev_Video_Info *)buf;
-      info->width = W;
-      info->height = H;
-      return sizeof(_Dev_Video_Info);
-    }
-  }
-  return 0;
-}
-
-static size_t video_write(uintptr_t reg, void *buf, size_t size) {
-  switch(reg) {
-    case _DEV_VIDEO_REG_FBCTL: {
-      _Dev_Video_FBCtl *ctl = (_Dev_Video_FBCtl *)buf;
-      int x = ctl->x, y = ctl->y, w = ctl->w, h = ctl->h;
-      uint32_t *pixels = ctl->pixels;
-      int len = (x + w >= W) ? W - x : w;
-      FBPixel *v;
-      for (int j = 0; j < h; j ++) {
-        if (y + j < H) {
-          v = &fb[x + (j + y) * W];
-          for (int i = 0; i < len; i ++, v ++) {
-            uint32_t p = pixels[i];
-            v->r = R(p); v->g = G(p); v->b = B(p);
-          }
-        }
-        pixels += w;
-      }
-      if (ctl->sync) {
-        // do nothing, hardware syncs.
-      }
-      return sizeof(size);
+    case _DEVREG_TIMER_DATE: {
+      get_date((_RTCReg *)buf);
+      return sizeof(_RTCReg);
     }
   }
   return 0;
@@ -278,6 +184,9 @@ static size_t hd_write(uintptr_t reg, void *buf, size_t size) {
   port_write(0x1f0 + reg, size, data);
   return 0;
 }
+
+size_t video_read(uintptr_t reg, void *buf, size_t size);
+size_t video_write(uintptr_t reg, void *buf, size_t size);
 
 static _Device x86_dev[] = {
   {_DEV_INPUT,   "8279 Keyboard Controller", input_read, nullptr},
