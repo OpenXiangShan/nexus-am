@@ -84,7 +84,7 @@ void _intr_write(int enable);
 
 // =================== Protection Extension (PTE) ====================
 
-int _pte_init(void*(*pgalloc)(), void (*pgfree)(void*));
+int _pte_init(void *(*pgalloc)(int npages), void (*pgfree)(void *));
 void _prot_create(_Protect *p);
 void _prot_destroy(_Protect *p);
 void _prot_switch(_Protect *p);
