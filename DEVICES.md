@@ -1,20 +1,35 @@
-# AM Devices
+# AM Devices (`amdev.h`)
 
-设备相关的宏定义在`amdev.h`。设备id为32位十六进制数。
+## AM设备API概述
 
-**对于读/写寄存器是结构体的，size必须与结构体一致，否则行为未定义**。PCI Conf Space、ATA控制器等支持不同数量字节的读写。
+`_Device`结构体描述了一个设备(通过`_device(n)`获取)，结构体中包含：
 
-| 设备ID      | 设备功能                                     | 设备描述    |
+* `uint32_t id`：设备编号，32位整数；
+* `const char *name`：设备的名称(调试用)；
+* `size_t (*read)(intptr_t reg, void *buf, size_t size)`: 从设备控制寄存器`reg`读取`size`字节；
+* `size_t (*write)(intptr_t reg, void *buf, size_t size)`: 向设备控制寄存器`reg`写入`size`字节。
+
+理解设备最重要的概念是设备的**控制寄存器**：我们将设备看成是一系列的可以读/写的**寄存器**，从寄存器中读出数据或写入数据即实现对设备的读/写访问。设备寄存器有以下两种可能：
+
+1. 一个有含义的结构体。读取/写入的数据必须与结构体的大小严格一致(`read`/`write`的`size`参数)。结构体用于AM虚拟设备。
+2. 一个端口/内存映射的地址。此时可以向其中写入1, 2, 4, 8等字节的数值。例如一个8位的数据端口可以写入`write(reg, &ch, 1);`，其中`ch`是`uint8_t`类型。
+
+## AM设备列表
+
+| 设备ID      | 设备名称                                 | 设备寄存器与功能描述 (r = read, w = write, o = only) |
 | --------- | ---------------------------------------- | ------- |
-| 0000 ac01 | 若干性能相关的计数器(ro)。           | AM性能计数器 |
-| 0000 ac02 | 键盘控制器(#1, ro)。 | AM输入设备 |
-| 0000 ac03 | 系统启动时间(#1, ro)和实时日期(#2, ro)。 | AM定时器   |
-| 0000 ac04 | 屏幕信息(#1, ro)和显存控制(#2, wo)。 | AM显示控制器 |
-| 0000 0080 | PCI Configuration Space (bus, slot, func, offset, rw)。 | PCI控制器  |
-| 0000 0dd0 | ATA主控制器(#1-#7, rw)。       | ATA控制器0 |
-| 0000 0dd1 | ATA从控制器(#1-#7, rw)。         | ATA控制器1 |
+| 0000 ac01 | AM性能计数器    | 若干性能相关的计数器(ro)。           |
+| 0000 ac02 | AM输入设备 | 键盘控制器(#1, ro)。 |
+| 0000 ac03 | AM定时器 | 系统启动时间(#1, ro)和实时日期(#2, ro)。 |
+| 0000 ac04 | AM显示控制器 | 屏幕信息(#1, ro)和显存控制(#2, wo)。 |
+| 0000 0080 | PCI控制器 | PCI Configuration Space (bus, slot, func, offset, rw)。 |
+| 0000 0dd0 | ATA控制器0 | ATA主控制器(#1-#7, rw)。       |
+| 0000 0dd1 | ATA控制器1  | ATA从控制器(#1-#7, rw)。         |
 
 ## 0000 ac01 - AM PerfCnt
+
+目前还没有这个虚拟设备。
+
 ## 0000 ac02 - AM Input
 
 1.  (`_DEVREG_INPUT_KBD`): AM键盘控制器。从中读出`_KbdReg`结构体，`keydown`为是否按下；`keycode`为扫描码(`_KEY_XXX`)。没有按键时`keycode = _KEY_NONE`。
