@@ -3,11 +3,11 @@
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-TSS tss[MAX_CPU];
+struct TSS tss[MAX_CPU];
 SegDesc gdts[MAX_CPU][NR_SEG];
 PDE kpdir[NR_PDE] PG_ALIGN;
 PDE kptab[NR_PDE * NR_PTE] PG_ALIGN;
-void* (*palloc_f)();
+void* (*palloc_f)(size_t);
 void (*pfree_f)(void*);
 
 _Area segments[] = {      // Kernel memory mappings
@@ -15,7 +15,7 @@ _Area segments[] = {      // Kernel memory mappings
     {.start = (void*)0xf0000000, .end = (void*)(0)}, //   High memory: APIC and VGA
 };
 
-int _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
+int _pte_init(void* (*palloc)(size_t), void (*pfree)(void*)) {
   palloc_f = palloc;
   pfree_f = pfree;
   SegDesc *gdt = gdts[_cpu()];
@@ -24,14 +24,15 @@ int _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   gdt[SEG_KDATA] = SEG(STA_W,         0,       0xffffffff, DPL_KERN);
   gdt[SEG_UCODE] = SEG(STA_X | STA_R, 0,       0xffffffff, DPL_USER);
   gdt[SEG_UDATA] = SEG(STA_W,         0,       0xffffffff, DPL_USER);
-  gdt[SEG_TSS] = SEG16(STS_T32A,      &tss[_cpu()], sizeof(TSS)-1, DPL_KERN);
+  gdt[SEG_TSS] = SEG16(STS_T32A,      &tss[_cpu()], sizeof(struct TSS)-1, DPL_KERN);
   set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
   set_tr(KSEL(SEG_TSS));
 
   PDE *alloc = kptab;
-  for (auto &seg: segments) {
-    PTE *ptab = nullptr;
-    for (uint32_t pa = reinterpret_cast<uint32_t>(seg.start); pa != reinterpret_cast<uint32_t>(seg.end); pa += PGSIZE) {
+  for (int i = 0; i < sizeof(segments) / sizeof(segments[0]); i++) {
+    _Area *seg = &segments[i];
+    PTE *ptab = NULL;
+    for (uint32_t pa = (uint32_t)seg->start; pa != (uint32_t)seg->end; pa += PGSIZE) {
       if (!(kpdir[PDX(pa)] & PTE_P)) {
           ptab = alloc;
           alloc += NR_PDE;
@@ -46,8 +47,8 @@ int _pte_init(void* (*palloc)(), void (*pfree)(void*)) {
   return 0;
 }
 
-void _protect(_Protect *p) {
-  PDE *updir = (PDE*)(palloc_f());
+int _prot_create(_Protect *p) {
+  PDE *updir = (PDE*)(palloc_f(1));
   p->ptr = updir;
   // map kernel space
   for (int i = 0; i < 1024; i ++)
@@ -56,9 +57,9 @@ void _protect(_Protect *p) {
   // exact copy of kernel page table
   // no user memory is mapped
 
-  p->area.start = reinterpret_cast<void*>(0x40000000);
-  p->area.end = reinterpret_cast<void*>(0xc0000000);
-  // return [ULOW, UHIGH)
+  p->area.start = (void*)0x40000000;
+  p->area.end = (void*)0xc0000000;
+  return 0;
 }
 
 void _release(_Protect *p) {
@@ -69,17 +70,18 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-void _map(_Protect *p, void *va, void *pa, int prot) {
+int _map(_Protect *p, void *va, void *pa) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
-  uint32_t wflag = (prot & _PROT_WRITE) ? PTE_W : 0;
+  uint32_t wflag = 0; // TODO: this should be not accessible
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | wflag | PTE_U | reinterpret_cast<uint32_t>(palloc_f());
+    *pde = PTE_P | wflag | PTE_U | (uint32_t)(palloc_f(1));
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
-    *pte = PTE_P | wflag | PTE_U | reinterpret_cast<uint32_t>(pa);
+    *pte = PTE_P | wflag | PTE_U | (uint32_t)(pa);
   }
+  return 0;
 }
 
 void *_query(_Protect *p, void *va, int *prot) {
@@ -106,9 +108,9 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), 
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
-  regs->esp3 = reinterpret_cast<uint32_t>(ustack.end);
+  regs->esp3 = (uint32_t)ustack.end;
   regs->ss0 = KSEL(SEG_KDATA);
-  regs->esp0 = reinterpret_cast<uint32_t>(kstack.end);
+  regs->esp0 = (uint32_t)kstack.end;
   regs->eip = (uint32_t)entry;
   regs->eflags = FL_IF;
 

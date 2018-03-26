@@ -2,8 +2,6 @@
 #include <am-x86.h>
 #include <am.h>
 
-extern "C" {
-
 int main();
 
 _Area _heap;
@@ -18,8 +16,6 @@ void _start() {
   _halt(ret);
 }
 
-}
-
 #define SERIAL_PORT 0x3f8
 
 static void serial_init() {
@@ -32,13 +28,12 @@ static void serial_init() {
   outb(SERIAL_PORT + 4, 0x0B);
 }
 
-
 static void memory_init() {
   extern char end;
   unsigned long st, ed;
   unsigned long step = 1L<<20; // 1 MB step
   st = ed = (((unsigned long)&end) & ~(step-1)) + step;
-  while (true) {
+  while (1) {
     volatile int *ptr = (int*)ed;
     *ptr = 0x5a5a5a5a;
     if (*ptr == 0x5a5a5a5a) {
@@ -47,8 +42,8 @@ static void memory_init() {
       break;
     }
   }
-  _heap.start = reinterpret_cast<void*>(st);
-  _heap.end = reinterpret_cast<void*>(ed);
+  _heap.start = (void*)st;
+  _heap.end = (void*)ed;
 }
 
 void _trm_init() {
@@ -67,6 +62,7 @@ static void puts(const char *s) {
     _putc(*p);
   }
 }
+
 void _halt(int code) {
   puts("Exited (");
   if (code == 0) _putc('0');
@@ -80,5 +76,3 @@ void _halt(int code) {
   puts(").\n");
   asm volatile("cli; hlt");
 }
-
-
