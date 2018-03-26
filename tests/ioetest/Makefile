@@ -1,4 +1,4 @@
 NAME = ioetest
-SRCS = main.cpp
+SRCS = main.c
 LIBS += klib
 include $(AM_HOME)/Makefile.app

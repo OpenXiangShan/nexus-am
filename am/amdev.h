@@ -6,17 +6,17 @@
 // =========================== AM Devices ============================
 // ((_Device *)dev)->id
 
-// AM virtual devices
-#define _DEV_PERFCNT 0x0000ac01
-#define _DEV_INPUT   0x0000ac02
-#define _DEV_TIMER   0x0000ac03
-#define _DEV_VIDEO   0x0000ac04
-// Other physical devices
-#define _DEV_PCICONF 0x00000080
-#define _DEV_ATA0    0x00000dd0
-#define _DEV_ATA1    0x00000dd1
+#define _DEV_PERFCNT 0x0000ac01 // AM Virtual Performance Counter 
+#define _DEV_INPUT   0x0000ac02 // AM Virtual Input Device
+#define _DEV_TIMER   0x0000ac03 // AM Virtual Timer
+#define _DEV_VIDEO   0x0000ac04 // AM Virtual Video Controller
+#define _DEV_PCICONF 0x00000080 // PCI Configuration Space
+#define _DEV_ATA0    0x00000dd0 // Primary ATA
+#define _DEV_ATA1    0x00000dd1 // Secondary ATA
 
 // ================= Device Register Specifications ==================
+
+// --------- _DEV_PERFCNT AM Performance Counter (0000ac01) ----------
 
 // ------------- _DEV_INPUT: AM Input Devices (0000ac02) -------------
 #define _DEVREG_INPUT_KBD     1

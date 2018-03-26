@@ -21,7 +21,7 @@ static int read_rtc(int reg) {
 static void wait_sec() {
   while (1) {
     int volatile s1 = read_rtc(0);
-    for (int volatile i = 0; i < 1000; i++) ;
+    for (int volatile i = 0; i < 10000; i++) ;
     int volatile s2 = read_rtc(0);
     if (s1 != s2) {
       return;
