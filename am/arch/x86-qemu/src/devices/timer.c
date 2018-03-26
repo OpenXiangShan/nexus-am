@@ -3,7 +3,7 @@
 #include <x86.h>
 
 static _RTCReg boot_date;
-static uint32_t freq_mhz;
+static uint32_t freq_mhz = 2000;
 uint64_t uptsc;
 
 static inline uint64_t rdtsc() {
