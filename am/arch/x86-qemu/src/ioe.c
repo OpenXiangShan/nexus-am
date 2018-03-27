@@ -50,13 +50,13 @@ static size_t pciconf_write(uintptr_t reg, void *buf, size_t size) {
 
 static size_t hd_read(uintptr_t reg, void *buf, size_t size) {
   *(uint32_t *)buf = port_read(0x1f0 + reg, size);
-  return 0;
+  return size;
 }
 
 static size_t hd_write(uintptr_t reg, void *buf, size_t size) {
   uint32_t data = *((uint32_t *)buf);
   port_write(0x1f0 + reg, size, data);
-  return 0;
+  return size;
 }
 
 size_t video_read(uintptr_t reg, void *buf, size_t size);

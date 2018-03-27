@@ -93,7 +93,7 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
       if (ctl->sync) {
         // do nothing, hardware syncs.
       }
-      return size;
+      return sizeof(*ctl);
     }
   }
   return 0;

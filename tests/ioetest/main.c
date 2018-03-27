@@ -1,7 +1,13 @@
 #include <am.h>
 #include <amdev.h>
 
-int printf(const char *fmt, ...);
+// TODO: implement necessary libraries
+int printf(const char *fmt, ...) {
+  for (; *fmt; fmt++) {
+    _putc(*fmt);
+  }
+  return 0;
+}
 
 static void input_test(_Device *dev);
 static void timer_test(_Device *dev);
@@ -10,7 +16,8 @@ static void pciconf_test(_Device *dev);
 static void ata_test(_Device *dev);
 
 int main() {
-  _ioe_init();
+  if (_ioe_init() != 0) _halt(1);
+  printf("_heap = [%08x, %08x)\n", _heap.start, _heap.end);
   for (int n = 1; ; n++) {
     _Device *dev = _device(n);
     if (!dev) break;

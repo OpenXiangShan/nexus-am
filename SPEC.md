@@ -63,7 +63,7 @@ AM程序仅能访问AM API操纵硬件完成相应的功能。最基础的AM API
   * `_EVENT_IRQ_IODEV`:I/O设备中断(无cause)
   * `_EVENT_ERROR`:一般错误(无cause)
   * `_EVENT_PAGEFAULT`:页错误(cause是`_PROT_XXX`的值；ref是缺页的地址)
-  * `_EVENT_TRAP`:内核态自陷(无cause)
+  * `_EVENT_YIELD`:当前运行主动让出处理器(无cause)
   * `_EVENT_SYSCALL`: 系统调用(无cause)
 * `_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg);`：从`kstack`指定的内存区域中分配寄存器现场(`kstack需有足够的空间`)，其中恢复该寄存器现场将使CPU从`entry`开始执行代码，并且`entry`函数能获得参数`arg`。返回分配的寄存器现场指针(保证它在`kstack`范围内)。
 * `void _yield();`：让出当前处理器的执行，使用自陷指令保存当前寄存器现场，并调用注册的handlerl`。
