@@ -1,6 +1,7 @@
 #include <am.h>
 #include <x86.h>
 
+#if 0
 static _RegSet* (*H)(_Event, _RegSet*) = NULL;
 
 void irq0();
@@ -59,3 +60,4 @@ void _trap() {
 int _istatus(int enable) {
   return 0;
 }
+#endif
