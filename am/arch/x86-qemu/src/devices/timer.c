@@ -3,7 +3,7 @@
 #include <x86.h>
 
 static _RTCReg boot_date;
-static uint32_t freq_mhz;
+static uint32_t freq_mhz = 2000;
 uint64_t uptsc;
 
 static inline uint64_t rdtsc() {
@@ -21,7 +21,7 @@ static int read_rtc(int reg) {
 static void wait_sec() {
   while (1) {
     int volatile s1 = read_rtc(0);
-    for (int volatile i = 0; i < 1000; i++) ;
+    for (int volatile i = 0; i < 10000; i++) ;
     int volatile s2 = read_rtc(0);
     if (s1 != s2) {
       return;

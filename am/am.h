@@ -84,12 +84,12 @@ void _intr_write(int enable);
 
 // =================== Protection Extension (PTE) ====================
 
-int _pte_init(void*(*pgalloc)(), void (*pgfree)(void*));
-void _prot_create(_Protect *p);
+int _pte_init(void *(*pgalloc)(size_t npages), void (*pgfree)(void *));
+int _prot_create(_Protect *p);
 void _prot_destroy(_Protect *p);
 void _prot_switch(_Protect *p);
-void _map(_Protect *p, void *va, void *pa);
-void _protect(_Protect *p, void *va, int len, int prot);
+int _map(_Protect *p, void *va, void *pa);
+int _protect(_Protect *p, void *va, int len, int prot);
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack,
                 void (*entry)(void *), void *args);
 

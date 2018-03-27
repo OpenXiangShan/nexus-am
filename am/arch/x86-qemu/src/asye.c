@@ -3,11 +3,8 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
-extern "C" { int printk(const char *, ...); }
+static _RegSet* (*H)(_Event, _RegSet*) = NULL;
 
-static _RegSet* (*H)(_Event, _RegSet*) = nullptr;
-
-extern "C" {
 void irq0();
 void irq1();
 void irq14();
@@ -29,9 +26,9 @@ void vec14();
 void vecsys();
 void irqall();
 
-extern TSS tss[];
+extern struct TSS tss[];
 
-void irq_handle(TrapFrame *tf) {
+void irq_handle(struct TrapFrame *tf) {
   _RegSet regs = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
     .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp3 = 0,
@@ -84,7 +81,7 @@ void irq_handle(TrapFrame *tf) {
   _RegSet *ret = &regs;
   if (H) {
     _RegSet *next = H(ev, &regs);
-    if (next != nullptr) {
+    if (next != NULL) {
       ret = next;
     }
   }
@@ -175,9 +172,6 @@ void irq_handle(TrapFrame *tf) {
   }
 }
 
-}
-
-
 int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   static GateDesc idt[NR_IRQ];
   smp_init();
@@ -217,9 +211,9 @@ int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   return 0;
 }
 
-_RegSet *_make(_Area stack, void *entry, void *arg) {
+_RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
   _RegSet *regs = (_RegSet*)stack.start;
-  regs->esp0 = reinterpret_cast<uint32_t>(stack.end);
+  regs->esp0 = (uint32_t)stack.end;
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
   regs->eip = (uint32_t)entry;

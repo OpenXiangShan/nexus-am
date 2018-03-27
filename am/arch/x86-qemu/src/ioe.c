@@ -2,10 +2,6 @@
 #include <amdev.h>
 #include <x86.h>
 
-extern "C" { int printf(const char *, ...); }
-
-extern "C" {
-
 extern void vga_init();
 extern void timer_init();
 
@@ -54,13 +50,13 @@ static size_t pciconf_write(uintptr_t reg, void *buf, size_t size) {
 
 static size_t hd_read(uintptr_t reg, void *buf, size_t size) {
   *(uint32_t *)buf = port_read(0x1f0 + reg, size);
-  return 0;
+  return size;
 }
 
 static size_t hd_write(uintptr_t reg, void *buf, size_t size) {
   uint32_t data = *((uint32_t *)buf);
   port_write(0x1f0 + reg, size, data);
-  return 0;
+  return size;
 }
 
 size_t video_read(uintptr_t reg, void *buf, size_t size);
@@ -69,8 +65,8 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size);
 size_t input_read(uintptr_t reg, void *buf, size_t size);
 
 static _Device x86_dev[] = {
-  {_DEV_INPUT,   "8279 Keyboard Controller", input_read, nullptr},
-  {_DEV_TIMER,   "RDTSC Timer",              timer_read, nullptr},
+  {_DEV_INPUT,   "8279 Keyboard Controller", input_read, NULL},
+  {_DEV_TIMER,   "RDTSC Timer / CMOS RTC",   timer_read, NULL},
   {_DEV_VIDEO,   "Standard VGA Controller",  video_read, video_write},
   {_DEV_PCICONF, "PCI Configuration",        pciconf_read, pciconf_write},
   {_DEV_ATA0,    "ATA Disk Controller 0",    hd_read, hd_write},
@@ -81,8 +77,6 @@ _Device *_device(int n) {
   if (n >= 0 && (unsigned int)n < sizeof(x86_dev) / sizeof(x86_dev[0])) {
     return &x86_dev[n];
   } else {
-    return nullptr;
+    return NULL;
   }
-}
-
 }

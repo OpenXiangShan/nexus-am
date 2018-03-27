@@ -2,9 +2,7 @@
 #include <x86.h>
 #include <am-x86.h>
 
-extern "C" {
-  int current_cpu();
-}
+int current_cpu();
 
 #define MP_PROC  0x00
 
@@ -97,10 +95,10 @@ int _mpe_init(void (*entry)()) {
 
   for (int cpu = 1; cpu < numcpu; cpu ++) {
     *(uint16_t*)(0x7c00 + 510) = 0x55aa;
-    *reinterpret_cast<uint32_t*>(0x7000) = 0x007c00ea;  // code for ljmp
-    *reinterpret_cast<uint32_t*>(0x7004) = 0x00000000;
+    *(uint32_t*)(0x7000) = 0x007c00ea;  // code for ljmp
+    *(uint32_t*)(0x7004) = 0x00000000;
     *(void**)(0x7010) = (void*)mp_entry;
-    *reinterpret_cast<uint32_t*>(0x7020) += 1024; // 1KB bootstrap stack
+    *(uint32_t*)(0x7020) += 1024; // 1KB bootstrap stack
     lapic_bootap(cpu, 0x7000);
     while (_atomic_xchg(&ap_boot, 0) != 1);
   }
