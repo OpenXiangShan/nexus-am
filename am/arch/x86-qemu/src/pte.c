@@ -70,10 +70,11 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-int _map(_Protect *p, void *va, void *pa) {
+int _map(_Protect *p, void *va, void *pa, int prot) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   uint32_t wflag = 0; // TODO: this should be not accessible
+  if (prot & _PROT_WRITE) wflag = PTE_W;
   if (!(*pde & PTE_P)) {
     *pde = PTE_P | wflag | PTE_U | (uint32_t)(palloc_f(1));
   }
@@ -82,23 +83,6 @@ int _map(_Protect *p, void *va, void *pa) {
     *pte = PTE_P | wflag | PTE_U | (uint32_t)(pa);
   }
   return 0;
-}
-
-void *_query(_Protect *p, void *va, int *prot) {
-  if (prot) *prot = 0;
-  PDE *pt = (PDE*)p->ptr;
-  PDE *pde = &pt[PDX(va)];
-  if (!(*pde & PTE_P)) {
-    return NULL;
-  }
-  PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
-  if (!(*pte & PTE_P)) {
-    return NULL;
-  }
-  if (prot) {
-    *prot = ((*pte & PTE_W) ? _PROT_WRITE : 0) | _PROT_READ;
-  }
-  return (void*)PTE_ADDR(*pte);
 }
 
 void _unmap(_Protect *p, void *va) {

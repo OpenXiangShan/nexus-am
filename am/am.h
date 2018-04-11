@@ -88,8 +88,8 @@ int _pte_init(void *(*pgalloc)(size_t npages), void (*pgfree)(void *));
 int _prot_create(_Protect *p);
 void _prot_destroy(_Protect *p);
 void _prot_switch(_Protect *p);
-int _map(_Protect *p, void *va, void *pa);
-int _protect(_Protect *p, void *va, int len, int prot);
+int _map(_Protect *p, void *va, void *pa, int prot);
+int _unmap(_Protect *p, void *va);
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack,
                 void (*entry)(void *), void *args);
 
