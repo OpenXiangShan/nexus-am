@@ -1,6 +1,6 @@
 #include <x86.h>
-#include <am-x86.h>
 #include <am.h>
+#include <am-x86.h>
 
 int main();
 

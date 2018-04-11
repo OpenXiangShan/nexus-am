@@ -47,8 +47,9 @@ int _pte_init(void* (*palloc)(size_t), void (*pfree)(void*)) {
   return 0;
 }
 
-int _prot_create(_Protect *p) {
-  PDE *updir = (PDE*)(palloc_f(1));
+int _protect(_Protect *p) {
+  PDE *updir = (PDE*)(palloc_f(PGSIZE));
+  p->pgsize = PGSIZE;
   p->ptr = updir;
   // map kernel space
   for (int i = 0; i < 1024; i ++)
@@ -62,8 +63,8 @@ int _prot_create(_Protect *p) {
   return 0;
 }
 
-void _release(_Protect *p) {
-  // free all spaces
+void _unprotect(_Protect *p) {
+  // DFS pages and call release
 }
 
 void _switch(_Protect *p) {
@@ -76,16 +77,13 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
   uint32_t wflag = 0; // TODO: this should be not accessible
   if (prot & _PROT_WRITE) wflag = PTE_W;
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | wflag | PTE_U | (uint32_t)(palloc_f(1));
+    *pde = PTE_P | wflag | PTE_U | (uint32_t)(palloc_f(PGSIZE));
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
     *pte = PTE_P | wflag | PTE_U | (uint32_t)(pa);
   }
   return 0;
-}
-
-void _unmap(_Protect *p, void *va) {
 }
 
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), void *args) {

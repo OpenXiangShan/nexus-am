@@ -212,16 +212,20 @@ int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
 }
 
 _RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
-  _RegSet *regs = (_RegSet*)stack.start;
+  _RegSet *regs = (_RegSet *)stack.start;
+  regs->eax = regs->ebx = regs->ecx = regs->edx = 0;
+  regs->esi = regs->edi = regs->ebp = regs->esp3 = 0;
+
+  regs->ss0 = 0; // only used for ring3 procs
   regs->esp0 = (uint32_t)stack.end;
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
   regs->eip = (uint32_t)entry;
   regs->eflags = 0;
-  regs->esp0 -= 4;
-  *((void**)(regs->esp0)) = arg; // argument
-  regs->esp0 -= 4;
-  *((void**)(regs->esp0)) = NULL; // return address
+
+  uint32_t **esp = (uint32_t **)&regs->esp0;
+  *(*esp -= 4) = (uint32_t)arg; // argument
+  *(*esp -= 4) = 0; // return address
   return regs;
 }
 

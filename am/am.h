@@ -59,7 +59,8 @@ typedef struct _RegSet _RegSet;
 // A protected address space with user memory @area
 // and arch-dependent @ptr
 typedef struct _Protect {
-  _Area area; 
+  size_t pgsize;
+  _Area area;
   void *ptr;
 } _Protect;
 
@@ -72,7 +73,7 @@ void _halt(int code);
 // ======================= I/O Extension (IOE) =======================
 
 int _ioe_init();
-_Device *_device(int n);
+_Device *_device(int n); // get the device #n
 
 // ================== Asynchronous Extension (ASYE) ==================
 
@@ -84,12 +85,11 @@ void _intr_write(int enable);
 
 // =================== Protection Extension (PTE) ====================
 
-int _pte_init(void *(*pgalloc)(size_t npages), void (*pgfree)(void *));
-int _prot_create(_Protect *p);
-void _prot_destroy(_Protect *p);
-void _prot_switch(_Protect *p);
+int _pte_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
+int _protect(_Protect *p);
+void _unprotect(_Protect *p);
+void _switch(_Protect *p);
 int _map(_Protect *p, void *va, void *pa, int prot);
-int _unmap(_Protect *p, void *va);
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack,
                 void (*entry)(void *), void *args);
 
