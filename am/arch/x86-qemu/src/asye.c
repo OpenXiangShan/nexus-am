@@ -221,7 +221,7 @@ _RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
   regs->cs = KSEL(SEG_KCODE);
   regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
   regs->eip = (uint32_t)entry;
-  regs->eflags = 0;
+  regs->eflags = FL_IF;
 
   uint32_t **esp = (uint32_t **)&regs->esp0;
   *(*esp -= 4) = (uint32_t)arg; // argument
