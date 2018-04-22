@@ -1,10 +1,9 @@
 #include <am.h>
 #include <x86.h>
 
+/*
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-struct TSS tss[MAX_CPU];
-SegDesc gdts[MAX_CPU][NR_SEG];
 PDE kpdir[NR_PDE] PG_ALIGN;
 PDE kptab[NR_PDE * NR_PTE] PG_ALIGN;
 void* (*palloc_f)(size_t);
@@ -18,16 +17,6 @@ _Area segments[] = {      // Kernel memory mappings
 int _pte_init(void* (*palloc)(size_t), void (*pfree)(void*)) {
   palloc_f = palloc;
   pfree_f = pfree;
-  SegDesc *gdt = gdts[_cpu()];
-
-  gdt[SEG_KCODE] = SEG(STA_X | STA_R, 0,       0xffffffff, DPL_KERN);
-  gdt[SEG_KDATA] = SEG(STA_W,         0,       0xffffffff, DPL_KERN);
-  gdt[SEG_UCODE] = SEG(STA_X | STA_R, 0,       0xffffffff, DPL_USER);
-  gdt[SEG_UDATA] = SEG(STA_W,         0,       0xffffffff, DPL_USER);
-  gdt[SEG_TSS] = SEG16(STS_T32A,      &tss[_cpu()], sizeof(struct TSS)-1, DPL_KERN);
-  set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
-  set_tr(KSEL(SEG_TSS));
-
   PDE *alloc = kptab;
   for (int i = 0; i < sizeof(segments) / sizeof(segments[0]); i++) {
     _Area *seg = &segments[i];
@@ -105,3 +94,4 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), 
 
   return regs;
 }
+*/
