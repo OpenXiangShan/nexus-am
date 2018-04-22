@@ -224,8 +224,8 @@ _RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
   regs->eflags = FL_IF;
 
   uint32_t **esp = (uint32_t **)&regs->esp0;
-  *(*esp -= 4) = (uint32_t)arg; // argument
-  *(*esp -= 4) = 0; // return address
+  *(*esp -= 1) = (uint32_t)arg; // argument
+  *(*esp -= 1) = 0; // return address
   return regs;
 }
 
