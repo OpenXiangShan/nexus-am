@@ -1,10 +1,9 @@
 #include <am.h>
 #include <x86.h>
 
+/*
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-struct TSS tss[MAX_CPU];
-SegDesc gdts[MAX_CPU][NR_SEG];
 PDE kpdir[NR_PDE] PG_ALIGN;
 PDE kptab[NR_PDE * NR_PTE] PG_ALIGN;
 void* (*palloc_f)(size_t);
@@ -18,16 +17,6 @@ _Area segments[] = {      // Kernel memory mappings
 int _pte_init(void* (*palloc)(size_t), void (*pfree)(void*)) {
   palloc_f = palloc;
   pfree_f = pfree;
-  SegDesc *gdt = gdts[_cpu()];
-
-  gdt[SEG_KCODE] = SEG(STA_X | STA_R, 0,       0xffffffff, DPL_KERN);
-  gdt[SEG_KDATA] = SEG(STA_W,         0,       0xffffffff, DPL_KERN);
-  gdt[SEG_UCODE] = SEG(STA_X | STA_R, 0,       0xffffffff, DPL_USER);
-  gdt[SEG_UDATA] = SEG(STA_W,         0,       0xffffffff, DPL_USER);
-  gdt[SEG_TSS] = SEG16(STS_T32A,      &tss[_cpu()], sizeof(struct TSS)-1, DPL_KERN);
-  set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
-  set_tr(KSEL(SEG_TSS));
-
   PDE *alloc = kptab;
   for (int i = 0; i < sizeof(segments) / sizeof(segments[0]); i++) {
     _Area *seg = &segments[i];
@@ -47,8 +36,9 @@ int _pte_init(void* (*palloc)(size_t), void (*pfree)(void*)) {
   return 0;
 }
 
-int _prot_create(_Protect *p) {
-  PDE *updir = (PDE*)(palloc_f(1));
+int _protect(_Protect *p) {
+  PDE *updir = (PDE*)(palloc_f(PGSIZE));
+  p->pgsize = PGSIZE;
   p->ptr = updir;
   // map kernel space
   for (int i = 0; i < 1024; i ++)
@@ -62,46 +52,27 @@ int _prot_create(_Protect *p) {
   return 0;
 }
 
-void _release(_Protect *p) {
-  // free all spaces
+void _unprotect(_Protect *p) {
+  // DFS pages and call release
 }
 
 void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-int _map(_Protect *p, void *va, void *pa) {
+int _map(_Protect *p, void *va, void *pa, int prot) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   uint32_t wflag = 0; // TODO: this should be not accessible
+  if (prot & _PROT_WRITE) wflag = PTE_W;
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | wflag | PTE_U | (uint32_t)(palloc_f(1));
+    *pde = PTE_P | wflag | PTE_U | (uint32_t)(palloc_f(PGSIZE));
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
     *pte = PTE_P | wflag | PTE_U | (uint32_t)(pa);
   }
   return 0;
-}
-
-void *_query(_Protect *p, void *va, int *prot) {
-  if (prot) *prot = 0;
-  PDE *pt = (PDE*)p->ptr;
-  PDE *pde = &pt[PDX(va)];
-  if (!(*pde & PTE_P)) {
-    return NULL;
-  }
-  PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
-  if (!(*pte & PTE_P)) {
-    return NULL;
-  }
-  if (prot) {
-    *prot = ((*pte & PTE_W) ? _PROT_WRITE : 0) | _PROT_READ;
-  }
-  return (void*)PTE_ADDR(*pte);
-}
-
-void _unmap(_Protect *p, void *va) {
 }
 
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), void *args) {
@@ -123,3 +94,4 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), 
 
   return regs;
 }
+*/

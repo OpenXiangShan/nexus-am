@@ -9,4 +9,3 @@ void ioapic_enable(int irq, int cpu);
 void smp_init();
 
 #endif
-
