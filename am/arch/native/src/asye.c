@@ -10,9 +10,11 @@ void irq_handle(_RegSet *r) {
   getcontext(&r->uc);
 
   _Event e;
-  e.event = _EVENT_SYSCALL;
+  e.event = ((uint32_t)r->rax == -1 ? _EVENT_YIELD : _EVENT_SYSCALL);
   _RegSet *ret = H(e, r);
-  assert(ret == NULL);
+  if (ret != NULL) {
+    r = ret;
+  }
 
   r->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)ret_from_trap;
   r->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)r;
@@ -33,6 +35,7 @@ _RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
 }
 
 void _yield() {
+  asm volatile("call *0x100000": : "a"(-1));
 }
 
 int _intr_read() {
