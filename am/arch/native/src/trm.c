@@ -11,7 +11,7 @@ void _putc(char ch) {
 
 void _halt(int code) {
   printf("Exit (%d)\n", code);
-  _exit(code);
+  exit(code);
 }
 
 _Area _heap;
