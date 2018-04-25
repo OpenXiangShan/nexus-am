@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define HEAP_SIZE (64 * 1024 * 1024)
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-static char heap[HEAP_SIZE];
 
 void _trm_init() {
 }
@@ -18,7 +19,22 @@ void _halt(int code) {
   _exit(code);
 }
 
-_Area _heap = {
-  .start = heap,
-  .end = heap + HEAP_SIZE,
-};
+_Area _heap;
+
+static int pmem_fd;
+
+void __attribute__ ((constructor)) init_platform() {
+  pmem_fd = shm_open("/native-pmem", O_RDWR | O_CREAT, 0700);
+  assert(pmem_fd != -1);
+  size_t size = 128 * 1024 * 1024;
+  ftruncate(pmem_fd, size);
+
+  void *start = (void *)0x100000;
+  void *end = (void *)size;
+  start = mmap(start, end - start, PROT_READ | PROT_WRITE | PROT_EXEC,
+      MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)start);
+  assert(start != (void *)-1);
+
+  _heap.start = start + 4096;  // this is to skip the trap entry
+  _heap.end = end;
+}
