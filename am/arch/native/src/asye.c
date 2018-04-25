@@ -10,23 +10,18 @@ static _RegSet* (*H)(_Event, _RegSet*) = NULL;
 extern void asm_trap();
 extern void ret_from_trap();
 
-void irq_handle(ucontext_t *uc) {
-  getcontext(uc);
-
-  _RegSet *r = (void *)uc->uc_mcontext.gregs;
-  uintptr_t *rax = (void *)uc + 1024;
-  SYSCALL_ARG1(r) = *rax;
+void irq_handle(_RegSet *r) {
+  getcontext(&r->uc);
 
   _Event e;
   e.event = _EVENT_SYSCALL;
   _RegSet *ret = H(e, r);
   assert(ret == NULL);
 
-  r->regs[REG_RIP] = (uintptr_t)ret_from_trap;
-  r->regs[REG_RSP] = (uintptr_t)uc;
-  *rax = SYSCALL_ARG1(r);
+  r->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)ret_from_trap;
+  r->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)r;
 
-  setcontext(uc);
+  setcontext(&r->uc);
 }
 
 int pmem_fd;

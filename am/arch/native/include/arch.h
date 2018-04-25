@@ -11,14 +11,18 @@
 #include <ucontext.h>
 
 struct _RegSet {
-  gregset_t regs;
-  // FIXME: should we save floating registers too?
+  union {
+    uint8_t pad[1024];
+    ucontext_t uc;
+  };
+  uintptr_t rax;
+  uintptr_t rip;
 };
 
-#define SYSCALL_ARG1(r) r->regs[REG_RAX]
-#define SYSCALL_ARG2(r) r->regs[REG_RSI]
-#define SYSCALL_ARG3(r) r->regs[REG_RDX]
-#define SYSCALL_ARG4(r) r->regs[REG_RCX]
+#define SYSCALL_ARG1(r) r->rax
+#define SYSCALL_ARG2(r) r->uc.uc_mcontext.gregs[REG_RSI]
+#define SYSCALL_ARG3(r) r->uc.uc_mcontext.gregs[REG_RDX]
+#define SYSCALL_ARG4(r) r->uc.uc_mcontext.gregs[REG_RCX]
 
 #undef __USE_GNU
 
