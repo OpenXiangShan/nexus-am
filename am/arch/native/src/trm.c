@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <klib.h>
 
 void _trm_init() {
 }
@@ -37,4 +38,17 @@ void __attribute__ ((constructor)) init_platform() {
 
   _heap.start = start + 4096;  // this is to skip the trap entry
   _heap.end = end;
+}
+
+void shm_mmap(void *va, void *pa, int prot) {
+  void *ret = mmap(va, 4096, PROT_READ | PROT_WRITE | PROT_EXEC,
+      MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)pa);
+  assert(ret != (void *)-1);
+//  printf("%p -> %p\n", va, pa);
+}
+
+void shm_munmap(void *va) {
+  int ret = munmap(va, 4096);
+  assert(ret == 0);
+//  printf("%p -> 0\n", va);
 }
