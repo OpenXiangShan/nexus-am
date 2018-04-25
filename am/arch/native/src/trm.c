@@ -24,6 +24,8 @@ _Area _heap;
 
 static int pmem_fd;
 
+static ucontext_t uc_example;
+
 void __attribute__ ((constructor)) init_platform() {
   pmem_fd = shm_open("/native-pmem", O_RDWR | O_CREAT, 0700);
   assert(pmem_fd != -1);
@@ -38,6 +40,8 @@ void __attribute__ ((constructor)) init_platform() {
 
   _heap.start = start + 4096;  // this is to skip the trap entry
   _heap.end = end;
+
+  getcontext(&uc_example);
 }
 
 void shm_mmap(void *va, void *pa, int prot) {
@@ -51,4 +55,8 @@ void shm_munmap(void *va) {
   int ret = munmap(va, 4096);
   assert(ret == 0);
 //  printf("%p -> 0\n", va);
+}
+
+void get_example_uc(_RegSet *r) {
+  memcpy(r, &uc_example, sizeof(uc_example));
 }
