@@ -66,7 +66,15 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
   pp->ppn = (uintptr_t)pa >> 12;
   pp->next = p->ptr;
   p->ptr = pp;
-  pp->is_mapped = false;
+
+  if (p == cur_as) {
+    // enforce the map immediately
+    shm_mmap((void *)(pp->vpn << 12), (void *)(pp->ppn << 12), 0);
+    pp->is_mapped = true;
+  }
+  else {
+    pp->is_mapped = false;
+  }
   
   return 0;
 }
