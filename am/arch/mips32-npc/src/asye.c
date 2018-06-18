@@ -6,18 +6,12 @@
 static _RegSet* (*H) (_Event, _RegSet*) = NULL;
 static uint32_t args[4];
 
-void _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
+int _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
   H = l;
-
-	// set axi timer interrupt cycles & up counter or down counter
-  // int_timer0_init(50000000, 0);
-
-	// set cp0 time interrupt initial compare
-  // volatile uint32_t init = 0x10000;
-  // SetCompare(init);
+  return 0;
 }
 
-_RegSet *_make(_Area kstack, void *entry, void *arg){
+_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg){
   _RegSet *r = (void *)0;
   int status = 0;
   int new_status = 0;
@@ -94,9 +88,9 @@ void irq_handle(struct TrapFrame *tf){
         case 0x80:{ // time interrupt
           // uint32_t count = GetCount(0);
           // SetCompare(count + INTERVAL);
-          set_int_timer(0, 0, 1, 1);
-          set_int_timer(0, 1, 0, 0);
-          ev.event = _EVENT_IRQ_TIME;
+          // set_int_timer(0, 0, 1, 1);
+          // set_int_timer(0, 1, 0, 0);
+          ev.event = _EVENT_IRQ_TIMER;
           break;
         }
         default:printk("ipcode = %x\n", ipcode);_halt(-1);
@@ -119,7 +113,7 @@ void irq_handle(struct TrapFrame *tf){
     }
     case 8:{ // syscall
       tf->epc += 4;
-      ev.event = _EVENT_TRAP;
+      ev.event = _EVENT_SYSCALL;
 	    printk("Syscall\n");
       printk("$epc = 0x%x\n", regs.epc);
       // _halt(0); 
@@ -146,7 +140,7 @@ void irq_handle(struct TrapFrame *tf){
     }
     case 13:{ // trap
       tf->epc += 4;
-      ev.event = _EVENT_TRAP;
+      ev.event = _EVENT_SYSCALL;
       break;
     }
     default:printk("exccode = %x\n", exccode);_halt(-1);
