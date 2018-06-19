@@ -26,6 +26,9 @@ static word ppu_ram_map[0x4000];
 
 static inline void draw(int col, int row, int idx) {
   canvas[row][col + 0xff] = idx;
+  if(idx != 0) {
+	  log("row:%d, col:%d, idx:%d\n", row, col, idx);
+  }
 }
 
 // PPUCTRL Functions
@@ -100,6 +103,7 @@ inline word ppu_get_real_ram_address(word address)
 
 inline byte ppu_ram_read(word address)
 {
+	log("ppu_ram_read: address:%x, map:%x\n", address, ppu_ram_map[address]);
     return PPU_RAM[ppu_ram_map[address]];
 }
 
@@ -171,10 +175,12 @@ static void table_init() {
   for (int x = 0; x < 0x4000; x ++) {
     ppu_ram_map[x] = ppu_get_real_ram_address(x);
   }
+  log("ppu_ram_map[0x3F00]=0x%x\n", ppu_ram_map[0x3F00]);
 }
 
 void ppu_draw_background_scanline(bool mirror)
 {
+	log("draw_background_scanline called\n");
     int tile_x, tile_y = ppu.scanline >> 3;
     int taddr = ppu_base_nametable_address() + (tile_y << 5) + (mirror ? 0x400 : 0);
     int y_in_tile = ppu.scanline & 0x7;
@@ -189,6 +195,7 @@ void ppu_draw_background_scanline(bool mirror)
         if (((tile_x << 3) - ppu.PPUSCROLL_X + (mirror ? 256 : 0)) > 256)
             continue;
 
+		log("call ppu_ram_read\n");
         int tile_index = ppu_ram_read(taddr);
         word tile_address = ppu_background_pattern_table_address() + (tile_index << 4);
 
@@ -199,6 +206,7 @@ void ppu_draw_background_scanline(bool mirror)
             attribute_address += (tile_x & 3) == 0;
             bool top = (ppu.scanline & 31) < 16;
             bool left = ((tile_x & 31) < 16);
+			log("call ppu_ram_read\n");
             byte palette_attribute = ppu_ram_read(attribute_address);
             if (!top) {
                 palette_attribute >>= 4;
@@ -209,6 +217,7 @@ void ppu_draw_background_scanline(bool mirror)
             palette_attribute &= 3;
 
             word palette_address = 0x3F00 + (palette_attribute << 2);
+			log("call ppu_ram_read\n");
             palette_cache[1] = ppu_ram_read(palette_address + 1);
             palette_cache[2] = ppu_ram_read(palette_address + 2);
             palette_cache[3] = ppu_ram_read(palette_address + 3);
@@ -231,6 +240,7 @@ void ppu_draw_background_scanline(bool mirror)
 
 void ppu_draw_sprite_scanline()
 {
+	log("====\n");
     int do_update = frame_cnt % 3 == 0;
     int scanline_sprite_count = 0;
     int n;
@@ -255,7 +265,9 @@ void ppu_draw_sprite_scanline()
 
         word tile_address = ppu_sprite_pattern_table_address() + 16 * PPU_SPRRAM[n + 1];
         int y_in_tile = ppu.scanline & 0x7;
+		log("call ppu_ram_read\n");
         byte l = ppu_ram_read(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
+		log("call ppu_ram_read\n");
         byte h = ppu_ram_read(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8);
 
         byte palette_attribute = PPU_SPRRAM[n + 2] & 0x3;
@@ -269,6 +281,7 @@ void ppu_draw_sprite_scanline()
                 int screen_x = sprite_x + x;
 
                 if (do_update) {
+					log("call ppu_ram_read\n");
                     int idx = ppu_ram_read(palette_address + color);
                     if (PPU_SPRRAM[n + 2] & 0x20) {
                         draw(screen_x, sprite_y + y_in_tile + 1, idx); // bbg
@@ -294,9 +307,11 @@ void ppu_draw_sprite_scanline()
 
 void ppu_run(int cycles)
 {
+	log("cycles:%d\n", cycles);
     while (cycles-- > 0) {
         ppu_cycle();
     }
+	log("cycles:%d\n", cycles);
 }
 
 void ppu_cycle()
@@ -305,12 +320,17 @@ void ppu_cycle()
         ppu.ready = true;
 
     ppu.scanline++;
+	log("flag:%x, %x\n", ppu_shows_background(), ppu_shows_sprites());
     if (ppu_shows_background()) {
+		log("shows_background\n");
         ppu_draw_background_scanline(false);
         ppu_draw_background_scanline(true);
     }
     
-    if (ppu_shows_sprites()) ppu_draw_sprite_scanline();
+    if (ppu_shows_sprites()) {
+		log("ppu_draw_sprite_scanline\n");
+		ppu_draw_sprite_scanline();
+	}
 
     if (ppu.scanline == 241) {
         ppu_set_in_vblank(true);
@@ -321,6 +341,7 @@ void ppu_cycle()
         ppu.scanline = -1;
         ppu_sprite_hit_occured = false;
         ppu_set_in_vblank(false);
+		log("fce_update_screen\n");
         fce_update_screen();
     }
 }
@@ -410,10 +431,13 @@ inline void ppu_io_write(word address, byte data)
         case 7:
         {
             if (ppu.PPUADDR > 0x1FFF || ppu.PPUADDR < 0x4000) {
+				log("ppu_write.1(%x,%d)\n", ppu.PPUADDR ^ ppu.mirroring_xor, data);
                 ppu_ram_write(ppu.PPUADDR ^ ppu.mirroring_xor, data);
+				log("ppu_write.2(%x,%d)\n", ppu.PPUADDR, data);
                 ppu_ram_write(ppu.PPUADDR, data);
             }
             else {
+				log("ppu_write.3(%x,%d)\n", ppu.PPUADDR, data);
                 ppu_ram_write(ppu.PPUADDR, data);
             }
         }

@@ -1,12 +1,6 @@
 #include <am.h>
 #include <klib.h>
 
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
-static inline uint8_t R(uint32_t p) { return p >> 16; }
-static inline uint8_t G(uint32_t p) { return p >> 8; }
-static inline uint8_t B(uint32_t p) { return p; }
 
 uint32_t color_buf[] = {
 0xff868885, 0xff8a8c89, 0xff848683, 0xff818380, 0xff888a87, 0xff939592, 0xff979996, 0xff90928f, 0xff888a87, 0xff8a8c89, 0xff8c8e8b, 0xff898b88, 0xff878986, 0xff919390, 0xff90928f, 0xff939592, 0xff939592, 
@@ -7069,12 +7063,6 @@ uint32_t color_buf[] = {
 0xff323433, 0xff313332, 0xff3a3c3b, 0xff3a3c3b, 0xff323433, 0xff4e504f, 0xff484a49, 0xff494b4a, 0xff454746, 0xff333534, 0xff373938, 0xff272928, 0xff313332, 0xff5d5f5e, 0xff323433, 0xff4b4d4c, 0xff4e504f, 
 0xff434544, 0xff5e605f, 0xff3b3d3c, 0xff4e4e50, 0xff454547, 0xff565759, 0xff666769, 0xff363837, 0xff5b5d5c, 0xff555756, 0xff4d4f4e, 0xff434544, 0xff444645, 0xff3f4342, 
 };
-
-#define R(p) (p >> 16)
-#define G(p) (p >> 8)
-#define B(p) (p)
-#define CONVERT(p) \
-	( ((R(p) & 0xf0) << 4) | (G(p) & 0xf0) | ((B(p) & 0xf0) >> 4) )
 
 int main() {
   _ioe_init();

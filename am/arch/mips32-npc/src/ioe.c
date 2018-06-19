@@ -173,9 +173,9 @@ size_t input_read(uintptr_t reg, void *buf, size_t size) {
 }
 
 static _Device mips32_npc_dev[] = {
-  {_DEV_INPUT,   "8279 Keyboard Controller", input_read, NULL},
-  {_DEV_TIMER,   "RDTSC Timer / CMOS RTC",   timer_read, NULL},
-  {_DEV_VIDEO,   "Standard VGA Controller",  video_read, video_write},
+  {_DEV_INPUT,   "NOOP Keyboard Controller", input_read, NULL},
+  {_DEV_TIMER,   "NOOP Fake Timer",   timer_read, NULL},
+  {_DEV_VIDEO,   "NoneStandard VGA Controller",  video_read, video_write},
 };
 
 _Device *_device(int n) {
