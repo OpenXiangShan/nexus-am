@@ -130,44 +130,57 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
 
 
 // keyboard
-static int scan_code[] = {
-  0,
-  1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
-  41, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 43,
-  58, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 28,
-  42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-  29, 91, 56, 57, 56, 29, 
-  72, 80, 75, 77, 0, 0, 0, 0, 0, 0
+static int ascii_to_keycode[256] = {
+  ['\e'] = _KEY_ESCAPE,
+  ['1'] = _KEY_1, ['2'] = _KEY_2, ['3'] = _KEY_3, ['4'] = _KEY_4,
+  ['5'] = _KEY_5, ['6'] = _KEY_6, ['7'] = _KEY_7, ['8'] = _KEY_8,
+  ['9'] = _KEY_9, ['0'] = _KEY_0,
+  ['A'] = _KEY_A, ['B'] = _KEY_B, ['C'] = _KEY_C, ['D'] = _KEY_D,
+  ['E'] = _KEY_E, ['F'] = _KEY_F, ['G'] = _KEY_G, ['H'] = _KEY_H,
+  ['I'] = _KEY_I, ['J'] = _KEY_J, ['K'] = _KEY_K, ['L'] = _KEY_L,
+  ['M'] = _KEY_M, ['N'] = _KEY_N, ['O'] = _KEY_O, ['P'] = _KEY_P,
+  ['Q'] = _KEY_Q, ['R'] = _KEY_R, ['S'] = _KEY_S, ['T'] = _KEY_T,
+  ['U'] = _KEY_U, ['V'] = _KEY_V, ['W'] = _KEY_W, ['X'] = _KEY_X,
+  ['Y'] = _KEY_Y, ['Z'] = _KEY_Z,
+  ['a'] = _KEY_A, ['b'] = _KEY_B, ['c'] = _KEY_C, ['d'] = _KEY_D,
+  ['e'] = _KEY_E, ['f'] = _KEY_F, ['g'] = _KEY_G, ['h'] = _KEY_H,
+  ['i'] = _KEY_I, ['j'] = _KEY_J, ['k'] = _KEY_K, ['l'] = _KEY_L,
+  ['m'] = _KEY_M, ['n'] = _KEY_N, ['o'] = _KEY_O, ['p'] = _KEY_P,
+  ['q'] = _KEY_Q, ['r'] = _KEY_R, ['s'] = _KEY_S, ['t'] = _KEY_T,
+  ['u'] = _KEY_U, ['v'] = _KEY_V, ['w'] = _KEY_W, ['x'] = _KEY_X,
+  ['y'] = _KEY_Y, ['z'] = _KEY_Z,
+  [' '] = _KEY_SPACE,  ['`'] = _KEY_GRAVE,
+  // ['~'] = _KEY_,
+  // ['!'] = _KEY_, ['@'] = _KEY_, ['#'] = _KEY_,
+  // ['$'] = _KEY_, ['%'] = _KEY_, ['^'] = _KEY_,
+  // ['&'] = _KEY_, ['*'] = _KEY_, ['('] = _KEY_,
+  // [')'] = _KEY_, ['_'] = _KEY_, ['+'] = _KEY_,
+  ['-'] = _KEY_MINUS, ['='] = _KEY_EQUALS,
+  ['['] = _KEY_LEFTBRACKET, [']'] = _KEY_RIGHTBRACKET,
+  ['\\'] = _KEY_BACKSLASH, [';'] = _KEY_SEMICOLON,
+  [','] = _KEY_COMMA, ['/'] = _KEY_SLASH,
+  // ['\''] = _KEY_,
+  ['.'] = _KEY_PERIOD,
+  // ['{'] = _KEY_, ['}'] = _KEY_,
+  // ['|'] = _KEY_, [':'] = _KEY_, ['"'] = _KEY_,
+  // ['<'] = _KEY_, ['>'] = _KEY_, ['?'] = _KEY_, 
+  ['\n'] = _KEY_RETURN,
+  ['\x7f'] = _KEY_DELETE,
 };
 
 size_t input_read(uintptr_t reg, void *buf, size_t size) {
+  static char code;
+  char in_byte();
+
   _KbdReg *kbd = (_KbdReg *)buf;
-
-  int status = 0; // inb(0x64);
-  kbd->keydown = 0;
-  kbd->keycode = _KEY_NONE;
-
-  if ((status & 0x1) == 0) {
+  if(code != 0) {
+	kbd->keycode = ascii_to_keycode[(int)code];
+	code = 0;
+	kbd->keydown = 0;
   } else {
-    if (status & 0x20) { // mouse
-    } else {
-      // int code = inb(0x60) & 0xff;
-      int code = 0x59;
-
-      for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
-        if (scan_code[i] == 0) continue;
-        if (scan_code[i] == code) {
-          kbd->keydown = 1;
-          kbd->keycode = i;
-          break;
-        } else if (scan_code[i] + 128 == code) {
-          kbd->keydown = 0;
-          kbd->keycode = i;
-          break;
-        }
-      }
-    }
+	code = in_byte();
+	kbd->keycode = ascii_to_keycode[(int)code];
+	kbd->keydown = 1;
   }
   return sizeof(*kbd);
 }
