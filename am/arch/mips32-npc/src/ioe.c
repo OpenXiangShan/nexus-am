@@ -101,23 +101,26 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
 }
 
 size_t timer_read(uintptr_t reg, void *buf, size_t size) {
-  /*
-  unsigned long counter_reg1 = real_timer_get_counter_reg(1);
-  unsigned long counter_reg0 = 0;
-  do {
-    counter_reg0 = real_timer_get_counter_reg(0);
-  }while(counter_reg1 != real_timer_get_counter_reg(1));
-  
-  npc_time = counter_reg1 * 1000 * ((1ul << 31) / HZ) * 2 + counter_reg0 / (HZ / 1000);
-  return npc_time;
-  */
-
+#define CYCLE_REG 9
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
-	  static int ms = 0;
-      _UptimeReg *uptime = (_UptimeReg *)buf;
-      uptime->hi = 0;
-      uptime->lo = ms += 10;
+#if 1
+	  uint32_t cr1 = 0;
+	  uint32_t cr0 = 0;
+	  MFC0(cr1, CYCLE_REG, 1);
+	  MFC0(cr0, CYCLE_REG, 0);
+
+	  uint32_t ms = cr1 * 1000 * ((1ul << 31) / HZ) * 2 + cr0 / (HZ / 1000);
+
+	  _UptimeReg *uptime = (_UptimeReg *)buf;
+	  uptime->hi = 0;
+      uptime->lo = ms;
+#else
+	  static uint32_t ms = 0;
+	  _UptimeReg *uptime = (_UptimeReg *)buf;
+	  uptime->hi = ms += 10;
+      uptime->lo = ms;
+#endif
       return sizeof(_UptimeReg);
     }
     case _DEVREG_TIMER_DATE: {
