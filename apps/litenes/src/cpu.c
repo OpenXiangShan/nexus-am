@@ -119,11 +119,14 @@ void ____FE____() { /* Instruction for future Extension */ }
 
 #define cpu_update_zn_flags(value) cpu.P = (cpu.P & ~(zero_flag | negative_flag)) | cpu_zn_flag_table[value]
 
-#define cpu_branch(flag) if (flag) { \
-	log("before: cpu.PC:%x\n", cpu.PC); \
-	cpu.PC = op_address; \
-	log("after: cpu.PC:%x\n", cpu.PC); \
-}
+#define cpu_branch(flag) do { \
+	log("#cpu_branch: flag" #flag "is %d\n", flag); \
+	if (flag) { \
+		log("before: cpu.PC:%x\n", cpu.PC); \
+		cpu.PC = op_address; \
+		log("after: cpu.PC:%x\n", cpu.PC); \
+	} \
+} while(0)
 #define cpu_compare(reg) int result = reg - op_value; \
                          cpu_modify_flag(carry_bp, result >= 0); \
                          cpu_modify_flag(zero_bp, result == 0); \
@@ -263,8 +266,14 @@ void cpu_op_bvs() { log("cpu.P=%x, cpu.PC=%x\n", cpu.P, cpu.PC); cpu_branch(cpu_
 void cpu_op_bne() { log("cpu.P=%x, cpu.PC=%x\n", cpu.P, cpu.PC); cpu_branch(!cpu_flag_set(zero_bp));     }
 void cpu_op_bcc() { log("cpu.P=%x, cpu.PC=%x\n", cpu.P, cpu.PC); cpu_branch(!cpu_flag_set(carry_bp));    }
 void cpu_op_bpl() {
-	log("cpu.P=%x, PC=%x, %d\n", cpu.P, cpu.PC, !cpu_flag_set(negative_bp));
-   	cpu_branch(!cpu_flag_set(negative_bp));
+	int flag = !cpu_flag_set(negative_bp);
+	log("cpu.P=%x, PC=%x, %d\n", cpu.P, cpu.PC, flag);
+	if (flag < 0 || flag > 0) {
+		log("before: cpu.PC:%x\n", cpu.PC);
+		cpu.PC = op_address;
+		log("after: cpu.PC:%x\n", cpu.PC);
+	}
+   	// cpu_branch(!cpu_flag_set(negative_bp));
 }
 void cpu_op_bvc() { log("cpu.P=%x, cpu.PC=%x\n", cpu.P, cpu.PC); cpu_branch(!cpu_flag_set(overflow_bp)); }
 

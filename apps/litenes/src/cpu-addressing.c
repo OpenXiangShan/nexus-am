@@ -68,11 +68,13 @@ void cpu_address_relative()
 {
     op_address = memory_readb(cpu.PC);
     cpu.PC++;
-    if (op_address & 0x80)
+	int flag = op_address & 0x80;
+    if (flag < 0 || flag > 0)
         op_address -= 0x100;
     op_address += cpu.PC;
 
-    if ((op_address >> 8) != (cpu.PC >> 8)) {
+	flag = (op_address >> 8) != (cpu.PC >> 8);
+    if (flag < 0 || flag > 0) {
         op_cycles++;
     }
 }

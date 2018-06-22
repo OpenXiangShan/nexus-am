@@ -147,9 +147,11 @@ static uint32_t row[1024];
 
 void fce_update_screen()
 {
+  /*
   static int count = 0;
   count ++;
   if(count > 30) _halt(0);
+  */
 
   int idx = ppu_ram_read(0x3F00);
   log("PPU_RAM[0]:%d, idx:%d\n", PPU_RAM[0x3f00], idx);

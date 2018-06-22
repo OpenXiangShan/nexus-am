@@ -104,7 +104,7 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
 #define CYCLE_REG 9
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
-#if 1
+#if 0
 	  uint32_t cr1 = 0;
 	  uint32_t cr0 = 0;
 	  MFC0(cr1, CYCLE_REG, 1);
