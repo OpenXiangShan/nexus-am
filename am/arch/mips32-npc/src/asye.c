@@ -34,7 +34,7 @@ _RegSet *_make(_Area kstack, void (*entry)(void *), void *arg){
 }
 
 void _yield(){
-  asm volatile("lw $a0, %0; syscall"::"i"(-1));
+  asm volatile("addiu $a0, $0, -1; syscall");
 }
 
 int _intr_read() {
@@ -103,10 +103,15 @@ void irq_handle(struct TrapFrame *tf){
     }
     case 8:{ // syscall
       tf->epc += 4;
-      ev.event = _EVENT_SYSCALL;
-	  printk("Syscall\n");
-      printk("$epc = 0x%x\n", regs.epc);
-      // _halt(0); 
+	  if(tf->a0 == -1) {
+		ev.event = _EVENT_YIELD;
+		printk("Yield\n");
+		printk("$epc = 0x%x\n", regs.epc);
+	  } else {
+		ev.event = _EVENT_SYSCALL;
+		printk("Syscall\n");
+		printk("$epc = 0x%x\n", regs.epc);
+	  }
       break;
     }
     case 9:{ // breakpoint
