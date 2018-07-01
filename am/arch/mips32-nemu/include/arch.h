@@ -16,5 +16,6 @@ struct _RegSet {
 #define GPR2 a1
 #define GPR3 a2
 #define GPR4 a3
+#define GPRx v0
 
 #endif

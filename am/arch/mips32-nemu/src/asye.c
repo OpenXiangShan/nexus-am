@@ -34,7 +34,7 @@ _RegSet *_make(_Area kstack, void (*entry)(void *), void *arg){
 }
 
 void _yield(){
-  asm volatile("syscall");
+  asm volatile("lw $a0, %0; syscall"::"i"(-1));
 }
 
 int _intr_read() {
