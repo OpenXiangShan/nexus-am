@@ -18,12 +18,12 @@
 #define INT_TIMER_BASE ((volatile char *)0x41c10000)
 #define PERF_COUNTER_BASE ((volatile char *)0xc0000000)
 
-#define cp0_badvaddr 8
-#define cp0_count    9
-#define cp0_compare  11
-#define cp0_status   12
-#define cp0_cause    13
-#define cp0_epc      14
+#define CP0_BADVADDR 8
+#define CP0_COUNT    9
+#define CP0_COMPARE  11
+#define CP0_STATUS   12
+#define CP0_CAUSE    13
+#define CP0_EPC      14
 
 #define MFC0(dst, src, sel) \
 asm volatile("mfc0 %0, $"_STR(src)", %1\n\t":"=r"(dst):"i"(sel))

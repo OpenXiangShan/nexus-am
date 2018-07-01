@@ -12,9 +12,9 @@ struct _RegSet {
 	epc, cause, status, badvaddr;
 };
 
-#define REG1(regs) ((regs)->a0)
-#define REG2(regs) ((regs)->a1)
-#define REG3(regs) ((regs)->a2)
-#define REG4(regs) ((regs)->a3)
+#define GPR1 a0
+#define GPR2 a1
+#define GPR3 a2
+#define GPR4 a3
 
 #endif

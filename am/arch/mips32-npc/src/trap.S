@@ -22,7 +22,7 @@ intr:
 
 do_irq:
 #pusha
-	addiu	$sp,$sp,-176
+	addiu	        $sp, $sp,-176
 	sw 		$at, 0x4($sp)
 	sw 		$v0, 0x8($sp)
 	sw 		$v1, 0xc($sp)
@@ -90,9 +90,9 @@ GetInterruptPriority:
 	mtc0	$k1, $12 
 SetMaskDone:
 	#clear exl to enable nested exception & sti
-	mfc0	$k0, $12
-	xori	$k0, $k0, 0x2
-	mtc0	$k0, $12
+	#mfc0	$k0, $12
+	#xori	$k0, $k0, 0x2
+	#mtc0	$k0, $12
 
 
 	jal		irq_handle
