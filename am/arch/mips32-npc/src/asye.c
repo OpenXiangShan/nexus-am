@@ -18,8 +18,16 @@ static void update_timer(int step) {
   MTC0(CP0_COMPARE, compare, 0);
 }
 
+static void init_timer(int step) {
+  int compare = 0;
+  MFC0(compare, CP0_COUNT, 0);
+  compare += step;
+  MTC0(CP0_COMPARE, compare, 0);
+}
+
 int _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
   H = l;
+  init_timer(30000);
   return 0;
 }
 
