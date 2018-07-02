@@ -167,24 +167,54 @@ static int ascii_to_keycode[256] = {
   // ['{'] = _KEY_, ['}'] = _KEY_,
   // ['|'] = _KEY_, [':'] = _KEY_, ['"'] = _KEY_,
   // ['<'] = _KEY_, ['>'] = _KEY_, ['?'] = _KEY_, 
-  ['\n'] = _KEY_RETURN,
+  ['\r'] = _KEY_RETURN,
   ['\x7f'] = _KEY_DELETE,
 };
 
+typedef struct {
+  int code;
+  int count;
+} _BufferedKey;
+
+#define NR_BUFFERED_KEYS 4
+
+static _BufferedKey buffered_keys[NR_BUFFERED_KEYS];
+
 size_t input_read(uintptr_t reg, void *buf, size_t size) {
-  static char code;
   char in_byte();
 
   _KbdReg *kbd = (_KbdReg *)buf;
-  if(code != 0) {
-	kbd->keycode = ascii_to_keycode[(int)code];
-	code = 0;
-	kbd->keydown = 0;
-  } else {
-	code = in_byte();
-	kbd->keycode = ascii_to_keycode[(int)code];
-	kbd->keydown = 1;
+
+  // return keyup
+  int no = -1;
+  for(int i = 0; i < NR_BUFFERED_KEYS; i++) {
+	if(buffered_keys[i].code != 0) {
+	  if(buffered_keys[i].count <= 0) {
+		kbd->keydown = 0;
+		kbd->keycode = buffered_keys[i].code;
+		buffered_keys[i].code = 0;
+		return sizeof(*kbd);
+	  } else {
+		buffered_keys[i].count --;
+	  }
+	} else {
+	  no = i;
+	}
   }
+
+  // no buffer empty, return keynone
+  if(no < 0) {
+	kbd->keydown = 0;
+	kbd->keycode = 0;
+	return sizeof(*kbd);
+  }
+
+  // read keydown
+  int code = ascii_to_keycode[(int)in_byte()];
+  kbd->keydown = 1;
+  kbd->keycode = code;
+  buffered_keys[no].code = code;
+  buffered_keys[no].count = 10;
   return sizeof(*kbd);
 }
 

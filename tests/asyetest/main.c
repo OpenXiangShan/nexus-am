@@ -25,7 +25,7 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
       }
       break;
     case _EVENT_YIELD:
-      assert(_intr_read() == 0);
+      // assert(_intr_read() == 0);
       ntraps++;
       break;
   }

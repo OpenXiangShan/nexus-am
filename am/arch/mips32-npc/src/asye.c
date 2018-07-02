@@ -5,12 +5,6 @@
 
 static _RegSet* (*H) (_Event, _RegSet*) = NULL;
 
-static int get_compare_register() {
-  int compare = 0;
-  MFC0(compare, CP0_COMPARE, 0);
-  return compare;
-}
-
 static void update_timer(int step) {
   int compare = 0;
   MFC0(compare, CP0_COMPARE, 0);
@@ -31,18 +25,23 @@ int _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
   return 0;
 }
 
-_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg){
-  _RegSet *r = (void *)0;
-  int status = 0;
-  int new_status = 0;
-  MFC0(status, CP0_STATUS, 0);
-  new_status = status | 0x1;
-  MTC0(CP0_STATUS, new_status, 0);  
-  return r;
+_RegSet *_make(_Area kstack, void (*entry)(void *), void *args){
+  _RegSet *regs = (_RegSet *)kstack.start;
+  regs->sp = (uint32_t) kstack.end;
+  regs->epc = (uint32_t) entry;
+
+  static const char *envp[] = { "FUCKYOU=true", NULL };
+
+  uintptr_t *arg = args;
+  regs->a0 = 0;
+  regs->a1 = (uintptr_t)arg;
+  regs->a2 = (uintptr_t)envp;
+  for(; *arg; arg ++, regs->a0++);
+  return regs;
 }
 
 void _yield(){
-  asm volatile("addiu $a0, $0, -1; syscall");
+  asm volatile("addiu $a0, $0, -1; syscall; nop");
 }
 
 int _intr_read() {
@@ -73,81 +72,119 @@ void irq_handle(struct TrapFrame *tf){
     .epc = tf->epc, .cause = tf->cause, .status = tf->status, .badvaddr = tf->badvaddr,
   };
 
-  uint32_t ipcode, exccode;
-  exccode = (regs.cause & 0xff) >> 2;
-  ipcode = ((regs.cause & regs.status) & 0xff00) >> 8;
+  cp0_cause_t *cause = (void*)&(regs.cause);
+  uint32_t exccode = cause->ExcCode;
+  uint32_t ipcode = cause->IP;
 
   _Event ev;
   ev.event = _EVENT_NULL;
   //TODO: exception handling
   // Delayslot should be considered when handle exceptions !!!
   switch(exccode){
-    case 0:{ // interruption
-      switch(ipcode){
-        case 0x80:{ // time interrupt
-		  printk("TimerIntr:%d\n", get_compare_register());
-		  // update_timer(INTERVAL);
+    case EXC_INTR: {
+      if(ipcode & IP_TIMER_MASK) {
 		  update_timer(30000);
           ev.event = _EVENT_IRQ_TIMER;
-          break;
-        }
-        default:printk("ipcode = %x\n", ipcode);_halt(-1);
+	  } else {
+		  printk("invalid ipcode = %x\n", ipcode);
+		  _halt(-1);
       }
       break;
     }
-    case 4:{ //AdEL
-      printk("AdEL\n");
-      printk("$epc = 0x%x\n", regs.epc);
-      printk("$BadVaddr = 0x%x\n", regs.badvaddr);
-      _halt(-1);
-      break;
-    }
-    case 5:{ //AdES
-      printk("AdES\n");
-      printk("$epc = 0x%x\n", regs.epc);
-      printk("$BadVaddr = 0x%x\n", regs.badvaddr);
-      _halt(-1);
-      break;
-    }
-    case 8:{ // syscall
-      tf->epc += 4;
-	  if(tf->a0 == -1) {
+    case EXC_SYSCALL:
+      regs.epc += 4;
+	  if(tf->a0 == -1)
 		ev.event = _EVENT_YIELD;
-		printk("Yield\n");
-		printk("$epc = 0x%x\n", regs.epc);
-	  } else {
+	  else
 		ev.event = _EVENT_SYSCALL;
-		printk("Syscall\n");
-		printk("$epc = 0x%x\n", regs.epc);
-	  }
       break;
-    }
-    case 9:{ // breakpoint
-      tf->epc += 4;
-      printk("Break\n");
-      printk("$epc = 0x%x\n", regs.epc);
-	  // _halt(0); 
-      break;
-    }
-    case 10:{ // invalid instruction
-      printk("Invalid instruction\n");
-      printk("$epc = 0x%x\n", regs.epc);
-      _halt(0);
-      break;
-    }
-    case 12:{ // overflow
-      printk("Overflow\n");
-      printk("$epc = 0x%x\n", regs.epc);
-      _halt(0);
-      break;
-    }
-    case 13:{ // trap
-      tf->epc += 4;
+    case EXC_TRAP:
       ev.event = _EVENT_SYSCALL;
       break;
-    }
-    default:printk("exccode = %x\n", exccode);_halt(-1);
+    case EXC_AdEL:
+    case EXC_AdES:
+    case EXC_BP:
+    case EXC_RI:
+    case EXC_OV:
+    default:
+	  printk("unhandled exccode = %x, epc:%08x\n", exccode, regs.epc);
+	  _halt(-1);
   }
 
-  if(H){ H(ev, &regs); }
+  _RegSet *ret = &regs;
+  if(H) {
+	  _RegSet *next = H(ev, &regs);
+	  if(next != NULL) ret = next;
+  }
+
+  asm volatile(
+    "nop;"
+    "lw $at, %0;"
+    "lw $v0, %1;"
+    "lw $a0, %3;"
+    "lw $a1, %4;"
+    "lw $a2, %5;"
+    "lw $a3, %6;"
+    "lw $s0, %7;"
+    "lw $s1, %8;"
+    "lw $s2, %9;"
+    "lw $s3, %10;"
+    "lw $s4, %11;"
+    "lw $s5, %12;"
+    "lw $s6, %13;"
+    "lw $s7, %14;"
+    "lw $gp, %15;"
+    "lw $fp, %16;"
+    "lw $ra, %17;"
+    "lw $sp, %18;"
+    "lw $k0, %19;"
+    "nop;"
+    "nop;"
+    "mtc0 $k0, $14;"
+    "nop;"
+    "nop;"
+    "lw $k0, %20;"
+    "mtc0 $k0, $13;"
+    "nop;"
+    "nop;"
+    "lw $k0, %21;"
+    "mtc0 $k0, $12;"
+    "nop;"
+    "nop;"
+    "lw $k0, %22;"
+    "mtc0 $k0, $8;"
+    "nop;"
+    "nop;"
+    "lw $v1, %2;"
+    "eret;"
+    : : 
+    "m"(ret->at),
+    "m"(ret->v0),
+    "m"(ret->v1),
+    "m"(ret->a0),
+    "m"(ret->a1),
+    "m"(ret->a2),
+    "m"(ret->a3),
+    "m"(ret->s0),
+    "m"(ret->s1),
+    "m"(ret->s2),
+    "m"(ret->s3),
+    "m"(ret->s4),
+    "m"(ret->s5),
+    "m"(ret->s6),
+    "m"(ret->s7),
+    "m"(ret->gp),
+    "m"(ret->fp),
+    "m"(ret->ra),
+    "m"(ret->sp),
+    "m"(ret->epc),
+    "m"(ret->cause),
+    "m"(ret->status),
+    "m"(ret->badvaddr)
+    :"at",
+     "v0",
+     "a0", "a1","a2","a3",
+     "s0","s1","s2","s3","s4","s5","s6","s7",
+     "fp","ra","sp"
+    );
 }
