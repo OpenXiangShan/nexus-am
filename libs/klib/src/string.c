@@ -78,21 +78,14 @@ void* memmove(void* dst,const void* src,size_t n){
   return dst;
 }
 
-void* memcpy(void* dst, const void* src, size_t n){
-
-  int n_align = n & ~0xf;
-  int i;
+void* memcpy(void* out, const void* in, size_t n) {
   // TODO: adjust 'dst' and 'src' to be 8-byte align to avoid unalign accesses on MIPS
-  for (i = 0; i < n_align; i += 16) {
-    *(uint64_t *)(dst + i     ) = *(uint64_t *)(src + i     );
-    *(uint64_t *)(dst + i + 8 ) = *(uint64_t *)(src + i + 8 );
-  }
-
-  for (; i < n; i ++) {
-    ((char *)dst)[i] = ((char *)src)[i];
-  }
-
-  return dst;
+  // I modify this implementation since align between dst and src is impossible, for example:
+  //    dst = 2, src = 1, len = 13
+  char *dst = (char *) out;
+  char *src = (char *) in;
+  while(n--) { *dst++ = *src++; }
+  return out;
 }
 int memcmp(const void* s1, const void* s2, size_t n){
   return strncmp(s1,s2,n);
