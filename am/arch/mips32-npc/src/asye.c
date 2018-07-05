@@ -57,22 +57,8 @@ void _intr_write(int enable) {
   MTC0(CP0_STATUS, status, 0); 
 }
 
-void irq_handle(struct TrapFrame *tf){
-  _RegSet regs = {
-    .at=tf->at, 
-    .v0 = tf->v0, .v1 = tf->v1,
-    .a0 = tf->a0, .a1 = tf->a1, .a2 = tf->a2, .a3 = tf->a3,
-    .t0 = tf->t0, .t1 = tf->t1, .t2 = tf->t2, .t3 = tf->t3,
-    .t4 = tf->t4, .t5 = tf->t5, .t6 = tf->t6, .t7 = tf->t7,  
-    .t8 = tf->t8, .t9 = tf->t9,  
-    .s0 = tf->s0, .s1 = tf->s1, .s2 = tf->s2, .s3 = tf->s3, 
-    .s4 = tf->s4, .s5 = tf->s5, .s6 = tf->s6, .s7 = tf->s7, 
-    .k0 = tf->k0, .k1 = tf->k1,
-    .gp = tf->gp, .sp = tf->sp, .fp = tf->fp, .ra = tf->ra,
-    .epc = tf->epc, .cause = tf->cause, .status = tf->status, .badvaddr = tf->badvaddr,
-  };
-
-  cp0_cause_t *cause = (void*)&(regs.cause);
+void irq_handle(struct _RegSet *regs){
+  cp0_cause_t *cause = (void*)&(regs->cause);
   uint32_t exccode = cause->ExcCode;
   uint32_t ipcode = cause->IP;
 
@@ -92,8 +78,8 @@ void irq_handle(struct TrapFrame *tf){
       break;
     }
     case EXC_SYSCALL:
-      regs.epc += 4;
-	  if(tf->a0 == -1)
+      regs->epc += 4;
+	  if(regs->a0 == -1)
 		ev.event = _EVENT_YIELD;
 	  else
 		ev.event = _EVENT_SYSCALL;
@@ -107,20 +93,22 @@ void irq_handle(struct TrapFrame *tf){
     case EXC_RI:
     case EXC_OV:
     default:
-	  printk("unhandled exccode = %x, epc:%08x\n", exccode, regs.epc);
+	  printk("unhandled exccode = %x, epc:%08x\n", exccode, regs->epc);
 	  _halt(-1);
   }
 
-  _RegSet *ret = &regs;
+  _RegSet *ret = regs;
   if(H) {
-	  _RegSet *next = H(ev, &regs);
+	  _RegSet *next = H(ev, regs);
 	  if(next != NULL) ret = next;
   }
 
   asm volatile(
+	".set noat;"
     "nop;"
     "lw $at, %0;"
     "lw $v0, %1;"
+    "lw $v1, %2;" // return value
     "lw $a0, %3;"
     "lw $a1, %4;"
     "lw $a2, %5;"
@@ -155,7 +143,10 @@ void irq_handle(struct TrapFrame *tf){
     "mtc0 $k0, $8;"
     "nop;"
     "nop;"
-    "lw $v1, %2;"
+    "lw $k0, %23;"
+    "mtc0 $k0, $7;"
+    "nop;"
+    "nop;"
     "eret;"
     : : 
     "m"(ret->at),
@@ -180,7 +171,8 @@ void irq_handle(struct TrapFrame *tf){
     "m"(ret->epc),
     "m"(ret->cause),
     "m"(ret->status),
-    "m"(ret->badvaddr)
+    "m"(ret->badvaddr),
+    "m"(ret->base)
     :"at",
      "v0",
      "a0", "a1","a2","a3",

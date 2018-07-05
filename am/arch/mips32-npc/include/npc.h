@@ -96,42 +96,8 @@ asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
 #define _STR(x) _VAL(x)
 #define _VAL(x) #x
 
-struct TrapFrame{
-  uint32_t at,
-  v0,v1,
-  a0,a1,a2,a3,
-  t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,
-  s0,s1,s2,s3,s4,s5,s6,s7,
-  k0,k1,
-  gp,sp,fp,ra,
-  epc, cause, status, badvaddr;
-};
-
-uint32_t inline GetCount(int sel){
-  uint32_t tick = 0;
-  if(sel == 0)
-    MFC0(tick, cp0_count, 0);
-  else if(sel == 1)
-    MFC0(tick, cp0_count, 1);
-  else
-    _halt(1);
-  return tick;
-}
-
-void inline SetCompare(uint32_t compare){
-  MTC0(cp0_compare, compare, 0);
-}
 
 char in_byte();
 void out_byte(char);
-
-
-void real_timer_init();
-uint32_t real_timer_get_counter_reg(int sel);
-void int_timer0_init(uint32_t count_down_cycle, int auto_load);
-void int_timer1_init(uint32_t count_down_cycle, int auto_load);
-void set_int_timer(int timer_no, int enable, int clear_int, int load);
-
-uint32_t get_perf_counter(int sel);
 
 #endif

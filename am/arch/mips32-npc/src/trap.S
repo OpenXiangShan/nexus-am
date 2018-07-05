@@ -1,5 +1,6 @@
 .extern irq_handle
 .extern _halt
+.extern _stack_pointer
 .set noat
 
 .globl _trap_entry
@@ -7,7 +8,8 @@
 
 _trap_entry:
 # pusha, save all user registers
-	addiu	$k0, $sp,-176
+	lw		$k0, _stack_pointer
+	addiu	$k0, $sp,-180
 	sw 		$at, 0x4($k0)
 	sw 		$v0, 0x8($k0)
 	sw 		$v1, 0xc($k0)
@@ -50,6 +52,8 @@ _trap_entry:
 	sw		$k0, 0x88($sp)
 	mfc0	$k0, $8
 	sw		$k0, 0x8c($sp)
+	mfc0	$k0, $7
+	sw		$k0, 0x90($sp)
 # give trapframe pointer to a0
 	addiu   $a0, $sp, 0x4
 # jmp to irq_handle
