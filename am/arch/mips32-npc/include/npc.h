@@ -10,6 +10,8 @@
 #define Tx 0x04
 #define STAT 0x08
 #define CTRL 0x0c
+#define SCANCODE 0x10
+#define SCANCODE_STAT 0x14
 #define GPIO_TRAP ((volatile char *)0x40000000)
 #define HZ 50000000
 #define MAX_MEMORY_SIZE 0x4000000
@@ -97,7 +99,32 @@ asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
 #define _VAL(x) #x
 
 
-char in_byte();
-void out_byte(char);
+inline char __attribute__((__always_inline__)) get_stat(){
+  volatile char *stat = SERIAL_PORT + STAT;
+  return *stat;
+}
+
+inline void out_byte(char ch) {
+  volatile char *csend = SERIAL_PORT + Tx;
+  while((get_stat() >> 3) & 0x1);
+  *csend = ch;
+}
+
+inline char in_byte() {
+  volatile char *crecv = SERIAL_PORT + Rx;
+  if(!(get_stat() & 0x1)) return '\0';
+  else return *crecv;
+}
+
+inline char __attribute__((__always_inline__)) get_kb_stat(){
+  volatile char *stat = SERIAL_PORT + SCANCODE_STAT;
+  return *stat;
+}
+
+inline int in_scancode() {
+  volatile int *crecv = (void *)SERIAL_PORT + SCANCODE;
+  if(!(get_kb_stat() & 0x1)) return 0;
+  else return *crecv;
+}
 
 #endif

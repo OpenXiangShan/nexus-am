@@ -35,6 +35,7 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
 #define _STR(x) _VAL(x)
 #define _VAL(x) #x
 
+/*
 #define MFC0(dst, src, sel) \
 asm volatile("mfc0 %0, $"_STR(src)", %1\n\t":"=r"(dst):"i"(sel))
 
@@ -52,11 +53,12 @@ void read_write_cp0() {
   CP0_OUT(13, 0)
   CP0_OUT(14, 0)
 }
+*/
 
 int main(){
   _ioe_init();
   _asye_init(handler);
-  read_write_cp0();
+  // read_write_cp0();
   assert(!_intr_read());
   _intr_write(1);
   //_make(_heap, void*)main, 0);

@@ -59,35 +59,6 @@ static int scan_code[] = {
 };
 
 size_t input_read(uintptr_t reg, void *buf, size_t size) {
-  _KbdReg *kbd = (_KbdReg *)buf;
-
-  int status = 0; // inb(0x64);
-  kbd->keydown = 0;
-  kbd->keycode = _KEY_NONE;
-
-  if ((status & 0x1) == 0) {
-  } else {
-    if (status & 0x20) { // mouse
-    } else {
-      // int code = inb(0x60) & 0xff;
-      int code = 0x59;
-
-      for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
-        if (scan_code[i] == 0) continue;
-        if (scan_code[i] == code) {
-          kbd->keydown = 1;
-          kbd->keycode = i;
-          break;
-        } else if (scan_code[i] + 128 == code) {
-          kbd->keydown = 0;
-          kbd->keycode = i;
-          break;
-        }
-      }
-    }
-  }
-  return sizeof(*kbd);
-
   switch (reg) {
     case _DEVREG_INPUT_KBD: {
       _KbdReg *kbd = (_KbdReg *)buf;

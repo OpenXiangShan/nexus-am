@@ -108,7 +108,6 @@ void irq_handle(struct _RegSet *regs){
     "nop;"
     "lw $at, %0;"
     "lw $v0, %1;"
-    "lw $v1, %2;" // return value
     "lw $a0, %3;"
     "lw $a1, %4;"
     "lw $a2, %5;"
@@ -147,6 +146,7 @@ void irq_handle(struct _RegSet *regs){
     "mtc0 $k0, $7;"
     "nop;"
     "nop;"
+    "lw $v1, %2;" // used by assembler, must be load at last
     "eret;"
     : : 
     "m"(ret->at),

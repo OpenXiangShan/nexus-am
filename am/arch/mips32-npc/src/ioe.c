@@ -4,45 +4,6 @@
 #include <klib.h>
 
 
-struct VBEInfo {
-  uint16_t attributes;
-  uint8_t window_a;
-  uint8_t window_b;
-  uint16_t granularity;
-  uint16_t window_size;
-  uint16_t segment_a;
-  uint16_t segment_b;
-  uint32_t win_func_ptr;
-  uint16_t pitch;
-  uint16_t width;
-  uint16_t height;
-  uint8_t w_char;
-  uint8_t y_char;
-  uint8_t planes;
-  uint8_t bpp;
-  uint8_t banks;
-  uint8_t memory_model;
-  uint8_t bank_size;
-  uint8_t image_pages;
-  uint8_t reserved0;
- 
-  uint8_t red_mask;
-  uint8_t red_position;
-  uint8_t green_mask;
-  uint8_t green_position;
-  uint8_t blue_mask;
-  uint8_t blue_position;
-  uint8_t reserved_mask;
-  uint8_t reserved_position;
-  uint8_t direct_color_attributes;
- 
-  uint32_t framebuffer;
-  uint32_t off_screen_mem_off;
-  uint16_t off_screen_mem_size;
-  uint8_t reserved1[206];
-} __attribute__ ((packed));
-typedef struct VBEInfo VBEInfo;
-
 typedef uint16_t FBPixel;
 static FBPixel *fb;
 static int W, H;
@@ -132,93 +93,106 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
 }
 
 
-// keyboard
-static int ascii_to_keycode[256] = {
-  ['\e'] = _KEY_ESCAPE,
-  ['1'] = _KEY_1, ['2'] = _KEY_2, ['3'] = _KEY_3, ['4'] = _KEY_4,
-  ['5'] = _KEY_5, ['6'] = _KEY_6, ['7'] = _KEY_7, ['8'] = _KEY_8,
-  ['9'] = _KEY_9, ['0'] = _KEY_0,
-  ['A'] = _KEY_A, ['B'] = _KEY_B, ['C'] = _KEY_C, ['D'] = _KEY_D,
-  ['E'] = _KEY_E, ['F'] = _KEY_F, ['G'] = _KEY_G, ['H'] = _KEY_H,
-  ['I'] = _KEY_I, ['J'] = _KEY_J, ['K'] = _KEY_K, ['L'] = _KEY_L,
-  ['M'] = _KEY_M, ['N'] = _KEY_N, ['O'] = _KEY_O, ['P'] = _KEY_P,
-  ['Q'] = _KEY_Q, ['R'] = _KEY_R, ['S'] = _KEY_S, ['T'] = _KEY_T,
-  ['U'] = _KEY_U, ['V'] = _KEY_V, ['W'] = _KEY_W, ['X'] = _KEY_X,
-  ['Y'] = _KEY_Y, ['Z'] = _KEY_Z,
-  ['a'] = _KEY_A, ['b'] = _KEY_B, ['c'] = _KEY_C, ['d'] = _KEY_D,
-  ['e'] = _KEY_E, ['f'] = _KEY_F, ['g'] = _KEY_G, ['h'] = _KEY_H,
-  ['i'] = _KEY_I, ['j'] = _KEY_J, ['k'] = _KEY_K, ['l'] = _KEY_L,
-  ['m'] = _KEY_M, ['n'] = _KEY_N, ['o'] = _KEY_O, ['p'] = _KEY_P,
-  ['q'] = _KEY_Q, ['r'] = _KEY_R, ['s'] = _KEY_S, ['t'] = _KEY_T,
-  ['u'] = _KEY_U, ['v'] = _KEY_V, ['w'] = _KEY_W, ['x'] = _KEY_X,
-  ['y'] = _KEY_Y, ['z'] = _KEY_Z,
-  [' '] = _KEY_SPACE,  ['`'] = _KEY_GRAVE,
-  // ['~'] = _KEY_,
-  // ['!'] = _KEY_, ['@'] = _KEY_, ['#'] = _KEY_,
-  // ['$'] = _KEY_, ['%'] = _KEY_, ['^'] = _KEY_,
-  // ['&'] = _KEY_, ['*'] = _KEY_, ['('] = _KEY_,
-  // [')'] = _KEY_, ['_'] = _KEY_, ['+'] = _KEY_,
-  ['-'] = _KEY_MINUS, ['='] = _KEY_EQUALS,
-  ['['] = _KEY_LEFTBRACKET, [']'] = _KEY_RIGHTBRACKET,
-  ['\\'] = _KEY_BACKSLASH, [';'] = _KEY_SEMICOLON,
-  [','] = _KEY_COMMA, ['/'] = _KEY_SLASH,
-  // ['\''] = _KEY_,
-  ['.'] = _KEY_PERIOD,
-  // ['{'] = _KEY_, ['}'] = _KEY_,
-  // ['|'] = _KEY_, [':'] = _KEY_, ['"'] = _KEY_,
-  // ['<'] = _KEY_, ['>'] = _KEY_, ['?'] = _KEY_, 
-  ['\r'] = _KEY_RETURN,
-  ['\x7f'] = _KEY_DELETE,
+size_t uartlite_read(uintptr_t reg, void *buf, size_t size) {
+  switch(reg) {
+	case _DEVREG_SERIAL_RECV:
+	  *((char *)buf) = in_byte();
+	  return 1;
+	case _DEVREG_SERIAL_STAT:
+	  *((char *)buf) = get_stat();
+	  return 1;
+	default:
+	  _halt(0);
+  }
+  return 0;
+}
+
+size_t uartlite_write(uintptr_t reg, void *buf, size_t size) {
+  switch(reg) {
+	case _DEVREG_SERIAL_SEND:
+	  for(int i = 0; i < size; i ++)
+		_putc(((char*)buf)[i]);
+	  return size;
+	// CTRL is not supported
+	default:
+	  _halt(0);
+  }
+}
+
+int normal_scancode[256] = {
+  [0x01] = _KEY_F9, [0x03] = _KEY_F5, [0x04] = _KEY_F3,
+  [0x05] = _KEY_F1, [0x06] = _KEY_F2, [0x07] = _KEY_F12,
+  [0x09] = _KEY_F10, [0x0A] = _KEY_F8, [0x0B] = _KEY_F6,
+  [0x0C] = _KEY_F4, [0x0D] = _KEY_TAB, // [0x0E] = _KEY_BACKQUOTE,
+  [0x11] = _KEY_LALT, [0x12] = _KEY_LSHIFT, [0x14] = _KEY_LCTRL,
+  [0x15] = _KEY_Q, [0x16] = _KEY_1, [0x1A] = _KEY_Z,
+  [0x1B] = _KEY_S, [0x1C] = _KEY_A, [0x1D] = _KEY_W,
+  [0x1E] = _KEY_2, [0x21] = _KEY_C, [0x22] = _KEY_X,
+  [0x23] = _KEY_D, [0x24] = _KEY_E, [0x25] = _KEY_4,
+  [0x26] = _KEY_3, [0x29] = _KEY_SPACE, [0x2A] = _KEY_V,
+  [0x2B] = _KEY_F, [0x2C] = _KEY_T, [0x2D] = _KEY_R,
+  [0x2E] = _KEY_5, [0x31] = _KEY_N, [0x32] = _KEY_B,
+  [0x33] = _KEY_H, [0x34] = _KEY_G, [0x35] = _KEY_Y,
+  [0x36] = _KEY_6, [0x3A] = _KEY_M, [0x3B] = _KEY_J,
+  [0x3C] = _KEY_U, [0x3D] = _KEY_7, [0x3E] = _KEY_8,
+  [0x41] = _KEY_COMMA, [0x42] = _KEY_K, [0x43] = _KEY_I,
+  [0x44] = _KEY_O, [0x45] = _KEY_0, [0x46] = _KEY_9,
+  [0x49] = _KEY_PERIOD, [0x4A] = _KEY_BACKSLASH, [0x4B] = _KEY_L,
+  [0x4C] = _KEY_SEMICOLON, [0x4D] = _KEY_P, [0x4E] = _KEY_MINUS,
+  // [0x52] = _KEY_QUOTE,
+  [0x54] = _KEY_LEFTBRACKET, [0x55] = _KEY_EQUALS,
+  [0x58] = _KEY_CAPSLOCK, [0x59] = _KEY_RSHIFT, [0x5A] = _KEY_RETURN,
+  [0x5B] = _KEY_RIGHTBRACKET, [0x5D] = _KEY_SLASH, [0x66] = _KEY_BACKSPACE,
+  [0x69] = _KEY_1, [0x6B] = _KEY_4, [0x6C] = _KEY_7,
+  [0x70] = _KEY_0, [0x71] = _KEY_EQUALS, [0x72] = _KEY_2,
+  [0x73] = _KEY_5, [0x74] = _KEY_6, [0x75] = _KEY_8,
+  [0x76] = _KEY_ESCAPE, // [0x77] = _KEY_NUMLOCK,
+  [0x78] = _KEY_F11,
+  // [0x79] = _KEY_PLUS,
+  [0x7A] = _KEY_3, [0x7B] = _KEY_MINUS,
+  // [0x7C] = _KEY_KP_MULTIPLY,
+  [0x7D] = _KEY_9,
+  [0x83] = _KEY_F7,
 };
 
-typedef struct {
-  int code;
-  int count;
-} _BufferedKey;
-
-#define NR_BUFFERED_KEYS 4
-
-static _BufferedKey buffered_keys[NR_BUFFERED_KEYS];
+int e0_scan_code[256] = {
+  [0x11] = _KEY_RALT,
+  [0x14] = _KEY_RCTRL,
+  [0x4A] = _KEY_SLASH,
+  [0x5A] = _KEY_RETURN,
+  [0x69] = _KEY_END,
+  [0x6B] = _KEY_LEFT,
+  [0x6C] = _KEY_HOME,
+  [0x70] = _KEY_INSERT,
+  [0x71] = _KEY_DELETE,
+  [0x72] = _KEY_DOWN,
+  [0x74] = _KEY_RIGHT,
+  [0x75] = _KEY_UP,
+  [0x7A] = _KEY_PAGEDOWN,
+  [0x7D] = _KEY_PAGEUP,
+};
 
 size_t input_read(uintptr_t reg, void *buf, size_t size) {
-  char in_byte();
+  int code = in_scancode();
+  int *table = normal_scancode;
 
   _KbdReg *kbd = (_KbdReg *)buf;
-
-  // return keyup
-  int no = -1;
-  for(int i = 0; i < NR_BUFFERED_KEYS; i++) {
-	if(buffered_keys[i].code != 0) {
-	  if(buffered_keys[i].count <= 0) {
-		kbd->keydown = 0;
-		kbd->keycode = buffered_keys[i].code;
-		buffered_keys[i].code = 0;
-		return sizeof(*kbd);
-	  } else {
-		buffered_keys[i].count --;
-	  }
-	} else {
-	  no = i;
-	}
-  }
-
-  // no buffer empty, return keynone
-  if(no < 0) {
-	kbd->keydown = 0;
-	kbd->keycode = 0;
-	return sizeof(*kbd);
-  }
-
-  // read keydown
-  int code = ascii_to_keycode[(int)in_byte()];
   kbd->keydown = 1;
-  kbd->keycode = code;
-  buffered_keys[no].code = code;
-  buffered_keys[no].count = 10;
+  kbd->keycode = 0;
+  for(int i = 0; i < 4; i++) {
+	int byte = (code & (0xFF << ((3 - i) * 8))) >> ((3 - i) * 8);
+	if(byte == 0xE0)
+	  table = e0_scan_code;
+	else if(byte == 0xF0)
+	  kbd->keydown = 0;
+	else
+	  kbd->keycode = table[byte];
+  }
   return sizeof(*kbd);
 }
 
 static _Device mips32_npc_dev[] = {
+  {_DEV_SERIAL,  "NOOP Serial Controller", uartlite_read, uartlite_write},
   {_DEV_INPUT,   "NOOP Keyboard Controller", input_read, NULL},
   {_DEV_TIMER,   "NOOP Fake Timer",   timer_read, NULL},
   {_DEV_VIDEO,   "NoneStandard VGA Controller",  video_read, video_write},
@@ -226,7 +200,7 @@ static _Device mips32_npc_dev[] = {
 
 _Device *_device(int n) {
   n --;
-  if (n >= 0 && (unsigned int)n < sizeof(mips32_npc_dev) / sizeof(mips32_npc_dev[0])) {
+  if (n >= 0 && (unsigned int)n <= sizeof(mips32_npc_dev) / sizeof(mips32_npc_dev[0])) {
     return &mips32_npc_dev[n];
   } else {
     return NULL;
