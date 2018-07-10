@@ -27,7 +27,9 @@ int main() {
     for (s = 0; s < sizeof(sizes)/sizeof(int); s++) {
       lengthMod = sizes[s] - 1;
       for (unsigned int i = 0; i < steps; i++) {
-        arr[fast_rand() & lengthMod] = fast_rand();
+        int idx = fast_rand() & lengthMod;
+        int result = fast_rand();
+        arr[idx] = result;
       }
     }
   }
@@ -37,7 +39,9 @@ int main() {
     for (s = 0; s < sizeof(sizes)/sizeof(int); s++) {
       lengthMod = sizes[s] - 1;
       for (unsigned int i = 0; i < steps; i++) {
-        nemu_assert(arr[fast_rand() & lengthMod] == fast_rand());
+        int idx = fast_rand() & lengthMod;
+        int result = fast_rand();
+        nemu_assert(arr[idx] == result);
       }
     }
   }
