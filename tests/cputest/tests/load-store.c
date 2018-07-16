@@ -36,7 +36,7 @@ int main() {
 		nemu_assert(mem[i] == lhu_ans[i]);
 	}
 
-	for(i = 0; i < (ARR_SIZE(mem) / 2); i ++) {
+	for(i = 0; i < ((ARR_SIZE(mem) / 2) - 1); i ++) {
 		unsigned x = ((unsigned*)((void*)mem + 1))[i];
 		nemu_assert(x == lwlr_ans[i]);
 	}
