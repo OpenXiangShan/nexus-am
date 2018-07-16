@@ -6,7 +6,8 @@ shift
 
 bash -c "cd $DIR/boot && make"
 
-mips-linux-gnu-ld --gc-sections -EL -T $DIR/loader.ld -e _start -o ${DEST} $DIR/boot/start.o --start-group $@ --end-group &&  \
+mips-linux-gnu-ld --gc-sections -EL -T $DIR/loader.ld -e _start -o ${DEST} $DIR/boot/start.o --start-group $@ --end-group && \
+# python $DIR/instr_check.py ${DEST}
 
 mips-linux-gnu-objcopy --set-section-flags .bss=alloc,contents -O binary ${DEST} ${DEST}.bin
 mips-linux-gnu-objdump -d ${DEST} > ${DEST}.S

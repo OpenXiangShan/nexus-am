@@ -8,7 +8,7 @@ INC_DIR += $(APP_DIR)/include/
 DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
 BINARY ?= $(APP_DIR)/build/$(NAME)-$(ARCH)
 
-LIBS += klib
+LIBS += klib compiler-rt
 
 INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 

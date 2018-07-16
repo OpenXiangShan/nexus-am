@@ -5,9 +5,21 @@
 
 static _RegSet* (*H) (_Event, _RegSet*) = NULL;
 
-static void update_timer(int step) {
+void print_timer() {
   int compare = 0;
   MFC0(compare, CP0_COMPARE, 0);
+  int count = 0;
+  MFC0(count, CP0_COUNT, 0);
+  printk("\e[33m[AM]\e[0m:%d, %d\n", compare, count);
+
+  static int counter = 0;
+  counter ++;
+  if(counter > 40) _halt(0);
+}
+
+void update_timer(uint32_t step) {
+  uint32_t compare = 0;
+  MFC0(compare, CP0_COUNT, 0);
   compare += step;
   MTC0(CP0_COMPARE, compare, 0);
 }
@@ -21,7 +33,6 @@ static void init_timer(int step) {
 
 int _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
   H = l;
-  init_timer(30000);
   return 0;
 }
 
@@ -41,6 +52,7 @@ _RegSet *_make(_Area kstack, void (*entry)(void *), void *args){
 }
 
 void _yield(){
+  init_timer(INTERVAL);
   asm volatile("addiu $a0, $0, -1; syscall; nop");
 }
 
@@ -66,11 +78,13 @@ void irq_handle(struct _RegSet *regs){
   ev.event = _EVENT_NULL;
   //TODO: exception handling
   // Delayslot should be considered when handle exceptions !!!
+  update_timer(3000000); // update when exception happens
   switch(exccode){
     case EXC_INTR: {
       if(ipcode & IP_TIMER_MASK) {
-		  update_timer(30000);
           ev.event = _EVENT_IRQ_TIMER;
+		  cause->IP = 0;
+		  asm volatile("mtc0 %0, $13, 0"::"r"(regs->cause));
 	  } else {
 		  printk("invalid ipcode = %x\n", ipcode);
 		  _halt(-1);
@@ -97,86 +111,62 @@ void irq_handle(struct _RegSet *regs){
 	  _halt(-1);
   }
 
+  // printf("regs: t0:%x, t1:%x, t2:%x, t3:%x\n", regs->t0, regs->t1, regs->t2, regs->t3);
   _RegSet *ret = regs;
   if(H) {
 	  _RegSet *next = H(ev, regs);
 	  if(next != NULL) ret = next;
   }
+  // printf("rets: t0:%x, t1:%x, t2:%x, t3:%x\n", ret->t0, ret->t1, ret->t2, ret->t3);
 
+  // restore common registers
   asm volatile(
 	".set noat;"
     "nop;"
-    "lw $at, %0;"
-    "lw $v0, %1;"
-    "lw $a0, %3;"
-    "lw $a1, %4;"
-    "lw $a2, %5;"
-    "lw $a3, %6;"
-    "lw $s0, %7;"
-    "lw $s1, %8;"
-    "lw $s2, %9;"
-    "lw $s3, %10;"
-    "lw $s4, %11;"
-    "lw $s5, %12;"
-    "lw $s6, %13;"
-    "lw $s7, %14;"
-    "lw $gp, %15;"
-    "lw $fp, %16;"
-    "lw $ra, %17;"
-    "lw $sp, %18;"
-    "lw $k0, %19;"
+    "lw $at, %0;"  "lw $v0, %1;"
+    "lw $a0, %2;"  "lw $a1, %3;"  "lw $a2, %4;" "lw $a3, %5;"
+    "lw $t0, %6;"  "lw $t1, %7;"  "lw $t2, %8;" "lw $t3, %9;"
+    "lw $t4, %10;" "lw $t5, %11;" "lw $t6, %12;" "lw $t7, %13;"
+    "lw $s0, %14;" "lw $s1, %15;" "lw $s2, %16;" "lw $s3, %17;"
+    "lw $s4, %18;" "lw $s5, %19;" "lw $s6, %20;" "lw $s7, %21;"
+    "lw $t8, %22;" "lw $t9, %23;"
+    "lw $gp, %24;" "lw $fp, %25;" "lw $ra, %26;" "lw $sp, %27;"
+    : : 
+    "m"(ret->at), "m"(ret->v0),
+    "m"(ret->a0), "m"(ret->a1), "m"(ret->a2), "m"(ret->a3),
+    "m"(ret->t0), "m"(ret->t1), "m"(ret->t2), "m"(ret->t3),
+    "m"(ret->t4), "m"(ret->t5), "m"(ret->t6), "m"(ret->t7),
+    "m"(ret->s0), "m"(ret->s1), "m"(ret->s2), "m"(ret->s3),
+    "m"(ret->s4), "m"(ret->s5), "m"(ret->s6), "m"(ret->s7),
+    "m"(ret->t8), "m"(ret->t9),
+    "m"(ret->gp), "m"(ret->fp), "m"(ret->ra), "m"(ret->sp)
+    :"at",
+     "v0",
+     "a0","a1","a2","a3",
+     "t0","t1","t2","t3",
+     "t4","t5","t6","t7",
+     "s0","s1","s2","s3","s4","s5","s6","s7",
+     "t8","t9",
+     "fp","ra","sp"
+    );
+
+  // restore cp0 registers
+  asm volatile(
+    "lw $k0, %0;"   // ld epc to k0
     "nop;"
     "nop;"
-    "mtc0 $k0, $14;"
+    "mtc0 $k0, $14;" // mtc0 epc
     "nop;"
     "nop;"
-    "lw $k0, %20;"
-    "mtc0 $k0, $13;"
-    "nop;"
-    "nop;"
-    "lw $k0, %21;"
-    "mtc0 $k0, $12;"
-    "nop;"
-    "nop;"
-    "lw $k0, %22;"
-    "mtc0 $k0, $8;"
-    "nop;"
-    "nop;"
-    "lw $k0, %23;"
-    "mtc0 $k0, $7;"
+    "lw $k0, %1;"   // ld base t0 k0
+    "mtc0 $k0, $7;"  // mtc0 base
     "nop;"
     "nop;"
     "lw $v1, %2;" // used by assembler, must be load at last
     "eret;"
     : : 
-    "m"(ret->at),
-    "m"(ret->v0),
-    "m"(ret->v1),
-    "m"(ret->a0),
-    "m"(ret->a1),
-    "m"(ret->a2),
-    "m"(ret->a3),
-    "m"(ret->s0),
-    "m"(ret->s1),
-    "m"(ret->s2),
-    "m"(ret->s3),
-    "m"(ret->s4),
-    "m"(ret->s5),
-    "m"(ret->s6),
-    "m"(ret->s7),
-    "m"(ret->gp),
-    "m"(ret->fp),
-    "m"(ret->ra),
-    "m"(ret->sp),
     "m"(ret->epc),
-    "m"(ret->cause),
-    "m"(ret->status),
-    "m"(ret->badvaddr),
-    "m"(ret->base)
-    :"at",
-     "v0",
-     "a0", "a1","a2","a3",
-     "s0","s1","s2","s3","s4","s5","s6","s7",
-     "fp","ra","sp"
-    );
+    "m"(ret->base),
+    "m"(ret->v1)
+	);
 }

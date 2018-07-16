@@ -65,17 +65,16 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
 #define CYCLE_REG 9
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
-#if 0
-	  uint32_t cr1 = 0;
-	  uint32_t cr0 = 0;
-	  MFC0(cr1, CYCLE_REG, 1);
-	  MFC0(cr0, CYCLE_REG, 0);
+#if 1
+      union { struct { uint32_t lo, hi; }; uint64_t val; } us;
+	  MFC0(us.hi, CYCLE_REG, 1);
+	  MFC0(us.lo, CYCLE_REG, 0);
 
-	  uint32_t ms = cr1 * 1000 * ((1ul << 31) / HZ) * 2 + cr0 / (HZ / 1000);
+	  us.val /= (HZ / 1000);
 
 	  _UptimeReg *uptime = (_UptimeReg *)buf;
-	  uptime->hi = 0;
-      uptime->lo = ms;
+	  uptime->hi = us.hi;
+      uptime->lo = us.lo;
 #else
 	  static uint32_t ms = 0;
 	  _UptimeReg *uptime = (_UptimeReg *)buf;
@@ -123,7 +122,7 @@ int normal_scancode[256] = {
   [0x01] = _KEY_F9, [0x03] = _KEY_F5, [0x04] = _KEY_F3,
   [0x05] = _KEY_F1, [0x06] = _KEY_F2, [0x07] = _KEY_F12,
   [0x09] = _KEY_F10, [0x0A] = _KEY_F8, [0x0B] = _KEY_F6,
-  [0x0C] = _KEY_F4, [0x0D] = _KEY_TAB, // [0x0E] = _KEY_BACKQUOTE,
+  [0x0C] = _KEY_F4, [0x0D] = _KEY_TAB, [0x0E] = _KEY_GRAVE,
   [0x11] = _KEY_LALT, [0x12] = _KEY_LSHIFT, [0x14] = _KEY_LCTRL,
   [0x15] = _KEY_Q, [0x16] = _KEY_1, [0x1A] = _KEY_Z,
   [0x1B] = _KEY_S, [0x1C] = _KEY_A, [0x1D] = _KEY_W,
