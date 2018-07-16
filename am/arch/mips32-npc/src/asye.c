@@ -78,13 +78,13 @@ void irq_handle(struct _RegSet *regs){
   ev.event = _EVENT_NULL;
   //TODO: exception handling
   // Delayslot should be considered when handle exceptions !!!
-  update_timer(3000000); // update when exception happens
+  update_timer(INTERVAL); // update when exception happens
   switch(exccode){
     case EXC_INTR: {
       if(ipcode & IP_TIMER_MASK) {
           ev.event = _EVENT_IRQ_TIMER;
 		  cause->IP = 0;
-		  asm volatile("mtc0 %0, $13, 0"::"r"(regs->cause));
+		  asm volatile("mtc0 %0, $13, 0;nop;nop"::"r"(regs->cause));
 	  } else {
 		  printk("invalid ipcode = %x\n", ipcode);
 		  _halt(-1);
