@@ -45,15 +45,35 @@ _trap_entry:
 
 	addu	$sp, $k0, $0
 
+	nop
+	nop
 	mfc0	$k0, $14
+	nop
+	nop
 	sw		$k0, 0x80($sp)
+	nop
+	nop
 	mfc0	$k0, $13
+	nop
+	nop
 	sw		$k0, 0x84($sp)
+	nop
+	nop
 	mfc0	$k0, $12
+	nop
+	nop
 	sw		$k0, 0x88($sp)
+	nop
+	nop
 	mfc0	$k0, $8
+	nop
+	nop
 	sw		$k0, 0x8c($sp)
+	nop
+	nop
 	mfc0	$k0, $7
+	nop
+	nop
 	sw		$k0, 0x90($sp)
 # give trapframe pointer to a0
 	addiu   $a0, $sp, 0x4

@@ -171,7 +171,7 @@ int e0_scan_code[256] = {
   [0x7D] = _KEY_PAGEUP,
 };
 
-size_t input_read(uintptr_t reg, void *buf, size_t size) {
+static size_t keyboard_read(uintptr_t reg, void *buf, size_t size) {
   int code = in_scancode();
   int *table = normal_scancode;
 
@@ -192,7 +192,7 @@ size_t input_read(uintptr_t reg, void *buf, size_t size) {
 
 static _Device mips32_npc_dev[] = {
   {_DEV_SERIAL,  "NOOP Serial Controller", uartlite_read, uartlite_write},
-  {_DEV_INPUT,   "NOOP Keyboard Controller", input_read, NULL},
+  {_DEV_INPUT,   "NOOP Keyboard Controller", keyboard_read, NULL},
   {_DEV_TIMER,   "NOOP Fake Timer",   timer_read, NULL},
   {_DEV_VIDEO,   "NoneStandard VGA Controller",  video_read, video_write},
 };

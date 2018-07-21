@@ -8,13 +8,11 @@ static _RegSet* (*H) (_Event, _RegSet*) = NULL;
 void print_timer() {
   int compare = 0;
   MFC0(compare, CP0_COMPARE, 0);
-  int count = 0;
-  MFC0(count, CP0_COUNT, 0);
-  printk("\e[33m[AM]\e[0m:%d, %d\n", compare, count);
-
-  static int counter = 0;
-  counter ++;
-  if(counter > 40) _halt(0);
+  int count0 = 0;
+  MFC0(count0, CP0_COUNT, 0);
+  int count1 = 0;
+  MFC0(count1, CP0_COUNT, 1);
+  printk("\e[33m[AM]\e[0m: compare:%d, count0:%d, count1:%d\n", compare, count0, count1);
 }
 
 void update_timer(uint32_t step) {
@@ -53,7 +51,7 @@ _RegSet *_make(_Area kstack, void (*entry)(void *), void *args){
 
 void _yield(){
   init_timer(INTERVAL);
-  asm volatile("addiu $a0, $0, -1; syscall; nop");
+  asm volatile("nop; li $a0, -1; syscall; nop");
 }
 
 int _intr_read() {
@@ -73,6 +71,9 @@ void irq_handle(struct _RegSet *regs){
   cp0_cause_t *cause = (void*)&(regs->cause);
   uint32_t exccode = cause->ExcCode;
   uint32_t ipcode = cause->IP;
+  
+  // print_timer();
+  // printk("[AM] cause:%x, status:%x, code:%x, ip:%x\n", regs->cause, regs->status, exccode, ipcode);
 
   _Event ev;
   ev.event = _EVENT_NULL;
@@ -107,7 +108,8 @@ void irq_handle(struct _RegSet *regs){
     case EXC_RI:
     case EXC_OV:
     default:
-	  printk("unhandled exccode = %x, epc:%08x\n", exccode, regs->epc);
+	  printk("unhandled exccode = %x, epc:%08x, badvaddr:%08x\n", exccode, regs->epc, regs->badvaddr);
+	  printk("cp0: base:%08x, cause:%08x, status:%08x\n", regs->base, regs->cause, regs->status);
 	  _halt(-1);
   }
 
@@ -117,7 +119,16 @@ void irq_handle(struct _RegSet *regs){
 	  _RegSet *next = H(ev, regs);
 	  if(next != NULL) ret = next;
   }
-  // printf("rets: t0:%x, t1:%x, t2:%x, t3:%x\n", ret->t0, ret->t1, ret->t2, ret->t3);
+  /*
+  printk("======================\n");
+  int count0 = 0;
+  MFC0(count0, CP0_COUNT, 0);
+  while(count0 > 0) {
+	_putc(count0 % 10 + '0');
+	count0 /= 10;
+  }
+  _putc('\n');
+  */
 
   // restore common registers
   asm volatile(

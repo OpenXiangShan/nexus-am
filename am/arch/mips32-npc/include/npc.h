@@ -90,10 +90,10 @@ typedef struct {
 #define EXC_TRAP    13
 
 #define MFC0(dst, src, sel) \
-asm volatile("mfc0 %0, $"_STR(src)", %1\n\t":"=r"(dst):"i"(sel))
+asm volatile("nop; nop; nop; mfc0 %0, $"_STR(src)", %1; nop; nop; nop\n\t":"=r"(dst):"i"(sel))
 
 #define MTC0(dst, src, sel) \
-asm volatile("mtc0 %0, $"_STR(dst)", %1\n\t"::"g"(src),"i"(sel))
+asm volatile("nop; nop; mtc0 %0, $"_STR(dst)", %1; nop; nop\n\t"::"g"(src),"i"(sel))
 
 #define _STR(x) _VAL(x)
 #define _VAL(x) #x
