@@ -3,7 +3,4 @@
 # Put your ssh public key on board to really enjoy one-key running!
 
 DIR=${AM_HOME}/am/arch/mips32-npc/img
-ip=192.168.1.114
-fname=${1##*/}
-scp $1 ${DIR}/arm_loader.c root@$ip:~/
-ssh root@$ip "gcc -o loader arm_loader.c && ./loader $fname"
+$MIPS32_NEMU_HOME/build/nemu -b -i $@.bin

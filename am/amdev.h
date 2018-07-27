@@ -10,9 +10,19 @@
 #define _DEV_INPUT   0x0000ac02 // AM Virtual Input Device
 #define _DEV_TIMER   0x0000ac03 // AM Virtual Timer
 #define _DEV_VIDEO   0x0000ac04 // AM Virtual Video Controller
+#define _DEV_SERIAL  0x0000ac05 // AM Virtual Serial
 #define _DEV_PCICONF 0x00000080 // PCI Configuration Space
 #define _DEV_ATA0    0x00000dd0 // Primary ATA
 #define _DEV_ATA1    0x00000dd1 // Secondary ATA
+
+// ================= Device Register Specifications ==================
+
+#define _DEVREG_SERIAL_RECV 0
+#define _DEVREG_SERIAL_SEND 1
+#define _DEVREG_SERIAL_STAT 2
+#define _DEVREG_SERIAL_CTRL 3
+
+
 
 // ================= Device Register Specifications ==================
 

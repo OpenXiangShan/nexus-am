@@ -9,12 +9,13 @@ struct _RegSet {
 	s0,s1,s2,s3,s4,s5,s6,s7,
 	k0,k1,
 	gp,sp,fp,ra,
-	epc, cause, status, badvaddr;
+	epc, cause, status, badvaddr, base;
 };
 
-#define REG1(regs) ((regs)->a0)
-#define REG2(regs) ((regs)->a1)
-#define REG3(regs) ((regs)->a2)
-#define REG4(regs) ((regs)->a3)
+#define GPR1 a0
+#define GPR2 a1
+#define GPR3 a2
+#define GPR4 a3
+#define GPRx v0
 
 #endif

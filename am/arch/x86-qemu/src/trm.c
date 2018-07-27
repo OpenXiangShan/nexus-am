@@ -89,4 +89,5 @@ void _halt(int code) {
   }
   puts(").\n");
   asm volatile("cli; hlt");
+  while(1);
 }
