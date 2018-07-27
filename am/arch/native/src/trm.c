@@ -2,11 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define HEAP_SIZE (64 * 1024 * 1024)
-
-static char heap[HEAP_SIZE];
-
+extern void platform_dummy();
 void _trm_init() {
+  platform_dummy();
 }
 
 void _putc(char ch) {
@@ -15,10 +13,7 @@ void _putc(char ch) {
 
 void _halt(int code) {
   printf("Exit (%d)\n", code);
-  _exit(code);
+  exit(code);
 }
 
-_Area _heap = {
-  .start = heap,
-  .end = heap + HEAP_SIZE,
-};
+_Area _heap;
