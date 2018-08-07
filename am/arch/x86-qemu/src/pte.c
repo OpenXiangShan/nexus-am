@@ -1,6 +1,66 @@
 #include <am.h>
 #include <x86.h>
 
+#include "klib.h"
+static void *(*pgalloc_usr)(size_t);
+static void (*pgfree_usr)(void *);
+
+static void *pgalloc(size_t size) {
+  void *ret = pgalloc_usr(size);
+  if (!ret) _halt(34);
+  for (int i = 0; i < PGSIZE / sizeof(uint32_t); i++) {
+    ((uint32_t *)ret)[i] = 0;
+  }
+  return ret;
+}
+
+static void pgfree(void *ptr) {
+  pgfree_usr(ptr);
+}
+
+// must be called atomically per-cpu
+
+static intptr_t first_proc = 1;
+static PDE *kpt;
+
+static _Area prot_vm_range = {
+  .start = (void*)0x40000000,
+  .end   = (void*)0x80000000,
+};
+static _Area segments[] = {
+    {.start = (void*)0,          .end = (void*)0x10000000},  //   Low memory: kernel data
+    {.start = (void*)0xf0000000, .end = (void*)(0)},         //   High memory: APIC and VGA
+};
+
+int _pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+  pgalloc_usr = pgalloc_f;
+  pgfree_usr = pgfree_f;
+
+  if (first_proc) {
+    // first processor, create kernel page table
+
+    kpt = pgalloc(PGSIZE);
+
+    for (int i = 0; i < sizeof(segments) / sizeof(segments[0]); i++) {
+      _Area *area = &segments[i];
+      for (uint32_t pa = (uint32_t)area->start; pa != (uint32_t)area->end; pa += PGSIZE) {
+        // TODO: map @kpt: @pa (v) -> @pa (p)
+      }
+    }
+
+    _atomic_xchg(&first_proc, 0);
+  }
+  pgfree(NULL); // TODO: for bypass warnings
+  return 0;
+}
+
+int _protect(_Protect *p) {
+  p->pgsize = PGSIZE;
+  p->area = prot_vm_range;
+  p->ptr = NULL; // TODO: create a new one
+  return 0;
+}
+
 /*
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
@@ -8,11 +68,6 @@ PDE kpdir[NR_PDE] PG_ALIGN;
 PDE kptab[NR_PDE * NR_PTE] PG_ALIGN;
 void* (*palloc_f)(size_t);
 void (*pfree_f)(void*);
-
-_Area segments[] = {      // Kernel memory mappings
-    {.start = (void*)0,          .end = (void*)0x10000000},  //   Low memory: kernel data
-    {.start = (void*)0xf0000000, .end = (void*)(0)}, //   High memory: APIC and VGA
-};
 
 int _pte_init(void* (*palloc)(size_t), void (*pfree)(void*)) {
   palloc_f = palloc;

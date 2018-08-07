@@ -37,12 +37,6 @@ void irq_handle(struct TrapFrame *tf) {
     .ss0 = 0, .esp0 = 0,
   };
   
-  if (tf->irq >= 32 && tf->irq < 64) {
-    lapic_eoi();
-  }
-
-  _Event ev;
-  
   if (tf->cs & DPL_USER) { // interrupt at user code
     regs.ss = tf->ss;
     regs.esp3 = tf->esp;
@@ -53,7 +47,12 @@ void irq_handle(struct TrapFrame *tf) {
     regs.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
   }
 
-  ev.event = _EVENT_NULL;
+  if (tf->irq >= 32 && tf->irq < 64) {
+    lapic_eoi();
+  }
+
+  _Event ev = { .event = _EVENT_NULL };
+  
   if (tf->irq == 32) {
     ev.event = _EVENT_IRQ_TIMER;
   } else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
