@@ -1,0 +1,6 @@
+#!/bin/bash
+
+make
+qemu-system-i386 -gdb tcp::1234 -S build/vmtest-x86-qemu -serial stdio &
+pid=$?
+gdb -x dbg.txt; kill -9 ${pid}

@@ -1,13 +1,13 @@
 #include <am.h>
 #include <x86.h>
+#include <am-x86.h>
 
-#include "klib.h"
 static void *(*pgalloc_usr)(size_t);
 static void (*pgfree_usr)(void *);
 
 static void *pgalloc() {
   void *ret = pgalloc_usr(PGSIZE);
-  if (!ret) _halt(34);
+  if (!ret) panic("page allocation fail");
   for (int i = 0; i < PGSIZE / sizeof(uint32_t); i++) {
     ((uint32_t *)ret)[i] = 0;
   }
@@ -90,6 +90,9 @@ void _switch(_Protect *p) {
 }
 
 int _map(_Protect *p, void *va, void *pa, int prot) {
+  if ((prot & _PROT_NONE) && (prot != _PROT_NONE)) panic("invalid permission");
+  if ((uint32_t)va % PGSIZE != 0) panic("unaligned virtual address");
+  if ((uint32_t)pa % PGSIZE != 0) panic("unaligned physical address");
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
 

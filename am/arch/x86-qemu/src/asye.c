@@ -36,7 +36,7 @@ void irq_handle(struct TrapFrame *tf) {
     .cs = tf->cs, .ds = tf->ds, .es = tf->es, .ss = 0,
     .ss0 = 0, .esp0 = 0,
   };
-  
+
   if (tf->cs & DPL_USER) { // interrupt at user code
     regs.ss = tf->ss;
     regs.esp3 = tf->esp;
@@ -88,6 +88,7 @@ void irq_handle(struct TrapFrame *tf) {
   if (ret->cs & DPL_USER) {
     tss[_cpu()].ss0 = ret->ss0;
     tss[_cpu()].esp0 = ret->esp0;
+
     // return to user
     asm volatile(
       "nop;"
