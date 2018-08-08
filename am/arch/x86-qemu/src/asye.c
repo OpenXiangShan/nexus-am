@@ -206,7 +206,7 @@ int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   return 0;
 }
 
-_RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
+_RegSet *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _RegSet *regs = (_RegSet *)stack.start;
   regs->eax = regs->ebx = regs->ecx = regs->edx = 0;
   regs->esi = regs->edi = regs->ebp = regs->esp3 = 0;

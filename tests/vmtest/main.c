@@ -2,7 +2,7 @@
 #include <amdev.h>
 #include <klib.h>
 
-_RegSet *ucontext;
+_RegSet *ctx;
 int ntraps = 0;
 
 _RegSet* handler(_Event ev, _RegSet *regs) {
@@ -27,9 +27,9 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
       assert(0);
   }
 
-  if (ucontext) {
-    regs = ucontext;
-    ucontext = NULL;
+  if (ctx) {
+    regs = ctx;
+    ctx = NULL;
   }
   return regs;
 }
@@ -85,7 +85,7 @@ int main() {
   _Area k = { .start = kstk, .end = kstk + 4096 };
   _Area u = { .start = ptr + pgsz, .end = ptr + pgsz * 2 };
 
-  ucontext = _make_prot(&prot, u, k, ptr, NULL);
+  ctx = _ucontext(&prot, u, k, ptr, NULL);
   _switch(&prot);
 
   _intr_write(1);

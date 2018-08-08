@@ -33,7 +33,6 @@ int main(){
   _asye_init(handler);
   assert(!_intr_read());
   _intr_write(1);
-  //_make(_heap, void*)main, 0);
   while (1) {
     _yield();
   }
