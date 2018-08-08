@@ -1,43 +1,13 @@
 #include <am-x86.h>
 
-int current_cpu();
-
-#define MP_PROC  0x00
-
-#define MP_MAGIC 0x5f504d5f // _MP_
-
-struct MPConf {     // configuration table header
-  uint8_t signature[4];       // "PCMP"
-  uint16_t length;        // total table length
-  uint8_t version;        // [14]
-  uint8_t checksum;         // all bytes must add up to 0
-  uint8_t product[20];      // product id
-  uint32_t *oemtable;         // OEM table pointer
-  uint16_t oemlength;       // OEM table length
-  uint16_t entry;         // entry count
-  uint32_t *lapicaddr;        // address of local APIC
-  uint16_t xlength;         // extended table length
-  uint8_t xchecksum;        // extended table checksum
-  uint8_t reserved;
-};
-typedef struct MPConf MPConf;
-
-struct MPDesc {
-  int magic;
-  MPConf *conf; // MP config table addr
-  uint8_t length; // 1
-  uint8_t specrev; // [14]
-  uint8_t checksum; // all bytes add to 0
-  uint8_t type;   // config type
-  uint8_t imcrp;
-  uint8_t reserved[3];
-};
-typedef struct MPDesc MPDesc;
+#define STACK_SZ   4096 // each processor's stack
+#define MP_PROC    0x00
+#define MP_MAGIC   0x5f504d5f // _MP_
 
 int numcpu = 0;
 extern uint32_t *lapic;
 
-static MPDesc *search() {
+static MPDesc *mp_search() {
   for (char *st = (char*)0xf0000; st != (char*)0xffffff; st ++) {
     if (*(uint32_t*)st == MP_MAGIC) { // starts with magic _MP_
       MPDesc *mp = (MPDesc*)st;
@@ -54,8 +24,7 @@ static MPDesc *search() {
 }
 
 void smp_init() {
-  MPDesc *mp = search();
-  MPConf *conf = mp->conf;
+  MPConf *conf = mp_search()->conf;
   lapic = conf->lapicaddr;
 
   for (char *p = (char*)(conf + 1); p < (char*)conf + conf->length; ) {
@@ -69,6 +38,9 @@ void smp_init() {
         p += 8;
     }
   }
+  if (numcpu > MAX_CPU) {
+    numcpu = MAX_CPU;
+  }
 }
 
 int _ncpu() {
@@ -79,8 +51,11 @@ static void (* volatile _entry)();
 
 static intptr_t ap_boot = 0;
 
+// TODO: use stack in heap memory, not in the low memory
+
 static void mp_entry() {
   if (_cpu() != 0) {
+    cpu_initgdt();
     lapic_init();
     ioapic_enable(IRQ_KBD, _cpu());
   }

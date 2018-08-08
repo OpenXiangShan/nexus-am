@@ -11,11 +11,11 @@ static void memory_init();
 // the bootloader jumps here,
 // with a (small) bootstrap stack
 void _start() {
-  memory_init();
-  ioapic_init();
-  cpu_initgdt(0);
   smp_init();
   lapic_init();
+  ioapic_init();
+  memory_init();
+  cpu_initgdt();
 
   int ret = main();
   _halt(ret);

@@ -64,7 +64,7 @@ typedef struct _Protect {
   void *ptr;
 } _Protect;
 
-// ========================= Turing Machine ==========================
+// ====================== Turing Machine (TRM) =======================
 
 extern _Area _heap;
 void _putc(char ch);
@@ -73,7 +73,7 @@ void _halt(int code) __attribute__((__noreturn__));
 // ======================= I/O Extension (IOE) =======================
 
 int _ioe_init();
-_Device *_device(int n); // get the device #n
+_Device *_device(int n);
 
 // ================== Asynchronous Extension (ASYE) ==================
 

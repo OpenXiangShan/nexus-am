@@ -1,4 +1,5 @@
-// code from xv6
+// LAPIC/IOAPIC related code
+// (copy-paste from xv6)
 
 #include <am.h>
 #include <x86.h>
@@ -45,7 +46,6 @@ lapicw(int index, int value)
   lapic[index] = value;
   lapic[ID];  // wait for write to finish, by reading
 }
-//PAGEBREAK!
 
 void
 lapic_init(void)

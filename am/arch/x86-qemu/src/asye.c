@@ -24,8 +24,6 @@ void vec14();
 void vecsys();
 void irqall();
 
-extern struct TSS tss[];
-
 void irq_handle(struct TrapFrame *tf) {
   _RegSet regs = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
@@ -51,6 +49,8 @@ void irq_handle(struct TrapFrame *tf) {
 
   _Event ev = { .event = _EVENT_NULL };
   
+  // TODO: make this code more clear
+  // TODO: add cause string for _EVENT_ERROR
   if (tf->irq == 32) {
     ev.event = _EVENT_IRQ_TIMER;
   } else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
@@ -83,10 +83,9 @@ void irq_handle(struct TrapFrame *tf) {
     }
   }
 
+  // TODO: move them to assembly
   if (ret->cs & DPL_USER) {
-    tss[_cpu()].ss0 = ret->ss0;
-    tss[_cpu()].esp0 = ret->esp0;
-
+    cpu_setustk(ret->ss0, ret->esp0);
     // return to user
     asm volatile(
       "nop;"
