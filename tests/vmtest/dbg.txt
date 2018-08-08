@@ -1,0 +1,4 @@
+file build/vmtest-x86-qemu.o
+target remote :1234
+hb *0x60000000
+c

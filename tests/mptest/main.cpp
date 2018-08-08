@@ -3,12 +3,13 @@
 #include <klib.h>
 
 void f() {
-  printf("%d / %d\n", _cpu(), _ncpu());
-  while (1);
+  // printf("%d / %d\n", _cpu(), _ncpu());
+  while (1) {
+    printf("%d", _cpu());
+  }
 }
 
 int main() {
-  _asye_init(nullptr);
   _mpe_init(f);
   assert(0);
   return 0;

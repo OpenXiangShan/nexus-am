@@ -64,7 +64,7 @@ typedef struct _Protect {
   void *ptr;
 } _Protect;
 
-// ========================= Turing Machine ==========================
+// ====================== Turing Machine (TRM) =======================
 
 extern _Area _heap;
 void _putc(char ch);
@@ -73,12 +73,12 @@ void _halt(int code) __attribute__((__noreturn__));
 // ======================= I/O Extension (IOE) =======================
 
 int _ioe_init();
-_Device *_device(int n); // get the device #n
+_Device *_device(int n);
 
 // ================== Asynchronous Extension (ASYE) ==================
 
 int _asye_init(_RegSet *(*handler)(_Event ev, _RegSet *regs));
-_RegSet *_make(_Area kstack, void (*entry)(void *), void *arg);
+_RegSet *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
 void _yield();
 int _intr_read();
 void _intr_write(int enable);
@@ -90,8 +90,8 @@ int _protect(_Protect *p);
 void _unprotect(_Protect *p);
 void _switch(_Protect *p);
 int _map(_Protect *p, void *va, void *pa, int prot);
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack,
-                void (*entry)(void *), void *args);
+_RegSet *_ucontext(_Protect *p, _Area ustack, _Area kstack,
+                    void *entry, void *args);
 
 // ================= Multi-Processor Extension (MPE) =================
 

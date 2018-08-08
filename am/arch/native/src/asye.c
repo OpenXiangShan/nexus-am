@@ -30,7 +30,7 @@ int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   return 0;
 }
 
-_RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
+_RegSet *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   return NULL;
 }
 

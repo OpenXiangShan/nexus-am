@@ -94,15 +94,15 @@ typedef struct SegDesc {
   uint32_t lim_15_0 : 16;  // Low bits of segment limit
   uint32_t base_15_0 : 16; // Low bits of segment base address
   uint32_t base_23_16 : 8; // Middle bits of segment base address
-  uint32_t type : 4;     // Segment type (see STS_ constants)
-  uint32_t s : 1;      // 0 = system, 1 = application
-  uint32_t dpl : 2;    // Descriptor Privilege Level
-  uint32_t p : 1;      // Present
+  uint32_t type : 4  ;     // Segment type (see STS_ constants)
+  uint32_t s : 1;          // 0 = system, 1 = application
+  uint32_t dpl : 2;        // Descriptor Privilege Level
+  uint32_t p : 1;          // Present
   uint32_t lim_19_16 : 4;  // High bits of segment limit
-  uint32_t avl : 1;    // Unused (available for software use)
-  uint32_t rsv1 : 1;     // Reserved
-  uint32_t db : 1;     // 0 = 16-bit segment, 1 = 32-bit segment
-  uint32_t g : 1;      // Granularity: limit scaled by 4K when set
+  uint32_t avl : 1;        // Unused (available for software use)
+  uint32_t rsv1 : 1;       // Reserved
+  uint32_t db : 1;         // 0 = 16-bit segment, 1 = 32-bit segment
+  uint32_t g : 1;          // Granularity: limit scaled by 4K when set
   uint32_t base_31_24 : 8; // High bits of segment base address
 } SegDesc;
 
@@ -119,13 +119,13 @@ typedef struct SegDesc {
 // Gate descriptors for interrupts and traps
 typedef struct GateDesc {
   uint32_t off_15_0 : 16;   // Low 16 bits of offset in segment
-  uint32_t cs : 16;     // Code segment selector
-  uint32_t args : 5;    // # args, 0 for interrupt/trap gates
-  uint32_t rsv1 : 3;    // Reserved(should be zero I guess)
-  uint32_t type : 4;    // Type(STS_{TG,IG32,TG32})
-  uint32_t s : 1;       // Must be 0 (system)
-  uint32_t dpl : 2;     // Descriptor(meaning new) privilege level
-  uint32_t p : 1;       // Present
+  uint32_t cs : 16;         // Code segment selector
+  uint32_t args : 5;        // # args, 0 for interrupt/trap gates
+  uint32_t rsv1 : 3;        // Reserved(should be zero I guess)
+  uint32_t type : 4;        // Type(STS_{TG,IG32,TG32})
+  uint32_t s : 1;           // Must be 0 (system)
+  uint32_t dpl : 2;         // Descriptor(meaning new) privilege level
+  uint32_t p : 1;           // Present
   uint32_t off_31_16 : 16;  // High bits of offset in segment
 } GateDesc;
 
@@ -146,11 +146,38 @@ struct TSS {
 struct TrapFrame {
   uint32_t edi, esi, ebp, esp_;
   uint32_t ebx, edx, ecx, eax;   // Register saved by pushal
-  uint32_t es, ds;         // Segment register
-  int   irq;          // # of irq
+  uint32_t es, ds;               // Segment register
+  int   irq;                     // # of irq
   uint32_t err, eip, cs, eflags; // Execution state before trap 
-  uint32_t esp, ss;        // Used only when returning to DPL=3
+  uint32_t esp, ss;              // Used only when returning to DPL=3
 };
+
+// Multiprocesor configuration
+typedef struct MPConf {    // configuration table header
+  uint8_t signature[4];    // "PCMP"
+  uint16_t length;         // total table length
+  uint8_t version;         // [14]
+  uint8_t checksum;        // all bytes must add up to 0
+  uint8_t product[20];     // product id
+  uint32_t *oemtable;      // OEM table pointer
+  uint16_t oemlength;      // OEM table length
+  uint16_t entry;          // entry count
+  uint32_t *lapicaddr;     // address of local APIC
+  uint16_t xlength;        // extended table length
+  uint8_t xchecksum;       // extended table checksum
+  uint8_t reserved;
+} MPConf;
+
+typedef struct MPDesc {
+  int magic;
+  MPConf *conf;     // MP config table addr
+  uint8_t length;   // 1
+  uint8_t specrev;  // [14]
+  uint8_t checksum; // all bytes add to 0
+  uint8_t type;     // config type
+  uint8_t imcrp;
+  uint8_t reserved[3];
+} MPDesc;
 
 static inline uint8_t inb(int port) {
   uint8_t data;

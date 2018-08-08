@@ -16,7 +16,7 @@ static ucontext_t uc_example;
 static void init_platform() {
   pmem_fd = shm_open(PMEM_SHM_FILE, O_RDWR | O_CREAT, 0700);
   assert(pmem_fd != -1);
-  ftruncate(pmem_fd, PMEM_SIZE);
+  assert(0 == ftruncate(pmem_fd, PMEM_SIZE));
 
   void *ret = mmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
       MAP_SHARED | MAP_FIXED, pmem_fd, PMEM_MAP_START);

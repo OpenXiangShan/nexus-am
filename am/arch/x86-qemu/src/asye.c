@@ -1,5 +1,3 @@
-#include <am.h>
-#include <x86.h>
 #include <am-x86.h>
 #include <stdarg.h>
 
@@ -26,8 +24,6 @@ void vec14();
 void vecsys();
 void irqall();
 
-extern struct TSS tss[];
-
 void irq_handle(struct TrapFrame *tf) {
   _RegSet regs = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
@@ -36,13 +32,7 @@ void irq_handle(struct TrapFrame *tf) {
     .cs = tf->cs, .ds = tf->ds, .es = tf->es, .ss = 0,
     .ss0 = 0, .esp0 = 0,
   };
-  
-  if (tf->irq >= 32 && tf->irq < 64) {
-    lapic_eoi();
-  }
 
-  _Event ev;
-  
   if (tf->cs & DPL_USER) { // interrupt at user code
     regs.ss = tf->ss;
     regs.esp3 = tf->esp;
@@ -53,7 +43,14 @@ void irq_handle(struct TrapFrame *tf) {
     regs.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
   }
 
-  ev.event = _EVENT_NULL;
+  if (tf->irq >= 32 && tf->irq < 64) {
+    lapic_eoi();
+  }
+
+  _Event ev = { .event = _EVENT_NULL };
+  
+  // TODO: make this code more clear
+  // TODO: add cause string for _EVENT_ERROR
   if (tf->irq == 32) {
     ev.event = _EVENT_IRQ_TIMER;
   } else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
@@ -86,9 +83,9 @@ void irq_handle(struct TrapFrame *tf) {
     }
   }
 
+  // TODO: move them to assembly
   if (ret->cs & DPL_USER) {
-    tss[_cpu()].ss0 = ret->ss0;
-    tss[_cpu()].esp0 = ret->esp0;
+    cpu_setustk(ret->ss0, ret->esp0);
     // return to user
     asm volatile(
       "nop;"
@@ -174,8 +171,6 @@ void irq_handle(struct TrapFrame *tf) {
 
 int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   static GateDesc idt[NR_IRQ];
-  smp_init();
-  lapic_init();
   ioapic_enable(IRQ_KBD, 0);
 
   // init IDT
@@ -211,7 +206,7 @@ int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   return 0;
 }
 
-_RegSet *_make(_Area stack, void (*entry)(void *), void *arg) {
+_RegSet *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _RegSet *regs = (_RegSet *)stack.start;
   regs->eax = regs->ebx = regs->ecx = regs->edx = 0;
   regs->esi = regs->edi = regs->ebp = regs->esp3 = 0;
