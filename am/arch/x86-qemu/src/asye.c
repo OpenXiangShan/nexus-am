@@ -25,7 +25,7 @@ void vecsys();
 void irqall();
 
 void irq_handle(struct TrapFrame *tf) {
-  _Context regs = {
+  _Context ctx = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
     .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp3 = 0,
     .eip = tf->eip, .eflags = tf->eflags,
@@ -34,13 +34,13 @@ void irq_handle(struct TrapFrame *tf) {
   };
 
   if (tf->cs & DPL_USER) { // interrupt at user code
-    regs.ss = tf->ss;
-    regs.esp3 = tf->esp;
-    regs.ss0 = KSEL(SEG_KDATA);
-    regs.esp0 = (uint32_t)tf + 68;
+    ctx.ss = tf->ss;
+    ctx.esp3 = tf->esp;
+    ctx.ss0 = KSEL(SEG_KDATA);
+    ctx.esp0 = (uint32_t)tf + 68;
   } else { // interrupt at kernel code
-    regs.ss0 = KSEL(SEG_KDATA);
-    regs.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
+    ctx.ss0 = KSEL(SEG_KDATA);
+    ctx.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
   }
 
   if (tf->irq >= 32 && tf->irq < 64) {
@@ -75,9 +75,9 @@ void irq_handle(struct TrapFrame *tf) {
     ev.ref = get_cr2();
   } else if (tf->irq < 32) ev.event = _EVENT_ERROR;
 
-  _Context *ret = &regs;
+  _Context *ret = &ctx;
   if (H) {
-    _Context *next = H(ev, &regs);
+    _Context *next = H(ev, &ctx);
     if (next != NULL) {
       ret = next;
     }
@@ -207,21 +207,21 @@ int _asye_init(_Context*(*handler)(_Event, _Context*)) {
 }
 
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Context *regs = (_Context *)stack.start;
-  regs->eax = regs->ebx = regs->ecx = regs->edx = 0;
-  regs->esi = regs->edi = regs->ebp = regs->esp3 = 0;
+  _Context *ctx = (_Context *)stack.start;
+  ctx->eax = ctx->ebx = ctx->ecx = ctx->edx = 0;
+  ctx->esi = ctx->edi = ctx->ebp = ctx->esp3 = 0;
 
-  regs->ss0 = 0; // only used for ring3 procs
-  regs->esp0 = (uint32_t)stack.end;
-  regs->cs = KSEL(SEG_KCODE);
-  regs->ds = regs->es = regs->ss = KSEL(SEG_KDATA);
-  regs->eip = (uint32_t)entry;
-  regs->eflags = FL_IF;
+  ctx->ss0 = 0; // only used for ring3 procs
+  ctx->esp0 = (uint32_t)stack.end;
+  ctx->cs = KSEL(SEG_KCODE);
+  ctx->ds = ctx->es = ctx->ss = KSEL(SEG_KDATA);
+  ctx->eip = (uint32_t)entry;
+  ctx->eflags = FL_IF;
 
-  uint32_t **esp = (uint32_t **)&regs->esp0;
+  uint32_t **esp = (uint32_t **)&ctx->esp0;
   *(*esp -= 1) = (uint32_t)arg; // argument
   *(*esp -= 1) = 0; // return address
-  return regs;
+  return ctx;
 }
 
 void _yield() {

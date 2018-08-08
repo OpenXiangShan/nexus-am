@@ -77,7 +77,7 @@ _Device *_device(int n);
 
 // ================== Asynchronous Extension (ASYE) ==================
 
-int _asye_init(_Context *(*handler)(_Event ev, _Context *regs));
+int _asye_init(_Context *(*handler)(_Event ev, _Context *ctx));
 _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
 void _yield();
 int _intr_read();

@@ -5,7 +5,7 @@
 _Context testcase_regs;
 
 int ntraps = 0;
-_Context* handler(_Event ev, _Context *regs) {
+_Context* handler(_Event ev, _Context *ctx) {
   switch (ev.event) {
     case _EVENT_IRQ_TIMER:
       printf(".");

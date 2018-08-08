@@ -108,14 +108,14 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
 }
 
 _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
-  _Context *regs = (_Context*)kstack.start;
-  regs->cs = USEL(SEG_UCODE);
-  regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
-  regs->esp3 = (uint32_t)ustack.end;
-  regs->ss0 = KSEL(SEG_KDATA);
-  regs->esp0 = (uint32_t)kstack.end;
-  regs->eip = (uint32_t)entry;
-  regs->eflags = FL_IF;
-  regs->eax = (uint32_t)args;
-  return regs;
+  _Context *ctx = (_Context*)kstack.start;
+  ctx->cs = USEL(SEG_UCODE);
+  ctx->ds = ctx->es = ctx->ss = USEL(SEG_UDATA);
+  ctx->esp3 = (uint32_t)ustack.end;
+  ctx->ss0 = KSEL(SEG_KDATA);
+  ctx->esp0 = (uint32_t)kstack.end;
+  ctx->eip = (uint32_t)entry;
+  ctx->eflags = FL_IF;
+  ctx->eax = (uint32_t)args;
+  return ctx;
 }
