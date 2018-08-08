@@ -57,11 +57,11 @@
 #define NR_IRQ    256     // IDT size
 
 // interrupts
-#define T_IRQ0 32
-#define IRQ_TIMER 0
-#define IRQ_KBD   1
+#define T_IRQ0       32
+#define IRQ_TIMER     0
+#define IRQ_KBD       1
 #define IRQ_SPURIOUS 31
-#define IRQ_ERROR 19
+#define IRQ_ERROR    19
 
 
 // The following macros will not be seen by the assembler

@@ -24,6 +24,12 @@ void vec14();
 void vecsys();
 void irqall();
 
+#define IRQ     T_IRQ0 + 
+#define SYSCALL 0x80
+#define E_GP    13
+#define E_PF    14
+#define MSG(m) : ev.msg = m;
+
 void irq_handle(struct TrapFrame *tf) {
   _Context ctx = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
@@ -43,37 +49,56 @@ void irq_handle(struct TrapFrame *tf) {
     ctx.esp0 = (uint32_t)tf + 60; // the %esp before interrupt
   }
 
-  if (tf->irq >= 32 && tf->irq < 64) {
+  if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
     lapic_eoi();
   }
 
-  _Event ev = { .event = _EVENT_NULL };
+  _Event ev = {
+    .event = _EVENT_NULL,
+    .cause = 0, .ref = 0,
+    .msg = "(no message)",
+  };
   
-  // TODO: make this code more clear
-  // TODO: add cause string for _EVENT_ERROR
-  if (tf->irq == 32) {
-    ev.event = _EVENT_IRQ_TIMER;
-  } else if (tf->irq == 33) ev.event = _EVENT_IRQ_IODEV;
-  else if (tf->irq == 0x80) {
-    if ((int32_t)tf->eax == -1) {
-      ev.event = _EVENT_YIELD;
-    } else {
-      ev.event = _EVENT_SYSCALL;
-    }
-  } else if (tf->irq == 14) {
-    uint32_t err = tf->err, cause = 0;
-    ev.event = _EVENT_PAGEFAULT;
-    if (err & 0x1) {
-      cause |= _PROT_NONE;
-    }
-    if (err & 0x2) {
-      cause |= _PROT_WRITE;
-    } else {
-      cause |= _PROT_READ;
-    }
-    ev.cause = cause;
-    ev.ref = get_cr2();
-  } else if (tf->irq < 32) ev.event = _EVENT_ERROR;
+  uint32_t err = tf->err, cause = 0;
+  switch (tf->irq) {
+    case IRQ 0 MSG("timer interrupt (lapic)")
+      ev.event = _EVENT_IRQ_TIMER;
+      break;
+    case IRQ 1 MSG("I/O device IRQ1 (keyboard)")
+      ev.event = _EVENT_IRQ_IODEV;
+      break;
+    case SYSCALL MSG("int $0x80 trap: _yield() or system call")
+      if ((int32_t)tf->eax == -1) {
+        ev.event = _EVENT_YIELD;
+      } else {
+        ev.event = _EVENT_SYSCALL;
+      }
+      break;
+    case E_PF MSG("page fault, @cause: _PROT_XXX")
+      ev.event = _EVENT_PAGEFAULT;
+      if (err & 0x1) {
+        cause |= _PROT_NONE;
+      }
+      if (err & 0x2) {
+        cause |= _PROT_WRITE;
+      } else {
+        cause |= _PROT_READ;
+      }
+      ev.cause = cause;
+      ev.ref = get_cr2();
+      break;
+    case E_GP MSG("GP #13, general protection failure")
+      ev.event = _EVENT_ERROR;
+      break;
+    default:
+      if (tf->irq < T_IRQ0) {
+        ev.event = _EVENT_ERROR;
+        ev.msg = "exceptions";
+      } else {
+        panic("some mysterious interrupts");
+      }
+      break;
+  }
 
   _Context *ret = &ctx;
   if (H) {

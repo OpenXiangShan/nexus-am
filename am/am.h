@@ -53,6 +53,7 @@ typedef struct _Device {
 typedef struct _Event {
   int event;
   uintptr_t cause, ref;
+  const char *msg;
 } _Event;
 typedef struct _Context _Context;
 
