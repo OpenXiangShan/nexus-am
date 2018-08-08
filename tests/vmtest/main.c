@@ -44,7 +44,6 @@ int main(){
   _asye_init(handler);
   _pte_init(alloc, free);
 
-
   _protect(&prot);
   _switch(&prot);
 

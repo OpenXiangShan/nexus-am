@@ -74,7 +74,14 @@ int _protect(_Protect *p) {
 
 void _unprotect(_Protect *p) {
   PDE *upt = p->ptr;
-  // TODO: free up all spaces
+  for (uint32_t va = (uint32_t)prot_vm_range.start;
+                va != (uint32_t)prot_vm_range.end;
+                va += (1 << PDXSHFT)) {
+    PDE pde = upt[PDX(va)];
+    if (pde & PTE_P) {
+      pgfree((void*)PTE_ADDR(pde));
+    }
+  }
   pgfree(upt);
 }
 
@@ -99,47 +106,7 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-/*
-int _protect(_Protect *p) {
-  PDE *updir = (PDE*)(palloc_f(PGSIZE));
-  p->pgsize = PGSIZE;
-  p->ptr = updir;
-  // map kernel space
-  for (int i = 0; i < 1024; i ++)
-    updir[i] = kpdir[i];
-
-  // exact copy of kernel page table
-  // no user memory is mapped
-
-  p->area.start = (void*)0x40000000;
-  p->area.end = (void*)0xc0000000;
-  return 0;
-}
-
-void _unprotect(_Protect *p) {
-  // DFS pages and call release
-}
-
-void _switch(_Protect *p) {
-  set_cr3(p->ptr);
-}
-
-int _map(_Protect *p, void *va, void *pa, int prot) {
-  PDE *pt = (PDE*)p->ptr;
-  PDE *pde = &pt[PDX(va)];
-  uint32_t wflag = 0; // TODO: this should be not accessible
-  if (prot & _PROT_WRITE) wflag = PTE_W;
-  if (!(*pde & PTE_P)) {
-    *pde = PTE_P | wflag | PTE_U | (uint32_t)(palloc_f(PGSIZE));
-  }
-  PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
-  if (!(*pte & PTE_P)) {
-    *pte = PTE_P | wflag | PTE_U | (uint32_t)(pa);
-  }
-  return 0;
-}
-
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), void *args) {
+_RegSet *_make_prot(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   _RegSet *regs = (_RegSet*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
@@ -148,14 +115,6 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), 
   regs->esp0 = (uint32_t)kstack.end;
   regs->eip = (uint32_t)entry;
   regs->eflags = FL_IF;
-
-  uint32_t esp = regs->esp3;
-  regs->esp3 = esp;
-  // TODO:
-  // push args to ustack
-  // prepare kstack
-  // make every register correct
-
+  regs->eax = (uint32_t)args;
   return regs;
 }
-*/
