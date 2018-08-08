@@ -1,5 +1,3 @@
-#include <am.h>
-#include <x86.h>
 #include <am-x86.h>
 #include <stdarg.h>
 
@@ -174,8 +172,6 @@ void irq_handle(struct TrapFrame *tf) {
 
 int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   static GateDesc idt[NR_IRQ];
-  smp_init();
-  lapic_init();
   ioapic_enable(IRQ_KBD, 0);
 
   // init IDT

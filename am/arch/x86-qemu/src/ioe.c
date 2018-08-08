@@ -1,6 +1,4 @@
-#include <am.h>
-#include <amdev.h>
-#include <x86.h>
+#include <am-x86.h>
 
 extern void vga_init();
 extern void timer_init();

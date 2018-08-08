@@ -1,5 +1,3 @@
-#include <am.h>
-#include <x86.h>
 #include <am-x86.h>
 
 int current_cpu();
