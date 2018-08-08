@@ -59,7 +59,6 @@ void irq_handle(struct TrapFrame *tf) {
     .msg = "(no message)",
   };
   
-  uint32_t err = tf->err, cause = 0;
   switch (tf->irq) {
     case IRQ 0 MSG("timer interrupt (lapic)")
       ev.event = _EVENT_IRQ_TIMER;
@@ -76,27 +75,16 @@ void irq_handle(struct TrapFrame *tf) {
       break;
     case E_PF MSG("page fault, @cause: _PROT_XXX")
       ev.event = _EVENT_PAGEFAULT;
-      if (err & 0x1) {
-        cause |= _PROT_NONE;
-      }
-      if (err & 0x2) {
-        cause |= _PROT_WRITE;
-      } else {
-        cause |= _PROT_READ;
-      }
-      ev.cause = cause;
+      if (tf->err & 0x1) ev.cause |= _PROT_NONE;
+      if (tf->err & 0x2) ev.cause |= _PROT_WRITE;
+      else               ev.cause |= _PROT_READ;
       ev.ref = get_cr2();
       break;
     case E_GP MSG("GP #13, general protection failure")
-      ev.event = _EVENT_ERROR;
-      break;
+      ev.event = _EVENT_ERROR; break;
+    // TODO: add other exceptions
     default:
-      if (tf->irq < T_IRQ0) {
-        ev.event = _EVENT_ERROR;
-        ev.msg = "exceptions";
-      } else {
-        panic("some mysterious interrupts");
-      }
+      panic("unexpected interrupt/exception");
       break;
   }
 
