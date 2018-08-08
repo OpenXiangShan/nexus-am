@@ -3,7 +3,7 @@
 #include <arch.h>
 #include <klib.h>
 
-static _RegSet* (*H) (_Event, _RegSet*) = NULL;
+static _Context* (*H) (_Event, _Context*) = NULL;
 
 void print_timer() {
   int compare = 0;
@@ -29,13 +29,13 @@ static void init_timer(int step) {
   MTC0(CP0_COMPARE, compare, 0);
 }
 
-int _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
+int _asye_init(_Context* (*l)(_Event ev, _Context *regs)){
   H = l;
   return 0;
 }
 
-_RegSet *_make(_Area kstack, void (*entry)(void *), void *args){
-  _RegSet *regs = (_RegSet *)kstack.start;
+_Context *_make(_Area kstack, void (*entry)(void *), void *args){
+  _Context *regs = (_Context *)kstack.start;
   regs->sp = (uint32_t) kstack.end;
   regs->epc = (uint32_t) entry;
 
@@ -67,7 +67,7 @@ void _intr_write(int enable) {
   MTC0(CP0_STATUS, status, 0); 
 }
 
-void irq_handle(struct _RegSet *regs){
+void irq_handle(struct _Context *regs){
   cp0_cause_t *cause = (void*)&(regs->cause);
   uint32_t exccode = cause->ExcCode;
   uint32_t ipcode = cause->IP;
@@ -114,9 +114,9 @@ void irq_handle(struct _RegSet *regs){
   }
 
   // printf("regs: t0:%x, t1:%x, t2:%x, t3:%x\n", regs->t0, regs->t1, regs->t2, regs->t3);
-  _RegSet *ret = regs;
+  _Context *ret = regs;
   if(H) {
-	  _RegSet *next = H(ev, regs);
+	  _Context *next = H(ev, regs);
 	  if(next != NULL) ret = next;
   }
   /*

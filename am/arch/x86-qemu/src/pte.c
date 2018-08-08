@@ -107,8 +107,8 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-_RegSet *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
-  _RegSet *regs = (_RegSet*)kstack.start;
+_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+  _Context *regs = (_Context*)kstack.start;
   regs->cs = USEL(SEG_UCODE);
   regs->ds = regs->es = regs->ss = USEL(SEG_UDATA);
   regs->esp3 = (uint32_t)ustack.end;

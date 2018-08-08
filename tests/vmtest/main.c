@@ -2,10 +2,10 @@
 #include <amdev.h>
 #include <klib.h>
 
-_RegSet *ctx;
+_Context *ctx;
 int ntraps = 0;
 
-_RegSet* handler(_Event ev, _RegSet *regs) {
+_Context* handler(_Event ev, _Context *regs) {
   switch (ev.event) {
     case _EVENT_YIELD:
       break;

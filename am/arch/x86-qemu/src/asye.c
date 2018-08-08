@@ -1,7 +1,7 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
-static _RegSet* (*H)(_Event, _RegSet*) = NULL;
+static _Context* (*H)(_Event, _Context*) = NULL;
 
 void irq0();
 void irq1();
@@ -25,7 +25,7 @@ void vecsys();
 void irqall();
 
 void irq_handle(struct TrapFrame *tf) {
-  _RegSet regs = {
+  _Context regs = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
     .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp3 = 0,
     .eip = tf->eip, .eflags = tf->eflags,
@@ -75,9 +75,9 @@ void irq_handle(struct TrapFrame *tf) {
     ev.ref = get_cr2();
   } else if (tf->irq < 32) ev.event = _EVENT_ERROR;
 
-  _RegSet *ret = &regs;
+  _Context *ret = &regs;
   if (H) {
-    _RegSet *next = H(ev, &regs);
+    _Context *next = H(ev, &regs);
     if (next != NULL) {
       ret = next;
     }
@@ -169,7 +169,7 @@ void irq_handle(struct TrapFrame *tf) {
   }
 }
 
-int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
+int _asye_init(_Context*(*handler)(_Event, _Context*)) {
   static GateDesc idt[NR_IRQ];
   ioapic_enable(IRQ_KBD, 0);
 
@@ -206,8 +206,8 @@ int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   return 0;
 }
 
-_RegSet *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _RegSet *regs = (_RegSet *)stack.start;
+_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
+  _Context *regs = (_Context *)stack.start;
   regs->eax = regs->ebx = regs->ecx = regs->edx = 0;
   regs->esi = regs->edi = regs->ebp = regs->esp3 = 0;
 

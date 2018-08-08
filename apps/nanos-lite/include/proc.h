@@ -9,7 +9,7 @@
 typedef union {
   uint8_t stack[STACK_SIZE] PG_ALIGN;
   struct {
-    _RegSet *tf;
+    _Context *tf;
     _Protect as;
     uintptr_t cur_brk;
     // we do not free memory, so use `max_brk' to determine when to call _map()

@@ -34,7 +34,7 @@ void change_game() {
   game_pcb = (game_pcb == &pcb[0] ? &pcb[2] : &pcb[0]);
 }
 
-_RegSet* schedule(_RegSet *prev) {
+_Context* schedule(_Context *prev) {
   // when current == NULL at the very beginning, it will not cover
   // any valid data, so it will be safe to write to memory near NULL
   current->tf = prev;

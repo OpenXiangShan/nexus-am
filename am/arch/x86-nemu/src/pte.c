@@ -82,9 +82,9 @@ void _map(_Protect *p, void *va, void *pa, int mode) {
 void _unmap(_Protect *p, void *va) {
 }
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   ustack.end -= 4 * sizeof(int);  // 4 = retaddr + argc + argv + envp
-  _RegSet *r = (_RegSet*)ustack.end - 1;
+  _Context *r = (_Context*)ustack.end - 1;
 
   r->cs = 0x8;
   r->eip = (uintptr_t)entry;
