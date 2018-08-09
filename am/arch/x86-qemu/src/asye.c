@@ -116,9 +116,10 @@ void irq_handle(struct TrapFrame *tf) {
   _Context *ret_ctx = &ctx;
   if (user_handler) {
     _Context *next = user_handler(ev, &ctx);
-    if (next != NULL) {
-      ret_ctx = next;
+    if (!next) {
+      panic("return to a null context");
     }
+    ret_ctx = next;
   }
 
   // Return to context @ret_ctx
@@ -192,6 +193,10 @@ int _asye_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
+static void panic_on_return() {
+  panic("kernel context returns");
+}
+
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *ctx = (_Context *)stack.start;
   ctx->eax = ctx->ebx = ctx->ecx = ctx->edx = 0;
@@ -206,7 +211,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
 
   uint32_t **esp = (uint32_t **)&ctx->esp0;
   *(*esp -= 1) = (uint32_t)arg; // argument
-  *(*esp -= 1) = 0; // return address
+  *(*esp -= 1) = (uint32_t)panic_on_return; // return address
   return ctx;
 }
 

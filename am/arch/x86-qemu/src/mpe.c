@@ -58,6 +58,7 @@ static void mp_entry() {
     cpu_initgdt();
     lapic_init();
     ioapic_enable(IRQ_KBD, _cpu());
+    cpu_initpte();
   }
   _atomic_xchg(&ap_boot, 1);
   _entry();

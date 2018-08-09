@@ -7,7 +7,6 @@ _Area _heap; // the heap memory defined in AM spec
 int main();
 static void memory_init();
 
-
 // the bootloader jumps here,
 // with a (small) bootstrap stack
 void _start() {
@@ -42,15 +41,10 @@ static void memory_init() {
   st = ed = (((uintptr_t)&end) & ~(step - 1)) + step;
   while (1) {
     volatile uint32_t *ptr = (uint32_t*)ed;
-    *ptr = 0x5a5a5a5a; // write
-    if (*ptr == 0x5a5a5a5a) { // then read
-      // if the value check passed, the memory is okay
-      ed += step;
-    } else {
-      // otherwise we hit the end of the physical memory
-      break;
-    }
+    *ptr = 0x5a5a5a5a; // write then read
+    if (*ptr == 0x5a5a5a5a) ed += step; // check passed, memory is okay
+    else break; // hit the end of the physical memory
   }
   _heap.start = (void*)st;
-  _heap.end = (void*)ed;
+  _heap.end   = (void*)ed;
 }

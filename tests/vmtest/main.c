@@ -11,7 +11,7 @@ _Context* handler(_Event ev, _Context *ctx) {
       break;
     case _EVENT_IRQ_TIMER:
     case _EVENT_IRQ_IODEV: 
-      printf(".");
+      printf("==== interrupt ===\n");
       break;
     case _EVENT_PAGEFAULT:
       printf("PF: %x %s%s%s\n",
@@ -85,7 +85,7 @@ int main() {
   _Area k = { .start = kstk, .end = kstk + 4096 };
   _Area u = { .start = ptr + pgsz, .end = ptr + pgsz * 2 };
 
-  uctx = _ucontext(&prot, u, k, ptr, NULL);
+  uctx = _ucontext(&prot, u, k, ptr, 0);
   _switch(&prot);
 
   _intr_write(1);

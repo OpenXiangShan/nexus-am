@@ -16,47 +16,50 @@ static void pgfree(void *ptr) {
   pgfree_usr(ptr);
 }
 
-
-static intptr_t first_proc = 1;
 static PDE *kpt;
 
-static _Area prot_vm_range = {
+static _Area prot_vm_range = { // 1GB protected space
   .start = (void*)0x40000000,
   .end   = (void*)0x80000000,
 };
 static _Area segments[] = {
-    {.start = (void*)0,          .end = (void*)0x10000000},  //   Low memory: kernel data
-    {.start = (void*)0xf0000000, .end = (void*)(0)},         //   High memory: APIC and VGA
+  {.start = (void*)0,          .end = (void*)0x10000000}, // kernel data
+  {.start = (void*)0xf0000000, .end = (void*)(0)},        // system memory
 };
 
-// must be called atomically per-cpu
 int _pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+  if (_cpu() != 0) {
+    panic("init PTE in non-bootstrap CPU");
+  }
+
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
-  if (first_proc) {
-    // first processor, create kernel page table
-
-    kpt = pgalloc();
-    for (int i = 0; i < sizeof(segments) / sizeof(segments[0]); i++) {
-      _Area *seg = &segments[i];
-      for (uint32_t pa = (uint32_t)seg->start; pa != (uint32_t)seg->end; pa += PGSIZE) {
-        PTE *ptab;
-        if (!(kpt[PDX(pa)] & PTE_P)) {
-          ptab = pgalloc();
-          kpt[PDX(pa)] = PTE_P | PTE_W | (uint32_t)ptab;
-        } else {
-          ptab = (PTE*)PTE_ADDR(kpt[PDX(pa)]);
-        }
-        ptab[PTX(pa)] = PTE_P | PTE_W | pa;
+  kpt = pgalloc();
+  for (int i = 0; i < sizeof(segments) / sizeof(segments[0]); i++) {
+    _Area *seg = &segments[i];
+    for (uint32_t pa = (uint32_t)seg->start;
+                  pa != (uint32_t)seg->end;
+                  pa += PGSIZE) {
+      PTE *ptab;
+      if (!(kpt[PDX(pa)] & PTE_P)) {
+        ptab = pgalloc();
+        kpt[PDX(pa)] = PTE_P | PTE_W | (uint32_t)ptab;
+      } else {
+        ptab = (PTE*)PTE_ADDR(kpt[PDX(pa)]);
       }
+      ptab[PTX(pa)] = PTE_P | PTE_W | pa;
     }
+  }
+  cpu_initpte(); // set CR3 and CR0 if kpt is not NULL
+  return 0;
+}
 
+void cpu_initpte() {
+  if (kpt) {
     set_cr3(kpt);
     set_cr0(get_cr0() | CR0_PG);
-    _atomic_xchg(&first_proc, 0);
   }
-  return 0;
 }
 
 int _protect(_Protect *p) {
