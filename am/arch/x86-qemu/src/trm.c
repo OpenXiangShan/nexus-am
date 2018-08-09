@@ -6,11 +6,13 @@ _Area _heap; // the heap memory defined in AM spec
 
 int main();
 static void memory_init();
+static void sys_init();
 
 // the bootloader jumps here,
-// with a (small) bootstrap stack
+//   with a (small) bootstrap stack
 void _start() {
-  smp_init();
+  // setup a C runtime environment
+  sys_init();
   lapic_init();
   ioapic_init();
   memory_init();
@@ -31,8 +33,35 @@ void _halt(int code) {
   char buf[] = "Exited (#).\n";
   buf[8] = '0' + code;
   puts(buf);
-  asm volatile("cli; hlt");
-  while(1);
+  while (1) {
+    // TODO: multiprocessor shutdown
+    asm volatile("cli; hlt");
+  }
+}
+
+#define MP_PROC    0x00
+#define MP_MAGIC   0x5f504d5f // _MP_
+
+static void sys_init() {
+  for (char *st = (char*)0xf0000; st != (char*)0xffffff; st ++) {
+    if (*(uint32_t*)st == MP_MAGIC) {
+      MPConf *conf = ((MPDesc*)st)->conf;
+      lapic = conf->lapicaddr;
+      for (char *ptr = (char *)(conf + 1);
+                 ptr < (char *)conf + conf->length; ) {
+        if (*ptr == MP_PROC) {
+          ptr += 20;
+          if (++ncpu > MAX_CPU) {
+            panic("cannot support > MAX_CPU processors");
+          }
+        } else {
+          ptr += 8;
+        }
+      }
+      return;
+    }
+  }
+  panic("seems not an x86-qemu machine");
 }
 
 static void memory_init() {
@@ -48,33 +77,3 @@ static void memory_init() {
   _heap.start = (void*)st;
   _heap.end   = (void*)ed;
 }
-
-
-#define MP_PROC    0x00
-#define MP_MAGIC   0x5f504d5f // _MP_
-
-static MPDesc *mp_search() {
-  for (char *st = (char*)0xf0000; st != (char*)0xffffff; st ++) {
-    if (*(uint32_t*)st == MP_MAGIC)
-      return (MPDesc*)st;
-  }
-  panic("_MP_ not found");
-  return NULL;
-}
-
-void smp_init() {
-  MPConf *conf = mp_search()->conf;
-  lapic = conf->lapicaddr;
-
-  for (char *p = (char*)(conf + 1); p < (char*)conf + conf->length; ) {
-    if (*p == MP_PROC) {
-      p += 20; ncpu ++;
-    } else {
-      p += 8;
-    }
-  }
-  if (ncpu > MAX_CPU) {
-    panic("cannot support > MAX_CPU processors");
-  }
-}
-

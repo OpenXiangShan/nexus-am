@@ -56,13 +56,24 @@
 // IDT size
 #define NR_IRQ    256     // IDT size
 
-// interrupts
+// Interrupts and exceptions
 #define T_IRQ0       32
 #define IRQ_TIMER     0
 #define IRQ_KBD       1
 #define IRQ_SPURIOUS 31
 #define IRQ_ERROR    19
 
+#define EX_SYSCALL 0x80
+#define EX_DIV        0
+#define EX_UD         6
+#define EX_NM         7
+#define EX_DF         8
+#define EX_TS        10
+#define EX_NP        11
+#define EX_SS        12
+#define EX_GP        13
+#define EX_PF        14
+#define EX_MF        15
 
 // The following macros will not be seen by the assembler
 #ifndef __ASSEMBLER__

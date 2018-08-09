@@ -10,7 +10,6 @@ void lapic_init();
 void ioapic_init();
 void lapic_bootap(int cpu, uint32_t address);
 void ioapic_enable(int irq, int cpu);
-void smp_init();
 void cpu_initgdt();
 void cpu_initpte();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
@@ -33,5 +32,27 @@ static inline void puts(const char *s) {
     puts(" @ " __FILE__ ":" TOSTRING(__LINE__) "  \n"); \
     _halt(1); \
   } while(0)
+
+
+void irq0();
+void irq1();
+void irq14();
+void vec0();
+void vec1();
+void vec2();
+void vec3();
+void vec4();
+void vec5();
+void vec6();
+void vec7();
+void vec8();
+void vec9();
+void vec10();
+void vec11();
+void vec12();
+void vec13();
+void vec14();
+void vecsys();
+void irqall();
 
 #endif
