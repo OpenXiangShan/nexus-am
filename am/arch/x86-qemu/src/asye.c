@@ -132,27 +132,27 @@ void irq_handle(struct TrapFrame *tf) {
  
   if (ret_ctx->cs & DPL_USER) { // return to user
     cpu_setustk(ret_ctx->ss0, ret_ctx->esp0);
-    asm volatile(
+    asm volatile goto(
       "movl %[esp], %%esp;" // move stack
-      REGS_USER(push)
-      "popal;"
-      "popl %%es;"
-      "popl %%ds;"
-      "iret;"
+      REGS_USER(push)       // push reg context onto stack
+      "jmp %l[iret]"        // goto iret
     : : [esp] "m"(ret_ctx->esp0)
-        REGS_USER(def) );
+        REGS_USER(def) : : iret );
   } else { // return to kernel
-    asm volatile(
+    asm volatile goto(
       "movl %[esp], %%esp;" // move stack
-      REGS_KERNEL(push)
-      "popal;"
-      "popl %%es;"
-      "popl %%ds;"
-      "iret;"
+      REGS_KERNEL(push)     // push reg context onto stack
+      "jmp %l[iret]"        // goto iret
     : : [esp] "m"(ret_ctx->esp0)
-        REGS_KERNEL(def) );
+        REGS_KERNEL(def) : : iret );
   }
-  panic("???"); // never reaches here
+iret:
+  asm volatile(
+    "popal;"     // restore context
+    "popl %es;"
+    "popl %ds;"
+    "iret;"      // interrupt return
+  );
 }
 
 int _asye_init(_Context*(*handler)(_Event, _Context*)) {
