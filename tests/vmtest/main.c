@@ -2,16 +2,16 @@
 #include <amdev.h>
 #include <klib.h>
 
-_RegSet *ctx;
+_Context *uctx;
 int ntraps = 0;
 
-_RegSet* handler(_Event ev, _RegSet *regs) {
+_Context* handler(_Event ev, _Context *ctx) {
   switch (ev.event) {
     case _EVENT_YIELD:
       break;
     case _EVENT_IRQ_TIMER:
     case _EVENT_IRQ_IODEV: 
-      printf(".");
+      printf("==== interrupt ===\n");
       break;
     case _EVENT_PAGEFAULT:
       printf("PF: %x %s%s%s\n",
@@ -21,17 +21,17 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
         (ev.cause & _PROT_WRITE) ? "[write fail]" : "");
       break;
     case _EVENT_SYSCALL:
-      printf("%d ", regs->GPR1);
+      printf("%d ", ctx->GPR1);
       break;
     default:
       assert(0);
   }
 
-  if (ctx) {
-    regs = ctx;
-    ctx = NULL;
+  if (uctx) {
+    ctx = uctx;
+    uctx = NULL;
   }
-  return regs;
+  return ctx;
 }
 
 static uintptr_t st;
@@ -85,7 +85,7 @@ int main() {
   _Area k = { .start = kstk, .end = kstk + 4096 };
   _Area u = { .start = ptr + pgsz, .end = ptr + pgsz * 2 };
 
-  ctx = _ucontext(&prot, u, k, ptr, NULL);
+  uctx = _ucontext(&prot, u, k, ptr, 0);
   _switch(&prot);
 
   _intr_write(1);

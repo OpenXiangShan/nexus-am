@@ -8,7 +8,7 @@
 
 typedef uint32_t size_t;
 
-struct _RegSet {
+struct _Context {
   uintptr_t edi, esi, ebp, esp;
   uintptr_t ebx, edx, ecx, eax;      // Register saved by pushal
   int       irq;                     // # of irq

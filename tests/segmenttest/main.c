@@ -2,10 +2,10 @@
 #include <amdev.h>
 #include <klib.h>
 
-_RegSet testcase_regs;
+_Context testcase_regs;
 
 int ntraps = 0;
-_RegSet* handler(_Event ev, _RegSet *regs) {
+_Context* handler(_Event ev, _Context *ctx) {
   switch (ev.event) {
     case _EVENT_IRQ_TIMER:
       printf(".");

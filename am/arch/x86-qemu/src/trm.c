@@ -6,12 +6,13 @@ _Area _heap; // the heap memory defined in AM spec
 
 int main();
 static void memory_init();
-
+static void sys_init();
 
 // the bootloader jumps here,
-// with a (small) bootstrap stack
+//   with a (small) bootstrap stack
 void _start() {
-  smp_init();
+  // setup a C runtime environment
+  sys_init();
   lapic_init();
   ioapic_init();
   memory_init();
@@ -32,8 +33,35 @@ void _halt(int code) {
   char buf[] = "Exited (#).\n";
   buf[8] = '0' + code;
   puts(buf);
-  asm volatile("cli; hlt");
-  while(1);
+  while (1) {
+    // TODO: multiprocessor shutdown
+    asm volatile("cli; hlt");
+  }
+}
+
+#define MP_PROC    0x00
+#define MP_MAGIC   0x5f504d5f // _MP_
+
+static void sys_init() {
+  for (char *st = (char*)0xf0000; st != (char*)0xffffff; st ++) {
+    if (*(uint32_t*)st == MP_MAGIC) {
+      MPConf *conf = ((MPDesc*)st)->conf;
+      lapic = conf->lapicaddr;
+      for (char *ptr = (char *)(conf + 1);
+                 ptr < (char *)conf + conf->length; ) {
+        if (*ptr == MP_PROC) {
+          ptr += 20;
+          if (++ncpu > MAX_CPU) {
+            panic("cannot support > MAX_CPU processors");
+          }
+        } else {
+          ptr += 8;
+        }
+      }
+      return;
+    }
+  }
+  panic("seems not an x86-qemu machine");
 }
 
 static void memory_init() {
@@ -42,15 +70,10 @@ static void memory_init() {
   st = ed = (((uintptr_t)&end) & ~(step - 1)) + step;
   while (1) {
     volatile uint32_t *ptr = (uint32_t*)ed;
-    *ptr = 0x5a5a5a5a; // write
-    if (*ptr == 0x5a5a5a5a) { // then read
-      // if the value check passed, the memory is okay
-      ed += step;
-    } else {
-      // otherwise we hit the end of the physical memory
-      break;
-    }
+    *ptr = 0x5a5a5a5a; // write then read
+    if (*ptr == 0x5a5a5a5a) ed += step; // check passed, memory is okay
+    else break; // hit the end of the physical memory
   }
   _heap.start = (void*)st;
-  _heap.end = (void*)ed;
+  _heap.end   = (void*)ed;
 }

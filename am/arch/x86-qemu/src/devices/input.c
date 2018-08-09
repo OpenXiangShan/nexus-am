@@ -1,6 +1,4 @@
-#include <am.h>
-#include <amdev.h>
-#include <x86.h>
+#include <am-x86.h>
 
 static int scan_code[] = {
   0,

@@ -13,7 +13,7 @@
 
 #include <ucontext.h>
 
-struct _RegSet {
+struct _Context {
   union {
     uint8_t pad[1024];
     ucontext_t uc;

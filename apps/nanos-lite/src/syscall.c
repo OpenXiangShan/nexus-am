@@ -37,7 +37,7 @@ int sys_brk(uintptr_t brk) {
   return mm_brk(brk);
 }
 
-_RegSet* do_syscall(_RegSet *r) {
+_Context* do_syscall(_Context *r) {
   int ret = 0;
   uintptr_t a[4];
   a[0] = SYSCALL_ARG1(r);

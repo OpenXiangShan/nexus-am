@@ -1,0 +1,3 @@
+#!/bin/bash
+make && \
+qemu-system-i386 -smp 4 -serial stdio build/mptest-x86-qemu

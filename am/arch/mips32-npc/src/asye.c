@@ -3,7 +3,7 @@
 #include <arch.h>
 #include <klib.h>
 
-static _RegSet* (*H) (_Event, _RegSet*) = NULL;
+static _Context* (*H) (_Event, _Context*) = NULL;
 
 void print_timer() {
   int compare = 0;
@@ -29,24 +29,24 @@ static void init_timer(int step) {
   MTC0(CP0_COMPARE, compare, 0);
 }
 
-int _asye_init(_RegSet* (*l)(_Event ev, _RegSet *regs)){
+int _asye_init(_Context* (*l)(_Event ev, _Context *ctx)){
   H = l;
   return 0;
 }
 
-_RegSet *_make(_Area kstack, void (*entry)(void *), void *args){
-  _RegSet *regs = (_RegSet *)kstack.start;
-  regs->sp = (uint32_t) kstack.end;
-  regs->epc = (uint32_t) entry;
+_Context *_make(_Area kstack, void (*entry)(void *), void *args){
+  _Context *ctx = (_Context *)kstack.start;
+  ctx->sp = (uint32_t) kstack.end;
+  ctx->epc = (uint32_t) entry;
 
   static const char *envp[] = { "FUCKYOU=true", NULL };
 
   uintptr_t *arg = args;
-  regs->a0 = 0;
-  regs->a1 = (uintptr_t)arg;
-  regs->a2 = (uintptr_t)envp;
-  for(; *arg; arg ++, regs->a0++);
-  return regs;
+  ctx->a0 = 0;
+  ctx->a1 = (uintptr_t)arg;
+  ctx->a2 = (uintptr_t)envp;
+  for(; *arg; arg ++, ctx->a0++);
+  return ctx;
 }
 
 void _yield(){
@@ -67,13 +67,13 @@ void _intr_write(int enable) {
   MTC0(CP0_STATUS, status, 0); 
 }
 
-void irq_handle(struct _RegSet *regs){
-  cp0_cause_t *cause = (void*)&(regs->cause);
+void irq_handle(struct _Context *ctx){
+  cp0_cause_t *cause = (void*)&(ctx->cause);
   uint32_t exccode = cause->ExcCode;
   uint32_t ipcode = cause->IP;
   
   // print_timer();
-  // printk("[AM] cause:%x, status:%x, code:%x, ip:%x\n", regs->cause, regs->status, exccode, ipcode);
+  // printk("[AM] cause:%x, status:%x, code:%x, ip:%x\n", ctx->cause, ctx->status, exccode, ipcode);
 
   _Event ev;
   ev.event = _EVENT_NULL;
@@ -85,7 +85,7 @@ void irq_handle(struct _RegSet *regs){
       if(ipcode & IP_TIMER_MASK) {
           ev.event = _EVENT_IRQ_TIMER;
 		  cause->IP = 0;
-		  asm volatile("mtc0 %0, $13, 0;nop;nop"::"r"(regs->cause));
+		  asm volatile("mtc0 %0, $13, 0;nop;nop"::"r"(ctx->cause));
 	  } else {
 		  printk("invalid ipcode = %x\n", ipcode);
 		  _halt(-1);
@@ -93,8 +93,8 @@ void irq_handle(struct _RegSet *regs){
       break;
     }
     case EXC_SYSCALL:
-      regs->epc += 4;
-	  if(regs->a0 == -1)
+      ctx->epc += 4;
+	  if(ctx->a0 == -1)
 		ev.event = _EVENT_YIELD;
 	  else
 		ev.event = _EVENT_SYSCALL;
@@ -108,15 +108,15 @@ void irq_handle(struct _RegSet *regs){
     case EXC_RI:
     case EXC_OV:
     default:
-	  printk("unhandled exccode = %x, epc:%08x, badvaddr:%08x\n", exccode, regs->epc, regs->badvaddr);
-	  printk("cp0: base:%08x, cause:%08x, status:%08x\n", regs->base, regs->cause, regs->status);
+	  printk("unhandled exccode = %x, epc:%08x, badvaddr:%08x\n", exccode, ctx->epc, ctx->badvaddr);
+	  printk("cp0: base:%08x, cause:%08x, status:%08x\n", ctx->base, ctx->cause, ctx->status);
 	  _halt(-1);
   }
 
-  // printf("regs: t0:%x, t1:%x, t2:%x, t3:%x\n", regs->t0, regs->t1, regs->t2, regs->t3);
-  _RegSet *ret = regs;
+  // printf("ctx: t0:%x, t1:%x, t2:%x, t3:%x\n", ctx->t0, ctx->t1, ctx->t2, ctx->t3);
+  _Context *ret = ctx;
   if(H) {
-	  _RegSet *next = H(ev, regs);
+	  _Context *next = H(ev, ctx);
 	  if(next != NULL) ret = next;
   }
   /*

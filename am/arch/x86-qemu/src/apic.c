@@ -90,11 +90,6 @@ lapic_init(void)
   lapicw(TPR, 0);
 }
 
-int _cpu(void)
-{
-  return lapic[ID] >> 24;
-}
-
 // Acknowledge interrupt.
 void
 lapic_eoi(void)

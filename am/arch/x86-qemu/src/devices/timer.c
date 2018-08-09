@@ -1,6 +1,4 @@
-#include <am.h>
-#include <amdev.h>
-#include <x86.h>
+#include <am-x86.h>
 
 static _RTCReg boot_date;
 static uint32_t freq_mhz = 2000;

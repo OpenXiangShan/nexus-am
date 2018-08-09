@@ -6,7 +6,7 @@
 typedef int off_t;
 typedef int ssize_t;
 
-struct _RegSet {
+struct _Context {
   uint32_t eax, ebx, ecx, edx,
            esi, edi, ebp, esp3,
            eip, eflags,

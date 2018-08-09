@@ -3,7 +3,7 @@
 #include <klib.h>
 
 int ntraps = 0;
-_RegSet* handler(_Event ev, _RegSet *regs) {
+_Context* handler(_Event ev, _Context *ctx) {
   switch (ev.event) {
     case _EVENT_IRQ_TIMER:
       printf(".");
@@ -25,7 +25,7 @@ _RegSet* handler(_Event ev, _RegSet *regs) {
       ntraps++;
       break;
   }
-  return regs;
+  return ctx;
 }
 
 int main(){

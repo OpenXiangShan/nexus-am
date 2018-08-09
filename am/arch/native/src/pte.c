@@ -79,11 +79,11 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-void get_example_uc(_RegSet *r);
+void get_example_uc(_Context *r);
 
-_RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), void *args) {
+_Context *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), void *args) {
   ustack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
-  _RegSet *r = (_RegSet*)ustack.end - 1;
+  _Context *r = (_Context*)ustack.end - 1;
 
   get_example_uc(r);
   r->rip = (uintptr_t)entry;

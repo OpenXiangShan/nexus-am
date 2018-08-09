@@ -53,8 +53,9 @@ typedef struct _Device {
 typedef struct _Event {
   int event;
   uintptr_t cause, ref;
+  const char *msg;
 } _Event;
-typedef struct _RegSet _RegSet;
+typedef struct _Context _Context;
 
 // A protected address space with user memory @area
 // and arch-dependent @ptr
@@ -77,8 +78,8 @@ _Device *_device(int n);
 
 // ================== Asynchronous Extension (ASYE) ==================
 
-int _asye_init(_RegSet *(*handler)(_Event ev, _RegSet *regs));
-_RegSet *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
+int _asye_init(_Context *(*handler)(_Event ev, _Context *ctx));
+_Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
 void _yield();
 int _intr_read();
 void _intr_write(int enable);
@@ -90,7 +91,7 @@ int _protect(_Protect *p);
 void _unprotect(_Protect *p);
 void _switch(_Protect *p);
 int _map(_Protect *p, void *va, void *pa, int prot);
-_RegSet *_ucontext(_Protect *p, _Area ustack, _Area kstack,
+_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack,
                     void *entry, void *args);
 
 // ================= Multi-Processor Extension (MPE) =================

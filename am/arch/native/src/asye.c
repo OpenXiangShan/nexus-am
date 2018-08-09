@@ -1,17 +1,17 @@
 #include <am.h>
 #include <klib.h>
 
-static _RegSet* (*H)(_Event, _RegSet*) = NULL;
+static _Context* (*H)(_Event, _Context*) = NULL;
 
 extern void asm_trap();
 extern void ret_from_trap();
 
-void irq_handle(_RegSet *r) {
+void irq_handle(_Context *r) {
   getcontext(&r->uc);
 
   _Event e;
   e.event = ((uint32_t)r->rax == -1 ? _EVENT_YIELD : _EVENT_SYSCALL);
-  _RegSet *ret = H(e, r);
+  _Context *ret = H(e, r);
   if (ret != NULL) {
     r = ret;
   }
@@ -22,7 +22,7 @@ void irq_handle(_RegSet *r) {
   setcontext(&r->uc);
 }
 
-int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
+int _asye_init(_Context*(*handler)(_Event, _Context*)) {
   void *start = (void *)0x100000;
   *(uintptr_t *)start = (uintptr_t)asm_trap;
 
@@ -30,7 +30,7 @@ int _asye_init(_RegSet*(*handler)(_Event, _RegSet*)) {
   return 0;
 }
 
-_RegSet *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
+_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   return NULL;
 }
 
