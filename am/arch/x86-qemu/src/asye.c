@@ -26,8 +26,16 @@ void irqall();
 
 #define IRQ     T_IRQ0 + 
 #define SYSCALL 0x80
+#define E_DIV    0
+#define E_UD     6
+#define E_NM     7
+#define E_DF     8
+#define E_TS    10
+#define E_NP    11
+#define E_SS    12
 #define E_GP    13
 #define E_PF    14
+#define E_MF    15
 #define MSG(m) : ev.msg = m;
 
 void irq_handle(struct TrapFrame *tf) {
@@ -61,11 +69,9 @@ void irq_handle(struct TrapFrame *tf) {
   
   switch (tf->irq) {
     case IRQ 0 MSG("timer interrupt (lapic)")
-      ev.event = _EVENT_IRQ_TIMER;
-      break;
+      ev.event = _EVENT_IRQ_TIMER; break;
     case IRQ 1 MSG("I/O device IRQ1 (keyboard)")
-      ev.event = _EVENT_IRQ_IODEV;
-      break;
+      ev.event = _EVENT_IRQ_IODEV; break;
     case SYSCALL MSG("int $0x80 trap: _yield() or system call")
       if ((int32_t)tf->eax == -1) {
         ev.event = _EVENT_YIELD;
@@ -73,18 +79,32 @@ void irq_handle(struct TrapFrame *tf) {
         ev.event = _EVENT_SYSCALL;
       }
       break;
-    case E_PF MSG("page fault, @cause: _PROT_XXX")
+    case E_DIV MSG("divide by zero")
+      ev.event = _EVENT_ERROR; break;
+    case E_UD MSG("UD #6 invalid opcode")
+      ev.event = _EVENT_ERROR; break;
+    case E_NM MSG("NM #7 coprocessor error")
+      ev.event = _EVENT_ERROR; break;
+    case E_DF MSG("DF #8 double fault")
+      ev.event = _EVENT_ERROR; break;
+    case E_TS MSG("TS #10 invalid TSS")
+      ev.event = _EVENT_ERROR; break;
+    case E_NP MSG("NP #11 segment/gate not present")
+      ev.event = _EVENT_ERROR; break;
+    case E_SS MSG("SS #12 stack fault")
+      ev.event = _EVENT_ERROR; break;
+    case E_GP MSG("GP #13, general protection fault")
+      ev.event = _EVENT_ERROR; break;
+    case E_PF MSG("PF #14, page fault, @cause: _PROT_XXX")
       ev.event = _EVENT_PAGEFAULT;
       if (tf->err & 0x1) ev.cause |= _PROT_NONE;
       if (tf->err & 0x2) ev.cause |= _PROT_WRITE;
       else               ev.cause |= _PROT_READ;
       ev.ref = get_cr2();
       break;
-    case E_GP MSG("GP #13, general protection failure")
-      ev.event = _EVENT_ERROR; break;
-    // TODO: add other exceptions
-    default:
-      panic("unexpected interrupt/exception");
+    default MSG("unrecognized interrupt/exception")
+      ev.event = _EVENT_ERROR;
+      ev.cause = tf->err;
       break;
   }
 
