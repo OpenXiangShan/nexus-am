@@ -15,6 +15,9 @@ void cpu_initgdt();
 void cpu_initpte();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
 
+extern volatile uint32_t *lapic;
+extern int ncpu;
+
 static inline void puts(const char *s) {
   for (; *s; s++) {
     _putc(*s);
