@@ -4,7 +4,7 @@
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
-int _asye_init(_Context *(*handler)(_Event, _Context *)) {
+int asye_init(_Context *(*handler)(_Event, _Context *)) {
   static GateDesc idt[NR_IRQ];
   ioapic_enable(IRQ_KBD, 0);
 
@@ -45,7 +45,7 @@ static void panic_on_return() {
   panic("kernel context returns");
 }
 
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
+_Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *ctx = (_Context *)stack.start;
   *ctx = (_Context) {
     .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
@@ -62,24 +62,32 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   return ctx;
 }
 
-void _yield() {
+int yield() {
   asm volatile("int $0x80" : : "a"(-1));
+  return 0;
 }
 
-int _intr_read() {
+int intr_read() {
   return (get_efl() & FL_IF) != 0;
 }
 
-void _intr_write(int enable) {
+int intr_write(int enable) {
   if (enable) {
     sti();
   } else {
     cli();
   }
+  return 0;
 }
 
 #define IRQ    T_IRQ0 + 
 #define MSG(m) : ev.msg = m;
+
+_Context *_irq_callback(_Event ev, _Context *ctx);
+
+_Context *irq_callback(_Event ev, _Context *ctx) {
+  return user_handler(ev, ctx);
+}
 
 void irq_handle(struct TrapFrame *tf) {
   // Saving processor context
@@ -158,7 +166,7 @@ void irq_handle(struct TrapFrame *tf) {
   // Call user handlers (registered in _asye_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
-    _Context *next = user_handler(ev, &ctx);
+    _Context *next = _irq_callback(ev, &ctx);
     if (!next) {
       panic("return to a null context");
     }
