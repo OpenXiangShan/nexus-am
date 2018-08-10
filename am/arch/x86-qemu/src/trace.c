@@ -1,11 +1,12 @@
 #include <am-x86.h>
 
-volatile int trace_on = 0;
+volatile uint32_t trace_flags = 0;
 
-void _trace_on() {
-  _atomic_xchg(&trace_on, 1);
+void _trace_on(uint32_t flags) {
+  // TODO: multiprocessor safety
+  trace_flags |= flags;
 }
 
-void _trace_off() {
-  _atomic_xchg(&trace_on, 0);
+void _trace_off(uint32_t flags) {
+  trace_flags &= ~flags;
 }

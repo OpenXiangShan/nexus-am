@@ -8,7 +8,7 @@
 
 extern volatile uint32_t *lapic;
 extern int ncpu;
-extern volatile int trace_on;
+extern volatile uint32_t trace_flags;
 
 void lapic_eoi();
 void lapic_init();
@@ -59,5 +59,16 @@ void vec13();
 void vec14();
 void vecsys();
 void irqall();
+
+static inline int traced() {
+#ifdef EXT
+  uint32_t flags = trace_flags;
+  if ( (flags & _TRACE_##EXT) && // the extension is being traced
+       1) {
+    return 1;
+  }
+#endif
+  return 0;
+}
 
 #endif
