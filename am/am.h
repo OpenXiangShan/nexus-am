@@ -89,7 +89,7 @@ void _intr_write(int enable);
 int _pte_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
 int _protect(_Protect *p);
 void _unprotect(_Protect *p);
-void _switch(_Protect *p);
+void _prot_switch(_Protect *p);
 int _map(_Protect *p, void *va, void *pa, int prot);
 _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack,
                     void *entry, void *args);

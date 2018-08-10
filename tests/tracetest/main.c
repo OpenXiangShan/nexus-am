@@ -56,7 +56,7 @@ int main() {
 
   _ucontext(&prot, u, k, ptr, (void*)-1);
 
-  _switch(&prot);
+  _prot_switch(&prot);
   _unprotect(&prot);
 
   _yield();

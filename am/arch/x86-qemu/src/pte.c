@@ -75,7 +75,7 @@ int unprotect(_Protect *p) {
   return 0;
 }
 
-int vm_switch(_Protect *p) {
+int prot_switch(_Protect *p) {
   set_cr3(p->ptr);
   return 0;
 }
