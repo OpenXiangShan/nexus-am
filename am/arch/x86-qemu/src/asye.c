@@ -7,7 +7,7 @@ int _asye_init(_Context *(*handler)(_Event, _Context *)) {
   static GateDesc idt[NR_IRQ];
   ioapic_enable(IRQ_KBD, 0);
 
-  // init IDT
+  // all vectors jumps to @irqall by default
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
     idt[i]  = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
   }
@@ -46,19 +46,18 @@ static void panic_on_return() {
 
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *ctx = (_Context *)stack.start;
-  ctx->eax = ctx->ebx = ctx->ecx = ctx->edx = 0;
-  ctx->esi = ctx->edi = ctx->ebp = ctx->esp3 = 0;
-
-  ctx->ss0 = 0; // only used for ring3 procs
-  ctx->esp0 = (uint32_t)stack.end;
-  ctx->cs = KSEL(SEG_KCODE);
-  ctx->ds = ctx->es = ctx->ss = KSEL(SEG_KDATA);
-  ctx->eip = (uint32_t)entry;
-  ctx->eflags = FL_IF;
-
-  uint32_t **esp = (uint32_t **)&ctx->esp0;
-  *(*esp -= 1) = (uint32_t)arg; // argument
-  *(*esp -= 1) = (uint32_t)panic_on_return; // return address
+  *ctx = (_Context) {
+    .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
+    .esi = 0, .edi = 0, .ebp = 0, .esp3 = 0,
+    .ss0 = 0, .esp0 = (uint32_t)stack.end,
+    .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
+    .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
+  };
+  // TODO: this piece of code is not tested.
+  void **esp = (void **)(((uint32_t)ctx->esp0) - 2 * sizeof(uint32_t));
+  esp[0] = panic_on_return;
+  esp[1] = arg;
+  ctx->esp0 = (uint32_t)esp;
   return ctx;
 }
 

@@ -22,11 +22,8 @@ void _start() {
   _halt(ret);
 }
 
-#define SERIAL_PORT 0x3f8
-
 void _putc(char ch) {
-  while ((inb(SERIAL_PORT + 5) & 0x20) == 0);
-  outb(SERIAL_PORT, ch);
+  outb(0x3f8, ch); // only works for qemu
 }
 
 void _halt(int code) {
@@ -74,6 +71,5 @@ static void memory_init() {
     if (*ptr == 0x5a5a5a5a) ed += step; // check passed, memory is okay
     else break; // hit the end of the physical memory
   }
-  _heap.start = (void*)st;
-  _heap.end   = (void*)ed;
+  _heap = RANGE(st, ed);
 }
