@@ -40,9 +40,9 @@ void _halt(int code) {
 #define MP_MAGIC   0x5f504d5f // _MP_
 
 static void sys_init() {
-  for (char *st = (char*)0xf0000; st != (char*)0xffffff; st ++) {
-    if (*(uint32_t*)st == MP_MAGIC) {
-      MPConf *conf = ((MPDesc*)st)->conf;
+  for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
+    if (*(uint32_t *)st == MP_MAGIC) {
+      MPConf *conf = ((MPDesc *)st)->conf;
       lapic = conf->lapicaddr;
       for (char *ptr = (char *)(conf + 1);
                  ptr < (char *)conf + conf->length; ) {

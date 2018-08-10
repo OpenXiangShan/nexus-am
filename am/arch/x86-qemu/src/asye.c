@@ -1,4 +1,3 @@
-#define TRACE_THIS _TRACE_ASYE
 #include <am-x86.h>
 #include <stdarg.h>
 
@@ -88,32 +87,29 @@ _Context *_cb_irq(_Event ev, _Context *ctx) {
 }
 
 void irq_handle(struct TrapFrame *tf) {
-  // Saving processor context
+  // saving processor context
   _Context ctx = {
-    .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
-    .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp3 = 0,
+    .eax = tf->eax, .ebx = tf->ebx, .ecx  = tf->ecx, .edx  = tf->edx,
+    .esi = tf->esi, .edi = tf->edi, .ebp  = tf->ebp, .esp3 = 0,
     .eip = tf->eip, .eflags = tf->eflags,
-    .cs  = tf->cs,  .ds = tf->ds,   .es = tf->es,   .ss = 0,
-    .ss0 = 0, .esp0 = 0,
+    .cs  = tf->cs,  .ds  = tf->ds,  .es   = tf->es,  .ss   = 0,
+    .ss0 = KSEL(SEG_KDATA),         .esp0 = (uint32_t)(tf + 1),
   };
 
   if (tf->cs & DPL_USER) { // interrupt at user code
-    ctx.esp0 = (uint32_t)(tf + 1); // tf is verything saved on the stack
     ctx.ss = tf->ss;
     ctx.esp3 = tf->esp;
-    ctx.ss0 = KSEL(SEG_KDATA);
   } else { // interrupt at kernel code
     // tf (without ss0/esp0) is everything saved on the stack
-    ctx.ss0 = KSEL(SEG_KDATA);
-    ctx.esp0 = ((uint32_t)(tf + 1)) - sizeof(uint32_t) * 2;
+    ctx.esp0 -= sizeof(uint32_t) * 2;
   }
 
-  // Sending end-of-interrupt
+  // sending end-of-interrupt
   if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
     lapic_eoi();
   }
 
-  // Creating an event
+  // creating an event
   _Event ev = {
     .event = _EVENT_NULL,
     .cause = 0, .ref = 0,
@@ -161,7 +157,7 @@ void irq_handle(struct TrapFrame *tf) {
       break;
   }
 
-  // Call user handlers (registered in _asye_init)
+  // call user handlers (registered in _asye_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
     _Context *next = __cb_irq(ev, &ctx);
