@@ -49,7 +49,7 @@ void cpu_initpte() { // called by all cpus
   }
 }
 
-int _protect(_Protect *p) {
+int protect(_Protect *p) {
   PDE *upt = pgalloc();
   for (int i = 0; i < PGSIZE / sizeof(PDE *); i++) {
     upt[i] = kpt[i];
@@ -62,7 +62,7 @@ int _protect(_Protect *p) {
   return 0;
 }
 
-void _unprotect(_Protect *p) {
+int unprotect(_Protect *p) {
   PDE *upt = p->ptr;
   for (uint32_t va = (uint32_t)prot_vm_range.start;
                 va != (uint32_t)prot_vm_range.end;
@@ -73,10 +73,12 @@ void _unprotect(_Protect *p) {
     }
   }
   pgfree(upt);
+  return 0;
 }
 
-void _switch(_Protect *p) {
+int vm_switch(_Protect *p) {
   set_cr3(p->ptr);
+  return 0;
 }
 
 int map(_Protect *p, void *va, void *pa, int prot) {
@@ -105,7 +107,7 @@ int map(_Protect *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   _Context *ctx = (_Context*)kstack.start;
   *ctx = (_Context) {
     .cs = USEL(SEG_UCODE),  .eip = (uint32_t)entry, .eflags = FL_IF,
@@ -130,10 +132,27 @@ static void pgfree(void *ptr) {
   pgfree_usr(ptr);
 }
 
-int _pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
-  trace_wrapper(int, pte_init, (pgalloc_f, pgfree_f)) ;
-}
+// wrappers
 
+int _pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+  trace_wrapper(int, _pte_init, pte_init, (pgalloc_f, pgfree_f), 2, pgalloc_f, pgfree_f) ;
+  return ret;
+}
 int _map(_Protect *p, void *va, void *pa, int prot) {
-  trace_wrapper(int, map, (p, va, pa, prot));
+  trace_wrapper(int, _map, map, (p, va, pa, prot), 4, p, va, pa, prot);
+  return ret;
+}
+_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+  trace_wrapper(_Context *, _ucontext, ucontext, (p, ustack, kstack, entry, args), 3, p, entry, args);
+  return ret;
+}
+void _switch(_Protect *p) {
+  trace_wrapper(int, _switch, vm_switch, (p), 1, p);
+}
+int _protect(_Protect *p) {
+  trace_wrapper(int, _protect, protect, (p), 1, p);
+  return ret;
+}
+void _unprotect(_Protect *p) {
+  trace_wrapper(int, _unprotect, unprotect, (p), 1, p);
 }

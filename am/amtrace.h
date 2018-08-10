@@ -1,13 +1,22 @@
 #ifndef __AMTRACE_H__
 #define __AMTRACE_H__
 
-struct _Trace {
+// payload of function calls
+typedef struct _CallArgs {
+  uintptr_t a0, a1, a2, a3;
+} _CallArgs;
+
+typedef union _Payload {
+  _CallArgs args;
+  uintptr_t retval;
+} _CallPayload;
+
+struct _TraceEvent {
   uint8_t cpu;
   uint8_t type;
-  uint16_t length;
   char payload[];
 } __attribute__((packed));
-typedef struct _Trace _Trace;
+typedef struct _TraceEvent _TraceEvent;
 
 // ========================= trace components ========================
 

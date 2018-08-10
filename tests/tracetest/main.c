@@ -31,10 +31,10 @@ _Protect prot;
 
 int main() {
   st = (uintptr_t)_heap.start;
-  _trace_on(_TRACE_PTE);
+  _trace_on(_TRACE_PTE | _TRACE_FUNC);
   _asye_init(ihandle);
   _pte_init(alloc, free);
-  print("Hello World!\n");
+  printf(">>> pte init done.\n");
 
   _protect(&prot);
 
@@ -44,9 +44,20 @@ int main() {
   int pgsz = 4096;
 
   _map(&prot, ptr, alloc(pgsz), _PROT_WRITE);
+
+  printf(">>> no longer trace function returns\n");
+  _trace_off(_TRACE_RET);
+
   _map(&prot, ptr + pgsz, alloc(pgsz), _PROT_WRITE);
 
+  static char kstk[4096];
+  _Area k = { .start = kstk, .end = kstk + 4096 };
+  _Area u = { .start = ptr + pgsz, .end = ptr + pgsz * 2 };
+
+  _ucontext(&prot, u, k, ptr, (void*)-1);
+
   _switch(&prot);
+  _unprotect(&prot);
 
   _intr_write(1);
   while (1) ;

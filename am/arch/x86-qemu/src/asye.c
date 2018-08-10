@@ -158,9 +158,7 @@ void irq_handle(struct TrapFrame *tf) {
   // Call user handlers (registered in _asye_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
-    trace_call(user_handler);
     _Context *next = user_handler(ev, &ctx);
-    trace_ret(user_handler, next);
     if (!next) {
       panic("return to a null context");
     }

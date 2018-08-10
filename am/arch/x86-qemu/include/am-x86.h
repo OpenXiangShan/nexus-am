@@ -62,11 +62,12 @@ void irqall();
 
 // Tracing
 
-static inline int traced() {
+static inline int traced(uint32_t req) {
 #ifdef TRACE_THIS
   uint32_t flags = trace_flags;
   if ( (flags & TRACE_THIS) && // the extension is being traced
-       1) {
+       (flags & req) // required flags are present
+     ) {
     return 1;
   }
 #endif
@@ -75,24 +76,34 @@ static inline int traced() {
 
 #include <klib.h> // TODO: don't do this.
 
-#define trace_call(fn) \
+#define trace_call(fn, args) \
   do { \
-    if (traced()) { \
-      printf("Call " #fn " (%x)\n", (void *)fn); \
+    if (traced(_TRACE_CALL)) { \
+      printf("[trace] call  " #fn " (%x) with args {%x, %x, %x, %x}\n", (void *)fn, \
+        args.a0, args.a1, args.a2, args.a3); \
     } \
   } while (0)
 
 #define trace_ret(fn, retval) \
   do { \
-    if (traced()) { \
-      printf("Return " #fn " (%x) -> %x\n", (void *)fn, (uintptr_t)retval); \
+    if (traced(_TRACE_RET)) { \
+      printf("[trace]  ret  " #fn " (%x) -> %x\n", (void *)fn, (uintptr_t)retval); \
     } \
   } while (0)
 
-#define trace_wrapper(rettype, func, args) \
-  trace_call(func); \
-  rettype ret = func args; \
-  trace_ret(func, ret); \
-  return ret;
+#define get_0(_0, _1, _2, _3, ...) ((uintptr_t)_0)
+#define get_1(_0, _1, _2, _3, ...) ((uintptr_t)_1)
+#define get_2(_0, _1, _2, _3, ...) ((uintptr_t)_2)
+#define get_3(_0, _1, _2, _3, ...) ((uintptr_t)_3)
+
+#define trace_wrapper(rettype, stub, func, arglist, n, ...) \
+  _CallArgs call_args = (_CallArgs) { .a0 = get_0(__VA_ARGS__, 0, 0, 0, 0),  \
+                              .a1 = get_1(__VA_ARGS__, 0, 0, 0, 0),  \
+                              .a2 = get_2(__VA_ARGS__, 0, 0, 0, 0),  \
+                              .a3 = get_3(__VA_ARGS__, 0, 0, 0, 0),  \
+                       }; \
+  trace_call(stub, call_args); \
+  rettype ret = func arglist; \
+  trace_ret(stub, ret);
 
 #endif
