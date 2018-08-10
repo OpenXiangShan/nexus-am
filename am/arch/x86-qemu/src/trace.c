@@ -13,27 +13,25 @@ void _trace_off(uint32_t flags) {
 
 #include <klib.h> // TODO: don't do this.
 
-#define should_trace(flags, req) ( \
-    (flags & TRACE_THIS) && \
-    (flags & req) \
-  )
-
-#define trace_call(fn, args) \
+#define TRACE_CALL(fn, args) \
   do { \
     uint32_t flags = trace_flags; \
-    if (should_trace(flags, _TRACE_CALL)) { \
+    if (SHOULD_TRACE(flags, _TRACE_CALL)) { \
       printf("[trace] call  " #fn " (%x) with args {%x, %x, %x, %x}\n", (void *)fn, \
         args.a0, args.a1, args.a2, args.a3); \
     } \
   } while (0)
 
-#define trace_ret(fn, retval) \
+#define TRACE_RET(fn, retval) \
   do { \
     uint32_t flags = trace_flags; \
-    if (should_trace(flags, _TRACE_RET)) { \
+    if (SHOULD_TRACE(flags, _TRACE_RET)) { \
       printf("[trace]  ret  " #fn " (%x) -> %x\n", (void *)fn, (uintptr_t)retval); \
     } \
   } while (0)
+
+#define SHOULD_TRACE(flags, require) \
+  (((flags) & TRACE_THIS) && ((flags) & (require)))
 
 #define CALL_ARGS(_0, _1, _2, _3, ...) \
   (_CallArgs) { .a0 = ((uintptr_t)_0), \
@@ -42,19 +40,25 @@ void _trace_off(uint32_t flags) {
                 .a3 = ((uintptr_t)_3), } \
 
 #define trace_wrapper_noret(rettype, stub, func, arglist, n, ...) \
-  trace_call(stub, CALL_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
-  rettype ret = func arglist; \
-  trace_ret(stub, ret);
 
 #define trace_wrapper(rettype, stub, func, arglist, n, ...) \
   trace_wrapper_noret(rettype, stub, func, arglist, n, __VA_ARGS__); \
   return ret;
 
 #define TRACE_NORET(rettype, stub, func, decl, arglist, n, ...) \
-  void stub decl { trace_wrapper_noret(int, stub, func, arglist, n, __VA_ARGS__); }
+  void stub decl { \
+    TRACE_CALL(stub, CALL_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
+    func arglist; \
+    TRACE_RET(stub, 0); \
+  }
 
 #define TRACE(rettype, stub, func, decl, arglist, n, ...) \
-  rettype stub decl { trace_wrapper(rettype, stub, func, arglist, n, __VA_ARGS__); }
+  rettype stub decl { \
+    TRACE_CALL(stub, CALL_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
+    rettype ret = func arglist; \
+    TRACE_RET(stub, ret); \
+    return ret; \
+  }
 
 #define DECL(tr, rettype, func, decl, args, ...) \
   rettype func decl ;
@@ -77,6 +81,8 @@ void _trace_off(uint32_t flags) {
   _(TRACE_NORET, int, prot_switch, (_Protect *p), (p), 1, p) \
   _(TRACE, int, protect, (_Protect *p), (p), 1, p) \
   _(TRACE_NORET, int, unprotect, (_Protect *p), (p), 1, p)
+
+// ========== real definitions are generated below ==========
 
 ASYE_FUNCS(DECL)
 PTE_FUNCS(DECL)
