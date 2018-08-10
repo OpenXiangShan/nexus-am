@@ -33,43 +33,19 @@ int unprotect(_Protect *p);
 // ==================== wrapper implementations ====================
 
 #define TRACE_THIS _TRACE_ASYE
-int _asye_init(_Context *(*handler)(_Event, _Context *)) {
-  trace_wrapper(int, _asye_init, asye_init, (handler), 1, handler);
-}
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  trace_wrapper(_Context *, _kcontext, kcontext, (stack, entry, arg), 2, entry, arg);
-}
-void _yield() {
-  trace_wrapper_noret(int, _yield, yield, (), 1, 0);
-}
-int _intr_read() {
-  trace_wrapper(int, _intr_read, intr_read, (), 1, 0);
-}
-void _intr_write(int enable) {
-  trace_wrapper_noret(int, _intr_write, intr_write, (enable), 1, enable);
-}
-_Context *_irq_callback(_Event ev, _Context *ctx) {
-  trace_wrapper(_Context *, _irq_callback, irq_callback, (ev, ctx), 4, ev.event, ev.cause, ev.ref, ctx);
-}
+TRACE(int, _asye_init, asye_init, (_Context *(*handler)(_Event, _Context *)), (handler), 1, handler);
+TRACE(_Context *, _kcontext, kcontext, (_Area stack, void (*entry)(void *), void *arg), (stack, entry, arg), 2, entry, arg);
+TRACE_NORET(_yield, yield, (), (), 1, 0);
+TRACE(int, _intr_read, intr_read, (), (), 1, 0);
+TRACE_NORET(_intr_write, intr_write, (int enable), (enable), 1, enable)
+TRACE(_Context *, _irq_callback, irq_callback, (_Event ev, _Context *ctx), (ev, ctx), 4, ev.event, ev.cause, ev.ref, ctx);
 #undef  TRACE_THIS
 
 #define TRACE_THIS _TRACE_PTE
-int _pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
-  trace_wrapper(int, _pte_init, pte_init, (pgalloc_f, pgfree_f), 2, pgalloc_f, pgfree_f) ;
-}
-int _map(_Protect *p, void *va, void *pa, int prot) {
-  trace_wrapper(int, _map, map, (p, va, pa, prot), 4, p, va, pa, prot);
-}
-_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
-  trace_wrapper(_Context *, _ucontext, ucontext, (p, ustack, kstack, entry, args), 3, p, entry, args);
-}
-void _switch(_Protect *p) {
-  trace_wrapper_noret(int, _switch, vm_switch, (p), 1, p);
-}
-int _protect(_Protect *p) {
-  trace_wrapper(int, _protect, protect, (p), 1, p);
-}
-void _unprotect(_Protect *p) {
-  trace_wrapper_noret(int, _unprotect, unprotect, (p), 1, p);
-}
+TRACE(int, _pte_init, pte_init, (void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)), (pgalloc_f, pgfree_f), 2, pgalloc_f, pgfree_f) ;
+TRACE(int, _map, map, (_Protect *p, void *va, void *pa, int prot), (p, va, pa, prot), 4, p, va, pa, prot);
+TRACE(_Context *, _ucontext, ucontext, (_Protect *p, _Area ustack, _Area kstack, void *entry, void *args), (p, ustack, kstack, entry, args), 3, p, entry, args);
+TRACE_NORET(_switch, vm_switch, (_Protect *p), (p), 1, p)
+TRACE(int, _protect, protect, (_Protect *p), (p), 1, p);
+TRACE_NORET(_unprotect, unprotect, (_Protect *p), (p), 1, p);
 #undef  TRACE_THIS

@@ -86,18 +86,14 @@ void irqall();
     } \
   } while (0)
 
-#define get_0(_0, _1, _2, _3, ...) ((uintptr_t)_0)
-#define get_1(_0, _1, _2, _3, ...) ((uintptr_t)_1)
-#define get_2(_0, _1, _2, _3, ...) ((uintptr_t)_2)
-#define get_3(_0, _1, _2, _3, ...) ((uintptr_t)_3)
+#define CALL_ARGS(_0, _1, _2, _3, ...) \
+  (_CallArgs) { .a0 = ((uintptr_t)_0), \
+                .a1 = ((uintptr_t)_1), \
+                .a2 = ((uintptr_t)_2), \
+                .a3 = ((uintptr_t)_3), } \
 
 #define trace_wrapper_noret(rettype, stub, func, arglist, n, ...) \
-  _CallArgs call_args = (_CallArgs) { .a0 = get_0(__VA_ARGS__, 0, 0, 0, 0),  \
-                                      .a1 = get_1(__VA_ARGS__, 0, 0, 0, 0),  \
-                                      .a2 = get_2(__VA_ARGS__, 0, 0, 0, 0),  \
-                                      .a3 = get_3(__VA_ARGS__, 0, 0, 0, 0),  \
-                       }; \
-  trace_call(stub, call_args); \
+  trace_call(stub, CALL_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
   rettype ret = func arglist; \
   trace_ret(stub, ret);
 
@@ -105,4 +101,9 @@ void irqall();
   trace_wrapper_noret(rettype, stub, func, arglist, n, __VA_ARGS__); \
   return ret;
 
+#define TRACE_NORET(stub, func, decl, arglist, n, ...) \
+  void stub decl { trace_wrapper_noret(int, stub, func, arglist, n, __VA_ARGS__); }
+
+#define TRACE(rettype, stub, func, decl, arglist, n, ...) \
+  rettype stub decl { trace_wrapper(rettype, stub, func, arglist, n, __VA_ARGS__); }
 #endif
