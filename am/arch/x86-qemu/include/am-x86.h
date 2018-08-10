@@ -3,10 +3,12 @@
 
 #include <am.h>
 #include <amdev.h>
+#include <amtrace.h>
 #include <x86.h>
 
 extern volatile uint32_t *lapic;
 extern int ncpu;
+extern volatile int trace_on;
 
 void lapic_eoi();
 void lapic_init();

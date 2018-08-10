@@ -49,13 +49,15 @@ void cpu_initpte() { // called by all cpus
 }
 
 int _protect(_Protect *p) {
-  p->pgsize = PGSIZE;
-  p->area = prot_vm_range;
   PDE *upt = pgalloc();
   for (int i = 0; i < PGSIZE / sizeof(PDE *); i++) {
     upt[i] = kpt[i];
   }
-  p->ptr = upt;
+  *p = (_Protect) {
+    .pgsize = PGSIZE,
+    .area = prot_vm_range,
+    .ptr = upt,
+  };
   return 0;
 }
 
@@ -81,11 +83,12 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
     panic("invalid permission");
   if ((uint32_t)va % PGSIZE != 0) panic("unaligned virtual address");
   if ((uint32_t)pa % PGSIZE != 0) panic("unaligned physical address");
+  // panic because the above cases are likely bugs
   if (!in_range(va, prot_vm_range)) {
-    return 1;
+    return 1; // mapping an out-of-range address
   }
-  PDE *pt = (PDE*)p->ptr;
-  PDE *pde = &pt[PDX(va)];
+  PDE *upt = (PDE*)p->ptr;
+  PDE *pde = &upt[PDX(va)];
 
   if (!(*pde & PTE_P)) {
     *pde = PTE_P | PTE_W | PTE_U | (uint32_t)(pgalloc());
@@ -93,10 +96,10 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
 
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (prot & _PROT_NONE) {
-    *pte = 0;
+    *pte = 0; // unmap @va
   } else {
     *pte = PTE_P | ((prot & _PROT_WRITE) ? PTE_W : 0) | PTE_U
-                 | (uint32_t)(pa);
+                 | (uint32_t)(pa);  // map @va -> @pa
   }
   return 0;
 }
@@ -104,15 +107,10 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
 _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   _Context *ctx = (_Context*)kstack.start;
   *ctx = (_Context) {
-    .cs = USEL(SEG_UCODE),
-    .ds = USEL(SEG_UDATA),
-    .es = USEL(SEG_UDATA),
-    .ss = USEL(SEG_UDATA),
-    .esp3 = (uint32_t)ustack.end,
-    .ss0 = KSEL(SEG_KDATA),
-    .esp0 = (uint32_t)kstack.end,
-    .eip = (uint32_t)entry,
-    .eflags = FL_IF,
+    .cs = USEL(SEG_UCODE),  .eip = (uint32_t)entry, .eflags = FL_IF,
+    .ds = USEL(SEG_UDATA),  .es  = USEL(SEG_UDATA),
+    .ss  = USEL(SEG_UDATA), .esp3 = (uint32_t)ustack.end,
+    .ss0 = KSEL(SEG_KDATA), .esp0 = (uint32_t)kstack.end,
     .eax = (uint32_t)args,
   };
   return ctx;
@@ -120,7 +118,7 @@ _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *
 
 static void *pgalloc() {
   void *ret = pgalloc_usr(PGSIZE);
-  if (!ret) panic("page allocation fail");
+  if (!ret) panic("page allocation fail"); // for ease of debugging
   for (int i = 0; i < PGSIZE / sizeof(uint32_t); i++) {
     ((uint32_t *)ret)[i] = 0;
   }
