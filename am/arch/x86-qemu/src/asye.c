@@ -1,3 +1,4 @@
+#define CURRENT _TRACE_ASYE
 #include <am-x86.h>
 #include <stdarg.h>
 

@@ -21,6 +21,7 @@ typedef struct _Trace _Trace;
 #define _TRACE_CALL    0x00010000
 #define _TRACE_RET     0x00020000
 #define _TRACE_FUNC    (_TRACE_CALL | _TRACE_RET)
+
 #define _TRACE_ALL     0xffffffff
 
 void _trace_on(uint32_t flags);

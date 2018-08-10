@@ -61,9 +61,9 @@ void vecsys();
 void irqall();
 
 static inline int traced() {
-#ifdef EXT
+#ifdef CURRENT
   uint32_t flags = trace_flags;
-  if ( (flags & _TRACE_##EXT) && // the extension is being traced
+  if ( (flags & CURRENT) && // the extension is being traced
        1) {
     return 1;
   }
