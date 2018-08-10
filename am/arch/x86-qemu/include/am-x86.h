@@ -91,7 +91,7 @@ void irqall();
 #define get_2(_0, _1, _2, _3, ...) ((uintptr_t)_2)
 #define get_3(_0, _1, _2, _3, ...) ((uintptr_t)_3)
 
-#define trace_wrapper(rettype, stub, func, arglist, n, ...) \
+#define trace_wrapper_noret(rettype, stub, func, arglist, n, ...) \
   _CallArgs call_args = (_CallArgs) { .a0 = get_0(__VA_ARGS__, 0, 0, 0, 0),  \
                                       .a1 = get_1(__VA_ARGS__, 0, 0, 0, 0),  \
                                       .a2 = get_2(__VA_ARGS__, 0, 0, 0, 0),  \
@@ -100,5 +100,9 @@ void irqall();
   trace_call(stub, call_args); \
   rettype ret = func arglist; \
   trace_ret(stub, ret);
+
+#define trace_wrapper(rettype, stub, func, arglist, n, ...) \
+  trace_wrapper_noret(rettype, stub, func, arglist, n, __VA_ARGS__); \
+  return ret;
 
 #endif
