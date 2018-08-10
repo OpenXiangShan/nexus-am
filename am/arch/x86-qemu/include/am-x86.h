@@ -60,15 +60,39 @@ void vec14();
 void vecsys();
 void irqall();
 
+// Tracing
+
 static inline int traced() {
-#ifdef CURRENT
+#ifdef TRACE_THIS
   uint32_t flags = trace_flags;
-  if ( (flags & CURRENT) && // the extension is being traced
+  if ( (flags & TRACE_THIS) && // the extension is being traced
        1) {
     return 1;
   }
 #endif
   return 0;
 }
+
+#include <klib.h> // TODO: don't do this.
+
+#define trace_call(fn) \
+  do { \
+    if (traced()) { \
+      printf("Call " #fn " (%x)\n", (void *)fn); \
+    } \
+  } while (0)
+
+#define trace_ret(fn, retval) \
+  do { \
+    if (traced()) { \
+      printf("Return " #fn " (%x) -> %x\n", (void *)fn, (uintptr_t)retval); \
+    } \
+  } while (0)
+
+#define trace_wrapper(rettype, func, args) \
+  trace_call(func); \
+  rettype ret = func args; \
+  trace_ret(func, ret); \
+  return ret;
 
 #endif

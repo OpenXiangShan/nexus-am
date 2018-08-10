@@ -1,3 +1,4 @@
+#define TRACE_THIS _TRACE_PTE
 #include <am-x86.h>
 
 static _Area prot_vm_range = RANGE(0x40000000, 0x80000000);
@@ -13,7 +14,7 @@ static void *pgalloc();
 static void pgfree(void *ptr);
 static PDE *kpt;
 
-int _pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+int pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
   if (_cpu() != 0) {
     panic("init PTE in non-bootstrap CPU");
   }
@@ -78,7 +79,7 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-int _map(_Protect *p, void *va, void *pa, int prot) {
+int map(_Protect *p, void *va, void *pa, int prot) {
   if ((prot & _PROT_NONE) && (prot != _PROT_NONE))
     panic("invalid permission");
   if ((uint32_t)va % PGSIZE != 0) panic("unaligned virtual address");
@@ -127,4 +128,12 @@ static void *pgalloc() {
 
 static void pgfree(void *ptr) {
   pgfree_usr(ptr);
+}
+
+int _pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+  trace_wrapper(int, pte_init, (pgalloc_f, pgfree_f)) ;
+}
+
+int _map(_Protect *p, void *va, void *pa, int prot) {
+  trace_wrapper(int, map, (p, va, pa, prot));
 }
