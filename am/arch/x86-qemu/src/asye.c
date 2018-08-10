@@ -62,30 +62,28 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
   return ctx;
 }
 
-int yield() {
+void yield() {
   asm volatile("int $0x80" : : "a"(-1));
-  return 0;
 }
 
 int intr_read() {
   return (get_efl() & FL_IF) != 0;
 }
 
-int intr_write(int enable) {
+void intr_write(int enable) {
   if (enable) {
     sti();
   } else {
     cli();
   }
-  return 0;
 }
 
 #define IRQ    T_IRQ0 + 
 #define MSG(m) : ev.msg = m;
 
-_Context *_irq_callback(_Event ev, _Context *ctx);
+_Context *__cb_irq(_Event ev, _Context *ctx);
 
-_Context *irq_callback(_Event ev, _Context *ctx) {
+_Context *_cb_irq(_Event ev, _Context *ctx) {
   return user_handler(ev, ctx);
 }
 
@@ -166,7 +164,7 @@ void irq_handle(struct TrapFrame *tf) {
   // Call user handlers (registered in _asye_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
-    _Context *next = _irq_callback(ev, &ctx);
+    _Context *next = __cb_irq(ev, &ctx);
     if (!next) {
       panic("return to a null context");
     }

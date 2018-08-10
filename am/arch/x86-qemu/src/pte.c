@@ -61,7 +61,7 @@ int protect(_Protect *p) {
   return 0;
 }
 
-int unprotect(_Protect *p) {
+void unprotect(_Protect *p) {
   PDE *upt = p->ptr;
   for (uint32_t va = (uint32_t)prot_vm_range.start;
                 va != (uint32_t)prot_vm_range.end;
@@ -72,12 +72,10 @@ int unprotect(_Protect *p) {
     }
   }
   pgfree(upt);
-  return 0;
 }
 
-int prot_switch(_Protect *p) {
+void prot_switch(_Protect *p) {
   set_cr3(p->ptr);
-  return 0;
 }
 
 int map(_Protect *p, void *va, void *pa, int prot) {
@@ -118,8 +116,14 @@ _Context *ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *a
   return ctx;
 }
 
+void *__cb_alloc(size_t size);
+void __cb_free(void *ptr);
+
+void *_cb_alloc(size_t size) { return pgalloc_usr(PGSIZE); }
+void _cb_free(void *ptr) { pgfree_usr(ptr); }
+
 static void *pgalloc() {
-  void *ret = pgalloc_usr(PGSIZE);
+  void *ret = __cb_alloc(PGSIZE);
   if (!ret) panic("page allocation fail"); // for ease of debugging
   for (int i = 0; i < PGSIZE / sizeof(uint32_t); i++) {
     ((uint32_t *)ret)[i] = 0;
@@ -128,5 +132,5 @@ static void *pgalloc() {
 }
 
 static void pgfree(void *ptr) {
-  pgfree_usr(ptr);
+  __cb_free(ptr);
 }
