@@ -3,7 +3,12 @@
 
 #include <am.h>
 #include <amdev.h>
+#include <amtrace.h>
 #include <x86.h>
+
+extern volatile uint32_t *lapic;
+extern int ncpu;
+extern volatile uint32_t trace_flags;
 
 void lapic_eoi();
 void lapic_init();
@@ -14,18 +19,18 @@ void cpu_initgdt();
 void cpu_initpte();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
 
-extern volatile uint32_t *lapic;
-extern int ncpu;
+#define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
+static inline int in_range(void *ptr, _Area area) {
+  return area.start <= ptr && ptr < area.end;
+}
 
 static inline void puts(const char *s) {
   for (; *s; s++) {
     _putc(*s);
   }
 }
-
 #define STRINGIFY(s) #s
 #define TOSTRING(s) STRINGIFY(s)
-
 #define panic(s) \
   do { \
     puts("AM Panic: "); puts(s); \

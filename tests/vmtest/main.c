@@ -1,5 +1,6 @@
 #include <am.h>
 #include <amdev.h>
+#include <amtrace.h>
 #include <klib.h>
 
 _Context *uctx;
@@ -61,6 +62,7 @@ uint8_t code[] = {
 uint8_t kstk[4096];
 
 int main() {
+  _trace_on(_TRACE_ALL);
   st = (uintptr_t)_heap.start;
   _ioe_init();
   _asye_init(handler);

@@ -1,13 +1,14 @@
+#define TRACE_THIS _TRACE_ASYE
 #include <am-x86.h>
 #include <stdarg.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
-int _asye_init(_Context *(*handler)(_Event, _Context *)) {
+int asye_init(_Context *(*handler)(_Event, _Context *)) {
   static GateDesc idt[NR_IRQ];
   ioapic_enable(IRQ_KBD, 0);
 
-  // init IDT
+  // all vectors jumps to @irqall by default
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
     idt[i]  = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
   }
@@ -44,33 +45,32 @@ static void panic_on_return() {
   panic("kernel context returns");
 }
 
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
+_Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *ctx = (_Context *)stack.start;
-  ctx->eax = ctx->ebx = ctx->ecx = ctx->edx = 0;
-  ctx->esi = ctx->edi = ctx->ebp = ctx->esp3 = 0;
-
-  ctx->ss0 = 0; // only used for ring3 procs
-  ctx->esp0 = (uint32_t)stack.end;
-  ctx->cs = KSEL(SEG_KCODE);
-  ctx->ds = ctx->es = ctx->ss = KSEL(SEG_KDATA);
-  ctx->eip = (uint32_t)entry;
-  ctx->eflags = FL_IF;
-
-  uint32_t **esp = (uint32_t **)&ctx->esp0;
-  *(*esp -= 1) = (uint32_t)arg; // argument
-  *(*esp -= 1) = (uint32_t)panic_on_return; // return address
+  *ctx = (_Context) {
+    .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
+    .esi = 0, .edi = 0, .ebp = 0, .esp3 = 0,
+    .ss0 = 0, .esp0 = (uint32_t)stack.end,
+    .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
+    .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
+  };
+  // TODO: this piece of code is not tested.
+  void **esp = (void **)(((uint32_t)ctx->esp0) - 2 * sizeof(uint32_t));
+  esp[0] = panic_on_return;
+  esp[1] = arg;
+  ctx->esp0 = (uint32_t)esp;
   return ctx;
 }
 
-void _yield() {
+void yield() {
   asm volatile("int $0x80" : : "a"(-1));
 }
 
-int _intr_read() {
+int intr_read() {
   return (get_efl() & FL_IF) != 0;
 }
 
-void _intr_write(int enable) {
+void intr_write(int enable) {
   if (enable) {
     sti();
   } else {
@@ -80,6 +80,12 @@ void _intr_write(int enable) {
 
 #define IRQ    T_IRQ0 + 
 #define MSG(m) : ev.msg = m;
+
+_Context *__cb_irq(_Event ev, _Context *ctx);
+
+_Context *_cb_irq(_Event ev, _Context *ctx) {
+  return user_handler(ev, ctx);
+}
 
 void irq_handle(struct TrapFrame *tf) {
   // Saving processor context
@@ -158,7 +164,7 @@ void irq_handle(struct TrapFrame *tf) {
   // Call user handlers (registered in _asye_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
-    _Context *next = user_handler(ev, &ctx);
+    _Context *next = __cb_irq(ev, &ctx);
     if (!next) {
       panic("return to a null context");
     }
