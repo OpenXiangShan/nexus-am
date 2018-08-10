@@ -31,9 +31,10 @@ _Protect prot;
 
 int main() {
   st = (uintptr_t)_heap.start;
-  _trace_on(_TRACE_PTE | _TRACE_ASYE | _TRACE_FUNC);
+  _trace_on(_TRACE_ASYE | _TRACE_FUNC);
   _asye_init(ihandle);
   _pte_init(alloc, free);
+  _trace_on(_TRACE_PTE);
   printf(">>> pte init done.\n");
 
   _protect(&prot);

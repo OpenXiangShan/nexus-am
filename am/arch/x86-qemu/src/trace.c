@@ -11,7 +11,7 @@ void _trace_off(uint32_t flags) {
   trace_flags &= ~flags;
 }
 
-#include <klib.h> // TODO: don't do this.
+#include <klib.h> // TODO: find a better way to write trace logs
 
 #define TRACE_CALL(fn, args) \
   do { \
@@ -33,34 +33,53 @@ void _trace_off(uint32_t flags) {
 #define SHOULD_TRACE(flags, require) \
   (((flags) & TRACE_THIS) && ((flags) & (require)))
 
-#define CALL_ARGS(_0, _1, _2, _3, ...) \
+#define TRACE_ARGS(_0, _1, _2, _3, ...) \
   (_CallArgs) { .a0 = ((uintptr_t)_0), \
                 .a1 = ((uintptr_t)_1), \
                 .a2 = ((uintptr_t)_2), \
                 .a3 = ((uintptr_t)_3), } \
 
-#define TRACE_VOID(rettype, func, decl, arglist, n, ...) \
-  void _##func decl { \
-    TRACE_CALL(func, CALL_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
-    func arglist; \
-    TRACE_RET(func, 0); \
-  }
+#ifndef TRACE_DISABLE
+  // add TRACE_CALL/TRACE_RET before/after AM function calls
+  #define TRACE_VOID(rettype, func, decl, arglist, n, ...) \
+    void _##func decl { \
+      TRACE_CALL(func, TRACE_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
+      func arglist; \
+      TRACE_RET(func, 0); \
+    }
 
-#define TRACE_FUNC(rettype, func, decl, arglist, n, ...) \
-  rettype _##func decl { \
-    TRACE_CALL(func, CALL_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
-    rettype ret = func arglist; \
-    TRACE_RET(func, ret); \
-    return ret; \
-  }
+  #define TRACE_FUNC(rettype, func, decl, arglist, n, ...) \
+    rettype _##func decl { \
+      TRACE_CALL(func, TRACE_ARGS(__VA_ARGS__, 0, 0, 0, 0)); \
+      rettype ret = func arglist; \
+      TRACE_RET(func, ret); \
+      return ret; \
+    }
+#else
+  // TRACE_DISABLE defined, no tracing (saves some checking time)
+  #define TRACE_VOID(rettype, func, decl, arglist, n, ...) \
+    void _##func decl { func arglist; }
+
+  #define TRACE_FUNC(rettype, func, decl, arglist, n, ...) \
+    rettype _##func decl { return func arglist; }
+#endif
 
 #define DECL(tr, rettype, func, decl, args, ...) \
   rettype func decl ;
 
 #define DEF(tr, rettype, func, decl, args, ...) \
   TRACE_##tr(rettype, func, decl, args, __VA_ARGS__)
- 
-#define ASYE_FUNCS(_) \
+
+// each function @f to be traced:
+//   VF | RT | ARGS (w type) | ARGS (w/o type) | NR | ARGS (log)...
+//   (1) VF (void/func): whether @f is void
+//   (2) RT (return type): void; int; void *; ...
+//   (3) ARGS (arguments w type): (int x, int y); (void *ptr); (); ...
+//   (4) ARGS (arguments w/o type): (x, y); (ptr); (); ...
+//   (5) NR (length of the variadic list, must be > 0): 1; 2; 3; ...
+//   (6) ARGS (the arguments to appear in the trace log): x, y, ptr
+
+#define ASYE_TRACE_FUNCS(_) \
   _(FUNC, int, asye_init, (_Context *(*handler)(_Event, _Context *)), (handler), 1, handler) \
   _(FUNC, _Context *, kcontext, (_Area stack, void (*entry)(void *), void *arg), (stack, entry, arg), 2, entry, arg) \
   _(VOID, void, yield, (), (), 1, 0) \
@@ -68,7 +87,7 @@ void _trace_off(uint32_t flags) {
   _(VOID, void, intr_write, (int enable), (enable), 1, enable) \
   _(FUNC, _Context *, _cb_irq, (_Event ev, _Context *ctx), (ev, ctx), 4, ev.event, ev.cause, ev.ref, ctx); \
 
-#define PTE_FUNCS(_) \
+#define PTE_TRACE_FUNCS(_) \
   _(FUNC, int, pte_init, (void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)), (pgalloc_f, pgfree_f), 2, pgalloc_f, pgfree_f) \
   _(FUNC, int, protect, (_Protect *p), (p), 1, p) \
   _(VOID, void, unprotect, (_Protect *p), (p), 1, p) \
@@ -80,13 +99,13 @@ void _trace_off(uint32_t flags) {
 
 // ========== real definitions are generated below ==========
 
-ASYE_FUNCS(DECL)
-PTE_FUNCS(DECL)
+ASYE_TRACE_FUNCS(DECL)
+PTE_TRACE_FUNCS(DECL)
 
 #define TRACE_THIS _TRACE_ASYE
-ASYE_FUNCS(DEF)
+ASYE_TRACE_FUNCS(DEF)
 #undef  TRACE_THIS
 
 #define TRACE_THIS _TRACE_PTE
-PTE_FUNCS(DEF)
+PTE_TRACE_FUNCS(DEF)
 #undef  TRACE_THIS

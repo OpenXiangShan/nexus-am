@@ -12,8 +12,10 @@ typedef union _Payload {
 } _CallPayload;
 
 struct _TraceEvent {
-  uint8_t cpu;
-  uint8_t type;
+  uint16_t cpu;
+  uint16_t type;
+  uint32_t time;
+  uintptr_t ref;
   char payload[];
 } __attribute__((packed));
 typedef struct _TraceEvent _TraceEvent;
