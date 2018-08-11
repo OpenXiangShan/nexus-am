@@ -65,7 +65,7 @@ typedef struct _Protect {
 
 extern _Area _heap;
 void _putc(char ch);
-void _halt(int code);
+void _halt(int code) __attribute__((__noreturn__));
 
 // ======================= I/O Extension (IOE) =======================
 

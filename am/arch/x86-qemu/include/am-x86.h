@@ -11,7 +11,7 @@ extern int ncpu;
 extern volatile uint32_t trace_flags;
 
 void lapic_eoi();
-void lapic_init();
+void cpu_lapic_init();
 void ioapic_init();
 void lapic_bootap(int cpu, uint32_t address);
 void ioapic_enable(int irq, int cpu);
@@ -19,7 +19,7 @@ void cpu_initidt();
 void cpu_initgdt();
 void cpu_initpte();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
-void cpu_die();
+void cpu_die() __attribute__((__noreturn__));
 void mp_halt();
 
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }

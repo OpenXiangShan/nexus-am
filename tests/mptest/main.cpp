@@ -31,8 +31,8 @@ static void free(void *ptr) {
 }
 
 int main() {
-  _trace_on(_TRACE_ALL);
   start = (uintptr_t)_heap.start;
+  _trace_on(_TRACE_ALL);
   _asye_init(interrupt);
   _pte_init(alloc, free);
   _mpe_init(f);

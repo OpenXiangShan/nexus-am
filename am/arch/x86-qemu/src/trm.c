@@ -13,10 +13,10 @@ static void sys_init();
 void _start() {
   // setup a C runtime environment
   sys_init();
-  lapic_init();
-  ioapic_init();
   memory_init();
   cpu_initgdt();
+  cpu_lapic_init();
+  ioapic_init();
 
   int ret = main();
   _halt(ret);
@@ -60,7 +60,7 @@ static void sys_init() {
   panic("seems not an x86-qemu machine");
 }
 
-static void memory_init() {
+void memory_init() {
   extern char end;
   uintptr_t st, ed, step = 1L << 20; // probe step: 1 MB
   st = ed = (((uintptr_t)&end) & ~(step - 1)) + step;

@@ -2,7 +2,7 @@
 
 int ncpu = 0;
 static void (* volatile user_entry)();
-static intptr_t apboot_done = 0;
+static volatile intptr_t apboot_done = 0;
 
 static void mp_entry();
 static void stack_switch(void (*entry)());
@@ -39,7 +39,7 @@ volatile struct boot_info *boot_rec = (void *)0x7000;
 static void ap_entry() {
   cpu_initgdt();
   cpu_initidt();
-  lapic_init();
+  cpu_lapic_init();
   ioapic_enable(IRQ_KBD, _cpu());
   cpu_initpte();
   _atomic_xchg(&apboot_done, 1);
@@ -53,6 +53,7 @@ static void stack_switch(void (*entry)()) {
     "call *%1" : : "r"(&cpu_stk[_cpu() + 1][0]), "r"(entry));
 }
 
+#include <klib.h>
 static void mp_entry() { // all cpus execute mp_entry()
   if (_cpu() != 0) {
     // init an ap
