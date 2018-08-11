@@ -35,7 +35,7 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
-  asm volatile(".byte 0xd6" : :"a"(code));
+  __asm__ volatile(".byte 0xd6" : :"a"(code));
 
   // should not reach here
   while (1);

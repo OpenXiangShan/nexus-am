@@ -62,7 +62,6 @@ uint8_t code[] = {
 uint8_t kstk[4096];
 
 int main() {
-  _trace_on(_TRACE_ALL);
   st = (uintptr_t)_heap.start;
   _ioe_init();
   _asye_init(handler);
@@ -78,7 +77,7 @@ int main() {
   _map(&prot, ptr, alloc(pgsz), _PROT_WRITE);
   _map(&prot, ptr + pgsz, alloc(pgsz), _PROT_WRITE);
 
-  _switch(&prot);
+  _prot_switch(&prot);
 
   memcpy(ptr, code, sizeof(code));
 
@@ -88,7 +87,7 @@ int main() {
   _Area u = { .start = ptr + pgsz, .end = ptr + pgsz * 2 };
 
   uctx = _ucontext(&prot, u, k, ptr, 0);
-  _switch(&prot);
+  _prot_switch(&prot);
 
   _intr_write(1);
   while (1) {

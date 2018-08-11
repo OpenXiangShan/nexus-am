@@ -1,11 +1,11 @@
-#define TRACE_THIS _TRACE_ASYE
 #include <am-x86.h>
 #include <stdarg.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
+static GateDesc idt[NR_IRQ];
 
 int asye_init(_Context *(*handler)(_Event, _Context *)) {
-  static GateDesc idt[NR_IRQ];
+  if (_cpu() != 0) panic("init ASYE in non-bootstrap CPU");
   ioapic_enable(IRQ_KBD, 0);
 
   // all vectors jumps to @irqall by default
@@ -34,11 +34,17 @@ int asye_init(_Context *(*handler)(_Event, _Context *)) {
   idt[46]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq14,  DPL_KERN);
   // -------------------- system call --------------------------
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
-  set_idt(idt, sizeof(idt));
 
   user_handler = handler; // global (unique) interrupt/exception handler
+  cpu_initidt();
 
   return 0;
+}
+
+void cpu_initidt() {
+  if (user_handler) {
+    set_idt(idt, sizeof(idt));
+  }
 }
 
 static void panic_on_return() {
@@ -63,7 +69,7 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
 }
 
 void yield() {
-  asm volatile("int $0x80" : : "a"(-1));
+  __asm__ volatile ("int $0x80" : : "a"(-1));
 }
 
 int intr_read() {
@@ -88,32 +94,29 @@ _Context *_cb_irq(_Event ev, _Context *ctx) {
 }
 
 void irq_handle(struct TrapFrame *tf) {
-  // Saving processor context
+  // saving processor context
   _Context ctx = {
-    .eax = tf->eax, .ebx = tf->ebx, .ecx = tf->ecx, .edx = tf->edx,
-    .esi = tf->esi, .edi = tf->edi, .ebp = tf->ebp, .esp3 = 0,
+    .eax = tf->eax, .ebx = tf->ebx, .ecx  = tf->ecx, .edx  = tf->edx,
+    .esi = tf->esi, .edi = tf->edi, .ebp  = tf->ebp, .esp3 = 0,
     .eip = tf->eip, .eflags = tf->eflags,
-    .cs  = tf->cs,  .ds = tf->ds,   .es = tf->es,   .ss = 0,
-    .ss0 = 0, .esp0 = 0,
+    .cs  = tf->cs,  .ds  = tf->ds,  .es   = tf->es,  .ss   = 0,
+    .ss0 = KSEL(SEG_KDATA),         .esp0 = (uint32_t)(tf + 1),
   };
 
   if (tf->cs & DPL_USER) { // interrupt at user code
-    ctx.esp0 = (uint32_t)(tf + 1); // tf is verything saved on the stack
     ctx.ss = tf->ss;
     ctx.esp3 = tf->esp;
-    ctx.ss0 = KSEL(SEG_KDATA);
   } else { // interrupt at kernel code
     // tf (without ss0/esp0) is everything saved on the stack
-    ctx.ss0 = KSEL(SEG_KDATA);
-    ctx.esp0 = ((uint32_t)(tf + 1)) - sizeof(uint32_t) * 2;
+    ctx.esp0 -= sizeof(uint32_t) * 2;
   }
 
-  // Sending end-of-interrupt
+  // sending end-of-interrupt
   if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
     lapic_eoi();
   }
 
-  // Creating an event
+  // creating an event
   _Event ev = {
     .event = _EVENT_NULL,
     .cause = 0, .ref = 0,
@@ -161,7 +164,7 @@ void irq_handle(struct TrapFrame *tf) {
       break;
   }
 
-  // Call user handlers (registered in _asye_init)
+  // call user handlers (registered in _asye_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
     _Context *next = __cb_irq(ev, &ctx);
@@ -182,14 +185,14 @@ void irq_handle(struct TrapFrame *tf) {
  
   if (ret_ctx->cs & DPL_USER) { // return to user
     cpu_setustk(ret_ctx->ss0, ret_ctx->esp0);
-    asm volatile goto(
+    __asm__ volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_USER(push)       // push reg context onto stack
       "jmp %l[iret]"        // goto iret
     : : [esp] "m"(ret_ctx->esp0)
         REGS_USER(def) : : iret );
   } else { // return to kernel
-    asm volatile goto(
+    __asm__ volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_KERNEL(push)     // push reg context onto stack
       "jmp %l[iret]"        // goto iret
@@ -197,7 +200,7 @@ void irq_handle(struct TrapFrame *tf) {
         REGS_KERNEL(def) : : iret );
   }
 iret:
-  asm volatile(
+  __asm__ volatile (
     "popal;"     // restore context
     "popl %es;"
     "popl %ds;"

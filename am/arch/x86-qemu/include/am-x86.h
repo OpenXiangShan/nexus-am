@@ -11,13 +11,20 @@ extern int ncpu;
 extern volatile uint32_t trace_flags;
 
 void lapic_eoi();
-void lapic_init();
 void ioapic_init();
 void lapic_bootap(int cpu, uint32_t address);
 void ioapic_enable(int irq, int cpu);
+
+void mp_halt();
+
+// all cpu_xxx only affects the currently running cpu.
+//     cpu_initxxx must be called for each cpu.
+void cpu_lapic_init();
+void cpu_initidt();
 void cpu_initgdt();
 void cpu_initpte();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
+void cpu_die() __attribute__((__noreturn__));
 
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
 static inline int in_range(void *ptr, _Area area) {

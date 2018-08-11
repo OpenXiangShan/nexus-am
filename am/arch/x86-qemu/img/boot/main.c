@@ -12,10 +12,10 @@ struct boot_info {
 void
 bootmain(void) {
   volatile struct boot_info *boot = (void*)0x7000;
-  if (boot->is_ap) {
+  int is_ap = boot->is_ap;
+  if (is_ap == 1) {
     boot->entry();
   }
-
   struct ELFHeader *elf;
   struct ProgramHeader *ph, *eph;
   unsigned char *pa, *i;

@@ -5,13 +5,10 @@
 目录组织：
 
 * `am/`：AM头文件、每个体系结构分别实现的AM代码。
+* `docs/`: AM文档、开发指南。
 * `libs/`：建立在AM上、体系结构无关的运行库，如软件模拟浮点数、基础libc功能等。
 * `apps/`：一些运行在AM上应用程序示例。
 * `tests/`: 用来测试AM实现的简单测试程序。
-
-## AM Specification
-
-参考：[AM Specification](SPEC.md)。
 
 ## 创建一个AM应用
 
@@ -29,7 +26,6 @@ include $(AM_HOME)/Makefile.app
 
 * `NAME`定义了应用的名字。编译后会在`build/`目录里出现以此命名的应用程序。
 * `SRCS`指定了编译应用所需的源文件。可以放在应用目录中的任意位置。
-
 
 * 应用目录下的`include/`目录会被添加到编译的`-I`选项中。
 * 环境变量`AM_HOME`需要包含**nexus-am项目的根目录的绝对路径**。

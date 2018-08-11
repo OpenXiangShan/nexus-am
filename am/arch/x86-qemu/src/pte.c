@@ -14,9 +14,7 @@ static void pgfree(void *ptr);
 static PDE *kpt;
 
 int pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
-  if (_cpu() != 0) {
-    panic("init PTE in non-bootstrap CPU");
-  }
+  if (_cpu() != 0) panic("init PTE in non-bootstrap CPU");
 
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
@@ -104,11 +102,12 @@ int map(_Protect *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *ucontext(_Protect *p, _Area ustack, _Area kstack,
+                                void *entry, void *args) {
   _Context *ctx = (_Context*)kstack.start;
   *ctx = (_Context) {
-    .cs = USEL(SEG_UCODE),  .eip = (uint32_t)entry, .eflags = FL_IF,
-    .ds = USEL(SEG_UDATA),  .es  = USEL(SEG_UDATA),
+    .cs  = USEL(SEG_UCODE), .eip  = (uint32_t)entry, .eflags = FL_IF,
+    .ds  = USEL(SEG_UDATA), .es   = USEL(SEG_UDATA),
     .ss  = USEL(SEG_UDATA), .esp3 = (uint32_t)ustack.end,
     .ss0 = KSEL(SEG_KDATA), .esp0 = (uint32_t)kstack.end,
     .eax = (uint32_t)args,

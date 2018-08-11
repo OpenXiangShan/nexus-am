@@ -2,7 +2,7 @@
 
 int ncpu = 0;
 static void (* volatile user_entry)();
-static intptr_t apboot_done = 0;
+static volatile intptr_t apboot_done = 0;
 
 static void mp_entry();
 static void stack_switch(void (*entry)());
@@ -25,7 +25,7 @@ int _ncpu() {
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   intptr_t result;
-  asm volatile("lock xchgl %0, %1":
+  __asm__ volatile ("lock xchgl %0, %1":
     "+m"(*addr), "=a"(result): "1"(newval): "cc");
   return result;
 }
@@ -34,10 +34,12 @@ struct boot_info {
   int is_ap;
   void (*entry)();
 };
+volatile struct boot_info *boot_rec = (void *)0x7000;
 
 static void ap_entry() {
   cpu_initgdt();
-  lapic_init();
+  cpu_initidt();
+  cpu_lapic_init();
   ioapic_enable(IRQ_KBD, _cpu());
   cpu_initpte();
   _atomic_xchg(&apboot_done, 1);
@@ -46,24 +48,39 @@ static void ap_entry() {
 
 static void stack_switch(void (*entry)()) {
   static uint8_t cpu_stk[MAX_CPU][4096]; // each cpu gets a 4KB stack
-  asm volatile(
+  __asm__ volatile (
     "movl %0, %%esp;"
     "call *%1" : : "r"(&cpu_stk[_cpu() + 1][0]), "r"(entry));
 }
 
+#include <klib.h>
 static void mp_entry() { // all cpus execute mp_entry()
   if (_cpu() != 0) {
     // init an ap
     stack_switch(ap_entry);
   } else {
     // stack already swithced, boot all aps
-    volatile struct boot_info *boot = (void *)0x7000;
     for (int cpu = 1; cpu < ncpu; cpu ++) {
-      boot->is_ap = 1;
-      boot->entry = mp_entry;
+      boot_rec->is_ap = 1;
+      boot_rec->entry = mp_entry;
       lapic_bootap(cpu, 0x7c00);
       while (_atomic_xchg(&apboot_done, 0) != 1);
     }
     user_entry();
+  }
+}
+
+void cpu_die() {
+  cli();
+  while (1) hlt();
+}
+
+void mp_halt() {
+  boot_rec->is_ap = 1;
+  boot_rec->entry = cpu_die;
+  for (int cpu = 0; cpu < ncpu; cpu++) {
+    if (cpu != _cpu()) {
+      lapic_bootap(cpu, 0x7c00);
+    }
   }
 }
