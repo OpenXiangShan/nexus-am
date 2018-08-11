@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // =========================== AM Devices ============================
 // ((_Device *)dev)->id
 
@@ -95,5 +99,9 @@
 #define _DEVREG_ATA_CYHIGH    5
 #define _DEVREG_ATA_DRIVE     6
 #define _DEVREG_ATA_STATUS    7
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

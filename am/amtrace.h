@@ -1,6 +1,10 @@
 #ifndef __AMTRACE_H__
 #define __AMTRACE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // payload of function calls
 typedef struct _CallArgs {
   uintptr_t a0, a1, a2, a3;
@@ -37,5 +41,9 @@ typedef struct _TraceEvent _TraceEvent;
 
 void _trace_on(uint32_t flags);
 void _trace_off(uint32_t flags);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
