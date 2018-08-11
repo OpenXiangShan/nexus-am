@@ -8,4 +8,6 @@
 
 怎么跳出呢？
 
-## 中断
+## 中断 {#intr}
+
+See [Section XX](#intr).

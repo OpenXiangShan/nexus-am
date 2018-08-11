@@ -5,4 +5,5 @@ RENDER_LIST = $(foreach f, $(MDS), $(f) .blankline)
 
 all:
 	@mkdir -p build/
-	pandoc -f markdown -t html src/title.txt $(RENDER_LIST) > $(OUTPUT)
+	pandoc -f markdown+footnotes \
+	       -t html src/title.txt $(RENDER_LIST) > $(OUTPUT)

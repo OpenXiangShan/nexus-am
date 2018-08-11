@@ -20,8 +20,14 @@
 
 例子：自己写了个CPU，非常简陋。
 
-但可以做很多事。
+但可以做很多事。[^hw-1]
 
-(COLUMN) mips impl
+[^hw-1]: Hello.
 
-(COLUMN) x86 impl
+::::: {.sidebar}
+MIPS32 implementation
+:::::
+
+::::: {.sidebar}
+x86 implementation
+:::::
