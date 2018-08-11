@@ -89,12 +89,12 @@ typedef struct GateDesc {
 
 static inline uint32_t get_cr0(void) {
   volatile uint32_t val;
-  asm volatile("movl %%cr0, %0" : "=r"(val));
+  __asm__ volatile("movl %%cr0, %0" : "=r"(val));
   return val;
 }
 
 static inline void set_cr0(uint32_t cr0) {
-  asm volatile("movl %0, %%cr0" : : "r"(cr0));
+  __asm__ volatile("movl %0, %%cr0" : : "r"(cr0));
 }
 
 
@@ -103,41 +103,41 @@ static inline void set_idt(GateDesc *idt, int size) {
   data[0] = size - 1;
   data[1] = (uint32_t)idt;
   data[2] = (uint32_t)idt >> 16;
-  asm volatile("lidt (%0)" : : "r"(data));
+  __asm__ volatile("lidt (%0)" : : "r"(data));
 }
 
 static inline void set_cr3(void *pdir) {
-  asm volatile("movl %0, %%cr3" : : "r"(pdir));
+  __asm__ volatile("movl %0, %%cr3" : : "r"(pdir));
 }
 
 static inline uint8_t inb(int port) {
   char data;
-  asm volatile("inb %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  __asm__ volatile("inb %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
 static inline uint16_t inw(int port) {
   short data;
-  asm volatile("inw %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  __asm__ volatile("inw %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
 static inline uint32_t inl(int port) {
   long data;
-  asm volatile("inl %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  __asm__ volatile("inl %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
 static inline void outb(int port, uint8_t data) {
-  asm volatile("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
+  __asm__ volatile("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 static inline void outw(int port, uint16_t data) {
-  asm volatile("outw %%ax, %%dx" : : "a"(data), "d"((uint16_t)port));
+  __asm__ volatile("outw %%ax, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 static inline void outl(int port, uint32_t data) {
-  asm volatile("outl %%eax, %%dx" : : "a"(data), "d"((uint16_t)port));
+  __asm__ volatile("outl %%eax, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 #endif
