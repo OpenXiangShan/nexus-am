@@ -11,15 +11,57 @@ void _trace_off(uint32_t flags) {
   trace_flags &= ~flags;
 }
 
-#include <klib.h> // TODO: find a better way to write trace logs
+#define COM2_PORT 0x2f8
+
+volatile intptr_t lock = 1;
+
+static inline void log_lock() {
+  while (1) {
+    intptr_t val = _atomic_xchg(&lock, 0);
+    if (val == 1) {
+      break;
+    }
+    asm volatile ("pause");
+  }
+}
+
+static inline void log_unlock(){
+  _atomic_xchg(&lock, 1);
+}
+
+static inline void log_byte(uint8_t ch) {
+  while ( (inb(COM2_PORT + 5) & 0x20) == 0 ) {
+    // TODO: see if this happens in practice
+    panic("writing to file serial port fail");
+  }
+  outb(COM2_PORT, ch);
+}
+
+static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
+  log_lock();
+  for (int i = 0; i < sizeof(ev); i++) {
+    log_byte(((char *)&ev)[i]);
+  }
+  for (int i = 0; i < length; i++) {
+    log_byte(((char *)ptr)[i]);
+  }
+  log_unlock();
+}
+
+static int tsc = 0;
+
+#define EV(_type, _ref) \
+  (_TraceEvent) { \
+    .cpu = (uint16_t)_cpu(), \
+    .type = _type, \
+    .time = tsc++, \
+    .ref = (uintptr_t)_ref }
 
 #define TRACE_CALL(fn, args) \
   do { \
     uint32_t flags = trace_flags; \
     if (SHOULD_TRACE(flags, _TRACE_CALL)) { \
-      printf("[trace] call  " #fn \
-             " (%x) with args {%x, %x, %x, %x}\n", (void *)fn, \
-        args.a0, args.a1, args.a2, args.a3); \
+      log_ev(EV(_TRACE_CALL, fn), sizeof(args), &args); \
     } \
   } while (0)
 
@@ -27,10 +69,12 @@ void _trace_off(uint32_t flags) {
   do { \
     uint32_t flags = trace_flags; \
     if (SHOULD_TRACE(flags, _TRACE_RET)) { \
-      printf("[trace]  ret  " #fn " (%x) -> %x\n", \
-             (void *)fn, (uintptr_t)retval); \
+      uintptr_t v = (uintptr_t)retval; \
+      log_ev(EV(_TRACE_RET, fn), sizeof(uintptr_t), &v); \
     } \
   } while (0)
+
+// ========================= trace wrappers ==========================
 
 #define SHOULD_TRACE(flags, require) \
   (((flags) & TRACE_THIS) && ((flags) & (require)))
