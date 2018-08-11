@@ -19,6 +19,8 @@ void cpu_initidt();
 void cpu_initgdt();
 void cpu_initpte();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
+void cpu_die();
+void mp_halt();
 
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
 static inline int in_range(void *ptr, _Area area) {

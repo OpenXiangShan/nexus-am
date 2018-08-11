@@ -34,6 +34,7 @@ struct boot_info {
   int is_ap;
   void (*entry)();
 };
+volatile struct boot_info *boot_rec = (void *)0x7000;
 
 static void ap_entry() {
   cpu_initgdt();
@@ -58,13 +59,27 @@ static void mp_entry() { // all cpus execute mp_entry()
     stack_switch(ap_entry);
   } else {
     // stack already swithced, boot all aps
-    volatile struct boot_info *boot = (void *)0x7000;
     for (int cpu = 1; cpu < ncpu; cpu ++) {
-      boot->is_ap = 1;
-      boot->entry = mp_entry;
+      boot_rec->is_ap = 1;
+      boot_rec->entry = mp_entry;
       lapic_bootap(cpu, 0x7c00);
       while (_atomic_xchg(&apboot_done, 0) != 1);
     }
     user_entry();
+  }
+}
+
+void cpu_die() {
+  cli();
+  while (1) hlt();
+}
+
+void mp_halt() {
+  boot_rec->is_ap = 1;
+  boot_rec->entry = cpu_die;
+  for (int cpu = 0; cpu < ncpu; cpu++) {
+    if (cpu != _cpu()) {
+      lapic_bootap(cpu, 0x7c00);
+    }
   }
 }

@@ -27,21 +27,22 @@ struct ProgramHeader {
 	unsigned int align;
 };
 
-static inline char
-in_byte(short port) {
+static inline char in_byte(short port) {
 	char data;
-	asm volatile("in %1,%0" : "=a" (data) : "d" (port));
+	__asm__ volatile ("in %1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
-static inline int 
-in_long(short port) {
-	int data;
-	asm volatile("in %1, %0" : "=a" (data) : "d" (port));
+static inline int in_long(short port) {
+  int data;
+	__asm__ volatile ("in %1, %0" : "=a" (data) : "d" (port));
 	return data;
 }
 
-static inline void
-out_byte(short port, char data) {
-	asm volatile("out %0,%1" : : "a" (data), "d" (port));
+static inline void out_byte(short port, char data) {
+	__asm__ volatile ("out %0,%1" : : "a" (data), "d" (port));
+}
+
+static inline void hlt() {
+  __asm__ volatile ("hlt");
 }

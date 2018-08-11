@@ -5,6 +5,10 @@
 
 void f() {
   _intr_write(1);
+  if (_cpu() == 0) {
+    for (int volatile i = 0; i < 10000000; i++) ;
+    assert(0);
+  }
   while (1) {
     printf("%d", _cpu());
   }

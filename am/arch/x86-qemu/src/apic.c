@@ -115,7 +115,6 @@ lapic_bootap(unsigned char apicid, unsigned int addr)
 {
   int i;
   unsigned short *wrv;
-
   
   // "The BSP must initialize CMOS shutdown code to 0AH
   // and the warm reset vector (DWORD based at 40:67) to point at

@@ -24,6 +24,7 @@ static _Device x86_dev[] = {
 };
 
 int _ioe_init() {
+  if (_cpu() != 0) panic("init IOE in non-bootstrap CPU");
   timer_init();
   vga_init();
   return 0;

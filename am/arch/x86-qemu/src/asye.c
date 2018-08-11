@@ -5,6 +5,7 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 static GateDesc idt[NR_IRQ];
 
 int asye_init(_Context *(*handler)(_Event, _Context *)) {
+  if (_cpu() != 0) panic("init ASYE in non-bootstrap CPU");
   ioapic_enable(IRQ_KBD, 0);
 
   // all vectors jumps to @irqall by default

@@ -27,13 +27,12 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
+  cli();
+  mp_halt();
   char buf[] = "Exited (#).\n";
   buf[8] = '0' + code;
   puts(buf);
-  while (1) {
-    // TODO: multiprocessor shutdown
-    cli(); hlt();
-  }
+  cpu_die();
 }
 
 #define MP_PROC    0x00
