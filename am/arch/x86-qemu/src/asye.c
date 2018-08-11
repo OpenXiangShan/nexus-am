@@ -2,9 +2,9 @@
 #include <stdarg.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
+static GateDesc idt[NR_IRQ];
 
 int asye_init(_Context *(*handler)(_Event, _Context *)) {
-  static GateDesc idt[NR_IRQ];
   ioapic_enable(IRQ_KBD, 0);
 
   // all vectors jumps to @irqall by default
@@ -33,11 +33,17 @@ int asye_init(_Context *(*handler)(_Event, _Context *)) {
   idt[46]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq14,  DPL_KERN);
   // -------------------- system call --------------------------
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
-  set_idt(idt, sizeof(idt));
 
   user_handler = handler; // global (unique) interrupt/exception handler
+  cpu_initidt();
 
   return 0;
+}
+
+void cpu_initidt() {
+  if (user_handler) {
+    set_idt(idt, sizeof(idt));
+  }
 }
 
 static void panic_on_return() {

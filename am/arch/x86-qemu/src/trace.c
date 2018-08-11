@@ -7,7 +7,6 @@ static inline void trace_lock() {
   while (1) {
     if (0 == _atomic_xchg(&locked, 1)) break;
     __asm__ volatile ("pause");
-    panic(".");
   }
 }
 

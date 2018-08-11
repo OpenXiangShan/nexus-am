@@ -4,18 +4,15 @@
 #include <amtrace.h>
 
 void f() {
-  if (_cpu() == 1) {
-    _intr_write(1);
-  }
+  _intr_write(1);
   while (1) {
-    // printf("%d", _cpu());
+    printf("%d", _cpu());
   }
 }
 
 static uintptr_t start;
 
 static _Context *interrupt(_Event ev, _Context *ctx) {
-  printf("Interrupt at core #%d\n", _cpu());
   return ctx;
 }
 

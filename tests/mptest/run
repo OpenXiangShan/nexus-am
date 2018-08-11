@@ -1,5 +1,6 @@
 #!/bin/bash
-make && \
+make || exit
+
 qemu-system-i386 \
   -smp 4 \
   -chardev stdio,mux=on,id=char0 \

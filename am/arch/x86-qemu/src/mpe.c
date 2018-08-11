@@ -37,6 +37,7 @@ struct boot_info {
 
 static void ap_entry() {
   cpu_initgdt();
+  cpu_initidt();
   lapic_init();
   ioapic_enable(IRQ_KBD, _cpu());
   cpu_initpte();
