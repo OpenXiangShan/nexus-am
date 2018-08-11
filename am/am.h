@@ -10,10 +10,6 @@
 #include <stddef.h>
 #include <arch.h>
 
-#ifndef NULL
-# define NULL ((void *)0)
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -22,10 +18,10 @@ extern "C" {
 
 enum {
   _EVENT_NULL = 0,
+  _EVENT_ERROR,
   _EVENT_IRQ_TIMER,
   _EVENT_IRQ_IODEV,
   _EVENT_PAGEFAULT,
-  _EVENT_ERROR,
   _EVENT_YIELD,
   _EVENT_SYSCALL,
 };

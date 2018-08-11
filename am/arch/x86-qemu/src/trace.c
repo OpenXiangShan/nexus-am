@@ -21,7 +21,7 @@ static inline void log_lock() {
     if (val == 1) {
       break;
     }
-    asm volatile ("pause");
+    __asm__ volatile ("pause");
   }
 }
 
@@ -30,10 +30,7 @@ static inline void log_unlock(){
 }
 
 static inline void log_byte(uint8_t ch) {
-  while ( (inb(COM2_PORT + 5) & 0x20) == 0 ) {
-    // TODO: see if this happens in practice
-    panic("writing to file serial port fail");
-  }
+  while ((inb(COM2_PORT + 5) & 0x20) == 0) ;
   outb(COM2_PORT, ch);
 }
 
@@ -48,7 +45,7 @@ static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
   log_unlock();
 }
 
-static int tsc = 0;
+static uint32_t tsc = 0;
 
 #define EV(_type, _ref) \
   (_TraceEvent) { \
@@ -69,8 +66,8 @@ static int tsc = 0;
   do { \
     uint32_t flags = trace_flags; \
     if (SHOULD_TRACE(flags, _TRACE_RET)) { \
-      uintptr_t v = (uintptr_t)retval; \
-      log_ev(EV(_TRACE_RET, fn), sizeof(uintptr_t), &v); \
+      uintptr_t val = (uintptr_t)retval; \
+      log_ev(EV(_TRACE_RET, fn), sizeof(uintptr_t), &val); \
     } \
   } while (0)
 

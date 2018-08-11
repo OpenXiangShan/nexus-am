@@ -6,3 +6,4 @@ qemu-system-i386 \
   -serial chardev:char0 \
   -serial chardev:char1 \
   build/tracetest-x86-qemu
+hd trace.log

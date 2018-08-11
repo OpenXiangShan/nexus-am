@@ -25,7 +25,7 @@ int _ncpu() {
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   intptr_t result;
-  asm volatile("lock xchgl %0, %1":
+  __asm__ volatile ("lock xchgl %0, %1":
     "+m"(*addr), "=a"(result): "1"(newval): "cc");
   return result;
 }
@@ -46,7 +46,7 @@ static void ap_entry() {
 
 static void stack_switch(void (*entry)()) {
   static uint8_t cpu_stk[MAX_CPU][4096]; // each cpu gets a 4KB stack
-  asm volatile(
+  __asm__ volatile (
     "movl %0, %%esp;"
     "call *%1" : : "r"(&cpu_stk[_cpu() + 1][0]), "r"(entry));
 }

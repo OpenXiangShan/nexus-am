@@ -6,7 +6,7 @@ uint64_t uptsc;
 
 static inline uint64_t rdtsc() {
   uint32_t lo, hi;
-  asm volatile ("rdtsc": "=a"(lo), "=d"(hi));
+  __asm__ volatile ("rdtsc": "=a"(lo), "=d"(hi));
   return ((uint64_t)hi << 32) | lo;
 }
 

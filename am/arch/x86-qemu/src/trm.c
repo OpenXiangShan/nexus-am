@@ -32,7 +32,7 @@ void _halt(int code) {
   puts(buf);
   while (1) {
     // TODO: multiprocessor shutdown
-    asm volatile("cli; hlt");
+    cli(); hlt();
   }
 }
 

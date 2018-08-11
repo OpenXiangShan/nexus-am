@@ -62,7 +62,7 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
 }
 
 void yield() {
-  asm volatile("int $0x80" : : "a"(-1));
+  __asm__ volatile ("int $0x80" : : "a"(-1));
 }
 
 int intr_read() {
@@ -178,14 +178,14 @@ void irq_handle(struct TrapFrame *tf) {
  
   if (ret_ctx->cs & DPL_USER) { // return to user
     cpu_setustk(ret_ctx->ss0, ret_ctx->esp0);
-    asm volatile goto(
+    __asm__ volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_USER(push)       // push reg context onto stack
       "jmp %l[iret]"        // goto iret
     : : [esp] "m"(ret_ctx->esp0)
         REGS_USER(def) : : iret );
   } else { // return to kernel
-    asm volatile goto(
+    __asm__ volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_KERNEL(push)     // push reg context onto stack
       "jmp %l[iret]"        // goto iret
@@ -193,7 +193,7 @@ void irq_handle(struct TrapFrame *tf) {
         REGS_KERNEL(def) : : iret );
   }
 iret:
-  asm volatile(
+  __asm__ volatile (
     "popal;"     // restore context
     "popl %es;"
     "popl %ds;"
