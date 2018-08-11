@@ -62,7 +62,7 @@ void shm_munmap(void *va) {
 //  printf("%p -> 0\n", va);
 }
 
-void get_example_uc(_RegSet *r) {
+void get_example_uc(_Context *r) {
   memcpy(&r->uc, &uc_example, sizeof(uc_example));
 }
 
