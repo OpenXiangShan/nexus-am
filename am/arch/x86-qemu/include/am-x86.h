@@ -19,10 +19,10 @@ void mp_halt();
 
 // all cpu_xxx only affects the currently running cpu.
 //     cpu_initxxx must be called for each cpu.
-void cpu_lapic_init();
 void cpu_initidt();
 void cpu_initgdt();
-void cpu_initpte();
+void cpu_initlapic();
+void cpu_initpg();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
 void cpu_die() __attribute__((__noreturn__));
 

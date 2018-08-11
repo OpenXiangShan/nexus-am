@@ -15,7 +15,7 @@ void _start() {
   sys_init();
   memory_init();
   cpu_initgdt();
-  cpu_lapic_init();
+  cpu_initlapic();
   ioapic_init();
 
   int ret = main();

@@ -48,7 +48,7 @@ lapicw(int index, int value)
 }
 
 void
-cpu_lapic_init(void)
+cpu_initlapic(void)
 {
   // Enable local APIC; set spurious interrupt vector.
   lapicw(SVR, ENABLE | (T_IRQ0 + IRQ_SPURIOUS));

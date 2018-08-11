@@ -39,9 +39,9 @@ volatile struct boot_info *boot_rec = (void *)0x7000;
 static void ap_entry() {
   cpu_initgdt();
   cpu_initidt();
-  cpu_lapic_init();
+  cpu_initlapic();
+  cpu_initpg();
   ioapic_enable(IRQ_KBD, _cpu());
-  cpu_initpte();
   _atomic_xchg(&apboot_done, 1);
   user_entry();
 }
