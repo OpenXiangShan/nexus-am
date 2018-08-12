@@ -10,22 +10,22 @@ extern volatile uint32_t *lapic;
 extern int ncpu;
 extern volatile uint32_t trace_flags;
 
+// apic utils
 void lapic_eoi();
 void ioapic_init();
 void lapic_bootap(int cpu, uint32_t address);
 void ioapic_enable(int irq, int cpu);
 
-void mp_halt();
+// per-cpu x86-specific operations
+void percpu_initirq();
+void percpu_initgdt();
+void percpu_initlapic();
+void percpu_initpg();
+void thiscpu_setustk(uintptr_t ss0, uintptr_t esp0);
+void thiscpu_die() __attribute__((__noreturn__));
+void allcpu_halt();
 
-// all cpu_xxx only affects the currently running cpu.
-//     cpu_initxxx must be called for each cpu.
-void cpu_initidt();
-void cpu_initgdt();
-void cpu_initlapic();
-void cpu_initpg();
-void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
-void cpu_die() __attribute__((__noreturn__));
-
+// simple spin locks
 #define LOCKDECL(name) \
   void name##_lock(); \
   void name##_unlock();
@@ -64,27 +64,5 @@ static inline void puts(const char *s) {
     puts(" @ " __FILE__ ":" TOSTRING(__LINE__) "  \n"); \
     _halt(1); \
   } while(0)
-
-
-void irq0();
-void irq1();
-void irq14();
-void vec0();
-void vec1();
-void vec2();
-void vec3();
-void vec4();
-void vec5();
-void vec6();
-void vec7();
-void vec8();
-void vec9();
-void vec10();
-void vec11();
-void vec12();
-void vec13();
-void vec14();
-void vecsys();
-void irqall();
 
 #endif

@@ -12,7 +12,7 @@ _Context* handler(_Event ev, _Context *ctx) {
       break;
     case _EVENT_IRQ_TIMER:
     case _EVENT_IRQ_IODEV: 
-      printf("==== interrupt ===\n");
+      printf("==== interrupt (%s)  ===\n", ev.msg);
       break;
     case _EVENT_PAGEFAULT:
       printf("PF: %x %s%s%s\n",

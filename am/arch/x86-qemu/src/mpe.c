@@ -37,10 +37,10 @@ struct boot_info {
 volatile struct boot_info *boot_rec = (void *)0x7000;
 
 static void ap_entry() {
-  cpu_initgdt();
-  cpu_initidt();
-  cpu_initlapic();
-  cpu_initpg();
+  percpu_initgdt();
+  percpu_initirq();
+  percpu_initlapic();
+  percpu_initpg();
   ioapic_enable(IRQ_KBD, _cpu());
   _atomic_xchg(&apboot_done, 1);
   user_entry();
@@ -69,14 +69,14 @@ static void mp_entry() { // all cpus execute mp_entry()
   }
 }
 
-void cpu_die() {
+void thiscpu_die() {
   cli();
   while (1) hlt();
 }
 
-void mp_halt() {
+void allcpu_halt() {
   boot_rec->is_ap = 1;
-  boot_rec->entry = cpu_die;
+  boot_rec->entry = thiscpu_die;
   for (int cpu = 0; cpu < ncpu; cpu++) {
     if (cpu != _cpu()) {
       lapic_bootap(cpu, 0x7c00);

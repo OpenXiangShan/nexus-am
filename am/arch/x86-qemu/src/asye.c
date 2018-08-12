@@ -1,50 +1,34 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
-// TODO: bug (pingpong sometimes crash)
+#define IDT_ENTRY_DECL(id, dpl, err) \
+  void irq##id();
+IRQS(IDT_ENTRY_DECL)
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 static GateDesc idt[NR_IRQ];
+void irqall();
 
 int asye_init(_Context *(*handler)(_Event, _Context *)) {
   if (_cpu() != 0) panic("init ASYE in non-bootstrap CPU");
-  ioapic_enable(IRQ_KBD, 0);
 
-  // all vectors jumps to @irqall by default
-  for (unsigned int i = 0; i < NR_IRQ; i ++) {
-    idt[i]  = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
+  // all vectors jumps to @irqdef by default
+  for (int i = 0; i < NR_IRQ; i ++) {
+    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
   }
-  // --------------------- exceptions --------------------------
-  idt[0]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec0,   DPL_KERN);
-  idt[1]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec1,   DPL_KERN);
-  idt[2]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec2,   DPL_KERN);
-  idt[3]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec3,   DPL_KERN);
-  idt[4]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec4,   DPL_KERN);
-  idt[5]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec5,   DPL_KERN);
-  idt[6]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec6,   DPL_KERN);
-  idt[7]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec7,   DPL_KERN);
-  idt[8]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec8,   DPL_KERN);
-  idt[9]    = GATE(STS_TG32, KSEL(SEG_KCODE), vec9,   DPL_KERN);
-  idt[10]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec10,  DPL_KERN);
-  idt[11]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec11,  DPL_KERN);
-  idt[12]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec12,  DPL_KERN);
-  idt[13]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec13,  DPL_KERN);
-  idt[14]   = GATE(STS_TG32, KSEL(SEG_KCODE), vec14,  DPL_KERN);
-  // --------------------- interrupts --------------------------
-  idt[32]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq0,   DPL_KERN);
-  idt[33]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq1,   DPL_KERN);
-  idt[46]   = GATE(STS_IG32, KSEL(SEG_KCODE), irq14,  DPL_KERN);
-  // -------------------- system call --------------------------
-  idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
+#define IDT_ENTRY(id, dpl, err) \
+  idt[id] = GATE(STS_TG32, KSEL(SEG_KCODE), irq##id, DPL_##dpl);
+  IRQS(IDT_ENTRY)
 
   user_handler = handler; // global (unique) interrupt/exception handler
-  cpu_initidt();
+  percpu_initirq();
 
   return 0;
 }
 
-void cpu_initidt() {
+void percpu_initirq() {
   if (user_handler) {
+    ioapic_enable(IRQ_KBD, 0);
     set_idt(idt, sizeof(idt));
   }
 }
@@ -70,14 +54,17 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
 }
 
 void yield() {
+  if (!user_handler) panic("no interrupt handler");
   __asm__ volatile ("int $0x80" : : "a"(-1));
 }
 
 int intr_read() {
+  if (!user_handler) panic("no interrupt handler");
   return (get_efl() & FL_IF) != 0;
 }
 
 void intr_write(int enable) {
+  if (!user_handler) panic("no interrupt handler");
   if (enable) {
     sti();
   } else {
@@ -94,7 +81,7 @@ _Context *_cb_irq(_Event ev, _Context *ctx) {
   return user_handler(ev, ctx);
 }
 
-void irq_handle(struct TrapFrame *tf) {
+void irq_handle(TrapFrame *tf) {
   // saving processor context
   _Context ctx = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx  = tf->ecx, .edx  = tf->edx,
@@ -185,7 +172,7 @@ void irq_handle(struct TrapFrame *tf) {
 #define def(r)  , [r] "m"(ret_ctx->r)  // -> [eax] "m"(ret_ctx->eax)
  
   if (ret_ctx->cs & DPL_USER) { // return to user
-    cpu_setustk(ret_ctx->ss0, ret_ctx->esp0);
+    thiscpu_setustk(ret_ctx->ss0, ret_ctx->esp0);
     __asm__ volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_USER(push)       // push reg context onto stack

@@ -43,12 +43,12 @@
 #define PTE_D     0x040     // Dirty
 
 // GDT entries
-#define NR_SEG    6       // GDT size
+#define NR_SEG      6       // GDT size
 #define SEG_KCODE   1       // Kernel code
 #define SEG_KDATA   2       // Kernel data/stack
 #define SEG_UCODE   3       // User code
 #define SEG_UDATA   4       // User data/stack
-#define SEG_TSS   5       // Global unique task state segement
+#define SEG_TSS     5       // Global unique task state segement
 
 #define KSEL(desc) (((desc) << 3) | DPL_KERN)
 #define USEL(desc) (((desc) << 3) | DPL_USER)
@@ -60,8 +60,29 @@
 #define T_IRQ0       32
 #define IRQ_TIMER     0
 #define IRQ_KBD       1
-#define IRQ_SPURIOUS 31
 #define IRQ_ERROR    19
+#define IRQ_SPURIOUS 31
+
+#define IRQS(_) \
+  _(  0, KERN, NOERR) _(  1, KERN, NOERR) \
+  _(  2, KERN, NOERR) _(  3, KERN, NOERR) \
+  _(  4, KERN, NOERR) _(  5, KERN, NOERR) \
+  _(  6, KERN, NOERR) _(  7, KERN, NOERR) \
+  _(  8, KERN,   ERR) _(  9, KERN, NOERR) \
+  _( 10, KERN,   ERR) _( 11, KERN,   ERR) \
+  _( 12, KERN,   ERR) _( 13, KERN,   ERR) \
+  _( 14, KERN,   ERR) _( 15, KERN, NOERR) \
+  _( 16, KERN, NOERR) _( 19, KERN, NOERR) \
+  _( 31, KERN, NOERR) \
+  _( 32, KERN, NOERR) _( 33, KERN, NOERR) \
+  _( 34, KERN, NOERR) _( 35, KERN, NOERR) \
+  _( 36, KERN, NOERR) _( 37, KERN, NOERR) \
+  _( 38, KERN, NOERR) _( 39, KERN, NOERR) \
+  _( 40, KERN, NOERR) _( 41, KERN, NOERR) \
+  _( 42, KERN, NOERR) _( 43, KERN, NOERR) \
+  _( 44, KERN, NOERR) _( 45, KERN, NOERR) \
+  _( 46, KERN, NOERR) _( 47, KERN, NOERR) \
+  _(128, USER, NOERR)
 
 #define EX_SYSCALL 0x80
 #define EX_DIV        0
@@ -146,22 +167,22 @@ typedef struct GateDesc {
 
 
 // Task state segment format
-struct TSS {
+typedef struct TSS {
   uint32_t link;     // Unused
   uint32_t esp0;     // Stack pointers and segment selectors
   uint32_t ss0;      //   after an increase in privilege level
   char dontcare[88];
-};
+} TSS;
 
 // Interrupt and exception frame
-struct TrapFrame {
+typedef struct TrapFrame {
   uint32_t edi, esi, ebp, esp_;
   uint32_t ebx, edx, ecx, eax;   // Register saved by pushal
   uint32_t es, ds;               // Segment register
   int   irq;                     // # of irq
   uint32_t err, eip, cs, eflags; // Execution state before trap 
   uint32_t esp, ss;              // Used only when returning to DPL=3
-};
+} TrapFrame;
 
 // Multiprocesor configuration
 typedef struct MPConf {    // configuration table header
@@ -279,8 +300,6 @@ static inline void set_cr3(void *pdir) {
   __asm__ volatile ("movl %0, %%cr3" : : "r"(pdir));
 }
 
-
 #endif
 
 #endif
-

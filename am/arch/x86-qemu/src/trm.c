@@ -14,8 +14,8 @@ void _start() {
   // setup a C runtime environment
   sys_init();
   memory_init();
-  cpu_initgdt();
-  cpu_initlapic();
+  percpu_initgdt();
+  percpu_initlapic();
   ioapic_init();
 
   int ret = main();
@@ -31,11 +31,11 @@ void _putc(char ch) {
 
 void _halt(int code) {
   cli();
-  mp_halt();
+  allcpu_halt();
   char buf[] = "Exited (#).\n";
   buf[8] = '0' + code;
   puts(buf);
-  cpu_die();
+  thiscpu_die();
 }
 
 #define MP_PROC    0x00
