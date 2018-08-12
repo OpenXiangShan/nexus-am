@@ -69,14 +69,14 @@ static void mp_entry() { // all cpus execute mp_entry()
   }
 }
 
-void thiscpu_die() {
+void thiscpu_halt() {
   cli();
   while (1) hlt();
 }
 
-void allcpu_halt() {
+void othercpu_halt() {
   boot_rec->is_ap = 1;
-  boot_rec->entry = thiscpu_die;
+  boot_rec->entry = thiscpu_halt;
   for (int cpu = 0; cpu < ncpu; cpu++) {
     if (cpu != _cpu()) {
       lapic_bootap(cpu, 0x7c00);

@@ -3,16 +3,15 @@
 
 #define IDT_ENTRY_DECL(id, dpl, err) \
   void irq##id();
-IRQS(IDT_ENTRY_DECL)
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 static GateDesc idt[NR_IRQ];
+IRQS(IDT_ENTRY_DECL)
 void irqall();
 
 int asye_init(_Context *(*handler)(_Event, _Context *)) {
   if (_cpu() != 0) panic("init ASYE in non-bootstrap CPU");
 
-  // all vectors jumps to @irqdef by default
   for (int i = 0; i < NR_IRQ; i ++) {
     idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
   }
@@ -20,17 +19,10 @@ int asye_init(_Context *(*handler)(_Event, _Context *)) {
   idt[id] = GATE(STS_TG32, KSEL(SEG_KCODE), irq##id, DPL_##dpl);
   IRQS(IDT_ENTRY)
 
-  user_handler = handler; // global (unique) irq handler
+  user_handler = handler;
   percpu_initirq();
 
   return 0;
-}
-
-void percpu_initirq() {
-  if (user_handler) {
-    ioapic_enable(IRQ_KBD, 0);
-    set_idt(idt, sizeof(idt));
-  }
 }
 
 static void panic_on_return() {
@@ -194,4 +186,11 @@ iret:
     "popl %ds;"
     "iret;"      // interrupt return
   );
+}
+
+void percpu_initirq() {
+  if (user_handler) {
+    ioapic_enable(IRQ_KBD, 0);
+    set_idt(idt, sizeof(idt));
+  }
 }

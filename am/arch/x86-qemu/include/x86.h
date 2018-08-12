@@ -111,9 +111,9 @@ typedef uint32_t PDE;
 #define OFF(va)        ((uint32_t)(va) & 0xfff)
 
 // construct virtual address from indexes and offset
-#define PGADDR(d,t,o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
+#define PGADDR(d, t, o)  ((uint32_t)((d)<<PDXSHFT | (t)<<PTXSHFT | (o)))
 
-#define ROUNDUP(a, sz)   ((((uintptr_t)a) + (sz) - 1) & ~((sz) - 1))
+#define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 #define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
 
 // Address in page table or page directory entry

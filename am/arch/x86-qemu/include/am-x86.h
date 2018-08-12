@@ -23,8 +23,8 @@ void percpu_initgdt();
 void percpu_initlapic();
 void percpu_initpg();
 void thiscpu_setustk(uintptr_t ss0, uintptr_t esp0);
-void thiscpu_die() __attribute__((__noreturn__));
-void allcpu_halt();
+void thiscpu_halt() __attribute__((__noreturn__));
+void othercpu_halt();
 
 // simple spin locks
 #define LOCKDECL(name) \

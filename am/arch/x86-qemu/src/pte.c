@@ -79,8 +79,10 @@ void prot_switch(_Protect *p) {
 int map(_Protect *p, void *va, void *pa, int prot) {
   if ((prot & _PROT_NONE) && (prot != _PROT_NONE))
     panic("invalid permission");
-  if ((uint32_t)va % PGSIZE != 0) panic("unaligned virtual address");
-  if ((uint32_t)pa % PGSIZE != 0) panic("unaligned physical address");
+  if ((uintptr_t)va != ROUNDDOWN(va, PGSIZE) ||
+      (uintptr_t)pa != ROUNDDOWN(pa, PGSIZE)) {
+    panic("unaligned memory address");
+  }
   // panic because the above cases are likely bugs
   if (!in_range(va, prot_vm_range)) {
     return 1; // mapping an out-of-range address
