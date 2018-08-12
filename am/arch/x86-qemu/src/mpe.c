@@ -53,7 +53,6 @@ static void stack_switch(void (*entry)()) {
     "call *%1" : : "r"(&cpu_stk[_cpu() + 1][0]), "r"(entry));
 }
 
-#include <klib.h>
 static void mp_entry() { // all cpus execute mp_entry()
   if (_cpu() != 0) {
     // init an ap
@@ -84,3 +83,4 @@ void mp_halt() {
     }
   }
 }
+

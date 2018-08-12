@@ -26,6 +26,22 @@ void cpu_initpg();
 void cpu_setustk(uintptr_t ss0, uintptr_t esp0);
 void cpu_die() __attribute__((__noreturn__));
 
+#define LOCKDECL(name) \
+  void name##_lock(); \
+  void name##_unlock();
+
+#define LOCKDEF(name) \
+  static volatile intptr_t name##_locked = 0; \
+  void name##_lock() { \
+    while (1) { \
+      if (0 == _atomic_xchg(&name##_locked, 1)) break; \
+      __asm__ volatile ("pause"); \
+    } \
+  } \
+  void name##_unlock() { \
+    _atomic_xchg(&name##_locked, 0); \
+  }
+
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
 static inline int in_range(void *ptr, _Area area) {
   return area.start <= ptr && ptr < area.end;

@@ -7,6 +7,7 @@ _Area _heap; // the heap memory defined in AM spec
 int main();
 static void memory_init();
 static void sys_init();
+LOCKDEF(putc); // spinlock for _putc safety
 
 // the bootloader jumps here,
 //   with a (small) bootstrap stack
@@ -22,8 +23,13 @@ void _start() {
   _halt(ret);
 }
 
+#define COM1_PORT 0x3f8
+
 void _putc(char ch) {
-  outb(0x3f8, ch); // only works for qemu
+  putc_lock();
+  while ((inb(COM1_PORT + 5) & 0x20) == 0) ;
+  outb(COM1_PORT, ch);
+  putc_unlock();
 }
 
 void _halt(int code) {
