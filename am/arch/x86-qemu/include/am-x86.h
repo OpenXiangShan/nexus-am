@@ -6,9 +6,9 @@
 #include <amtrace.h>
 #include <x86.h>
 
+#define MAX_CPU 8
+
 extern volatile uint32_t *lapic;
-extern int ncpu;
-extern volatile uint32_t trace_flags;
 
 // apic utils
 void lapic_eoi();
@@ -17,6 +17,7 @@ void lapic_bootap(int cpu, uint32_t address);
 void ioapic_enable(int irq, int cpu);
 
 // per-cpu x86-specific operations
+void bootcpu_init();
 void percpu_initirq();
 void percpu_initgdt();
 void percpu_initlapic();

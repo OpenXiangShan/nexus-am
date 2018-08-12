@@ -20,7 +20,7 @@ int asye_init(_Context *(*handler)(_Event, _Context *)) {
   idt[id] = GATE(STS_TG32, KSEL(SEG_KCODE), irq##id, DPL_##dpl);
   IRQS(IDT_ENTRY)
 
-  user_handler = handler; // global (unique) interrupt/exception handler
+  user_handler = handler; // global (unique) irq handler
   percpu_initirq();
 
   return 0;

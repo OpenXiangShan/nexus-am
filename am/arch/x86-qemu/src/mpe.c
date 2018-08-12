@@ -84,3 +84,27 @@ void allcpu_halt() {
   }
 }
 
+#define MP_PROC    0x00
+#define MP_MAGIC   0x5f504d5f // _MP_
+
+void bootcpu_init() {
+  for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
+    if (*(volatile uint32_t *)st == MP_MAGIC) {
+      volatile MPConf *conf = ((volatile MPDesc *)st)->conf;
+      lapic = conf->lapicaddr;
+      for (volatile char *ptr = (char *)(conf + 1);
+                 ptr < (char *)conf + conf->length; ) {
+        if (*ptr == MP_PROC) {
+          ptr += 20;
+          if (++ncpu > MAX_CPU) {
+            panic("cannot support > MAX_CPU processors");
+          }
+        } else {
+          ptr += 8;
+        }
+      }
+      return;
+    }
+  }
+  panic("seems not an x86-qemu machine");
+}
