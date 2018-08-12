@@ -1,15 +1,15 @@
 #include <am.h>
-#include <amdev.h>
 #include <klib.h>
 
 #define N 5
 
 void f(void *s) {
-  int n = 0;
+  int volatile n = 0;
+  const char *str = s;
   while (1) {
-    printf("%s", s);
-    if (n++ > 10000) {
-      return; // not allowd, triggers a panic
+    printf("%s", str);
+    if (str[0] == 'a' && ++n >= 10000) {
+      return; // bug, should panic.
     }
   }
 }
@@ -17,14 +17,15 @@ void f(void *s) {
 _Context *current = NULL;
 _Context contexts[N];
 char texts[N][2];
-uint8_t stacks[N][4096];
+uint8_t stacks[N][1024];
 
 _Context* handler(_Event ev, _Context *ctx) {
   if (!current) {
     current = contexts; // 1st interrupt
   } else {
     *current = *ctx;
-    if (current++ == contexts + N) { // round-robin
+    current++;
+    if (current == contexts + N) { // round-robin
       current = contexts;
     }
   }
