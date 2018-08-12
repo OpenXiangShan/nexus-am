@@ -40,10 +40,10 @@ void _halt(int code) {
 
 static void sys_init() {
   for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
-    if (*(uint32_t *)st == MP_MAGIC) {
-      MPConf *conf = ((MPDesc *)st)->conf;
+    if (*(volatile uint32_t *)st == MP_MAGIC) {
+      volatile MPConf *conf = ((volatile MPDesc *)st)->conf;
       lapic = conf->lapicaddr;
-      for (char *ptr = (char *)(conf + 1);
+      for (volatile char *ptr = (char *)(conf + 1);
                  ptr < (char *)conf + conf->length; ) {
         if (*ptr == MP_PROC) {
           ptr += 20;
@@ -60,7 +60,7 @@ static void sys_init() {
   panic("seems not an x86-qemu machine");
 }
 
-void memory_init() {
+static void memory_init() {
   extern char end;
   uintptr_t st, ed, step = 1L << 20; // probe step: 1 MB
   st = ed = (((uintptr_t)&end) & ~(step - 1)) + step;
