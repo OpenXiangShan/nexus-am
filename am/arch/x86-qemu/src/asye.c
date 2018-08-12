@@ -1,6 +1,8 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
+// TODO: bug (pingpong sometimes crash)
+
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 static GateDesc idt[NR_IRQ];
 
@@ -60,7 +62,6 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
     .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
     .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
   };
-  // TODO: this piece of code is not tested.
   void **esp = (void **)(((uint32_t)ctx->esp0) - 2 * sizeof(uint32_t));
   esp[0] = panic_on_return;
   esp[1] = arg;
