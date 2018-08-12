@@ -37,11 +37,11 @@ struct boot_info {
 volatile struct boot_info *boot_rec = (void *)0x7000;
 
 static void ap_entry() {
-  cpu_initgdt();
-  cpu_initidt();
-  cpu_lapic_init();
+  percpu_initgdt();
+  percpu_initirq();
+  percpu_initlapic();
+  percpu_initpg();
   ioapic_enable(IRQ_KBD, _cpu());
-  cpu_initpte();
   _atomic_xchg(&apboot_done, 1);
   user_entry();
 }
@@ -53,7 +53,6 @@ static void stack_switch(void (*entry)()) {
     "call *%1" : : "r"(&cpu_stk[_cpu() + 1][0]), "r"(entry));
 }
 
-#include <klib.h>
 static void mp_entry() { // all cpus execute mp_entry()
   if (_cpu() != 0) {
     // init an ap
@@ -70,17 +69,42 @@ static void mp_entry() { // all cpus execute mp_entry()
   }
 }
 
-void cpu_die() {
+void thiscpu_die() {
   cli();
   while (1) hlt();
 }
 
-void mp_halt() {
+void allcpu_halt() {
   boot_rec->is_ap = 1;
-  boot_rec->entry = cpu_die;
+  boot_rec->entry = thiscpu_die;
   for (int cpu = 0; cpu < ncpu; cpu++) {
     if (cpu != _cpu()) {
       lapic_bootap(cpu, 0x7c00);
     }
   }
+}
+
+#define MP_PROC    0x00
+#define MP_MAGIC   0x5f504d5f // _MP_
+
+void bootcpu_init() {
+  for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
+    if (*(volatile uint32_t *)st == MP_MAGIC) {
+      volatile MPConf *conf = ((volatile MPDesc *)st)->conf;
+      lapic = conf->lapicaddr;
+      for (volatile char *ptr = (char *)(conf + 1);
+                 ptr < (char *)conf + conf->length; ) {
+        if (*ptr == MP_PROC) {
+          ptr += 20;
+          if (++ncpu > MAX_CPU) {
+            panic("cannot support > MAX_CPU processors");
+          }
+        } else {
+          ptr += 8;
+        }
+      }
+      return;
+    }
+  }
+  panic("seems not an x86-qemu machine");
 }

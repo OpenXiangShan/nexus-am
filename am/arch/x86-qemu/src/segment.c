@@ -1,9 +1,9 @@
 #include <am-x86.h>
 
-struct TSS tss[MAX_CPU];
+TSS tss[MAX_CPU];
 SegDesc gdts[MAX_CPU][NR_SEG];
 
-void cpu_initgdt() {
+void percpu_initgdt() {
   int cpu = _cpu();
   SegDesc *gdt = gdts[cpu];
   gdt[SEG_KCODE] = SEG(STA_X | STA_R,      0,       0xffffffff, DPL_KERN);
@@ -15,7 +15,7 @@ void cpu_initgdt() {
   set_tr(KSEL(SEG_TSS));
 }
 
-void cpu_setustk(uintptr_t ss0, uintptr_t esp0) {
+void thiscpu_setustk(uintptr_t ss0, uintptr_t esp0) {
   int cpu = _cpu();
   tss[cpu].ss0 = ss0;
   tss[cpu].esp0 = esp0;

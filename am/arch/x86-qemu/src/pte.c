@@ -35,11 +35,11 @@ int pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
       ptab[PTX(pa)] = PTE_P | PTE_W | pa;
     }
   }
-  cpu_initpte(); // set CR3 and CR0 if kpt is not NULL
+  percpu_initpg(); // set CR3 and CR0 if kpt is not NULL
   return 0;
 }
 
-void cpu_initpte() { // called by all cpus
+void percpu_initpg() { // called by all cpus
   if (kpt) {
     set_cr3(kpt);
     set_cr0(get_cr0() | CR0_PG);

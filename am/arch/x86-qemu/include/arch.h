@@ -1,10 +1,7 @@
 #ifndef __X86_ARCH_H__
 #define __X86_ARCH_H__
 
-#include <stdint.h>
-
-typedef int off_t;
-typedef int ssize_t;
+typedef int32_t off_t;
 
 struct _Context {
   uint32_t eax, ebx, ecx, edx,

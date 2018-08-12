@@ -1,18 +1,7 @@
 #include <am-x86.h>
 
 volatile uint32_t trace_flags = 0; // current trace status
-volatile intptr_t locked = 0;      // spinlock
-
-static inline void trace_lock() {
-  while (1) {
-    if (0 == _atomic_xchg(&locked, 1)) break;
-    __asm__ volatile ("pause");
-  }
-}
-
-static inline void trace_unlock(){
-  _atomic_xchg(&locked, 0);
-}
+LOCKDEF(trace);
 
 void _trace_on(uint32_t flags) {
   trace_lock();

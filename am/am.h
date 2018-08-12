@@ -31,7 +31,7 @@ enum {
 #define _PROT_WRITE  4    // can write
 #define _PROT_EXEC   8    // can execute
 
-// A memory area of [@start, @end)
+// Memory area for [@start, @end)
 typedef struct _Area {
   void *start, *end;
 } _Area; 

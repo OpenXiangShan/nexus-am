@@ -12,7 +12,7 @@ _Context* handler(_Event ev, _Context *ctx) {
       break;
     case _EVENT_IRQ_TIMER:
     case _EVENT_IRQ_IODEV: 
-      printf("==== interrupt ===\n");
+      printf("==== interrupt (%s)  ===\n", ev.msg);
       break;
     case _EVENT_PAGEFAULT:
       printf("PF: %x %s%s%s\n",
@@ -63,7 +63,6 @@ uint8_t kstk[4096];
 
 int main() {
   st = (uintptr_t)_heap.start;
-  _ioe_init();
   _asye_init(handler);
   _pte_init(alloc, free);
 
