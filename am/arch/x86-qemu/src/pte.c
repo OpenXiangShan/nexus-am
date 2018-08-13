@@ -66,7 +66,7 @@ void unprotect(_Protect *p) {
                 va += (1 << PDXSHFT)) {
     PDE pde = upt[PDX(va)];
     if (pde & PTE_P) {
-      pgfree((void*)PTE_ADDR(pde));
+      pgfree((void *)PTE_ADDR(pde));
     }
   }
   pgfree(upt);
@@ -77,13 +77,13 @@ void prot_switch(_Protect *p) {
 }
 
 int map(_Protect *p, void *va, void *pa, int prot) {
+  // panic because the below cases are likely bugs
   if ((prot & _PROT_NONE) && (prot != _PROT_NONE))
-    panic("invalid permission");
+    panic("invalid protection flags");
   if ((uintptr_t)va != ROUNDDOWN(va, PGSIZE) ||
       (uintptr_t)pa != ROUNDDOWN(pa, PGSIZE)) {
     panic("unaligned memory address");
   }
-  // panic because the above cases are likely bugs
   if (!in_range(va, prot_vm_range)) {
     return 1; // mapping an out-of-range address
   }

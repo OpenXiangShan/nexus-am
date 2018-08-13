@@ -1,12 +1,11 @@
 #include <am-x86.h>
 #include <stdarg.h>
 
-#define IDT_ENTRY_DECL(id, dpl, err) \
-  void irq##id();
-
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 static GateDesc idt[NR_IRQ];
-IRQS(IDT_ENTRY_DECL)
+
+#define IRQHANDLE_DECL(id, dpl, err)  void irq##id();
+IRQS(IRQHANDLE_DECL)
 void irqall();
 
 int asye_init(_Context *(*handler)(_Event, _Context *)) {
@@ -21,33 +20,12 @@ int asye_init(_Context *(*handler)(_Event, _Context *)) {
 
   user_handler = handler;
   percpu_initirq();
-
   return 0;
-}
-
-static void panic_on_return() {
-  panic("kernel context returns");
-}
-
-_Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Context *ctx = (_Context *)stack.start;
-  *ctx = (_Context) {
-    .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
-    .esi = 0, .edi = 0, .ebp = 0, .esp3 = 0,
-    .ss0 = 0, .esp0 = (uint32_t)stack.end,
-    .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
-    .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
-  };
-  void **esp = (void **)(((uint32_t)ctx->esp0) - 2 * sizeof(uint32_t));
-  esp[0] = panic_on_return;
-  esp[1] = arg;
-  ctx->esp0 = (uint32_t)esp;
-  return ctx;
 }
 
 void yield() {
   if (!user_handler) panic("no interrupt handler");
-  __asm__ volatile ("int $0x80" : : "a"(-1));
+  asm volatile ("int $0x80" : : "a"(-1));
 }
 
 int intr_read() {
@@ -62,6 +40,26 @@ void intr_write(int enable) {
   } else {
     cli();
   }
+}
+
+static void panic_on_return() { panic("kernel context returns"); }
+
+_Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
+  _Context *ctx = (_Context *)stack.start;
+  *ctx = (_Context) {
+    .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
+    .esi = 0, .edi = 0, .ebp = 0, .esp3 = 0,
+    .ss0 = 0, .esp0 = (uint32_t)stack.end,
+    .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
+    .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
+  };
+
+  void *values[] = { panic_on_return, arg }; // copy to stack
+  ctx->esp0 -= sizeof(values);
+  for (int i = 0; i < sizeof(values) / sizeof(void *); i++) {
+    ((uintptr_t *)ctx->esp0)[i] = (uintptr_t)values[i];
+  }
+  return ctx;
 }
 
 #define IRQ    T_IRQ0 + 
@@ -164,15 +162,15 @@ void irq_handle(TrapFrame *tf) {
 #define def(r)  , [r] "m"(ret_ctx->r)  // -> [eax] "m"(ret_ctx->eax)
  
   if (ret_ctx->cs & DPL_USER) { // return to user
-    thiscpu_setustk(ret_ctx->ss0, ret_ctx->esp0);
-    __asm__ volatile goto (
+    thiscpu_setstk0(ret_ctx->ss0, ret_ctx->esp0);
+    asm volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_USER(push)       // push reg context onto stack
       "jmp %l[iret]"        // goto iret
     : : [esp] "m"(ret_ctx->esp0)
         REGS_USER(def) : : iret );
   } else { // return to kernel
-    __asm__ volatile goto (
+    asm volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_KERNEL(push)     // push reg context onto stack
       "jmp %l[iret]"        // goto iret
@@ -180,7 +178,7 @@ void irq_handle(TrapFrame *tf) {
         REGS_KERNEL(def) : : iret );
   }
 iret:
-  __asm__ volatile (
+  asm volatile (
     "popal;"     // restore context
     "popl %es;"
     "popl %ds;"

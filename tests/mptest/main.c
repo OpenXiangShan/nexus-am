@@ -5,7 +5,7 @@
 
 void f() {
   _intr_write(1);
-  if (_cpu() == 0) {
+  if (_cpu() == 1) {
     for (int volatile i = 0; i < 10000000; i++) ;
     assert(0);
   }

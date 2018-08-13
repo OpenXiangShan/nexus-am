@@ -28,7 +28,7 @@ void percpu_initirq();
 void percpu_initgdt();
 void percpu_initlapic();
 void percpu_initpg();
-void thiscpu_setustk(uintptr_t ss0, uintptr_t esp0);
+void thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
 void thiscpu_halt() __attribute__((__noreturn__));
 void othercpu_halt();
 
@@ -45,7 +45,7 @@ void othercpu_halt();
     cli(); \
     while (1) { \
       if (0 == _atomic_xchg(&name##_locked, 1)) break; \
-      __asm__ volatile ("pause"); \
+      pause(); \
     } \
   } \
   void name##_unlock() { \

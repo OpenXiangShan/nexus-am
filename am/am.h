@@ -75,17 +75,16 @@ _Device *_device(int n);
 // ================== Asynchronous Extension (ASYE) ==================
 
 int _asye_init(_Context *(*handler)(_Event ev, _Context *ctx));
-_Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
 void _yield();
 int _intr_read();
 void _intr_write(int enable);
+_Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
 
 // =================== Protection Extension (PTE) ====================
 
 int _pte_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
 int _protect(_Protect *p);
 void _unprotect(_Protect *p);
-void _prot_switch(_Protect *p);
 int _map(_Protect *p, void *va, void *pa, int prot);
 _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack,
                     void *entry, void *args);
