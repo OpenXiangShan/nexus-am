@@ -8,7 +8,13 @@
 
 #define MAX_CPU 8
 
+struct boot_info {
+  int is_ap;
+  void (*entry)();
+};
 extern volatile uint32_t *lapic;
+extern volatile struct boot_info *boot_rec;
+extern int ncpu;
 
 // apic utils
 void lapic_eoi();

@@ -3,14 +3,16 @@
 int ncpu = 0;
 static void (* volatile user_entry)();
 static volatile intptr_t apboot_done = 0;
+volatile struct boot_info *boot_rec = (void *)0x7000;
 
-static void mp_entry();
+static void percpu_entry();
+static void ap_entry();
 static void stack_switch(void (*entry)());
 
 int _mpe_init(void (*entry)()) {
   user_entry = entry;
-  stack_switch(mp_entry); // switch stack, and the bootstrap stack at
-                          // 0x7000 can be reused by an ap's bootloader
+  stack_switch(percpu_entry); // switch stack, and the bootstrap stack at
+                              // 0x7000 can be reused by ap's bootloader
   panic("mp_init should not return");
   return 1;
 }
@@ -30,11 +32,21 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   return result;
 }
 
-struct boot_info {
-  int is_ap;
-  void (*entry)();
-};
-volatile struct boot_info *boot_rec = (void *)0x7000;
+static void percpu_entry() { // all cpus execute percpu_entry()
+  if (_cpu() != 0) {
+    // init an ap
+    stack_switch(ap_entry);
+  } else {
+    // stack already swithced, boot all aps
+    for (int cpu = 1; cpu < ncpu; cpu ++) {
+      boot_rec->is_ap = 1;
+      boot_rec->entry = percpu_entry;
+      lapic_bootap(cpu, 0x7c00);
+      while (_atomic_xchg(&apboot_done, 0) != 1);
+    }
+    user_entry();
+  }
+}
 
 static void ap_entry() {
   percpu_initgdt();
@@ -51,60 +63,4 @@ static void stack_switch(void (*entry)()) {
   __asm__ volatile (
     "movl %0, %%esp;"
     "call *%1" : : "r"(&cpu_stk[_cpu() + 1][0]), "r"(entry));
-}
-
-static void mp_entry() { // all cpus execute mp_entry()
-  if (_cpu() != 0) {
-    // init an ap
-    stack_switch(ap_entry);
-  } else {
-    // stack already swithced, boot all aps
-    for (int cpu = 1; cpu < ncpu; cpu ++) {
-      boot_rec->is_ap = 1;
-      boot_rec->entry = mp_entry;
-      lapic_bootap(cpu, 0x7c00);
-      while (_atomic_xchg(&apboot_done, 0) != 1);
-    }
-    user_entry();
-  }
-}
-
-void thiscpu_halt() {
-  cli();
-  while (1) hlt();
-}
-
-void othercpu_halt() {
-  boot_rec->is_ap = 1;
-  boot_rec->entry = thiscpu_halt;
-  for (int cpu = 0; cpu < ncpu; cpu++) {
-    if (cpu != _cpu()) {
-      lapic_bootap(cpu, 0x7c00);
-    }
-  }
-}
-
-#define MP_PROC    0x00
-#define MP_MAGIC   0x5f504d5f // _MP_
-
-void bootcpu_init() {
-  for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
-    if (*(volatile uint32_t *)st == MP_MAGIC) {
-      volatile MPConf *conf = ((volatile MPDesc *)st)->conf;
-      lapic = conf->lapicaddr;
-      for (volatile char *ptr = (char *)(conf + 1);
-                 ptr < (char *)conf + conf->length; ) {
-        if (*ptr == MP_PROC) {
-          ptr += 20;
-          if (++ncpu > MAX_CPU) {
-            panic("cannot support > MAX_CPU processors");
-          }
-        } else {
-          ptr += 8;
-        }
-      }
-      return;
-    }
-  }
-  panic("seems not an x86-qemu machine");
 }
