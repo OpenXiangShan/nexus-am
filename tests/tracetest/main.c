@@ -37,8 +37,6 @@ int main() {
   _trace_on(_TRACE_PTE);
   printf(">>> pte init done.\n");
 
-  _protect(&prot);
-
   uint8_t *ptr = (void*)((uintptr_t)(prot.area.start) +
      ((uintptr_t)(prot.area.end) - (uintptr_t)(prot.area.start)) / 2);
 
@@ -57,7 +55,6 @@ int main() {
 
   _ucontext(&prot, u, k, ptr, (void*)-1);
 
-  _prot_switch(&prot);
   _unprotect(&prot);
 
   _yield();

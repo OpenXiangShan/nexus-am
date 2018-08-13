@@ -1,7 +1,6 @@
 #include <x86.h>
 
 trap:
-  cli
   pushl %ds
   pushl %es
   pushal
@@ -11,20 +10,11 @@ trap:
   movw %ax, %es
 
   pushl %esp
-  call irq_handle
-  addl $4, %esp
-
-  popal
-  popl %es
-  popl %ds
-  addl $8, %esp
-
-  iret
+  call irq_handle // iret in the C code
 
 #define NOERR     pushl $0
 #define ERR
 #define IRQ_DEF(id, dpl, err) \
-  .globl irq##id; irq##id: err; pushl $id; jmp trap;
-
+  .globl irq##id; irq##id: cli;      err; pushl $id; jmp trap;
 IRQS(IRQ_DEF)
-.globl irqall; irqall: pushl $0; pushl $-1; jmp trap
+  .globl  irqall;  irqall: cli; pushl $0; pushl $-1; jmp trap;

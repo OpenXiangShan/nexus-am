@@ -24,6 +24,8 @@ extern int ncpu;
 extern struct cpu_local cpuinfo[MAX_CPU];
 #define CPU (&cpuinfo[_cpu()])
 
+#define NELEM(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 // apic utils
 void lapic_eoi();
 void ioapic_init();

@@ -41,7 +41,7 @@ typedef struct _Area {
 typedef struct _Device {
   uint32_t id;
   const char *name;
-  size_t (*read)(uintptr_t reg, void *buf, size_t size);
+  size_t (*read) (uintptr_t reg, void *buf, size_t size);
   size_t (*write)(uintptr_t reg, void *buf, size_t size);
 } _Device;
 
@@ -87,7 +87,7 @@ int _protect(_Protect *p);
 void _unprotect(_Protect *p);
 int _map(_Protect *p, void *va, void *pa, int prot);
 _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack,
-                    void *entry, void *args);
+                                 void *entry, void *args);
 
 // ================= Multi-Processor Extension (MPE) =================
 

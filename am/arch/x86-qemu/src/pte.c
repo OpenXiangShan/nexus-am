@@ -26,7 +26,7 @@ int pte_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
   pgfree_usr = pgfree_f;
 
   kpt = pgalloc();
-  for (int i = 0; i < sizeof(areas) / sizeof(areas[0]); i++) {
+  for (int i = 0; i < NELEM(areas); i++) {
     const struct vm_area *seg = &areas[i];
     if (!seg->physical) continue;
     for (uint32_t pa =  (uint32_t)seg->area.start;

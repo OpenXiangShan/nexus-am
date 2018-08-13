@@ -57,7 +57,7 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
 
   void *values[] = { panic_on_return, arg }; // copy to stack
   ctx->esp0 -= sizeof(values);
-  for (int i = 0; i < sizeof(values) / sizeof(void *); i++) {
+  for (int i = 0; i < NELEM(values); i++) {
     ((uintptr_t *)ctx->esp0)[i] = (uintptr_t)values[i];
   }
   return ctx;

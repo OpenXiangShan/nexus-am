@@ -15,8 +15,8 @@ void _start() { // the bootloader jumps here
 }
 
 void _putc(char ch) { // only works for x86-qemu
-  #define COM1_PORT 0x3f8
-  outb(COM1_PORT, ch);
+  #define COM1 0x3f8
+  outb(COM1, ch); // first -serial device
 }
 
 void _halt(int code) {
