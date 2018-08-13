@@ -3,7 +3,7 @@ make || exit
 
 rm -f trace.log
 qemu-system-i386 \
-  -smp 4 \
+  -smp 6 \
   -chardev stdio,mux=on,id=char0 \
   -chardev file,path=trace.log,id=char1 \
   -serial chardev:char0 \

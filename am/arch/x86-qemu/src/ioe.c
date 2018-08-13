@@ -3,17 +3,17 @@
 void vga_init();
 void timer_init();
 
-#define devop_def(dev, op) \
+#define DEVOP_DEF(dev, op) \
   size_t dev##_##op(uintptr_t reg, void *buf, size_t size);
 
-#define devops(_) \
+#define DEVOPS(_) \
   _(input, read) \
   _(timer, read) \
   _(video, read)   _(video, write) \
   _(pciconf, read) _(pciconf, write) \
   _(hd, read)      _(hd, write)
 
-devops(devop_def)
+DEVOPS(DEVOP_DEF)
 
 static _Device x86_dev[] = {
   {_DEV_INPUT,   "8279 Keyboard Controller", input_read, NULL},

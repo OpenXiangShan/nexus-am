@@ -5,34 +5,28 @@ _Area _heap; // the heap memory defined in AM spec
 int main();
 static void heap_init();
 
-// the bootloader jumps here,
-//   with a (small) bootstrap stack
-void _start() {
-  // setup a C runtime environment
+void _start() { // the bootloader jumps here
   bootcpu_init();
   heap_init();
   percpu_initgdt();
   percpu_initlapic();
   ioapic_init();
-
-  int ret = main();
-  _halt(ret);
+  _halt(main());
 }
 
-void _putc(char ch) {
-  // works for qemu, but not real hardware
-  #define COM1_PORT 0x3f8
-  outb(COM1_PORT, ch);
+void _putc(char ch) { // only works for x86-qemu
+  #define COM1 0x3f8
+  outb(COM1, ch); // first -serial device
 }
 
 void _halt(int code) {
   cli();
-  allcpu_halt();
+  othercpu_halt();
   char buf[] = "Exited (#).\n";
   for (char *p = buf; *p; p++) {
     _putc((*p == '#') ? ('0' + code) : *p);
   }
-  thiscpu_die();
+  thiscpu_halt();
 }
 
 static void heap_init() {

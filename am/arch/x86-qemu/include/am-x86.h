@@ -5,15 +5,31 @@
 #include <amdev.h>
 #include <amtrace.h>
 #include <x86.h>
+#include <klib.h> // for debugging
 
 #define MAX_CPU 8
 
+struct boot_info {
+  int is_ap;
+  void (*entry)();
+};
+struct cpu_local {
+  _Protect *prot;
+  SegDesc gdt[NR_SEG];
+  uint8_t stack[4096];
+};
 extern volatile uint32_t *lapic;
+extern volatile struct boot_info *bootrec;
+extern int ncpu;
+extern struct cpu_local cpuinfo[MAX_CPU];
+#define CPU (&cpuinfo[_cpu()])
+
+#define NELEM(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // apic utils
 void lapic_eoi();
 void ioapic_init();
-void lapic_bootap(int cpu, uint32_t address);
+void lapic_bootap(unsigned int cpu, uint32_t address);
 void ioapic_enable(int irq, int cpu);
 
 // per-cpu x86-specific operations
@@ -22,9 +38,9 @@ void percpu_initirq();
 void percpu_initgdt();
 void percpu_initlapic();
 void percpu_initpg();
-void thiscpu_setustk(uintptr_t ss0, uintptr_t esp0);
-void thiscpu_die() __attribute__((__noreturn__));
-void allcpu_halt();
+void thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
+void thiscpu_halt() __attribute__((__noreturn__));
+void othercpu_halt();
 
 // simple spin locks
 #define LOCKDECL(name) \
@@ -39,7 +55,7 @@ void allcpu_halt();
     cli(); \
     while (1) { \
       if (0 == _atomic_xchg(&name##_locked, 1)) break; \
-      __asm__ volatile ("pause"); \
+      pause(); \
     } \
   } \
   void name##_unlock() { \

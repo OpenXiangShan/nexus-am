@@ -1,8 +1,7 @@
 // LAPIC/IOAPIC related code
 // (copy-paste from xv6)
 
-#include <am.h>
-#include <x86.h>
+#include <am-x86.h>
 
 // The local APIC manages internal (non-I/O) interrupts.
 // See Chapter 8 & Appendix C of Intel processor manual volume 3.
@@ -111,7 +110,7 @@ microdelay(int us)
 // Start additional processor running entry code at addr.
 // See Appendix B of MultiProcessor Specification.
 void
-lapic_bootap(unsigned char apicid, unsigned int addr)
+lapic_bootap(unsigned int apicid, unsigned int addr)
 {
   int i;
   unsigned short *wrv;

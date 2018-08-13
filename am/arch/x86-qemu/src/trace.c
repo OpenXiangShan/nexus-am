@@ -15,11 +15,10 @@ void _trace_off(uint32_t flags) {
   trace_unlock();
 }
 
-#define COM2_PORT 0x2f8
-
 static inline void log_byte(uint8_t ch) {
-  while ((inb(COM2_PORT + 5) & 0x20) == 0) ;
-  outb(COM2_PORT, ch);
+  #define COM2 0x2f8
+  while ((inb(COM2 + 5) & 0x20) == 0) ;
+  outb(COM2, ch);
 }
 
 static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
@@ -33,13 +32,11 @@ static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
   trace_unlock();
 }
 
-static uint32_t tsc = 0;
-
 #define EV(_type, _ref) \
   (_TraceEvent) { \
     .cpu = (uint16_t)_cpu(), \
     .type = _type, \
-    .time = tsc++, \
+    .time = 0, \
     .ref = (uintptr_t)_ref }
 
 #define TRACE_CALL(fn, args) \
@@ -125,7 +122,6 @@ static uint32_t tsc = 0;
     (void *(*al)(size_t), void (*fr)(void *)), (al, fr), al, fr) \
   _(FUNC,        int,     protect, (_Protect *p), (p), p) \
   _(VOID,       void,   unprotect, (_Protect *p), (p), p) \
-  _(VOID,       void, prot_switch, (_Protect *p), (p), p) \
   _(FUNC,        int, map, \
     (_Protect *p, void *va, void *pa, int prot), \
     (p, va, pa, prot), p, va, pa, prot) \

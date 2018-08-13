@@ -73,20 +73,16 @@ int main() {
 
   int pgsz = 4096;
 
-  _map(&prot, ptr, alloc(pgsz), _PROT_WRITE);
-  _map(&prot, ptr + pgsz, alloc(pgsz), _PROT_WRITE);
+  void *up1 = alloc(pgsz);
+  _map(&prot, ptr, up1, _PROT_WRITE);
 
-  _prot_switch(&prot);
-
-  memcpy(ptr, code, sizeof(code));
-
+  memcpy(up1, code, sizeof(code));
   printf("Code copied to %x execute\n", ptr);
 
   _Area k = { .start = kstk, .end = kstk + 4096 };
-  _Area u = { .start = ptr + pgsz, .end = ptr + pgsz * 2 };
+  _Area u = { .start = ptr + pgsz, .end = ptr + pgsz };
 
   uctx = _ucontext(&prot, u, k, ptr, 0);
-  _prot_switch(&prot);
 
   _intr_write(1);
   while (1) {

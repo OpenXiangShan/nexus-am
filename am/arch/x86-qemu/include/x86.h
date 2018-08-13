@@ -1,6 +1,7 @@
 #ifndef __X86_H__
 #define __X86_H__
 
+
 // CPU rings
 #define DPL_KERN       0x0     // Kernel (ring 0)
 #define DPL_USER       0x3     // User (ring 3)
@@ -94,7 +95,7 @@
 #define EX_PF          14
 #define EX_MF          15
 
-// Below are only valid for c/cpp files
+// Below are only defined for c/cpp files
 #ifndef __ASSEMBLER__
 
 #include <arch.h>
@@ -106,18 +107,12 @@
 //  \--- PDX(va) --/ \--- PTX(va) --/\------ OFF(va) ------/
 typedef uint32_t PTE;
 typedef uint32_t PDE;
-#define PDX(va)        (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
-#define PTX(va)        (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
-#define OFF(va)        ((uint32_t)(va) & 0xfff)
-
-// construct virtual address from indexes and offset
-#define PGADDR(d,t,o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
-
-#define ROUNDUP(a, sz)   ((((uintptr_t)a) + (sz) - 1) & ~((sz) - 1))
+#define PDX(va)          (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
+#define PTX(va)          (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
+#define OFF(va)          ((uint32_t)(va) & 0xfff)
+#define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 #define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
-
-// Address in page table or page directory entry
-#define PTE_ADDR(pte)   ((uint32_t)(pte) & ~0xfff)
+#define PTE_ADDR(pte)    ((uint32_t)(pte) & ~0xfff)
 
 // Segment Descriptor
 typedef struct SegDesc {
@@ -209,63 +204,68 @@ typedef struct MPDesc {
   uint8_t reserved[3];
 } MPDesc;
 
-// Instruction wrappers
+#define asm  __asm__
+
 static inline uint8_t inb(int port) {
   uint8_t data;
-  __asm__ volatile ("inb %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  asm volatile ("inb %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
 static inline uint32_t inw(int port) {
   uint16_t data;
-  __asm__ volatile ("inw %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  asm volatile ("inw %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
 static inline uint32_t inl(int port) {
   uint32_t data;
-  __asm__ volatile ("inl %1, %0" : "=a"(data) : "d"((uint16_t)port));
+  asm volatile ("inl %1, %0" : "=a"(data) : "d"((uint16_t)port));
   return data;
 }
 
 static inline void outb(int port, uint8_t data) {
-  __asm__ volatile ("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
+  asm volatile ("outb %%al, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 static inline void outw(int port, uint16_t data) {
-  __asm__ volatile ("outw %%ax, %%dx" : : "a"(data), "d"((uint16_t)port));
+  asm volatile ("outw %%ax, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 static inline void outl(int port, uint32_t data) {
-  __asm__ volatile ("outl %%eax, %%dx" : : "a"(data), "d"((uint16_t)port));
+  asm volatile ("outl %%eax, %%dx" : : "a"(data), "d"((uint16_t)port));
 }
 
 static inline void cli() {
-  __asm__ volatile ("cli");
+  asm volatile ("cli");
 }
 
 static inline void sti() {
-  __asm__ volatile ("sti");
+  asm volatile ("sti");
 }
 
 static inline void hlt() {
-  __asm__ volatile ("hlt");
+  asm volatile ("hlt");
+}
+
+static inline void pause() {
+  asm volatile ("pause");
 }
 
 static inline uint32_t get_efl() {
   volatile uint32_t efl;
-  __asm__ volatile ("pushf; pop %0": "=r"(efl));
+  asm volatile ("pushf; pop %0": "=r"(efl));
   return efl;
 }
 
 static inline uint32_t get_cr0(void) {
   volatile uint32_t val;
-  __asm__ volatile ("movl %%cr0, %0" : "=r"(val));
+  asm volatile ("movl %%cr0, %0" : "=r"(val));
   return val;
 }
 
 static inline void set_cr0(uint32_t cr0) {
-  __asm__ volatile ("movl %0, %%cr0" : : "r"(cr0));
+  asm volatile ("movl %0, %%cr0" : : "r"(cr0));
 }
 
 
@@ -274,7 +274,7 @@ static inline void set_idt(GateDesc *idt, int size) {
   data[0] = size - 1;
   data[1] = (uint32_t)idt;
   data[2] = (uint32_t)idt >> 16;
-  __asm__ volatile ("lidt (%0)" : : "r"(data));
+  asm volatile ("lidt (%0)" : : "r"(data));
 }
 
 static inline void set_gdt(SegDesc *gdt, int size) {
@@ -282,21 +282,21 @@ static inline void set_gdt(SegDesc *gdt, int size) {
   data[0] = size - 1;
   data[1] = (uint32_t)gdt;
   data[2] = (uint32_t)gdt >> 16;
-  __asm__ volatile ("lgdt (%0)" : : "r"(data));
+  asm volatile ("lgdt (%0)" : : "r"(data));
 }
 
 static inline void set_tr(int selector) {
-  __asm__ volatile ("ltr %0" : : "r"((uint16_t)selector));
+  asm volatile ("ltr %0" : : "r"((uint16_t)selector));
 }
 
 static inline uint32_t get_cr2() {
   volatile uint32_t val;
-  __asm__ volatile ("movl %%cr2, %0" : "=r"(val));
+  asm volatile ("movl %%cr2, %0" : "=r"(val));
   return val;
 }
 
 static inline void set_cr3(void *pdir) {
-  __asm__ volatile ("movl %0, %%cr3" : : "r"(pdir));
+  asm volatile ("movl %0, %%cr3" : : "r"(pdir));
 }
 
 #endif
