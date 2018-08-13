@@ -1,29 +1,36 @@
 #include <am-x86.h>
 
-static _Area prot_vm_range = RANGE(0x40000000, 0x80000000);
-
-static _Area segments[] = {
-  RANGE(0x00000000, 0x10000000),  // kernel code/data
-  RANGE(0xf0000000, 0x00000000),  // system mmap area
+struct vm_area {
+  _Area area;
+  int physical;
 };
 
-static void *(*pgalloc_usr)(size_t);
-static void (*pgfree_usr)(void *);
+static const struct vm_area areas[] = {
+  { RANGE(0x00000000, 0x20000000), 1 }, // kernel code/data
+  { RANGE(0x40000000, 0x80000000), 0 }, // protected address space range
+  { RANGE(0xf0000000, 0x00000000), 1 }, // system mmap area
+};
+#define uvm_area (areas[1].area)
+
 static void *pgalloc();
 static void pgfree(void *ptr);
-static PDE *kpt;
 
-int pte_init(void * (*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+static PDE *kpt;
+static void *(*pgalloc_usr)(size_t);
+static void (*pgfree_usr)(void *);
+
+int pte_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
   if (_cpu() != 0) panic("init PTE in non-bootstrap CPU");
 
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
   kpt = pgalloc();
-  for (int i = 0; i < sizeof(segments) / sizeof(segments[0]); i++) {
-    _Area *seg = &segments[i];
-    for (uint32_t pa = (uint32_t)seg->start;
-                  pa != (uint32_t)seg->end;
+  for (int i = 0; i < sizeof(areas) / sizeof(areas[0]); i++) {
+    const struct vm_area *seg = &areas[i];
+    if (!seg->physical) continue;
+    for (uint32_t pa =  (uint32_t)seg->area.start;
+                  pa != (uint32_t)seg->area.end;
                   pa += PGSIZE) {
       PTE *ptab;
       if (!(kpt[PDX(pa)] & PTE_P)) {
@@ -53,7 +60,7 @@ int protect(_Protect *p) {
   }
   *p = (_Protect) {
     .pgsize = PGSIZE,
-    .area = prot_vm_range,
+    .area = uvm_area,
     .ptr = upt,
   };
   return 0;
@@ -61,8 +68,8 @@ int protect(_Protect *p) {
 
 void unprotect(_Protect *p) {
   PDE *upt = p->ptr;
-  for (uint32_t va = (uint32_t)prot_vm_range.start;
-                va != (uint32_t)prot_vm_range.end;
+  for (uint32_t va =  (uint32_t)uvm_area.start;
+                va != (uint32_t)uvm_area.end;
                 va += (1 << PDXSHFT)) {
     PDE pde = upt[PDX(va)];
     if (pde & PTE_P) {
@@ -80,7 +87,7 @@ int map(_Protect *p, void *va, void *pa, int prot) {
       (uintptr_t)pa != ROUNDDOWN(pa, PGSIZE)) {
     panic("unaligned memory address");
   }
-  if (!in_range(va, prot_vm_range)) {
+  if (!in_range(va, uvm_area)) {
     return 1; // mapping an out-of-range address
   }
   PDE *upt = (PDE*)p->ptr;
@@ -108,7 +115,7 @@ _Context *ucontext(_Protect *p, _Area ustack, _Area kstack,
     .ds  = USEL(SEG_UDATA), .es   = USEL(SEG_UDATA),
     .ss  = USEL(SEG_UDATA), .esp3 = (uint32_t)ustack.end,
     .ss0 = KSEL(SEG_KDATA), .esp0 = (uint32_t)kstack.end,
-    .eax = (uint32_t)args,
+    .eax = (uint32_t)args, // just use eax to pass @args
     .prot = p,
   };
   return ctx;

@@ -47,8 +47,8 @@ void thiscpu_halt() {
 }
 
 void othercpu_halt() {
-  boot_rec->is_ap = 1;
-  boot_rec->entry = thiscpu_halt;
+  bootrec->is_ap = 1;
+  bootrec->entry = thiscpu_halt;
   for (int cpu = 0; cpu < ncpu; cpu++) {
     if (cpu != _cpu()) {
       lapic_bootap(cpu, 0x7c00);

@@ -4,7 +4,7 @@ int ncpu = 0;
 struct cpu_local cpuinfo[MAX_CPU];
 static void (* volatile user_entry)();
 static volatile intptr_t apboot_done = 0;
-volatile struct boot_info *boot_rec = (void *)0x7000;
+volatile struct boot_info *bootrec = (void *)0x7000;
 
 static void percpu_entry();
 static void ap_entry();
@@ -13,7 +13,7 @@ static void jump_to(void (*entry)());
 int _mpe_init(void (*entry)()) {
   user_entry = entry;
   jump_to(percpu_entry);
-  panic("mp_init should not return");
+  panic("bug: should not return");
   return 1;
 }
 
@@ -32,21 +32,19 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   return result;
 }
 
-static void percpu_entry() { // all cpus execute percpu_entry()
-  if (_cpu() != 0) {
-    // init an ap
-    jump_to(ap_entry);
-  } else {
-    // stack already swithced, boot all aps
+static void percpu_entry() {
+  if (_cpu() == 0) { // bootstrap cpu, boot all aps
     for (int cpu = 1; cpu < ncpu; cpu++) {
-      boot_rec->is_ap = 1;
-      boot_rec->entry = percpu_entry;
+      bootrec->is_ap = 1;
+      bootrec->entry = percpu_entry;
       lapic_bootap(cpu, 0x7c00);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
       }
     }
     user_entry();
+  } else { // this is an ap
+    jump_to(ap_entry);
   }
 }
 

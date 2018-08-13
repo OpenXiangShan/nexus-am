@@ -19,7 +19,7 @@ struct cpu_local {
   uint8_t stack[4096];
 };
 extern volatile uint32_t *lapic;
-extern volatile struct boot_info *boot_rec;
+extern volatile struct boot_info *bootrec;
 extern int ncpu;
 extern struct cpu_local cpuinfo[MAX_CPU];
 #define CPU (&cpuinfo[_cpu()])
