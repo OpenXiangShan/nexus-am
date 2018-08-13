@@ -1,6 +1,7 @@
 #include <am-x86.h>
 
 int ncpu = 0;
+struct cpu_local cpuinfo[MAX_CPU];
 static void (* volatile user_entry)();
 static volatile intptr_t apboot_done = 0;
 volatile struct boot_info *boot_rec = (void *)0x7000;
@@ -59,9 +60,9 @@ static void ap_entry() {
 }
 
 static void jump_to(void (*entry)()) {
-  static uint8_t cpu_stk[MAX_CPU][4096];
+  void *esp = CPU->stack + sizeof(CPU->stack);
   asm volatile (
     "movl %0, %%esp;" // switch stack, and the bootstrap stack at
     "call *%1"        // 0x7000 can be reused by ap's bootloader
-      : : "r"(&cpu_stk[_cpu() + 1][0]), "r"(entry));
+      : : "r"(esp) , "r"(entry));
 }

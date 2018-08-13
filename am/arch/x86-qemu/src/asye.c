@@ -52,6 +52,7 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
     .ss0 = 0, .esp0 = (uint32_t)stack.end,
     .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
     .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
+    .prot = NULL,
   };
 
   void *values[] = { panic_on_return, arg }; // copy to stack
@@ -79,6 +80,7 @@ void irq_handle(TrapFrame *tf) {
     .eip = tf->eip, .eflags = tf->eflags,
     .cs  = tf->cs,  .ds  = tf->ds,  .es   = tf->es,  .ss   = 0,
     .ss0 = KSEL(SEG_KDATA),         .esp0 = (uint32_t)(tf + 1),
+    .prot = CPU->prot,
   };
 
   if (tf->cs & DPL_USER) { // interrupt at user code
@@ -161,7 +163,12 @@ void irq_handle(TrapFrame *tf) {
 #define push(r) "push %[" #r "];"      // -> push %[eax]
 #define def(r)  , [r] "m"(ret_ctx->r)  // -> [eax] "m"(ret_ctx->eax)
  
+  CPU->prot = ret_ctx->prot;
   if (ret_ctx->cs & DPL_USER) { // return to user
+    _Protect *prot = ret_ctx->prot;
+    if (prot) {
+      set_cr3(prot->ptr);
+    }
     thiscpu_setstk0(ret_ctx->ss0, ret_ctx->esp0);
     asm volatile goto (
       "movl %[esp], %%esp;" // move stack

@@ -125,7 +125,6 @@ static uint32_t tsc = 0;
     (void *(*al)(size_t), void (*fr)(void *)), (al, fr), al, fr) \
   _(FUNC,        int,     protect, (_Protect *p), (p), p) \
   _(VOID,       void,   unprotect, (_Protect *p), (p), p) \
-  _(VOID,       void, prot_switch, (_Protect *p), (p), p) \
   _(FUNC,        int, map, \
     (_Protect *p, void *va, void *pa, int prot), \
     (p, va, pa, prot), p, va, pa, prot) \

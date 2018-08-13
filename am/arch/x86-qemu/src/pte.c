@@ -72,10 +72,6 @@ void unprotect(_Protect *p) {
   pgfree(upt);
 }
 
-void prot_switch(_Protect *p) {
-  set_cr3(p->ptr);
-}
-
 int map(_Protect *p, void *va, void *pa, int prot) {
   // panic because the below cases are likely bugs
   if ((prot & _PROT_NONE) && (prot != _PROT_NONE))
@@ -113,6 +109,7 @@ _Context *ucontext(_Protect *p, _Area ustack, _Area kstack,
     .ss  = USEL(SEG_UDATA), .esp3 = (uint32_t)ustack.end,
     .ss0 = KSEL(SEG_KDATA), .esp0 = (uint32_t)kstack.end,
     .eax = (uint32_t)args,
+    .prot = p,
   };
   return ctx;
 }

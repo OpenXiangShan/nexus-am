@@ -5,6 +5,7 @@
 #include <amdev.h>
 #include <amtrace.h>
 #include <x86.h>
+#include <klib.h> // for debugging
 
 #define MAX_CPU 8
 
@@ -12,9 +13,16 @@ struct boot_info {
   int is_ap;
   void (*entry)();
 };
+struct cpu_local {
+  _Protect *prot;
+  SegDesc gdt[NR_SEG];
+  uint8_t stack[4096];
+};
 extern volatile uint32_t *lapic;
 extern volatile struct boot_info *boot_rec;
 extern int ncpu;
+extern struct cpu_local cpuinfo[MAX_CPU];
+#define CPU (&cpuinfo[_cpu()])
 
 // apic utils
 void lapic_eoi();

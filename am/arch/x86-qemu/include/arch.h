@@ -9,6 +9,7 @@ struct _Context {
            eip, eflags,
            cs, ds, es, ss,
            ss0, esp0;
+  void *prot;
 };
 
 #define GPR1 eax

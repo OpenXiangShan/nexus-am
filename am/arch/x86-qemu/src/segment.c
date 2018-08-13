@@ -1,7 +1,6 @@
 #include <am-x86.h>
 
 TSS tss[MAX_CPU];
-SegDesc gdts[MAX_CPU][NR_SEG];
 
 void bootcpu_init() {
   #define MAGIC 0x5f504d5f
@@ -26,7 +25,7 @@ void bootcpu_init() {
 
 void percpu_initgdt() {
   int cpu = _cpu();
-  SegDesc *gdt = gdts[cpu];
+  SegDesc *gdt = CPU->gdt;
   gdt[SEG_KCODE] = SEG(STA_X | STA_R,      0,       0xffffffff, DPL_KERN);
   gdt[SEG_KDATA] = SEG(STA_W,              0,       0xffffffff, DPL_KERN);
   gdt[SEG_UCODE] = SEG(STA_X | STA_R,      0,       0xffffffff, DPL_USER);
