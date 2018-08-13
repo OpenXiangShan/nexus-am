@@ -27,7 +27,7 @@ extern struct cpu_local cpuinfo[MAX_CPU];
 // apic utils
 void lapic_eoi();
 void ioapic_init();
-void lapic_bootap(int cpu, uint32_t address);
+void lapic_bootap(unsigned int cpu, uint32_t address);
 void ioapic_enable(int irq, int cpu);
 
 // per-cpu x86-specific operations
