@@ -21,15 +21,6 @@ extern "C" {
 
 // ================= Device Register Specifications ==================
 
-#define _DEVREG_SERIAL_RECV 0
-#define _DEVREG_SERIAL_SEND 1
-#define _DEVREG_SERIAL_STAT 2
-#define _DEVREG_SERIAL_CTRL 3
-
-
-
-// ================= Device Register Specifications ==================
-
 // --------- _DEV_PERFCNT AM Performance Counter (0000ac01) ----------
 
 // ------------- _DEV_INPUT: AM Input Devices (0000ac02) -------------
@@ -84,6 +75,14 @@ extern "C" {
     int w, h;         //   @pixels[i * w + j] is 00RRGGBB 
     int sync;         // @sync ? sync screen : do nothing
   } _FBCtlReg;
+
+// ---------- _DEV_SERIAL: AM Serial Controller (0000ac05) -----------
+
+#define _DEVREG_SERIAL_RECV 0
+#define _DEVREG_SERIAL_SEND 1
+#define _DEVREG_SERIAL_STAT 2
+#define _DEVREG_SERIAL_CTRL 3
+
 
 // -------- _DEV_PCICONF: PCI Configuration Space (00000080) ---------
 #define _DEVREG_PCICONF(bus, slot, func, offset) \
