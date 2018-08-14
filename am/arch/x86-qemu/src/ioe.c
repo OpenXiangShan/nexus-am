@@ -31,7 +31,7 @@ int _ioe_init() {
 }
 
 _Device *_device(int n) {
-  if (n >= 1 && n < sizeof(x86_dev) / sizeof(x86_dev[0])) {
+  if (n >= 1 && n <= sizeof(x86_dev) / sizeof(x86_dev[0])) {
     return &x86_dev[n - 1];
   } else {
     return NULL;
