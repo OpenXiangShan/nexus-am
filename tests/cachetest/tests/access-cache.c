@@ -1,4 +1,4 @@
-#include "trap.h"
+#include "klib.h"
 
 int main() {
   int round = 30;
@@ -6,6 +6,6 @@ int main() {
   for (int i = 0; i < round; i++)
     arr[i * 64] = i;
   for (int i = 0; i < round; i++)
-    nemu_assert(arr[i * 64] == (char)i);
+    assert(arr[i * 64] == (char)i);
   return 0;
 }

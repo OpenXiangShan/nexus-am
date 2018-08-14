@@ -1,4 +1,4 @@
-#include "trap.h"
+#include "klib.h"
 
 int ans[64] = {0};
 
@@ -7,6 +7,6 @@ int main() {
   for (i = 0; i < 64; i++)
     ans[i] = 64 - i;
   for (i = 0; i < 64; i++)
-    nemu_assert(ans[i] == 64 - i);
+    assert(ans[i] == 64 - i);
   return 0;
 }

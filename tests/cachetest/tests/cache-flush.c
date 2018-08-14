@@ -1,4 +1,4 @@
-#include "trap.h"
+#include "klib.h"
 
 
 #define KB 1024
@@ -41,7 +41,7 @@ int main() {
       for (unsigned int i = 0; i < steps; i++) {
         int idx = fast_rand() & lengthMod;
         int result = fast_rand();
-        nemu_assert(arr[idx] == result);
+        assert(arr[idx] == result);
       }
     }
   }
