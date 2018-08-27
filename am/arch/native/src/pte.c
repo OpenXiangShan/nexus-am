@@ -15,13 +15,19 @@ typedef struct PageMap {
 void shm_mmap(void *va, void *pa, int prot);
 void shm_munmap(void *va);
 
-int _pte_init(void* (*palloc)(size_t), void (*pfree)(void*)) {
+int _pte_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
+  // we do not need to ask MM to get a page from OS,
+  // since we can call malloc() in native
   return 0;
 }
 
 int _protect(_Protect *p) {
   p->ptr = NULL;
+  p->pgsize = PGSIZE;
   return 0;
+}
+
+void _unprotect(_Protect *p) {
 }
 
 static _Protect *cur_as = NULL;
@@ -34,7 +40,7 @@ void _switch(_Protect *p) {
     // munmap all mappings
     list_foreach(pp, cur_as->ptr) {
       if (pp->is_mapped) {
-        shm_munmap((void *)(pp->vpn << 12));
+        shm_munmap((void *)(pp->vpn << PGSHIFT));
         pp->is_mapped = false;
       }
     }
@@ -42,7 +48,7 @@ void _switch(_Protect *p) {
 
   // mmap all mappings
   list_foreach(pp, p->ptr) {
-    shm_mmap((void *)(pp->vpn << 12), (void *)(pp->ppn << 12), 0);
+    shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
     pp->is_mapped = true;
   }
 
@@ -50,26 +56,26 @@ void _switch(_Protect *p) {
 }
 
 int _map(_Protect *p, void *va, void *pa, int prot) {
-  uintptr_t vpn = (uintptr_t)va >> 12;
+  uintptr_t vpn = (uintptr_t)va >> PGSHIFT;
   PageMap *pp;
   list_foreach(pp, p->ptr) {
     // can not remap
     if (pp->vpn == vpn) {
-      printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->vpn << 12, pp->ppn << 12);
-      assert(pp->ppn == ((uintptr_t)pa >> 12));
+      printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->vpn << PGSHIFT, pp->ppn << PGSHIFT);
+      assert(pp->ppn == ((uintptr_t)pa >> PGSHIFT));
       return 0;
     }
   }
 
   pp = malloc(sizeof(PageMap));
   pp->vpn = vpn;
-  pp->ppn = (uintptr_t)pa >> 12;
+  pp->ppn = (uintptr_t)pa >> PGSHIFT;
   pp->next = p->ptr;
   p->ptr = pp;
 
   if (p == cur_as) {
     // enforce the map immediately
-    shm_mmap((void *)(pp->vpn << 12), (void *)(pp->ppn << 12), 0);
+    shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
     pp->is_mapped = true;
   }
   else {
@@ -81,11 +87,14 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
 
 void get_example_uc(_Context *r);
 
-_Context *_umake(_Protect *p, _Area ustack, _Area kstack, void (*entry)(void *), void *args) {
-  ustack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
-  _Context *r = (_Context*)ustack.end - 1;
+_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+  ustack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr
+  _Context *c = (_Context*)ustack.end - 1;
 
-  get_example_uc(r);
-  r->rip = (uintptr_t)entry;
-  return r;
+  get_example_uc(c);
+  c->rip = (uintptr_t)entry;
+  c->prot = p;
+  c->uc.uc_mcontext.gregs[REG_RDI] = 0;  // argc
+  c->uc.uc_mcontext.gregs[REG_RSI] = 0;  // argv
+  return c;
 }

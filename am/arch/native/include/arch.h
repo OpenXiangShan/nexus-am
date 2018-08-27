@@ -22,10 +22,14 @@ struct _Context {
   uintptr_t rip;
 };
 
-#define SYSCALL_ARG1(r) r->rax
-#define SYSCALL_ARG2(r) r->uc.uc_mcontext.gregs[REG_RSI]
-#define SYSCALL_ARG3(r) r->uc.uc_mcontext.gregs[REG_RDX]
-#define SYSCALL_ARG4(r) r->uc.uc_mcontext.gregs[REG_RCX]
+#define GPR1 rax
+#define GPR2 uc.uc_mcontext.gregs[REG_RSI]
+#define GPR3 uc.uc_mcontext.gregs[REG_RDX]
+#define GPR4 uc.uc_mcontext.gregs[REG_RCX]
+#define GPRx rax
+
+#define PGSHIFT 12
+#define PGSIZE (1 << PGSHIFT)
 
 #undef __USE_GNU
 
