@@ -65,6 +65,8 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
   PageMap *pp;
   list_foreach(pp, p->ptr) {
     // can not remap
+    // Actually this is allowed according to the semantics of AM API,
+    // but we do this to catch unexcepted behavior from Nanos-lite
     if (pp->vpn == vpn) {
       printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->vpn << PGSHIFT, pp->ppn << PGSHIFT);
       assert(pp->ppn == ((uintptr_t)pa >> PGSHIFT));
