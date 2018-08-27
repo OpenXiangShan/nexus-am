@@ -6,8 +6,12 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 extern void asm_trap();
 extern void ret_from_trap();
 
+extern void get_cur_as(_Context *c);
+extern void _switch(_Context *c);
+
 void irq_handle(_Context *c) {
   getcontext(&c->uc);
+  get_cur_as(c);
 
   _Event e;
   e.event = ((uint32_t)c->rax == -1 ? _EVENT_YIELD : _EVENT_SYSCALL);
@@ -16,6 +20,7 @@ void irq_handle(_Context *c) {
     c = ret;
   }
 
+  _switch(c);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)ret_from_trap;
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
 

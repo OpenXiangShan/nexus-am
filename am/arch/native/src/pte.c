@@ -32,7 +32,12 @@ void _unprotect(_Protect *p) {
 
 static _Protect *cur_as = NULL;
 
-void _switch(_Protect *p) {
+void get_cur_as(_Context *c) {
+  c->prot = cur_as;
+}
+
+void _switch(_Context *c) {
+  _Protect *p = c->prot;
   if (p == cur_as) return;
   PageMap *pp;
 

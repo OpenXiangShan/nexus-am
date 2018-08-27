@@ -16,7 +16,10 @@
 struct _Context {
   union {
     uint8_t pad[1024];
-    ucontext_t uc;
+    struct {
+      ucontext_t uc;
+      void *prot;
+    };
   };
   uintptr_t rax;
   uintptr_t rip;
