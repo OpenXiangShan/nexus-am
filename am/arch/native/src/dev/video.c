@@ -4,6 +4,7 @@
 
 #define W 400
 #define H 300
+#define FPS 30
 
 static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
   return (r << 16) | (g << 8) | b;
@@ -22,21 +23,22 @@ static inline int min(int x, int y) {
   return (x < y) ? x : y;
 }
 
-static void texture_sync() {
+static Uint32 texture_sync(Uint32 interval, void *param) {
   SDL_UpdateTexture(texture, NULL, fb, W * sizeof(Uint32));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
+  return interval;
 }
 
 void video_init() {
-  SDL_Init(SDL_INIT_VIDEO);
+  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
   SDL_CreateWindowAndRenderer(W * 2, H * 2, 0, &window, &renderer);
   SDL_SetWindowTitle(window, "Native Application");
   texture = SDL_CreateTexture(renderer,
     SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, W, H);
   memset(fb, 0, W * H * sizeof(uint32_t));
-  texture_sync();
+  SDL_AddTimer(1000 / FPS, texture_sync, NULL);
 }
 
 size_t video_read(uintptr_t reg, void *buf, size_t size) {
@@ -63,7 +65,7 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
         pixels += w;
       }
       if (ctl->sync) {
-        texture_sync();
+        // do nothing, texture_sync() is called by SDL_timer
       }
       return size;
     }
