@@ -12,7 +12,7 @@ size_t video_read(uintptr_t reg, void *buf, size_t size);
 size_t video_write(uintptr_t reg, void *buf, size_t size);
 
 static _Device devices[] = {
-  {_DEV_INPUT,   "SDL Keyboard", input_read},
+  {_DEV_INPUT,   "SDL Keyboard", input_read, NULL},
   {_DEV_TIMER,   "Native Timer", timer_read, NULL},
   {_DEV_VIDEO,   "SDL Graphics", video_read, video_write},
 };
@@ -25,9 +25,8 @@ int _ioe_init() {
 }
 
 _Device *_device(int n) {
-  n --;
-  if (n >= 0 && n < sizeof(devices) / sizeof(devices[0])) {
-    return &devices[n];
+  if (n >= 1 && n <= sizeof(devices) / sizeof(devices[0])) {
+    return &devices[n - 1];
   } else {
     return NULL;
   }
