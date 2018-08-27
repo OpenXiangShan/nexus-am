@@ -1,32 +1,37 @@
 #include <am.h>
 #include <klib.h>
 
-static _Context* (*H)(_Event, _Context*) = NULL;
+static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
 extern void asm_trap();
 extern void ret_from_trap();
 
-void irq_handle(_Context *r) {
-  getcontext(&r->uc);
+extern void get_cur_as(_Context *c);
+extern void _switch(_Context *c);
+
+void irq_handle(_Context *c) {
+  getcontext(&c->uc);
+  get_cur_as(c);
 
   _Event e;
-  e.event = ((uint32_t)r->rax == -1 ? _EVENT_YIELD : _EVENT_SYSCALL);
-  _Context *ret = H(e, r);
+  e.event = ((uint32_t)c->rax == -1 ? _EVENT_YIELD : _EVENT_SYSCALL);
+  _Context *ret = user_handler(e, c);
   if (ret != NULL) {
-    r = ret;
+    c = ret;
   }
 
-  r->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)ret_from_trap;
-  r->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)r;
+  _switch(c);
+  c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)ret_from_trap;
+  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
 
-  setcontext(&r->uc);
+  setcontext(&c->uc);
 }
 
 int _asye_init(_Context*(*handler)(_Event, _Context*)) {
   void *start = (void *)0x100000;
   *(uintptr_t *)start = (uintptr_t)asm_trap;
 
-  H = handler;
+  user_handler = handler;
   return 0;
 }
 
