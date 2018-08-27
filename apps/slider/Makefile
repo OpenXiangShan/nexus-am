@@ -1,4 +1,4 @@
-NAME = fucking
-SRCS = main.c
+NAME = slider
+SRCS = main.c image.S
 LIBS += klib
 include $(AM_HOME)/Makefile.app
