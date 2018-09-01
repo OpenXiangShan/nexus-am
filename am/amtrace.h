@@ -28,8 +28,8 @@ typedef struct _TraceEvent _TraceEvent;
 // ========================= trace components ========================
 
 #define _TRACE_IOE     0x00010000
-#define _TRACE_ASYE    0x00020000
-#define _TRACE_PTE     0x00040000
+#define _TRACE_CTE     0x00020000
+#define _TRACE_VME     0x00040000
 
 // =========================== trace points ==========================
 

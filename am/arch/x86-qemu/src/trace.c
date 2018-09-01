@@ -106,8 +106,8 @@ static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
 //   (4) ARGS (arguments w/o type): (x, y); (ptr); (); ...
 //   (5) ARGS (the arguments to appear in the trace log): x, y, ptr
 
-#define ASYE_TRACE_FUNCS(_) \
-  _(FUNC,        int,   asye_init, \
+#define CTE_TRACE_FUNCS(_) \
+  _(FUNC,        int,   cte_init, \
     (_Context *(*f)(_Event, _Context *)), (f), f) \
   _(FUNC, _Context *,    kcontext, \
     (_Area stk, void (*f)(void *), void *arg), (stk, f, arg), f, arg) \
@@ -117,8 +117,8 @@ static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
   _(FUNC, _Context *,     _cb_irq, \
     (_Event ev, _Context *ctx), (ev, ctx), ev.event, ev.cause, ev.ref, ctx);
 
-#define PTE_TRACE_FUNCS(_) \
-  _(FUNC,        int,    pte_init,\
+#define VME_TRACE_FUNCS(_) \
+  _(FUNC,        int,    vme_init,\
     (void *(*al)(size_t), void (*fr)(void *)), (al, fr), al, fr) \
   _(FUNC,        int,     protect, (_Protect *p), (p), p) \
   _(VOID,       void,   unprotect, (_Protect *p), (p), p) \
@@ -133,13 +133,13 @@ static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
 
 // ========== real definitions are generated below ==========
 
-ASYE_TRACE_FUNCS(DECL)
-PTE_TRACE_FUNCS(DECL)
+CTE_TRACE_FUNCS(DECL)
+VME_TRACE_FUNCS(DECL)
 
-#define TRACE_THIS _TRACE_ASYE
-ASYE_TRACE_FUNCS(DEF)
+#define TRACE_THIS _TRACE_CTE
+CTE_TRACE_FUNCS(DEF)
 #undef  TRACE_THIS
 
-#define TRACE_THIS _TRACE_PTE
-PTE_TRACE_FUNCS(DEF)
+#define TRACE_THIS _TRACE_VME
+VME_TRACE_FUNCS(DEF)
 #undef  TRACE_THIS

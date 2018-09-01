@@ -19,8 +19,8 @@ static PDE *kpt;
 static void *(*pgalloc_usr)(size_t);
 static void (*pgfree_usr)(void *);
 
-int pte_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
-  if (_cpu() != 0) panic("init PTE in non-bootstrap CPU");
+int vme_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+  if (_cpu() != 0) panic("init VME in non-bootstrap CPU");
 
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;

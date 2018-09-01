@@ -15,7 +15,7 @@ typedef struct PageMap {
 void shm_mmap(void *va, void *pa, int prot);
 void shm_munmap(void *va);
 
-int _pte_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
+int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   // we do not need to ask MM to get a page from OS,
   // since we can call malloc() in native
   return 0;

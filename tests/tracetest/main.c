@@ -31,11 +31,11 @@ _Protect prot;
 
 int main() {
   st = (uintptr_t)_heap.start;
-  _trace_on(_TRACE_ASYE | _TRACE_FUNC);
-  _asye_init(ihandle);
-  _pte_init(alloc, free);
-  _trace_on(_TRACE_PTE);
-  printf(">>> pte init done.\n");
+  _trace_on(_TRACE_CTE | _TRACE_FUNC);
+  _cte_init(ihandle);
+  _vme_init(alloc, free);
+  _trace_on(_TRACE_VME);
+  printf(">>> vme init done.\n");
 
   uint8_t *ptr = (void*)((uintptr_t)(prot.area.start) +
      ((uintptr_t)(prot.area.end) - (uintptr_t)(prot.area.start)) / 2);
@@ -59,7 +59,7 @@ int main() {
 
   _yield();
   _intr_write(1);
-  _trace_off(_TRACE_ASYE);
+  _trace_off(_TRACE_CTE);
 
   while (1) ;
   return 1;

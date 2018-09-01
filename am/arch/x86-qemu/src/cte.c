@@ -8,8 +8,8 @@ static GateDesc idt[NR_IRQ];
 IRQS(IRQHANDLE_DECL)
 void irqall();
 
-int asye_init(_Context *(*handler)(_Event, _Context *)) {
-  if (_cpu() != 0) panic("init ASYE in non-bootstrap CPU");
+int cte_init(_Context *(*handler)(_Event, _Context *)) {
+  if (_cpu() != 0) panic("init CTE in non-bootstrap CPU");
 
   for (int i = 0; i < NR_IRQ; i ++) {
     idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
@@ -144,7 +144,7 @@ void irq_handle(TrapFrame *tf) {
       break;
   }
 
-  // call user handlers (registered in _asye_init)
+  // call user handlers (registered in _cte_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
     _Context *next = __cb_irq(ev, &ctx);

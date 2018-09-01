@@ -38,7 +38,7 @@ _Context* handler(_Event ev, _Context *ctx) {
 
 int main(){
   printf("kcontext test started.\n");
-  _asye_init(handler);
+  _cte_init(handler);
   assert(!_intr_read());
   for (int i = 0; i < N; i++) {
     texts[i][0] = 'a' + i;
