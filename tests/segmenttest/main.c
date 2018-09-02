@@ -36,7 +36,7 @@ void load_testcase() {
 
 int main(){
   _ioe_init();
-  _asye_init(handler);
+  _cte_init(handler);
 
   assert(!_intr_read());
   _intr_write(1);

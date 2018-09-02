@@ -27,7 +27,7 @@ void irq_handle(_Context *c) {
   setcontext(&c->uc);
 }
 
-int _asye_init(_Context*(*handler)(_Event, _Context*)) {
+int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   void *start = (void *)0x100000;
   *(uintptr_t *)start = (uintptr_t)asm_trap;
 

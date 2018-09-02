@@ -63,8 +63,8 @@ uint8_t kstk[4096];
 
 int main() {
   st = (uintptr_t)_heap.start;
-  _asye_init(handler);
-  _pte_init(alloc, free);
+  _cte_init(handler);
+  _vme_init(alloc, free);
 
   _protect(&prot);
 

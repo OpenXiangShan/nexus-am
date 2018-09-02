@@ -33,8 +33,8 @@ static void free(void *ptr) {
 int main() {
   start = (uintptr_t)_heap.start;
   _trace_on(_TRACE_ALL);
-  _asye_init(interrupt);
-  _pte_init(alloc, free);
+  _cte_init(interrupt);
+  _vme_init(alloc, free);
   _mpe_init(f);
   assert(0);
   return 0;
