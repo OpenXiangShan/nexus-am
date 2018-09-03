@@ -4,7 +4,7 @@
 
 static PDE kpdirs[NR_PDE] PG_ALIGN;
 static PTE kptabs[PMEM_SIZE / PGSIZE] PG_ALIGN;
-static void* (*pgalloc_usr)();
+static void* (*pgalloc_usr)(size_t);
 static void (*pgfree_usr)(void*);
 
 _Area segments[] = {      // Kernel memory mappings
@@ -49,7 +49,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 int _protect(_Protect *p) {
-  PDE *updir = (PDE*)(pgalloc_usr());
+  PDE *updir = (PDE*)(pgalloc_usr(1));
   p->pgsize = 4096;
   p->ptr = updir;
   // map kernel space
@@ -65,15 +65,21 @@ int _protect(_Protect *p) {
 void _unprotect(_Protect *p) {
 }
 
-void _switch(_Protect *p) {
-  set_cr3(p->ptr);
+static _Protect *cur_as = NULL;
+void get_cur_as(_Context *c) {
+  c->prot = cur_as;
+}
+
+void _switch(_Context *c) {
+  set_cr3(c->prot->ptr);
+  cur_as = c->prot;
 }
 
 int _map(_Protect *p, void *va, void *pa, int mode) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)pgalloc_usr();
+    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)pgalloc_usr(1);
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
@@ -84,9 +90,9 @@ int _map(_Protect *p, void *va, void *pa, int mode) {
 }
 
 _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
-//  ustack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
-//  uintptr_t *esp = ustack.end;
-//  esp[1] = esp[2] = esp[3] = 0;
+  ustack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
+  uintptr_t *esp = ustack.end;
+  esp[1] = esp[2] = esp[3] = 0;
 
   _Context *c = (_Context*)ustack.end - 1;
 

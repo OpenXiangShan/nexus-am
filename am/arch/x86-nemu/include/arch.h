@@ -9,16 +9,18 @@
 typedef uint32_t size_t;
 
 struct _Context {
+  struct _Protect *prot;
   uintptr_t edi, esi, ebp, esp;
   uintptr_t ebx, edx, ecx, eax;      // Register saved by pushal
   int       irq;                     // # of irq
   uintptr_t err, eip, cs, eflags;    // Execution state before trap
 };
 
-#define SYSCALL_ARG1(r) ((r)->eax)
-#define SYSCALL_ARG2(r) ((r)->ebx)
-#define SYSCALL_ARG3(r) ((r)->ecx)
-#define SYSCALL_ARG4(r) ((r)->edx)
+#define GPR1 eax
+#define GPR2 ebx
+#define GPR3 ecx
+#define GPR4 edx
+#define GPRx eax
 
 #ifdef __cplusplus
 extern "C" {
