@@ -96,12 +96,17 @@ void get_example_uc(_Context *r);
 
 _Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
   ustack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr
-  _Context *c = (_Context*)ustack.end - 1;
+  uintptr_t ret = (uintptr_t)ustack.end;
+  *(uintptr_t *)ret = 0;
 
+  _Context *c = (_Context*)ustack.end - 1;
   get_example_uc(c);
   c->rip = (uintptr_t)entry;
   c->prot = p;
-  c->uc.uc_mcontext.gregs[REG_RDI] = 0;  // argc
-  c->uc.uc_mcontext.gregs[REG_RSI] = 0;  // argv
+
+  c->uc.uc_mcontext.gregs[REG_RDI] = 0;
+  c->uc.uc_mcontext.gregs[REG_RSI] = ret; // ???
+  c->uc.uc_mcontext.gregs[REG_RDX] = ret; // ???
+
   return c;
 }
