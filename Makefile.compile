@@ -15,6 +15,11 @@ ifeq ($(ISA), riscv64)
 CROSS_COMPILE = riscv64-unknown-linux-gnu-
 endif
 
+ifeq ($(PLATFORM), navy)
+NAVY_LIBS = libndl libos libc
+INC_DIR += $(addsuffix /include/, $(addprefix $(NAVY_HOME)/libs/, $(NAVY_LIBS)))
+endif
+
 AS = $(CROSS_COMPILE)gcc
 CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++

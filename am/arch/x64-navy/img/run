@@ -1,0 +1,4 @@
+#!/bin/bash
+
+make -C $NAVY_HOME/libs/libos ISA=native
+LD_PRELOAD=$NAVY_HOME/libs/libos/build/native.so $1

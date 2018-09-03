@@ -1,0 +1,26 @@
+#!/bin/bash
+
+DEST=$1
+shift
+
+ISA=am_native
+
+OBJS="$@ $NAVY_HOME/libs/libndl/build/libndl-$ISA.a"
+
+#make -C $NAVY_HOME/tests/dummy ISA=am_native APP="$DEST" OBJS="$@" LIBS="libndl"
+make -C $NAVY_HOME/libs/libndl ISA=$ISA
+if [[ $ISA == "native" ]]; then
+  g++ -pie -o $DEST -Wl,--start-group $OBJS -Wl,--end-group
+else
+  OBJS="$OBJS $NAVY_HOME/libs/libc/build/libc-$ISA.a \
+    $NAVY_HOME/libs/libos/build/libos-$ISA.a"
+
+  make -C $NAVY_HOME/libs/libc ISA=$ISA
+  make -C $NAVY_HOME/libs/libos ISA=$ISA
+  ld -e _start -N -Ttext 0x4000000 -o "$DEST" --start-group $OBJS --end-group
+fi
+
+#g++ -pie -o "$DEST" -Wl,--start-group $@ -Wl,--end-group -lSDL2 -lGL -lrt
+
+mkdir -p $NAVY_HOME/fsimg/bin/am
+cp "$DEST" $NAVY_HOME/fsimg/bin/am/
