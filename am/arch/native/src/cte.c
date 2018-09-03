@@ -35,8 +35,14 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
+void get_example_uc(_Context *r);
+
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  return NULL;
+  _Context *c = (_Context*)stack.end - 1;
+
+  get_example_uc(c);
+  c->rip = (uintptr_t)entry;
+  return c;
 }
 
 void _yield() {
