@@ -1,3 +1,3 @@
-# X64 Navy
+# Navy
 
 Only has TRM + IOE.

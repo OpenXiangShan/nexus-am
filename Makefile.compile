@@ -69,6 +69,12 @@ CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
 ASFLAGS  += -m32
 endif
 
+ifeq ($(ISA), am_native)
+CFLAGS_COMMON = -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-reorder-functions
+CFLAGS   += $(CFLAGS_COMMON)
+CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
+endif
+
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
 

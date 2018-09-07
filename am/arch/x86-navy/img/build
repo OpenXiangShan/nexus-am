@@ -1,0 +1,20 @@
+#!/bin/bash
+
+DEST=$1
+shift
+
+tmp=`basename $DEST -navy`
+ISA=`echo $tmp | grep -o '[^-]*$'`
+NAME=`basename $tmp -$ISA`
+
+mkfile=`pwd`/Makefile.navy
+echo "NAME = $NAME-am" > $mkfile
+echo "APP = $DEST" >> $mkfile
+echo "OBJS = $@" >> $mkfile
+cat $AM_HOME/am/arch/x86-navy/img/Makefile.navy >> $mkfile
+
+make install -f $mkfile ISA=$ISA 
+
+rm $mkfile
+
+exit

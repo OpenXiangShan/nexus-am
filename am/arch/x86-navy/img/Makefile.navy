@@ -1,0 +1,2 @@
+LIBS += libndl
+include $(NAVY_HOME)/Makefile.app
