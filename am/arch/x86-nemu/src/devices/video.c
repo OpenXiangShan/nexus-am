@@ -1,7 +1,9 @@
 #include <am.h>
+#include <x86.h>
 #include <amdev.h>
 #include <klib.h>
 
+#define SCREEN_PORT 0x100
 static int W, H;
 static uint32_t* const fb = (uint32_t *)0x40000;
 
@@ -44,6 +46,7 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
 }
 
 void vga_init() {
-  W = 400;
-  H = 300;
+  uint32_t data = inl(SCREEN_PORT);
+  W = data >> 16;
+  H = data & 0xffff;
 }
