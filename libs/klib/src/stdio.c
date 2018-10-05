@@ -1,7 +1,7 @@
 #include "klib.h"
 #include <stdarg.h>
 
-#ifndef __ISA_NATIVE__
+#if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 char *printch(char ch, char **s, int *limit_n);
 int printdec(unsigned int dec, int base, int width, char abs, char flagc, char **s, int *limit_n);
