@@ -1,5 +1,5 @@
 NAME = klib
-SRCS = src/printk.c \
+SRCS = src/stdio.c \
        src/string.c \
        src/cpp.c \
        src/stdlib.c \
