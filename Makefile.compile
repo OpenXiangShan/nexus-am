@@ -23,36 +23,34 @@ ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
 
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
 INCLUDES += -I$(AM_HOME)/am/arch/$(ARCH)/include
-CFLAGS   += -std=gnu11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -fno-builtin
-CXXFLAGS += -std=c++11 -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -fno-builtin
-ASFLAGS  +=                -MMD                     $(INCLUDES) -D$(ISA_DEF)
+
+CFLAGS_COMMON += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) \
+                 -fno-builtin -fno-stack-protector
+CFLAGS   += -std=gnu11
+CXXFLAGS += -std=c++11 -ffreestanding -fno-rtti -fno-exceptions
+ASFLAGS  += -MMD $(INCLUDES) -D$(ISA_DEF)
 
 ifeq ($(ISA), native)
-CFLAGS_COMMON = -fpie
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON)
+CFLAGS_COMMON += -fpie
 ASFLAGS  += -fpie -pie
 endif
 
 ifeq ($(ISA), mips32)
-CFLAGS_COMMON = -fno-pic -static -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL -mno-llsc -mno-imadd -mno-mad
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
+CFLAGS_COMMON += -fno-pic -static -fno-strict-aliasing -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL -mno-llsc -mno-imadd -mno-mad
 ASFLAGS  += -march=mips32 -EL -mno-check-zero-division -O0 -mno-abicalls -fno-pic -fno-delayed-branch
 endif
 
 ifeq ($(ISA), x86)
-CFLAGS_COMMON = -m32 -fno-pic -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -march=i386 -mstringop-strategy=unrolled_loop
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
+CFLAGS_COMMON += -m32 -fno-pic -fno-omit-frame-pointer -march=i386 -mstringop-strategy=loop
 ASFLAGS  += -m32
 endif
 
 ifeq ($(ISA), am_native)
-CFLAGS_COMMON = -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-reorder-functions
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON) -ffreestanding -fno-rtti -fno-exceptions
+CFLAGS_COMMON += -fno-omit-frame-pointer -fno-reorder-functions
 endif
+
+CFLAGS   += $(CFLAGS_COMMON)
+CXXFLAGS += $(CFLAGS_COMMON)
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
