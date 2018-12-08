@@ -51,7 +51,7 @@ CPU正确性和性能测试用基准程序。对AbstractMachine的要求：
 虽然klib中提供了一些函数，但使用它们可能会导致在不同平台上的性能不准确。
 
 * `bench_memcpy(void *dst, const void *src, size_t n)`: 内存复制。
-* `bench_srand(int seed)`：用seed初始化随机数种子。
+* `bench_srand(uint seed)`：用seed初始化随机数种子。
 * `bench_rand()`：返回一个0..32767之间的随机数。
 * `bench_alloc`/`bench_free`：内存分配/回收。目前回收是空操作。
 

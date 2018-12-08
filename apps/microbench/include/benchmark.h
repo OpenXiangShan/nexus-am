@@ -103,8 +103,8 @@ void bench_free(void *ptr);
 void bench_reset();
 
 // random number generator
-void bench_srand(int32_t seed);
-int32_t bench_rand(); // return a random number between 0..32767
+void bench_srand(uint32_t seed);
+uint32_t bench_rand(); // return a random number between 0..32767
 
 // checksum
 uint32_t checksum(void *start, void *end);

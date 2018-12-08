@@ -131,28 +131,27 @@ void bench_reset() {
   start = (char*)_heap.start;
 }
 
-static int32_t seed = 1;
+static uint32_t seed = 1;
 
-void bench_srand(int32_t _seed) {
+void bench_srand(uint32_t _seed) {
   seed = _seed & 0x7fff;
 }
 
-int32_t bench_rand() {
-  seed = (seed * (int32_t)214013L + (int32_t)2531011L);
+uint32_t bench_rand() {
+  seed = (seed * (uint32_t)214013L + (uint32_t)2531011L);
   return (seed >> 16) & 0x7fff;
 }
 
 // FNV hash
 uint32_t checksum(void *start, void *end) {
-  const int32_t x = 16777619;
-  int32_t hash = 2166136261u;
+  const uint32_t x = 16777619;
+  uint32_t h1 = 2166136261u;
   for (uint8_t *p = (uint8_t*)start; p + 4 < (uint8_t*)end; p += 4) {
-    int32_t h1 = hash;
     for (int i = 0; i < 4; i ++) {
       h1 = (h1 ^ p[i]) * x;
     }
-    hash = h1;
   }
+  int32_t hash = (uint32_t)h1;
   hash += hash << 13;
   hash ^= hash >> 7;
   hash += hash << 3;
