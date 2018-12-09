@@ -38,7 +38,7 @@ void get_cur_as(_Context *c) {
 
 void _switch(_Context *c) {
   _Protect *p = c->prot;
-  if (p == cur_as) return;
+  if (p == NULL || p == cur_as) return;
   PageMap *pp;
 
   if (cur_as != NULL) {
