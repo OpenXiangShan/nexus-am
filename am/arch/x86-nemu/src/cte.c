@@ -12,22 +12,22 @@ void vecnull();
 void get_cur_as(_Context *c);
 void _switch(_Context *c);
 
-_Context* irq_handle(_Context *tf) {
-  get_cur_as(tf);
+_Context* irq_handle(_Context *c) {
+  get_cur_as(c);
 
-  _Context *next = tf;
+  _Context *next = c;
   if (user_handler) {
     _Event ev = {0};
-    switch (tf->irq) {
+    switch (c->irq) {
       case 32: ev.event = _EVENT_IRQ_TIMER; break;
       case 0x80: ev.event = _EVENT_SYSCALL; break;
       case 0x81: ev.event = _EVENT_YIELD; break;
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    next = user_handler(ev, tf);
+    next = user_handler(ev, c);
     if (next == NULL) {
-      next = tf;
+      next = c;
     }
   }
 
