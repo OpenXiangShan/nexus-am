@@ -1,3 +1,3 @@
 #!/bin/bash
 
-make -C $NEMU_HOME run ARGS="-b -l `dirname $1`/nemu-log.txt $1.bin"
+make -C $NEMU_HOME ARCH=x86 run ARGS="-b -l `dirname $1`/nemu-log.txt $1.bin"
