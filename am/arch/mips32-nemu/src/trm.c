@@ -1,10 +1,10 @@
 #include <am.h>
-#include <mips32-nemu.h>
+#include <mips32.h>
 
 // Define this macro after serial has been implemented
 #define HAS_SERIAL
 
-#define SERIAL_PORT ((volatile char *)((MMIO_BASE) + 0x3f8))
+#define SERIAL_PORT 0x43f8
 
 extern char _heap_start;
 extern char _heap_end;
@@ -17,7 +17,7 @@ _Area _heap = {
 
 void _putc(char ch) {
 #ifdef HAS_SERIAL
-  SERIAL_PORT[0] = ch;
+  outb(SERIAL_PORT, ch);
 #endif
 }
 
