@@ -1,0 +1,12 @@
+#!/bin/bash
+
+DIR=${AM_HOME}/am/arch/mips32-nemu/img
+DEST=$1
+shift
+
+make -C $DIR/boot -s
+
+mips-linux-gnu-ld --gc-sections -EL -T $DIR/loader.ld -e _start -o $DEST $DIR/boot/start.o --start-group $@ --end-group
+mips-linux-gnu-objdump -d $DEST > $DEST.txt
+
+mips-linux-gnu-objcopy -S --set-section-flags .bss=alloc,contents -O binary $DEST $DEST.bin
