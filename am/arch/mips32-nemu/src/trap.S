@@ -1,12 +1,14 @@
 
-#define concat_temp(x, y) x ## y
-#define concat(x, y) concat_temp(x, y)
+#define map(c, f) c(f)
 
-#define regs(X) \
-      X( 1) X( 2) X( 3) X( 4) X( 5) X( 6) X( 7) X( 8) X( 9) \
-X(10) X(11) X(12) X(13) X(14) X(15) X(16) X(17) X(18) X(19) \
-X(20) X(21) X(22) X(23) X(24) X(25) X(26) X(27) X(28)       \
-X(30) X(31)
+#define regs(f) \
+      f( 1) f( 2) f( 3) f( 4) f( 5) f( 6) f( 7) f( 8) f( 9) \
+f(10) f(11) f(12) f(13) f(14) f(15) f(16) f(17) f(18) f(19) \
+f(20) f(21) f(22) f(23) f(24) f(25) f(26) f(27) f(28)       \
+f(30) f(31)
+
+#define push(n) sw $n, (n * 4)($sp);
+#define pop(n)  lw $n, (n * 4)($sp);
 
 #define CONTEXT_SIZE ((31 + 6) * 4)
 #define OFFSET_SP     (29 * 4)
@@ -20,16 +22,14 @@ X(30) X(31)
 #define CP0_CAUSE  13
 #define CP0_EPC    14
 
-#define push(n) sw $n, (n * 4)($sp);
-#define pop(n)  lw $n, (n * 4)($sp);
-
 .set noat
 .globl asm_trap
 asm_trap:
   move $k0, $sp
   addiu $sp, $sp, -CONTEXT_SIZE
 
-  regs(push)
+  map(regs, push)
+
   sw $k0, OFFSET_SP($sp)
   mflo $t0
   mfhi $t1
@@ -45,6 +45,8 @@ asm_trap:
   move $a0, $sp
   jal irq_handle
 
+  move $sp, $v0
+
   lw $t0, OFFSET_LO($sp)
   lw $t1, OFFSET_HI($sp)
   lw $t2, OFFSET_CAUSE($sp)
@@ -56,6 +58,8 @@ asm_trap:
   mtc0 $t3, $CP0_STATUS
   mtc0 $t4, $CP0_EPC
 
-  regs(pop)
+  map(regs, pop)
+
+  addiu $sp, $sp, CONTEXT_SIZE
 
   eret
