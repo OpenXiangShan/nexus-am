@@ -38,7 +38,7 @@ _Context* irq_handle(_Context *c) {
 
 extern void asm_trap(void);
 
-#define EX_ENTRY 0x180
+#define EX_ENTRY 0x80000180
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   // initialize exception entry

@@ -1,14 +1,14 @@
 
-#define map(c, f) c(f)
+#define MAP(c, f) c(f)
 
-#define regs(f) \
+#define REGS(f) \
       f( 1) f( 2) f( 3) f( 4) f( 5) f( 6) f( 7) f( 8) f( 9) \
 f(10) f(11) f(12) f(13) f(14) f(15) f(16) f(17) f(18) f(19) \
 f(20) f(21) f(22) f(23) f(24) f(25) f(26) f(27) f(28)       \
 f(30) f(31)
 
-#define push(n) sw $n, (n * 4)($sp);
-#define pop(n)  lw $n, (n * 4)($sp);
+#define PUSH(n) sw $n, (n * 4)($sp);
+#define POP(n)  lw $n, (n * 4)($sp);
 
 #define CONTEXT_SIZE ((31 + 6) * 4)
 #define OFFSET_SP     (29 * 4)
@@ -28,7 +28,7 @@ asm_trap:
   move $k0, $sp
   addiu $sp, $sp, -CONTEXT_SIZE
 
-  map(regs, push)
+  MAP(REGS, PUSH)
 
   sw $k0, OFFSET_SP($sp)
   mflo $t0
@@ -58,7 +58,7 @@ asm_trap:
   mtc0 $t3, $CP0_STATUS
   mtc0 $t4, $CP0_EPC
 
-  map(regs, pop)
+  MAP(REGS, POP)
 
   addiu $sp, $sp, CONTEXT_SIZE
 

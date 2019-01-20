@@ -1,8 +1,6 @@
 #ifndef __MIPS32_H__
 #define __MIPS32_H__
 
-#define EX_ENTRY 0x180
-
 #ifndef __ASSEMBLER__
 
 #include <arch.h>

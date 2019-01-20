@@ -2,5 +2,6 @@
 .type _start, function
 
 _start:
+  move $fp, $zero
   la $sp, _stack_pointer
-  j _trm_init
+  jal _trm_init

@@ -1,5 +1,5 @@
 SECTIONS {
-  . = 0x100000;
+  . = 0x80100000;
   .text : {
     *(.text)
   }
@@ -19,9 +19,11 @@ SECTIONS {
     *(.sbss)
     *(.scommon)
   }
+  _stack_top = ALIGN(4096);
+  . = _stack_top + 0x8000;
+  _stack_pointer = .;
   end = .;
   _end = .;
   _heap_start = ALIGN(4096);
-  _stack_pointer = 0x8000000;
-  _heap_end = _stack_pointer - 4 * 1024 * 1024;
+  _heap_end = 0x88000000;
 }
