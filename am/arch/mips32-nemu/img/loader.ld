@@ -16,7 +16,7 @@ SECTIONS {
   .bss : {
 	_bss_start = .;
     *(.bss*)
-    *(.sbss)
+    *(.sbss*)
     *(.scommon)
   }
   _stack_top = ALIGN(4096);
