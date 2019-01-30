@@ -71,6 +71,8 @@ void _halt(int code) __attribute__((__noreturn__));
 
 int _ioe_init();
 _Device *_device(int n);
+size_t _io_read(uint32_t dev, uintptr_t reg, void *buf, size_t size);
+size_t _io_write(uint32_t dev, uintptr_t reg, void *buf, size_t size);
 
 // ====================== Context Extension (CTE) ====================
 

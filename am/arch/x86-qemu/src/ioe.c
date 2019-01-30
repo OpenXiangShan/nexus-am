@@ -20,7 +20,6 @@ static _Device x86_dev[] = {
   {_DEV_TIMER,   "RDTSC Timer / CMOS RTC",   timer_read, NULL},
   {_DEV_VIDEO,   "Standard VGA Controller",  video_read, video_write},
   {_DEV_PCICONF, "PCI Configuration",        pciconf_read, pciconf_write},
-  {_DEV_ATA0,    "ATA Disk Controller 0",    hd_read, hd_write},
 };
 
 int _ioe_init() {

@@ -20,7 +20,7 @@ static _Device *video_dev;
 static _Device *timer_dev;
 
 uint32_t uptime() {
-  _UptimeReg uptime;
+  _DEV_TIMER_UPTIME_t uptime;
   _Device *dev = getdev(&timer_dev, _DEV_TIMER);
   dev->read(_DEVREG_TIMER_UPTIME, &uptime, sizeof(uptime));
   return uptime.lo;
@@ -28,13 +28,13 @@ uint32_t uptime() {
 
 void get_timeofday(void *rtc) {
   _Device *dev = getdev(&timer_dev, _DEV_TIMER);
-  dev->read(_DEVREG_TIMER_DATE, rtc, sizeof(_RTCReg));
+  dev->read(_DEVREG_TIMER_DATE, rtc, sizeof(_DEV_TIMER_DATE_t));
 }
 
 int read_key() {
   _Device *dev = getdev(&input_dev, _DEV_INPUT);
-  _KbdReg key;
-  dev->read(_DEVREG_INPUT_KBD, &key, sizeof(_KbdReg));
+  _DEV_INPUT_KBD_t key;
+  dev->read(_DEVREG_INPUT_KBD, &key, sizeof(_DEV_INPUT_KBD_t));
   int ret = key.keycode;
   if (key.keydown) ret |= 0x8000;
   return ret;
@@ -42,7 +42,7 @@ int read_key() {
 
 void draw_rect(uint32_t *pixels, int x, int y, int w, int h) {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  _FBCtlReg ctl;
+  _DEV_VIDEO_FBCTL_t ctl;
   ctl.pixels = pixels;
   ctl.x = x;
   ctl.y = y;
@@ -54,7 +54,7 @@ void draw_rect(uint32_t *pixels, int x, int y, int w, int h) {
 
 void draw_sync() {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  _FBCtlReg ctl;
+  _DEV_VIDEO_FBCTL_t ctl;
   ctl.pixels = NULL;
   ctl.x = ctl.y = ctl.w = ctl.h = 0;
   ctl.sync = 1;
@@ -63,14 +63,14 @@ void draw_sync() {
 
 int screen_width() {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  _VideoInfoReg info;
+  _DEV_VIDEO_INFO_t info;
   dev->read(_DEVREG_VIDEO_INFO, &info, sizeof(info));
   return info.width;
 }
 
 int screen_height() {
   _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  _VideoInfoReg info;
+  _DEV_VIDEO_INFO_t info;
   dev->read(_DEVREG_VIDEO_INFO, &info, sizeof(info));
   return info.height;
 }
