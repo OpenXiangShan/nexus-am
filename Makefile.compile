@@ -7,6 +7,10 @@ ifeq ($(ISA), mips32)
 CROSS_COMPILE = mips-linux-gnu-
 endif
 
+ifeq ($(ISA), riscv32)
+CROSS_COMPILE = riscv-none-embed-
+endif
+
 ifeq ($(PLATFORM), navy)
 NAVY_LIBS = libndl libos libc
 INC_DIR += $(addsuffix /include/, $(addprefix $(NAVY_HOME)/libs/, $(NAVY_LIBS)))
@@ -43,6 +47,11 @@ endif
 ifeq ($(ISA), x86)
 CFLAGS_COMMON += -m32 -fno-pic -fno-omit-frame-pointer -march=i386 -mstringop-strategy=loop -fno-reorder-functions
 ASFLAGS  += -m32
+endif
+
+ifeq ($(ISA), riscv32)
+CFLAGS_COMMON += -fno-pic -static -march=rv32im -mabi=ilp32
+ASFLAGS  += -march=rv32im -mabi=ilp32 -O0 -fno-pic
 endif
 
 ifeq ($(ISA), am_native)

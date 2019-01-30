@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DIR=${AM_HOME}/am/arch/riscv32-nemu/img
+DEST=$1
+shift
+CROSS_COMPILE=riscv-none-embed-
+
+make -C $DIR/boot -s
+
+${CROSS_COMPILE}ld --gc-sections -melf32lriscv -T $DIR/loader.ld -e _start -o $DEST $DIR/boot/start.o --start-group $@ --end-group
+${CROSS_COMPILE}objdump -d $DEST > $DEST.txt
+
+${CROSS_COMPILE}objcopy -S --set-section-flags .bss=alloc,contents -O binary $DEST $DEST.bin
