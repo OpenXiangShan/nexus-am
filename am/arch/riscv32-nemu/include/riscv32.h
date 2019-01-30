@@ -15,8 +15,11 @@ static inline void outb(uintptr_t addr, uint8_t  data) { *(volatile uint8_t  *)M
 static inline void outw(uintptr_t addr, uint16_t data) { *(volatile uint16_t *)MMIO_OFFSET(addr) = data; }
 static inline void outl(uintptr_t addr, uint32_t data) { *(volatile uint32_t *)MMIO_OFFSET(addr) = data; }
 
-#define PTE_V 0x2
-#define PTE_D 0x4
+#define PTE_V 0x01
+#define PTE_R 0x02
+#define PTE_W 0x04
+#define PTE_X 0x08
+#define PTE_U 0x10
 
 // Page directory and page table constants
 #define NR_PDE    1024    // # directory entries per page directory
@@ -37,7 +40,10 @@ typedef uint32_t PDE;
 #define OFF(va)     ((uint32_t)(va) & 0xfff)
 
 // Address in page table or page directory entry
-#define PTE_ADDR(pte)   ((uint32_t)(pte) & ~0xfff)
+#define PTE_ADDR(pte)   (((uint32_t)(pte) & ~0x3ff) << 2)
+
+// construct virtual address from indexes and offset
+#define PGADDR(d, t, o) ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 
 #endif
 

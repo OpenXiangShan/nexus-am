@@ -8,7 +8,7 @@ void get_cur_as(_Context *c);
 void _switch(_Context *c);
 
 _Context* irq_handle(_Context *c) {
-//  get_cur_as(c);
+  get_cur_as(c);
 
   _Context *next = c;
   if (user_handler) {
@@ -28,7 +28,7 @@ _Context* irq_handle(_Context *c) {
     }
   }
 
-//  _switch(next);
+  _switch(next);
 
   return next;
 }
