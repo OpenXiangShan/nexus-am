@@ -1,77 +1,49 @@
 #include <klib.h>
 #include <amdev.h>
 
-static _Device *getdev(_Device **ptr, uint32_t id) {
-  if (*ptr) return *ptr;
-  for (int n = 1; ; n ++) {
-    _Device *cur = _device(n);
-    if (cur->id == id) {
-      *ptr = cur;
-      return cur;
-    }
-    if (!cur) break;
-  }
-  assert(0);
-  return NULL;
-}
-
-static _Device *input_dev;
-static _Device *video_dev;
-static _Device *timer_dev;
-
 uint32_t uptime() {
   _DEV_TIMER_UPTIME_t uptime;
-  _Device *dev = getdev(&timer_dev, _DEV_TIMER);
-  dev->read(_DEVREG_TIMER_UPTIME, &uptime, sizeof(uptime));
+  _io_read(_DEV_TIMER, _DEVREG_TIMER_UPTIME, &uptime, sizeof(uptime));
   return uptime.lo;
 }
 
 void get_timeofday(void *rtc) {
-  _Device *dev = getdev(&timer_dev, _DEV_TIMER);
-  dev->read(_DEVREG_TIMER_DATE, rtc, sizeof(_DEV_TIMER_DATE_t));
+  _io_read(_DEV_TIMER, _DEVREG_TIMER_DATE, rtc, sizeof(_DEV_TIMER_DATE_t));
 }
 
 int read_key() {
-  _Device *dev = getdev(&input_dev, _DEV_INPUT);
   _DEV_INPUT_KBD_t key;
-  dev->read(_DEVREG_INPUT_KBD, &key, sizeof(_DEV_INPUT_KBD_t));
+  _io_read(_DEV_INPUT, _DEVREG_INPUT_KBD, &key, sizeof(_DEV_INPUT_KBD_t));
   int ret = key.keycode;
   if (key.keydown) ret |= 0x8000;
   return ret;
 }
 
 void draw_rect(uint32_t *pixels, int x, int y, int w, int h) {
-  _Device *dev = getdev(&video_dev, _DEV_VIDEO);
-  _DEV_VIDEO_FBCTL_t ctl;
-  ctl.pixels = pixels;
-  ctl.x = x;
-  ctl.y = y;
-  ctl.w = w;
-  ctl.h = h;
-  ctl.sync = 0;
-  dev->write(_DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
+  _DEV_VIDEO_FBCTL_t ctl = (_DEV_VIDEO_FBCTL_t) {
+    .pixels = pixels,
+    .x = x, .y = y, .w = w, .h = h,
+    .sync = 0,
+  };
+  _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
 }
 
 void draw_sync() {
-  _Device *dev = getdev(&video_dev, _DEV_VIDEO);
   _DEV_VIDEO_FBCTL_t ctl;
   ctl.pixels = NULL;
   ctl.x = ctl.y = ctl.w = ctl.h = 0;
   ctl.sync = 1;
-  dev->write(_DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
+  _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
 }
 
 int screen_width() {
-  _Device *dev = getdev(&video_dev, _DEV_VIDEO);
   _DEV_VIDEO_INFO_t info;
-  dev->read(_DEVREG_VIDEO_INFO, &info, sizeof(info));
+  _io_read(_DEV_VIDEO, _DEVREG_VIDEO_INFO, &info, sizeof(info));
   return info.width;
 }
 
 int screen_height() {
-  _Device *dev = getdev(&video_dev, _DEV_VIDEO);
   _DEV_VIDEO_INFO_t info;
-  dev->read(_DEVREG_VIDEO_INFO, &info, sizeof(info));
+  _io_read(_DEV_VIDEO, _DEVREG_VIDEO_INFO, &info, sizeof(info));
   return info.height;
 }
-
