@@ -24,10 +24,10 @@ void vga_init() {
 size_t video_read(uintptr_t reg, void *buf, size_t size) {
   switch(reg) {
     case _DEVREG_VIDEO_INFO: {
-      _VideoInfoReg *info = (_VideoInfoReg *)buf;
+      _DEV_VIDEO_INFO_t *info = (_DEV_VIDEO_INFO_t *)buf;
       info->width = SCR_WIDTH;
       info->height = SCR_HEIGHT;
-      return sizeof(_VideoInfoReg);
+      return sizeof(_DEV_VIDEO_INFO_t);
     }
   }
   return 0;
@@ -36,7 +36,7 @@ size_t video_read(uintptr_t reg, void *buf, size_t size) {
 size_t video_write(uintptr_t reg, void *buf, size_t size) {
   switch(reg) {
     case _DEVREG_VIDEO_FBCTL: {
-      _FBCtlReg *ctl = (_FBCtlReg *)buf;
+      _DEV_VIDEO_FBCTL_t *ctl = (_DEV_VIDEO_FBCTL_t *)buf;
       int x = ctl->x, y = ctl->y, w = ctl->w, h = ctl->h;
       uint32_t *pixels = ctl->pixels;
       int len = (x + w >= W) ? W - x : w;
@@ -72,20 +72,20 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
 
 	  us.val /= (HZ / 1000);
 
-	  _UptimeReg *uptime = (_UptimeReg *)buf;
+	  _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
 	  uptime->hi = us.hi;
       uptime->lo = us.lo;
 #else
 	  static uint32_t ms = 0;
-	  _UptimeReg *uptime = (_UptimeReg *)buf;
+	  _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
 	  uptime->hi = ms += 10;
       uptime->lo = ms;
 #endif
-      return sizeof(_UptimeReg);
+      return sizeof(_DEV_TIMER_UPTIME_t);
     }
     case _DEVREG_TIMER_DATE: {
 	  // do nothing
-      return sizeof(_RTCReg);
+      return sizeof(_DEV_TIMER_DATE_t);
     }
   }
   return 0;
@@ -175,7 +175,7 @@ static size_t keyboard_read(uintptr_t reg, void *buf, size_t size) {
   int code = in_scancode();
   int *table = normal_scancode;
 
-  _KbdReg *kbd = (_KbdReg *)buf;
+  _DEV_INPUT_KBD_t *kbd = (_DEV_INPUT_KBD_t *)buf;
   kbd->keydown = 1;
   kbd->keycode = 0;
   for(int i = 0; i < 4; i++) {

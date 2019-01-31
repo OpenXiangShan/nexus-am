@@ -26,10 +26,12 @@ enum {
   _EVENT_SYSCALL,
 };
 
-#define _PROT_NONE   1    // no access
-#define _PROT_READ   2    // can read
-#define _PROT_WRITE  4    // can write
-#define _PROT_EXEC   8    // can execute
+enum {
+  _PROT_NONE  = 1, // no access
+  _PROT_READ  = 2, // can read
+  _PROT_WRITE = 4, // can write
+  _PROT_EXEC  = 8, // can execute
+};
 
 // Memory area for [@start, @end)
 typedef struct _Area {
