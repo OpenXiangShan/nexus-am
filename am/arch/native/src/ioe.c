@@ -8,14 +8,7 @@ void input_init();
 size_t input_read(uintptr_t reg, void *buf, size_t size);
 size_t timer_read(uintptr_t reg, void *buf, size_t size);
 size_t video_read(uintptr_t reg, void *buf, size_t size);
-
 size_t video_write(uintptr_t reg, void *buf, size_t size);
-
-static _Device devices[] = {
-  {_DEV_INPUT,   "SDL Keyboard", input_read, NULL},
-  {_DEV_TIMER,   "Native Timer", timer_read, NULL},
-  {_DEV_VIDEO,   "SDL Graphics", video_read, video_write},
-};
 
 int _ioe_init() {
   timer_init();
@@ -24,10 +17,19 @@ int _ioe_init() {
   return 0;
 }
 
-_Device *_device(int n) {
-  if (n >= 1 && n <= sizeof(devices) / sizeof(devices[0])) {
-    return &devices[n - 1];
-  } else {
-    return NULL;
+size_t _io_read(uint32_t dev, uintptr_t reg, void *buf, size_t size) {
+  switch (dev) {
+    case _DEV_INPUT: return input_read(reg, buf, size);
+    case _DEV_TIMER: return timer_read(reg, buf, size);
+    case _DEV_VIDEO: return video_read(reg, buf, size);
   }
+  return 0;
 }
+
+size_t _io_write(uint32_t dev, uintptr_t reg, void *buf, size_t size) {
+  switch (dev) {
+    case _DEV_VIDEO: return video_write(reg, buf, size);
+  }
+  return 0;
+}
+

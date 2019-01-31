@@ -32,7 +32,7 @@ static void input_test(_Device *dev) {
 }
 
 static void timer_test(_Device *dev) {
-  _UptimeReg uptime;
+  _DEV_TIMER_UPTIME_t uptime;
   uint32_t t0, t1;
 
   dev->read(_DEVREG_TIMER_UPTIME, &uptime, sizeof(uptime));
@@ -47,12 +47,12 @@ static void timer_test(_Device *dev) {
 }
 
 static void video_test(_Device *dev) {
-  _VideoInfoReg info;
+  _DEV_VIDEO_INFO_t info;
   dev->read(_DEVREG_VIDEO_INFO, &info, sizeof(info));
   printf("Screen size: %d x %d\n", info.width, info.height);
   for (int x = 0; x < 100; x++)
     for (int y = 0; y < 100; y++) {
-      _FBCtlReg ctl;
+      _DEV_VIDEO_FBCTL_t ctl;
       uint32_t pixel = 0x006a005f;
       ctl.x = info.width / 2 - 50 + x;
       ctl.y = info.height / 2 - 50 + y;

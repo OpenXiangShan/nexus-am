@@ -3,7 +3,7 @@
 #include <klib.h>
 
 int main(){
-  _RTCReg rtc;
+  _DEV_TIMER_DATE_t rtc;
   _ioe_init();
   int sec = 1;
   while (1) {

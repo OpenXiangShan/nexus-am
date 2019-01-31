@@ -26,24 +26,17 @@ enum {
   _EVENT_SYSCALL,
 };
 
-#define _PROT_NONE   1    // no access
-#define _PROT_READ   2    // can read
-#define _PROT_WRITE  4    // can write
-#define _PROT_EXEC   8    // can execute
+enum {
+  _PROT_NONE  = 1, // no access
+  _PROT_READ  = 2, // can read
+  _PROT_WRITE = 4, // can write
+  _PROT_EXEC  = 8, // can execute
+};
 
 // Memory area for [@start, @end)
 typedef struct _Area {
   void *start, *end;
 } _Area; 
-
-// A device (@id, @name) with @read/@write support
-// See <amdev.h> for device descriptions
-typedef struct _Device {
-  uint32_t id;
-  const char *name;
-  size_t (*read) (uintptr_t reg, void *buf, size_t size);
-  size_t (*write)(uintptr_t reg, void *buf, size_t size);
-} _Device;
 
 // An event of type @event, caused by @cause of pointer @ref
 typedef struct _Event {
@@ -70,7 +63,8 @@ void _halt(int code) __attribute__((__noreturn__));
 // ======================= I/O Extension (IOE) =======================
 
 int _ioe_init();
-_Device *_device(int n);
+size_t _io_read(uint32_t dev, uintptr_t reg, void *buf, size_t size);
+size_t _io_write(uint32_t dev, uintptr_t reg, void *buf, size_t size);
 
 // ====================== Context Extension (CTE) ====================
 

@@ -1,6 +1,6 @@
 #include <am-x86.h>
 
-static _RTCReg boot_date;
+static _DEV_TIMER_DATE_t boot_date;
 static uint32_t freq_mhz = 2000;
 uint64_t uptsc;
 
@@ -45,7 +45,7 @@ static uint32_t estimate_freq() {
   return freq;
 }
 
-static void get_date(_RTCReg *rtc) {
+static void get_date(_DEV_TIMER_DATE_t *rtc) {
   int tmp;
   do {
     rtc->second = read_rtc(0);
@@ -70,14 +70,14 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
       uint64_t tsc = rdtsc() - uptsc;
       uint32_t mticks = (tsc >> 20);
       uint32_t ms = mticks * 1000 / freq_mhz;
-      _UptimeReg *uptime = (_UptimeReg *)buf;
+      _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
       uptime->hi = 0;
       uptime->lo = ms;
-      return sizeof(_UptimeReg);
+      return sizeof(_DEV_TIMER_UPTIME_t);
     }
     case _DEVREG_TIMER_DATE: {
-      get_date((_RTCReg *)buf);
-      return sizeof(_RTCReg);
+      get_date((_DEV_TIMER_DATE_t *)buf);
+      return sizeof(_DEV_TIMER_DATE_t);
     }
   }
   return 0;
