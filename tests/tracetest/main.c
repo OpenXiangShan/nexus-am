@@ -27,7 +27,7 @@ static void *alloc(size_t size) {
 static void free(void *ptr) {
 }
 
-_Protect prot;
+_AddressSpace prot;
 
 int main() {
   st = (uintptr_t)_heap.start;
