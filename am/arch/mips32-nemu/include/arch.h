@@ -7,7 +7,7 @@
 #define PGSIZE    4096
 
 struct _Context {
-  struct _Protect *prot;
+  struct _AddressSpace *prot;
   uint32_t gpr[31];
   uint32_t lo, hi;
   uint32_t cause, status, epc;

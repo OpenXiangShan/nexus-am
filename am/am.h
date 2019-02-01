@@ -44,15 +44,17 @@ typedef struct _Event {
   uintptr_t cause, ref;
   const char *msg;
 } _Event;
+
+// Arch-dependent processor context
 typedef struct _Context _Context;
 
 // A protected address space with user memory @area
 // and arch-dependent @ptr
-typedef struct _Protect {
+typedef struct _AddressSpace {
   size_t pgsize;
   _Area area;
   void *ptr;
-} _Protect;
+} _AddressSpace;
 
 // ====================== Turing Machine (TRM) =======================
 
@@ -77,10 +79,10 @@ _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
 // ================= Virtual Memory Extension (VME) ==================
 
 int _vme_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
-int _protect(_Protect *p);
-void _unprotect(_Protect *p);
-int _map(_Protect *p, void *va, void *pa, int prot);
-_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack,
+int _protect(_AddressSpace *as);
+void _unprotect(_AddressSpace *as);
+int _map(_AddressSpace *as, void *va, void *pa, int prot);
+_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack,
                                  void *entry, void *args);
 
 // ================= Multi-Processor Extension (MPE) =================

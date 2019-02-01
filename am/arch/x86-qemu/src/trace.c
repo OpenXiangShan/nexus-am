@@ -120,13 +120,13 @@ static inline void log_ev(_TraceEvent ev, int length, void *ptr) {
 #define VME_TRACE_FUNCS(_) \
   _(FUNC,        int,    vme_init,\
     (void *(*al)(size_t), void (*fr)(void *)), (al, fr), al, fr) \
-  _(FUNC,        int,     protect, (_Protect *p), (p), p) \
-  _(VOID,       void,   unprotect, (_Protect *p), (p), p) \
+  _(FUNC,        int,     protect, (_AddressSpace *p), (p), p) \
+  _(VOID,       void,   unprotect, (_AddressSpace *p), (p), p) \
   _(FUNC,        int, map, \
-    (_Protect *p, void *va, void *pa, int prot), \
+    (_AddressSpace *p, void *va, void *pa, int prot), \
     (p, va, pa, prot), p, va, pa, prot) \
   _(FUNC, _Context *,    ucontext, \
-    (_Protect *p, _Area us, _Area ks, void *f, void *args), \
+    (_AddressSpace *p, _Area us, _Area ks, void *f, void *args), \
     (p, us, ks, f, args), p, f, args) \
   _(FUNC,     void *,   _cb_alloc, (size_t size), (size), size) \
   _(VOID,       void,   _cb_free, (void *ptr), (ptr), ptr)
