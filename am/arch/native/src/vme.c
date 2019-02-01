@@ -21,23 +21,23 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_Protect *p) {
+int _protect(_AddressSpace *p) {
   p->ptr = NULL;
   p->pgsize = PGSIZE;
   return 0;
 }
 
-void _unprotect(_Protect *p) {
+void _unprotect(_AddressSpace *p) {
 }
 
-static _Protect *cur_as = NULL;
+static _AddressSpace *cur_as = NULL;
 
 void get_cur_as(_Context *c) {
   c->prot = cur_as;
 }
 
 void _switch(_Context *c) {
-  _Protect *p = c->prot;
+  _AddressSpace *p = c->prot;
   if (p == NULL || p == cur_as) return;
   PageMap *pp;
 
@@ -60,7 +60,7 @@ void _switch(_Context *c) {
   cur_as = p;
 }
 
-int _map(_Protect *p, void *va, void *pa, int prot) {
+int _map(_AddressSpace *p, void *va, void *pa, int prot) {
   uintptr_t vpn = (uintptr_t)va >> PGSHIFT;
   PageMap *pp;
   list_foreach(pp, p->ptr) {
@@ -94,7 +94,7 @@ int _map(_Protect *p, void *va, void *pa, int prot) {
 
 void get_example_uc(_Context *r);
 
-_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, void *args) {
   ustack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr
   uintptr_t ret = (uintptr_t)ustack.end;
   *(uintptr_t *)ret = 0;

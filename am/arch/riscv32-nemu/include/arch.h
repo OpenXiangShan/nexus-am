@@ -8,7 +8,7 @@
 
 struct _Context {
   union {
-    struct _Protect *prot;
+    struct _AddressSpace *prot;
     uint32_t gpr[32];
   };
   uint32_t cause;

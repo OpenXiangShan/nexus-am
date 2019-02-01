@@ -9,7 +9,7 @@
 typedef uint32_t size_t;
 
 struct _Context {
-  struct _Protect *prot;
+  struct _AddressSpace *prot;
   uintptr_t edi, esi, ebp, esp;
   uintptr_t ebx, edx, ecx, eax;      // Register saved by pushal
   int       irq;                     // # of irq

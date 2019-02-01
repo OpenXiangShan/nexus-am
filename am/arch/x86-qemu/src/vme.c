@@ -53,12 +53,12 @@ void percpu_initpg() { // called by all cpus
   }
 }
 
-int protect(_Protect *p) {
+int protect(_AddressSpace *p) {
   PDE *upt = pgalloc();
   for (int i = 0; i < PGSIZE / sizeof(PDE *); i++) {
     upt[i] = kpt[i];
   }
-  *p = (_Protect) {
+  *p = (_AddressSpace) {
     .pgsize = PGSIZE,
     .area = uvm_area,
     .ptr = upt,
@@ -66,7 +66,7 @@ int protect(_Protect *p) {
   return 0;
 }
 
-void unprotect(_Protect *p) {
+void unprotect(_AddressSpace *p) {
   PDE *upt = p->ptr;
   for (uint32_t va =  (uint32_t)uvm_area.start;
                 va != (uint32_t)uvm_area.end;
@@ -79,7 +79,7 @@ void unprotect(_Protect *p) {
   pgfree(upt);
 }
 
-int map(_Protect *p, void *va, void *pa, int prot) {
+int map(_AddressSpace *p, void *va, void *pa, int prot) {
   // panic because the below cases are likely bugs
   if ((prot & _PROT_NONE) && (prot != _PROT_NONE))
     panic("invalid protection flags");
@@ -107,7 +107,7 @@ int map(_Protect *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *ucontext(_Protect *p, _Area ustack, _Area kstack,
+_Context *ucontext(_AddressSpace *p, _Area ustack, _Area kstack,
                                 void *entry, void *args) {
   _Context *ctx = (_Context*)kstack.start;
   *ctx = (_Context) {
