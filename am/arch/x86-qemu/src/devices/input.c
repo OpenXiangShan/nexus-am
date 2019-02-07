@@ -11,7 +11,7 @@ static int scan_code[] = {
 };
 
 size_t input_read(uintptr_t reg, void *buf, size_t size) {
-  _KbdReg *kbd = (_KbdReg *)buf;
+  _DEV_INPUT_KBD_t *kbd = (_DEV_INPUT_KBD_t *)buf;
 
   int status = inb(0x64);
   kbd->keydown = 0;

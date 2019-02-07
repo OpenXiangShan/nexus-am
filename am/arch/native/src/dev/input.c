@@ -49,7 +49,7 @@ void input_init() {
 size_t input_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_INPUT_KBD: {
-      _KbdReg *kbd = (_KbdReg *)buf;
+      _DEV_INPUT_KBD_t *kbd = (_DEV_INPUT_KBD_t *)buf;
       int k = _KEY_NONE;
 
       SDL_LockMutex(key_queue_lock);
@@ -62,7 +62,7 @@ size_t input_read(uintptr_t reg, void *buf, size_t size) {
       kbd->keydown = (k & KEYDOWN_MASK ? 1 : 0);
       kbd->keycode = k & ~KEYDOWN_MASK;
 
-      return sizeof(_KbdReg);
+      return sizeof(_DEV_INPUT_KBD_t);
     }
   }
   return 0;
