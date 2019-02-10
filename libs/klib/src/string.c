@@ -121,7 +121,10 @@ void* memcpy(void* out, const void* in, size_t n) {
 }
 
 int memcmp(const void* s1, const void* s2, size_t n){
-  return strncmp(s1,s2,n);
+  const char *t1 = s1;
+  const char *t2 = s2;
+  while(--n>0&&*t1==*t2)t1++,t2++;
+  return (int)(*t1-*t2);
 }
 
 #endif
