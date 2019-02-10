@@ -4,6 +4,7 @@
 #include <klib.h>
 
 #define SCREEN_PORT 0x100
+#define SYNC_PORT 0x104
 static int W, H;
 static uint32_t* const fb = (uint32_t *)0x40000;
 
@@ -37,7 +38,7 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
       }
 
       if (ctl->sync) {
-        // do nothing, hardware syncs.
+        outl(SYNC_PORT, 0);
       }
       return size;
     }
