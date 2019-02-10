@@ -4,6 +4,7 @@
 #include <klib.h>
 
 #define SCREEN_MMIO 0x4100
+#define SYNC_MMIO 0x4104
 static int W, H;
 static uint32_t* const fb = (uint32_t *)MMIO_OFFSET(0x40000);
 
@@ -37,7 +38,7 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
       }
 
       if (ctl->sync) {
-        // do nothing, hardware syncs.
+        outl(SYNC_MMIO, 0);
       }
       return size;
     }
