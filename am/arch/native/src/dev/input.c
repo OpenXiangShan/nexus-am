@@ -19,21 +19,19 @@ static int event_thread(void *args) {
   while (1) {
     SDL_WaitEvent(&event);
     switch (event.type) {
-      case SDL_QUIT: exit(0); break;
+      case SDL_QUIT: _exit(0); break;
       case SDL_KEYDOWN: 
       case SDL_KEYUP:
         {
           SDL_Keysym k = event.key.keysym;
           int keydown = event.key.type == SDL_KEYDOWN;
-          if (event.key.repeat == 0) {
-            int scancode = k.scancode;
-            if (keymap[scancode] != 0) {
-              int am_code = keymap[scancode] | (keydown ? KEYDOWN_MASK : 0);
-              SDL_LockMutex(key_queue_lock);
-              key_queue[key_r] = am_code;
-              key_r = (key_r + 1) % KEY_QUEUE_LEN;
-              SDL_UnlockMutex(key_queue_lock);
-            }
+          int scancode = k.scancode;
+          if (keymap[scancode] != 0) {
+            int am_code = keymap[scancode] | (keydown ? KEYDOWN_MASK : 0);
+            SDL_LockMutex(key_queue_lock);
+            key_queue[key_r] = am_code;
+            key_r = (key_r + 1) % KEY_QUEUE_LEN;
+            SDL_UnlockMutex(key_queue_lock);
           }
         }
         break;
