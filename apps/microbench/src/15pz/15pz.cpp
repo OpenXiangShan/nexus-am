@@ -3,7 +3,11 @@
 #include "heap.h"
 
 const int N = 4;
+#ifdef SETTING_REF
 const int MAXN = 65536;
+#else
+const int MAXN = 10;
+#endif
 
 static int PUZZLE_SM[N*N] = {
   1, 2, 3, 4,

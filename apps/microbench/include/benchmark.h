@@ -40,11 +40,11 @@ extern "C" {
 #define   FIB_LG {      91, 256 KB, 28575, 0xebdc5f80}
 #define SIEVE_SM {     100,   1 KB,     0, 0x00000019}
 #define SIEVE_LG {10000000,   2 MB, 42406, 0x000a2403}
-#define  PZ15_SM {       0,   2 MB,     0, 0x00000006}
+#define  PZ15_SM {       0,   1 KB,     0, 0x00000006}
 #define  PZ15_LG {       1,   8 MB,  5792, 0x00068b8c}
-#define DINIC_SM {      10,   1 MB,     0, 0x0000019c}
+#define DINIC_SM {      10,   8 KB,     0, 0x0000019c}
 #define DINIC_LG {     128,   1 MB, 13536, 0x0000c248}
-#define  LZIP_SM {     128,   1 MB,     0, 0x03e9fa7d}
+#define  LZIP_SM {     128,  64 KB,     0, 0xb2581709}
 #define  LZIP_LG { 1048576,   4 MB, 26469, 0x43601310}
 #define SSORT_SM {     100,   4 KB,     0, 0x4c555e09}
 #define SSORT_LG {  100000,   4 MB,  5915, 0x4f0ab431}

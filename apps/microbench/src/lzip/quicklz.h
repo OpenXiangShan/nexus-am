@@ -45,7 +45,12 @@ static inline void* bench_memcpy(void* dst, const void* src, size_t n){
 	// compression ratio. 
 	//#define QLZ_COMPRESSION_LEVEL 1
 	//#define QLZ_COMPRESSION_LEVEL 2
+	//#define QLZ_COMPRESSION_LEVEL 3
+#ifdef SETTING_REF
 	#define QLZ_COMPRESSION_LEVEL 3
+#else
+	#define QLZ_COMPRESSION_LEVEL 1
+#endif
 
 	// If > 0, zero out both states prior to first call to qlz_compress() or qlz_decompress() 
 	// and decompress packets in the same order as they were compressed

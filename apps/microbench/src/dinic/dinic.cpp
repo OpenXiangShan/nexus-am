@@ -1,7 +1,11 @@
 #include <benchmark.h>
 
 static int N;
-#define MAXN 128
+#ifdef SETTING_REF
+# define MAXN 128
+#else
+# define MAXN 10
+#endif
 #define MAXM (MAXN * MAXN + MAXN * 2) * 2
 
 const int INF = 0x3f3f3f;
