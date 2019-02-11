@@ -7,7 +7,7 @@ void print(const char *s) {
 }
 int main() {
   for (int i = 0; i < 10; i ++) {
-    print("Hello World!\n");
+    print("Hello World from a(n) " __ISA__ " program!\n");
   }
   return 0;
 }
