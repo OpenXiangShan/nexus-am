@@ -60,8 +60,11 @@ unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
 int main() {
   _ioe_init();
 
+  printk("======= Running MicroBench [INPUT *%s*] =======\n", SETTING ? "REF" : "TEST");
+
   unsigned long bench_score = 0;
   int pass = 1;
+  uint32_t t0 = uptime();
 
   for (int i = 0; i < ARR_SIZE(benchmarks); i ++) {
     Benchmark *bench = &benchmarks[i];
@@ -97,6 +100,7 @@ int main() {
       bench_score += cur;
     }
   }
+  uint32_t t1 = uptime();
 
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
@@ -108,6 +112,7 @@ int main() {
   } else {
     printk("\n");
   }
+  printk("Total time: %d ms\n", t1 - t0);
   _halt(0);
   return 0;
 }
