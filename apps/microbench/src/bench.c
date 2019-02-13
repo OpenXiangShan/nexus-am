@@ -29,6 +29,10 @@ static void bench_prepare(Result *res) {
   res->msec = uptime();
 }
 
+static void bench_reset() {
+  start = (char*)_heap.start;
+}
+
 static void bench_done(Result *res) {
   res->msec = uptime() - res->msec;
 }
@@ -41,7 +45,7 @@ static const char *bench_check(Benchmark *bench) {
   return NULL;
 }
 
-void run_once(Benchmark *b, Result *res) {
+static void run_once(Benchmark *b, Result *res) {
   bench_reset();       // reset malloc state
   is_preparing = true;
   current->prepare();  // call bechmark's prepare function
@@ -52,7 +56,7 @@ void run_once(Benchmark *b, Result *res) {
   res->pass = current->validate();
 }
 
-unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
+static unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
   if (msec == 0) return 0;
   return (REF_SCORE / 1000) * setting->ref / msec;
 }
@@ -140,10 +144,6 @@ void* bench_alloc(size_t size) {
 }
 
 void bench_free(void *ptr) {
-}
-
-void bench_reset() {
-  start = (char*)_heap.start;
 }
 
 static uint32_t seed = 1;

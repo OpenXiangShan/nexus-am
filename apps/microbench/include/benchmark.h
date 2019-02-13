@@ -100,7 +100,6 @@ void done(Result *res);
 // memory allocation
 void* bench_alloc(size_t size);
 void bench_free(void *ptr);
-void bench_reset();
 
 // random number generator
 void bench_srand(uint32_t seed);
