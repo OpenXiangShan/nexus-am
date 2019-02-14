@@ -23,7 +23,7 @@ size_t input_read(uintptr_t reg, void *buf, size_t size) {
     } else {
       int code = inb(0x60) & 0xff;
 
-      for (unsigned int i = 0; i < sizeof(scan_code) / sizeof(int); i ++) {
+      for (int i = 0; i < sizeof(scan_code) / sizeof(scan_code[0]); i ++) {
         if (scan_code[i] == 0) continue;
         if (scan_code[i] == code) {
           kbd->keydown = 1;

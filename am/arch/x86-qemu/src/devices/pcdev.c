@@ -1,6 +1,6 @@
 #include <am-x86.h>
 
-static uintptr_t port_read(int port, size_t nmemb) {
+static inline uintptr_t port_read(int port, size_t nmemb) {
   switch (nmemb) {
     case 1: return inb(port);
     case 2: return inw(port);
@@ -9,7 +9,7 @@ static uintptr_t port_read(int port, size_t nmemb) {
   return 0;
 }
 
-static void port_write(int port, size_t nmemb, uintptr_t data) {
+static inline void port_write(int port, size_t nmemb, uintptr_t data) {
   switch (nmemb) {
     case 1: return outb(port, data);
     case 2: return outw(port, data);
@@ -34,16 +34,5 @@ size_t pciconf_write(uintptr_t reg, void *buf, size_t size) {
     case 2: outw(0xcfc + (reg & 2), *(uint16_t *)buf);
     case 4: outl(0xcfc            , *(uint32_t *)buf);
   }
-  return size;
-}
-
-size_t hd_read(uintptr_t reg, void *buf, size_t size) {
-  *(uint32_t *)buf = port_read(0x1f0 + reg, size);
-  return size;
-}
-
-size_t hd_write(uintptr_t reg, void *buf, size_t size) {
-  uint32_t data = *((uint32_t *)buf);
-  port_write(0x1f0 + reg, size, data);
   return size;
 }

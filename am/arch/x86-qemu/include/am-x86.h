@@ -16,6 +16,7 @@ struct boot_info {
 struct cpu_local {
   _AddressSpace *prot;
   SegDesc gdt[NR_SEG];
+  TSS tss;
   uint8_t stack[4096];
 };
 extern volatile uint32_t *lapic;

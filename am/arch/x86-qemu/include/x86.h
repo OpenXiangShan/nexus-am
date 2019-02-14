@@ -1,7 +1,6 @@
 #ifndef __X86_H__
 #define __X86_H__
 
-
 // CPU rings
 #define DPL_KERN       0x0     // Kernel (ring 0)
 #define DPL_USER       0x3     // User (ring 3)
@@ -61,6 +60,17 @@
 #define IRQ_KBD        1
 #define IRQ_ERROR      19
 #define IRQ_SPURIOUS   31
+#define EX_DIV         0
+#define EX_UD          6
+#define EX_NM          7
+#define EX_DF          8
+#define EX_TS          10
+#define EX_NP          11
+#define EX_SS          12
+#define EX_GP          13
+#define EX_PF          14
+#define EX_MF          15
+#define EX_SYSCALL     0x80
 
 #define IRQS(_) \
   _(  0, KERN, NOERR) _(  1, KERN, NOERR) \
@@ -82,18 +92,6 @@
   _( 44, KERN, NOERR) _( 45, KERN, NOERR) \
   _( 46, KERN, NOERR) _( 47, KERN, NOERR) \
   _(128, USER, NOERR)
-
-#define EX_SYSCALL     0x80
-#define EX_DIV         0
-#define EX_UD          6
-#define EX_NM          7
-#define EX_DF          8
-#define EX_TS          10
-#define EX_NP          11
-#define EX_SS          12
-#define EX_GP          13
-#define EX_PF          14
-#define EX_MF          15
 
 // Below are only defined for c/cpp files
 #ifndef __ASSEMBLER__
