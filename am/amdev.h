@@ -8,7 +8,6 @@ extern "C" {
 #endif
 
 // =========================== AM Devices ============================
-// ((_Device *)dev)->id
 
 #define _DEV_PERFCNT 0x0000ac01 // AM Virtual Performance Counter 
 #define _DEV_INPUT   0x0000ac02 // AM Virtual Input Device

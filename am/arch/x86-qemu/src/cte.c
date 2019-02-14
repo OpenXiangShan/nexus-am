@@ -165,7 +165,7 @@ void irq_handle(TrapFrame *tf) {
  
   CPU->prot = ret_ctx->prot;
   if (ret_ctx->cs & DPL_USER) { // return to user
-    _Protect *prot = ret_ctx->prot;
+    _AddressSpace *prot = ret_ctx->prot;
     if (prot) {
       set_cr3(prot->ptr);
     }
