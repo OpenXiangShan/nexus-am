@@ -62,7 +62,7 @@ static unsigned int SP;
 static const char *code;
 static char *input;
 
-int compile_bf() {
+static int compile_bf() {
   unsigned short pc = 0, jmp_pc;
   for (; *code; code ++) {
     int c = *code;
@@ -101,11 +101,11 @@ int compile_bf() {
   return SUCCESS;
 }
 
-unsigned short *data;
-char *output;
-int noutput;
+static unsigned short *data;
+static char *output;
+static int noutput;
 
-void execute_bf() {
+static void execute_bf() {
   unsigned int pc = 0, ptr = 0;
   while (PROGRAM[pc].operator != OP_END && ptr < DATA_SIZE) {
     switch (PROGRAM[pc].operator) {

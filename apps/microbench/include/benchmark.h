@@ -44,7 +44,7 @@ extern "C" {
 #define  PZ15_LG {       1,   8 MB,  5792, 0x00068b8c}
 #define DINIC_SM {      10,   8 KB,     0, 0x0000019c}
 #define DINIC_LG {     128,   1 MB, 13536, 0x0000c248}
-#define  LZIP_SM {     128,  64 KB,     0, 0xb2581709}
+#define  LZIP_SM {     128, 128 KB,     0, 0xb2581709}
 #define  LZIP_LG { 1048576,   4 MB, 26469, 0x43601310}
 #define SSORT_SM {     100,   4 KB,     0, 0x4c555e09}
 #define SSORT_LG {  100000,   4 MB,  5915, 0x4f0ab431}
@@ -100,7 +100,6 @@ void done(Result *res);
 // memory allocation
 void* bench_alloc(size_t size);
 void bench_free(void *ptr);
-void bench_reset();
 
 // random number generator
 void bench_srand(uint32_t seed);

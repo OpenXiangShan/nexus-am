@@ -6,6 +6,7 @@ Benchmark *current;
 Setting *setting;
 
 static char *start;
+static int is_preparing;
 
 #define ARR_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
 
@@ -28,6 +29,10 @@ static void bench_prepare(Result *res) {
   res->msec = uptime();
 }
 
+static void bench_reset() {
+  start = (char*)_heap.start;
+}
+
 static void bench_done(Result *res) {
   res->msec = uptime() - res->msec;
 }
@@ -40,16 +45,18 @@ static const char *bench_check(Benchmark *bench) {
   return NULL;
 }
 
-void run_once(Benchmark *b, Result *res) {
+static void run_once(Benchmark *b, Result *res) {
   bench_reset();       // reset malloc state
+  is_preparing = true;
   current->prepare();  // call bechmark's prepare function
+  is_preparing = false;
   bench_prepare(res); // clean everything, start timer
   current->run();      // run it
   bench_done(res);    // collect results
   res->pass = current->validate();
 }
 
-unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
+static unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
   if (msec == 0) return 0;
   return (REF_SCORE / 1000) * setting->ref / msec;
 }
@@ -57,8 +64,11 @@ unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) {
 int main() {
   _ioe_init();
 
+  printk("======= Running MicroBench [INPUT *%s*] =======\n", SETTING ? "REF" : "TEST");
+
   unsigned long bench_score = 0;
   int pass = 1;
+  uint32_t t0 = uptime();
 
   for (int i = 0; i < ARR_SIZE(benchmarks); i ++) {
     Benchmark *bench = &benchmarks[i];
@@ -94,6 +104,7 @@ int main() {
       bench_score += cur;
     }
   }
+  uint32_t t1 = uptime();
 
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
   
@@ -105,6 +116,7 @@ int main() {
   } else {
     printk("\n");
   }
+  printk("Total time: %d ms\n", t1 - t0);
   _halt(0);
   return 0;
 }
@@ -119,16 +131,19 @@ void* bench_alloc(size_t size) {
   char *old = start;
   start += size;
   assert((uintptr_t)_heap.start <= (uintptr_t)start && (uintptr_t)start < (uintptr_t)_heap.end);
-  for (char *p = old; p != start; p ++) *p = '\0';
+  if (is_preparing) {
+    // use fast method for preparation
+    memset(old, 0, start - old);
+  }
+  else {
+    // use slow method to keep the score
+    for (char *p = old; p != start; p ++) *p = '\0';
+  }
   assert((uintptr_t)start - (uintptr_t)_heap.start <= setting->mlim);
   return old;
 }
 
 void bench_free(void *ptr) {
-}
-
-void bench_reset() {
-  start = (char*)_heap.start;
 }
 
 static uint32_t seed = 1;
