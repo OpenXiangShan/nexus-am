@@ -52,7 +52,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_Protect *p) {
+int _protect(_AddressSpace *p) {
   PDE *updir = (PDE*)(pgalloc_usr(1));
   p->pgsize = 4096;
 
@@ -65,10 +65,10 @@ int _protect(_Protect *p) {
   return 0;
 }
 
-void _unprotect(_Protect *p) {
+void _unprotect(_AddressSpace *p) {
 }
 
-static _Protect *cur_as = NULL;
+static _AddressSpace *cur_as = NULL;
 void get_cur_as(_Context *c) {
   c->prot = cur_as;
 }
@@ -78,7 +78,7 @@ void _switch(_Context *c) {
   cur_as = c->prot;
 }
 
-int _map(_Protect *p, void *va, void *pa, int mode) {
+int _map(_AddressSpace *p, void *va, void *pa, int mode) {
   PDE *pt = (PDE*)p->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_V)) {
@@ -92,7 +92,7 @@ int _map(_Protect *p, void *va, void *pa, int mode) {
   return 0;
 }
 
-_Context *_ucontext(_Protect *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, void *args) {
   _Context *c = (_Context*)ustack.end - 1;
 
   c->prot = p;
