@@ -5,10 +5,10 @@
 Benchmark *current;
 Setting *setting;
 
-static char *start;
-static int is_preparing;
+static char *hbrk;
 
 #define ARR_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
+#define ROUNDUP(a, sz) ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 
 // The benchmark list
 
@@ -30,7 +30,7 @@ static void bench_prepare(Result *res) {
 }
 
 static void bench_reset() {
-  start = (char*)_heap.start;
+  hbrk = (void *)ROUNDUP(_heap.start, 8);
 }
 
 static void bench_done(Result *res) {
@@ -38,7 +38,7 @@ static void bench_done(Result *res) {
 }
 
 static const char *bench_check(Benchmark *bench) {
-  unsigned long freesp = (unsigned long)_heap.end - (unsigned long)_heap.start;
+  uintptr_t freesp = (uintptr_t)_heap.end - (uintptr_t)_heap.start;
   if (freesp < setting->mlim) {
     return "(insufficient memory)";
   }
@@ -47,12 +47,10 @@ static const char *bench_check(Benchmark *bench) {
 
 static void run_once(Benchmark *b, Result *res) {
   bench_reset();       // reset malloc state
-  is_preparing = true;
   current->prepare();  // call bechmark's prepare function
-  is_preparing = false;
-  bench_prepare(res); // clean everything, start timer
+  bench_prepare(res);  // clean everything, start timer
   current->run();      // run it
-  bench_done(res);    // collect results
+  bench_done(res);     // collect results
   res->pass = current->validate();
 }
 
@@ -121,25 +119,17 @@ int main() {
   return 0;
 }
 
-// Library
-
+// Libraries
 
 void* bench_alloc(size_t size) {
-  if ((uintptr_t)start % 16 != 0) {
-    start = start + 16 - ((uintptr_t)start % 16);
+  size  = (size_t)ROUNDUP(size, 8);
+  char *old = hbrk;
+  hbrk += size;
+  assert((uintptr_t)_heap.start <= (uintptr_t)hbrk && (uintptr_t)hbrk < (uintptr_t)_heap.end);
+  for (uint64_t *p = (uint64_t *)old; p != (uint64_t *)hbrk; p ++) {
+    *p = 0;
   }
-  char *old = start;
-  start += size;
-  assert((uintptr_t)_heap.start <= (uintptr_t)start && (uintptr_t)start < (uintptr_t)_heap.end);
-  if (is_preparing) {
-    // use fast method for preparation
-    memset(old, 0, start - old);
-  }
-  else {
-    // use slow method to keep the score
-    for (char *p = old; p != start; p ++) *p = '\0';
-  }
-  assert((uintptr_t)start - (uintptr_t)_heap.start <= setting->mlim);
+  assert((uintptr_t)hbrk - (uintptr_t)_heap.start <= setting->mlim);
   return old;
 }
 
@@ -174,4 +164,3 @@ uint32_t checksum(void *start, void *end) {
   hash += hash << 5;
   return hash;
 }
-

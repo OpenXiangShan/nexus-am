@@ -14,7 +14,7 @@ extern "C" {
 #define true 1
 #define false 0
 
-#define REF_CPU    "i7-6700 @ 3.40GHz"
+#define REF_CPU    "i7-7700K @ 4.20GHz"
 #define REF_SCORE  100000
 
 #ifdef SETTING_TEST
@@ -31,25 +31,25 @@ extern "C" {
 
 //                 size |  heap | time |  checksum   
 #define QSORT_SM {     100,   1 KB,     0, 0x08467105}
-#define QSORT_LG {  100000, 640 KB,  5519, 0xed8cff89}
+#define QSORT_LG {  100000, 640 KB,  5114, 0xed8cff89}
 #define QUEEN_SM {       8,   0 KB,     0, 0x0000005c}
-#define QUEEN_LG {      12,   0 KB,  5159, 0x00003778}
+#define QUEEN_LG {      12,   0 KB,  4707, 0x00003778}
 #define    BF_SM {       4,  32 KB,     0, 0xa6f0079e}
-#define    BF_LG {     180,  32 KB, 26209, 0x9221e2b3}
+#define    BF_LG {     180,  32 KB, 23673, 0x9221e2b3}
 #define   FIB_SM {       2,   1 KB,     0, 0x7cfeddf0}
-#define   FIB_LG {      91, 256 KB, 28575, 0xebdc5f80}
+#define   FIB_LG {      91, 256 KB, 28318, 0xebdc5f80}
 #define SIEVE_SM {     100,   1 KB,     0, 0x00000019}
-#define SIEVE_LG {10000000,   2 MB, 42406, 0x000a2403}
+#define SIEVE_LG {10000000,   2 MB, 39361, 0x000a2403}
 #define  PZ15_SM {       0,   1 KB,     0, 0x00000006}
-#define  PZ15_LG {       1,   8 MB,  5792, 0x00068b8c}
+#define  PZ15_LG {       1,   8 MB,  4486, 0x00068b8c}
 #define DINIC_SM {      10,   8 KB,     0, 0x0000019c}
-#define DINIC_LG {     128,   1 MB, 13536, 0x0000c248}
+#define DINIC_LG {     128,   1 MB, 10882, 0x0000c248}
 #define  LZIP_SM {     128, 128 KB,     0, 0xb2581709}
-#define  LZIP_LG { 1048576,   4 MB, 26469, 0x43601310}
+#define  LZIP_LG { 1048576,   4 MB, 24456, 0x43601310}
 #define SSORT_SM {     100,   4 KB,     0, 0x4c555e09}
-#define SSORT_LG {  100000,   4 MB,  5915, 0x4f0ab431}
+#define SSORT_LG {  100000,   4 MB,  4504, 0x4f0ab431}
 #define   MD5_SM {     100,   1 KB,     0, 0xf902f28f}
-#define   MD5_LG {10000000,  16 MB, 19593, 0x27286a42}
+#define   MD5_LG {10000000,  16 MB, 17239, 0x27286a42}
 
 #define BENCHMARK_LIST(def) \
   def(qsort, "qsort", QSORT_SM, QSORT_LG, "Quick sort") \
