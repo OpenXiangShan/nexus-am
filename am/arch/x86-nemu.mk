@@ -1,14 +1,14 @@
-AM_SRCS := x86/nemu/trm.c \
-           x86/nemu/ioe.c \
-           x86/nemu/cte.c \
-           x86/nemu/trap.S \
-           x86/nemu/vme.c \
+AM_SRCS := $(ISA)/nemu/trm.c \
+           $(ISA)/nemu/ioe.c \
+           $(ISA)/nemu/cte.c \
+           $(ISA)/nemu/trap.S \
+           $(ISA)/nemu/vme.c \
            nemu-devices/nemu-input.c \
            nemu-devices/nemu-timer.c \
            nemu-devices/nemu-video.c \
-           x86/nemu/boot/start.S
+           $(ISA)/nemu/boot/start.S
 
-LD_SCRIPT := $(AM_HOME)/am/src/x86/nemu/boot/loader.ld
+LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
 image:
 	@echo + LD "->" $(BINARY).o
@@ -18,4 +18,4 @@ image:
 	@objcopy -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).o $(BINARY).bin
 
 run:
-	make -C $(NEMU_HOME) ISA=x86 run ARGS="-b -l $(shell dirname $(BINARY_ABS))/nemu-log.txt $(BINARY_ABS).bin"
+	make -C $(NEMU_HOME) ISA=$(ISA) run ARGS="-b -l $(shell dirname $(BINARY_ABS))/nemu-log.txt $(BINARY_ABS).bin"
