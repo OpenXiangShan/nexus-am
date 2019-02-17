@@ -3,6 +3,7 @@
 
 #ifdef __ARCH_X86_NEMU
 #include <x86.h>
+#define SERIAL_PORT  0x3f8
 #define KBD_ADDR     0x60
 #define RTC_ADDR     0x48
 #define SCREEN_ADDR  0x100
@@ -12,6 +13,7 @@
 
 #ifdef __ARCH_MIPS32_NEMU
 #include <mips32.h>
+#define SERIAL_PORT  0x43f8
 #define KBD_ADDR     0x4060
 #define RTC_ADDR     0x4048
 #define SCREEN_ADDR  0x4100
@@ -21,6 +23,7 @@
 
 #ifdef __ARCH_RISCV32_NEMU
 #include <riscv32.h>
+#define SERIAL_PORT  0x43f8
 #define KBD_ADDR     0x4060
 #define RTC_ADDR     0x4048
 #define SCREEN_ADDR  0x4100

@@ -1,10 +1,5 @@
 #include <am.h>
-#include <riscv32.h>
-
-// Define this macro after serial has been implemented
-#define HAS_SERIAL
-
-#define SERIAL_PORT 0x43f8
+#include <nemu.h>
 
 extern char _heap_start;
 extern char _heap_end;
@@ -16,9 +11,7 @@ _Area _heap = {
 };
 
 void _putc(char ch) {
-#ifdef HAS_SERIAL
   outb(SERIAL_PORT, ch);
-#endif
 }
 
 void _halt(int code) {
