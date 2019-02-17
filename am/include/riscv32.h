@@ -3,7 +3,7 @@
 
 #ifndef __ASSEMBLER__
 
-#include <arch.h>
+#include <stdint.h>
 
 #define MMIO_OFFSET(addr) (addr)
 
@@ -20,6 +20,8 @@ static inline void outl(uintptr_t addr, uint32_t data) { *(volatile uint32_t *)M
 #define PTE_W 0x04
 #define PTE_X 0x08
 #define PTE_U 0x10
+
+#define PGSIZE 4096
 
 // Page directory and page table constants
 #define NR_PDE    1024    // # directory entries per page directory

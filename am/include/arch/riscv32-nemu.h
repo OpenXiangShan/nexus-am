@@ -1,6 +1,8 @@
 #ifndef __ARCH_H__
 #define __ARCH_H__
 
+#define PMEM_SIZE (128 * 1024 * 1024)
+
 struct _Context {
   union {
     struct _AddressSpace *prot;
@@ -17,11 +19,4 @@ struct _Context {
 #define GPR4 gpr[13]
 #define GPRx gpr[10]
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -7,7 +7,7 @@ AM_SRCS := riscv32/nemu/trm.c \
            nemu-devices/nemu-timer.c \
            nemu-devices/nemu-video.c \
 
-LOADER_DIR := $(AM_HOME)/am/src/risv32/nemu/loader
+LOADER_DIR := $(AM_HOME)/am/src/riscv32/nemu/loader
 
 image:
 	@echo + CC loader/start.S
