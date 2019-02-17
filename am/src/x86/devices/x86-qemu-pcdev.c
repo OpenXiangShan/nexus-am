@@ -1,4 +1,4 @@
-#include <am-x86.h>
+#include "../am-x86.h"
 
 static inline uintptr_t port_read(int port, size_t nmemb) {
   switch (nmemb) {

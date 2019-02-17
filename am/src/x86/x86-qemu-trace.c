@@ -1,4 +1,4 @@
-#include <am-x86.h>
+#include "am-x86.h"
 
 volatile uint32_t trace_flags = 0; // current trace status
 LOCKDEF(trace);

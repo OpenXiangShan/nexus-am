@@ -1,5 +1,6 @@
 .DEFAULT_GOAL = app
 
+include $(AM_HOME)/am/arch/$(ARCH).mk
 include $(AM_HOME)/Makefile.check
 $(info Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
 
@@ -24,16 +25,12 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
   $(LINKLIBS) \
 ))
 
-.PHONY: app _app __dummy run clean
+.PHONY: app run image
 
 $(OBJS): $(PREBUILD)
-_app: $(OBJS) am $(LIBS)
-	@bash $(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
-$(POSTBUILD) __dummy: _app
-app: $(POSTBUILD) __dummy
-
+image: $(OBJS) am $(LIBS)
+app: image
 run: app
-	@bash $(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
 
 clean: 
 	rm -rf $(APP_DIR)/build/

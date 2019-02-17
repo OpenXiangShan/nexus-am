@@ -1,4 +1,4 @@
-#include <am-x86.h>
+#include "../am-x86.h"
 
 struct VBEInfo {
   uint16_t attributes;

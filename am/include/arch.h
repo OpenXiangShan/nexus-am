@@ -1,5 +1,5 @@
-#ifndef __X86_ARCH_H__
-#define __X86_ARCH_H__
+#ifndef __ARCH_H__
+#define __ARCH_H__
 
 struct _Context {
   uint32_t eax, ebx, ecx, edx,

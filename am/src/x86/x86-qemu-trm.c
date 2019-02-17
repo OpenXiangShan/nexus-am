@@ -1,4 +1,4 @@
-#include <am-x86.h>
+#include "am-x86.h"
 
 _Area _heap; // the heap memory defined in AM spec
 
