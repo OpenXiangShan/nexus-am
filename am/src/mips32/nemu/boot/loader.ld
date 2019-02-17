@@ -1,6 +1,7 @@
 SECTIONS {
   . = 0x80100000;
   .text : {
+    *(entry)
     *(.text)
   }
   etext = .;

@@ -5,7 +5,7 @@ $(error Environment variable AM_HOME must be defined.)
 endif
 
 ARCH  ?= native
-ARCHS := $(basename $(shell ls $(AM_HOME)/am/arch/))
+ARCHS := $(basename $(notdir $(shell ls $(AM_HOME)/am/arch/*.mk)))
 
 ifeq ($(filter $(ARCHS), $(ARCH)), ) # ARCH must be valid
 $(error Invalid ARCH. Supported: $(ARCHS))
