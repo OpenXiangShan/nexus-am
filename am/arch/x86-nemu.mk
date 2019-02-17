@@ -9,13 +9,14 @@ AM_SRCS := $(ISA)/nemu/trm.c \
            $(ISA)/nemu/boot/start.S
 
 LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
+LDFLAGS := -melf_i386
 
 image:
-	@echo + LD "->" $(BINARY).o
-	@ld -melf_i386 --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).o --start-group $(LINK_FILES) --end-group
-	@objdump -d $(BINARY).o > $(BINARY).txt
-	@echo + CREATE "->" $(BINARY).bin
-	@objcopy -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).o $(BINARY).bin
+	@echo + LD "->" $(BINARY).elf
+	@$(LD) $(LDFLAGS) --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).elf --start-group $(LINK_FILES) --end-group
+	@$(OBJDUMP) -d $(BINARY).elf > $(BINARY).txt
+	@echo + OBJCOPY "->" $(BINARY).bin
+	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
 
 run:
 	make -C $(NEMU_HOME) ISA=$(ISA) run ARGS="-b -l $(shell dirname $(BINARY_ABS))/nemu-log.txt $(BINARY_ABS).bin"
