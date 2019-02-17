@@ -2,6 +2,7 @@
 #define __ARCH_H__
 
 #include <unistd.h>
+#include <ucontext.h>
 #include <sys/types.h>
 
 #define false 0
@@ -10,8 +11,6 @@
 #ifndef __USE_GNU
 # define __USE_GNU
 #endif
-
-#include <ucontext.h>
 
 struct _Context {
   union {

@@ -3,9 +3,9 @@ AM_SRCS := riscv32/nemu/trm.c \
            riscv32/nemu/trap.S \
            riscv32/nemu/cte.c \
            riscv32/nemu/vme.c \
-           devices/nemu-input.c \
-           devices/nemu-timer.c \
-           devices/nemu-video.c \
+           nemu-devices/nemu-input.c \
+           nemu-devices/nemu-timer.c \
+           nemu-devices/nemu-video.c \
 
 LOADER_DIR := $(AM_HOME)/am/src/risv32/nemu/loader
 
