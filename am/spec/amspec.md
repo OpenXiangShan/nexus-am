@@ -1,8 +1,42 @@
 # 抽象计算机
 
-## 基本概念：C程序的语义
+AM：C程序在“bare-metal”上的运行环境。
 
-### 内存
+回顾一下C程序执行过程
+
+```c
+a.c: 
+
+void say(const char *s);
+int main() {
+  say("Hello World");
+}
+
+b.c:
+
+#include <stdlib.h>
+void say(const char *s) {
+  system(...);
+}
+```
+
+在OS上：
+
+```
+a.c  -> 编译(gcc -c) -> a.o \ 
+                            \
+b.c  ->                b.o  -> 链接 -> a.out -> 加载 (OS)
+```
+
+baremetal运行的程序和OS上的程序不一样。没有libc，也没有操作系统(system会创建一个进程)，这些都是无法实现的。
+
+baremetal上运行什么呢？操作系统——它也是个C程序。其他程序也可以。但写操作系统从来都不容易。不容易的感觉是因为OS一方面是个复杂的程序，另一方面还要和硬件打交道。
+
+但如果我们一上来的目标就不是实现一个OS，只是让baremetal能运行一个程序呢？这就容易多了。
+
+AbstractMachine就是从一个最小的C Runtime出发，最终支持在任何体系结构上编写纯C操作系统。
+
+## 内存
 
 所有东西都位于同一个地址空间里。内存的访问(读写)通过：
 
