@@ -1,27 +1,7 @@
 #include <am.h>
 #include <amdev.h>
 #include <klib.h>
-
-#ifdef __ARCH_X86_NEMU
-#include <x86.h>
-#define SCREEN_ADDR 0x100
-#define SYNC_ADDR 0x104
-#define FB_ADDR 0x40000
-#endif
-
-#ifdef __ARCH_MIPS32_NEMU
-#include <mips32.h>
-#define SCREEN_ADDR 0x4100
-#define SYNC_ADDR 0x4104
-#define FB_ADDR 0x40000
-#endif
-
-#ifdef __ARCH_RISCV32_NEMU
-#include <riscv32.h>
-#define SCREEN_ADDR 0x4100
-#define SYNC_ADDR 0x4104
-#define FB_ADDR 0x40000
-#endif
+#include <nemu.h>
 
 static int W, H;
 static uint32_t* const fb = (uint32_t *)FB_ADDR;

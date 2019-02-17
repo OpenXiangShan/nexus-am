@@ -7,7 +7,7 @@ $(info Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
 APP_DIR ?= $(shell pwd)
 INC_DIR += $(APP_DIR)/include/
 DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
-BINARY ?= $(APP_DIR)/build/$(NAME)-$(ARCH)
+BINARY  ?= $(shell realpath $(APP_DIR)/build/$(NAME)-$(ARCH) --relative-to .)
 
 LIBS += klib compiler-rt
 
@@ -25,12 +25,16 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
   $(LINKLIBS) \
 ))
 
-.PHONY: app run image
+.PHONY: app run image prompt
 
 $(OBJS): $(PREBUILD)
-image: $(OBJS) am $(LIBS)
+image: $(OBJS) am $(LIBS) prompt
+prompt: $(OBJS) am $(LIBS)
 app: image
 run: app
+
+prompt:
+	@echo Creating binary image [$(ARCH)]
 
 clean: 
 	rm -rf $(APP_DIR)/build/

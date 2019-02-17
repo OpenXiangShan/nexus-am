@@ -10,10 +10,13 @@ AM_SRCS := mips32/nemu/trm.c \
 LOADER_DIR := $(AM_HOME)/am/src/mips32/nemu/loader
 
 image:
-	mips-linux-gnu-gcc -EL -march=mips32 -fno-pic -mno-abicalls -fno-delayed-branch -c $(LOADER_DIR)/start.S -o $(LOADER_DIR)/start.o
-	mips-linux-gnu-ld --gc-sections -EL -T $(LOADER_DIR)/loader.ld -e _start -o $(BINARY).o $(LOADER_DIR)/start.o --start-group $(LINK_FILES) --end-group
-	mips-linux-gnu-objdump -d $(BINARY).o > $(BINARY).txt
-	mips-linux-gnu-objcopy -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).o $(BINARY).bin
+	@echo + CC loader/start.S
+	@mips-linux-gnu-gcc -EL -march=mips32 -fno-pic -mno-abicalls -fno-delayed-branch -c $(LOADER_DIR)/start.S -o $(LOADER_DIR)/start.o
+	@echo + LD "->" $(BINARY).o
+	@mips-linux-gnu-ld --gc-sections -EL -T $(LOADER_DIR)/loader.ld -e _start -o $(BINARY).o $(LOADER_DIR)/start.o --start-group $(LINK_FILES) --end-group
+	@mips-linux-gnu-objdump -d $(BINARY).o > $(BINARY).txt
+	@echo + CREATE "->" $(BINARY).bin
+	@mips-linux-gnu-objcopy -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).o $(BINARY).bin
 
 run:
 	make -C $(NEMU_HOME) ISA=mips32 run ARGS="-b -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin"

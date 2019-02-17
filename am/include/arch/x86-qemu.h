@@ -2,12 +2,12 @@
 #define __ARCH_H__
 
 struct _Context {
+  struct _AddressSpace *prot;
   uint32_t eax, ebx, ecx, edx,
            esi, edi, ebp, esp3,
            eip, eflags,
            cs, ds, es, ss,
            ss0, esp0;
-  void *prot;
 };
 
 #define GPR1 eax

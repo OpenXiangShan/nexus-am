@@ -1,5 +1,5 @@
 include $(AM_HOME)/Makefile.check
-$(info Building $(NAME) [$(ARCH)])
+$(info Building lib-$(NAME) [$(ARCH)])
 
 LIB_DIR ?= $(shell pwd)
 INC_DIR += $(LIB_DIR)/include/
@@ -17,7 +17,7 @@ $(shell mkdir -p $(DST_DIR))
 include $(AM_HOME)/Makefile.compile
 
 $(ARCHIVE): $(OBJS)
-	@echo + AR $@
+	@echo + AR "->" $@
 	@ar rcs $(ARCHIVE) $(OBJS)
 
 .PHONY: clean

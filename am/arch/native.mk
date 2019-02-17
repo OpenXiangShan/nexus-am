@@ -9,7 +9,8 @@ AM_SRCS := native/trm.c \
            native/devices/video.c \
 
 image:
-	g++ -pie -o $(BINARY) -Wl,--start-group $(LINK_FILES) -Wl,--end-group -lSDL2 -lGL -lrt
+	@echo + LD "->" $(BINARY)
+	@g++ -pie -o $(BINARY) -Wl,--start-group $(LINK_FILES) -Wl,--end-group -lSDL2 -lGL -lrt
 
 run:
 	$(BINARY)

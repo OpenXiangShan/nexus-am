@@ -1,20 +1,6 @@
 #include <am.h>
 #include <amdev.h>
-
-#ifdef __ARCH_X86_NEMU
-#include <x86.h>
-#define RTC_ADDR 0x48
-#endif
-
-#ifdef __ARCH_MIPS32_NEMU
-#include <mips32.h>
-#define RTC_ADDR 0x4048
-#endif
-
-#ifdef __ARCH_RISCV32_NEMU
-#include <riscv32.h>
-#define RTC_ADDR 0x4048
-#endif
+#include <nemu.h>
 
 static unsigned long boot_time;
 
