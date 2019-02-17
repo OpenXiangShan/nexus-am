@@ -6,14 +6,13 @@ AM_SRCS := x86/nemu/trm.c \
            nemu-devices/nemu-input.c \
            nemu-devices/nemu-timer.c \
            nemu-devices/nemu-video.c \
+           x86/nemu/boot/start.S
 
-LOADER_DIR := $(AM_HOME)/am/src/x86/nemu/loader
+LD_SCRIPT := $(AM_HOME)/am/src/x86/nemu/boot/loader.ld
 
 image:
-	@echo + CC loader/start.S
-	@gcc -m32 -fno-pic -ffunction-sections -c $(LOADER_DIR)/start.S -o $(LOADER_DIR)/start.o
 	@echo + LD "->" $(BINARY).o
-	@ld -melf_i386 --gc-sections -T $(LOADER_DIR)/loader.ld -e _start -o $(BINARY).o $(LOADER_DIR)/start.o --start-group $(LINK_FILES) --end-group
+	@ld -melf_i386 --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).o --start-group $(LINK_FILES) --end-group
 	@objdump -d $(BINARY).o > $(BINARY).txt
 	@echo + CREATE "->" $(BINARY).bin
 	@objcopy -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).o $(BINARY).bin

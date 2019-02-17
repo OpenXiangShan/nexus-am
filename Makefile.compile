@@ -48,7 +48,7 @@ endif
 
 ifeq ($(ISA), x86)
 CFLAGS_COMMON += -m32 -fno-pic -fno-omit-frame-pointer -march=i386 -mstringop-strategy=loop -fno-reorder-functions
-ASFLAGS  += -m32
+ASFLAGS  += -m32 -fno-pic
 endif
 
 ifeq ($(ISA), riscv32)
