@@ -21,8 +21,6 @@ static inline void outl(uintptr_t addr, uint32_t data) { *(volatile uint32_t *)M
 #define PTE_X 0x08
 #define PTE_U 0x10
 
-#define PGSIZE 4096
-
 // Page directory and page table constants
 #define NR_PDE    1024    // # directory entries per page directory
 #define NR_PTE    1024    // # PTEs per page table
