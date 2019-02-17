@@ -24,16 +24,13 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
   $(LINKLIBS) \
 ))
 
-.PHONY: app _app prebuild postbuild run clean
-prebuild: $(PREBUILD)
-postbuild: $(POSTBUILD)
+.PHONY: app _app __dummy run clean
+
+$(OBJS): $(PREBUILD)
 _app: $(OBJS) am $(LIBS)
 	@bash $(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
-
-app:
-	$(MAKE) prebuild
-	$(MAKE) _app
-	$(MAKE) postbuild
+$(POSTBUILD) __dummy: _app
+app: $(POSTBUILD) __dummy
 
 run: app
 	@bash $(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
