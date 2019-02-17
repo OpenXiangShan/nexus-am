@@ -16,6 +16,13 @@
 #define FB_ADDR 0x40000
 #endif
 
+#ifdef __ARCH_RISCV32_NEMU
+#include <riscv32.h>
+#define SCREEN_ADDR 0x4100
+#define SYNC_ADDR 0x4104
+#define FB_ADDR 0x40000
+#endif
+
 static int W, H;
 static uint32_t* const fb = (uint32_t *)FB_ADDR;
 

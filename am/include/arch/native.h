@@ -31,9 +31,6 @@ struct _Context {
 #define GPR4 uc.uc_mcontext.gregs[REG_RCX]
 #define GPRx rax
 
-#define PGSHIFT 12
-#define PGSIZE (1 << PGSHIFT)
-
 #undef __USE_GNU
 
 #endif

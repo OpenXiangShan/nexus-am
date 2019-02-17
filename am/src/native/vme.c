@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <klib.h>
 
+#define PGSIZE  4096
+#define PGSHIFT 12
+
 typedef struct PageMap {
   uintptr_t vpn;
   uintptr_t ppn;

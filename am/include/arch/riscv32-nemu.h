@@ -1,11 +1,6 @@
 #ifndef __ARCH_H__
 #define __ARCH_H__
 
-#include <am.h>
-
-#define PMEM_SIZE (128 * 1024 * 1024)
-#define PGSIZE    4096
-
 struct _Context {
   union {
     struct _AddressSpace *prot;

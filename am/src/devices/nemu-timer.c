@@ -11,6 +11,11 @@
 #define RTC_ADDR 0x4048
 #endif
 
+#ifdef __ARCH_RISCV32_NEMU
+#include <riscv32.h>
+#define RTC_ADDR 0x4048
+#endif
+
 static unsigned long boot_time;
 
 size_t timer_read(uintptr_t reg, void *buf, size_t size) {

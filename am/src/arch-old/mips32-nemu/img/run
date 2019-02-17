@@ -1,3 +1,0 @@
-#!/bin/bash
-
-make -C $NEMU_HOME ISA=mips32 run ARGS="-b -l `dirname $1`/nemu-log.txt $1.bin"
