@@ -1,11 +1,6 @@
 #ifndef __ARCH_H__
 #define __ARCH_H__
 
-#include <am.h>
-
-#define PMEM_SIZE (128 * 1024 * 1024)
-#define PGSIZE    4096
-
 struct _Context {
   struct _AddressSpace *prot;
   uint32_t gpr[31];
@@ -19,11 +14,4 @@ struct _Context {
 #define GPR4 gpr[6]
 #define GPRx gpr[1]
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
-#endif
 #endif

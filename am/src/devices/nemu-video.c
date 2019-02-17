@@ -1,12 +1,23 @@
 #include <am.h>
-#include <x86.h>
 #include <amdev.h>
 #include <klib.h>
 
-#define SCREEN_PORT 0x100
-#define SYNC_PORT 0x104
+#ifdef __ARCH_X86_NEMU
+#include <x86.h>
+#define SCREEN_ADDR 0x100
+#define SYNC_ADDR 0x104
+#define FB_ADDR 0x40000
+#endif
+
+#ifdef __ARCH_MIPS32_NEMU
+#include <mips32.h>
+#define SCREEN_ADDR 0x4100
+#define SYNC_ADDR 0x4104
+#define FB_ADDR 0x40000
+#endif
+
 static int W, H;
-static uint32_t* const fb = (uint32_t *)0x40000;
+static uint32_t* const fb = (uint32_t *)FB_ADDR;
 
 size_t video_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
@@ -38,7 +49,7 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
       }
 
       if (ctl->sync) {
-        outl(SYNC_PORT, 0);
+        outl(SYNC_ADDR, 0);
       }
       return size;
     }
@@ -47,7 +58,7 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
 }
 
 void vga_init() {
-  uint32_t data = inl(SCREEN_PORT);
+  uint32_t data = inl(SCREEN_ADDR);
   W = data >> 16;
   H = data & 0xffff;
 }

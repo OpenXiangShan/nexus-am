@@ -1,8 +1,16 @@
 #include <am.h>
-#include <x86.h>
 #include <amdev.h>
 
-#define RTC_PORT 0x48   // Note that this is not standard
+#ifdef __ARCH_X86_NEMU
+#include <x86.h>
+#define RTC_ADDR 0x48
+#endif
+
+#ifdef __ARCH_MIPS32_NEMU
+#include <mips32.h>
+#define RTC_ADDR 0x4048
+#endif
+
 static unsigned long boot_time;
 
 size_t timer_read(uintptr_t reg, void *buf, size_t size) {
@@ -10,7 +18,7 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
     case _DEVREG_TIMER_UPTIME: {
       _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
       uptime->hi = 0;
-      uptime->lo = inl(RTC_PORT) - boot_time;
+      uptime->lo = inl(RTC_ADDR) - boot_time;
       return sizeof(_DEV_TIMER_UPTIME_t);
     }
     case _DEVREG_TIMER_DATE: {
@@ -28,5 +36,5 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
 }
 
 void timer_init() {
-  boot_time = inl(RTC_PORT);
+  boot_time = inl(RTC_ADDR);
 }

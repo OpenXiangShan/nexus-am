@@ -3,7 +3,7 @@
 
 #ifndef __ASSEMBLER__
 
-#include <arch.h>
+#include <stdint.h>
 
 #define MMIO_OFFSET(addr) ((uintptr_t)0xa0000000 + addr)
 

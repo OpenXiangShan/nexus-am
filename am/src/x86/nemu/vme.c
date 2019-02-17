@@ -1,5 +1,6 @@
 #include <am.h>
 #include <x86.h>
+#include <nemu.h>
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 

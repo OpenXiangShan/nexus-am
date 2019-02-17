@@ -96,8 +96,6 @@
 // Below are only defined for c/cpp files
 #ifndef __ASSEMBLER__
 
-#include <arch.h>
-
 // +--------10------+-------10-------+---------12----------+
 // | Page Directory |   Page Table   | Offset within Page  |
 // |      Index     |      Index     |                     |

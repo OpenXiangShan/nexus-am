@@ -1,5 +1,6 @@
 #include <mips32.h>
 #include <klib.h>
+#include <nemu.h>
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 

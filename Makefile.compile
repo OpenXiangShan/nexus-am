@@ -24,11 +24,13 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 READELF = $(CROSS_COMPILE)readelf
 
 ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
+ARCH_DEF = __ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _)
 
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
 INCLUDES += -I$(AM_HOME)/am/include
 
 CFLAGS_COMMON += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -D__ISA__=\"$(ISA)\" \
+                 -D__ARCH__=$(ARCH) -D$(ARCH_DEF) \
                  -fno-builtin -fno-stack-protector
 CFLAGS   += -std=gnu11
 CXXFLAGS += -std=c++11 -ffreestanding -fno-rtti -fno-exceptions
