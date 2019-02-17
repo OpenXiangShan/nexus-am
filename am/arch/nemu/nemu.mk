@@ -1,8 +1,8 @@
 AM_SRCS := $(ISA)/nemu/trm.c \
-           $(ISA)/nemu/ioe.c \
            $(ISA)/nemu/cte.c \
            $(ISA)/nemu/trap.S \
            $(ISA)/nemu/vme.c \
+           nemu-devices/ioe.c \
            nemu-devices/nemu-input.c \
            nemu-devices/nemu-timer.c \
            nemu-devices/nemu-video.c \
