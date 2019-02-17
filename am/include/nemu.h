@@ -16,7 +16,7 @@
 #define RTC_ADDR     0x4048
 #define SCREEN_ADDR  0x4100
 #define SYNC_ADDR    0x4104
-#define FB_ADDR      0x40000
+#define FB_ADDR      0xa0040000
 #endif
 
 #ifdef __ARCH_RISCV32_NEMU
