@@ -1,4 +1,4 @@
-#include "am-x86.h"
+#include "../x86-qemu.h"
 
 int ncpu = 0;
 struct cpu_local cpuinfo[MAX_CPU];

@@ -1,7 +1,7 @@
 // LAPIC/IOAPIC related code
 // (copy-paste from xv6)
 
-#include "../am-x86.h"
+#include "../../x86-qemu.h"
 
 // The local APIC manages internal (non-I/O) interrupts.
 // See Chapter 8 & Appendix C of Intel processor manual volume 3.

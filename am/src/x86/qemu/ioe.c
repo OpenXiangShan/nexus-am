@@ -1,4 +1,4 @@
-#include "am-x86.h"
+#include "../x86-qemu.h"
 
 void vga_init();
 void timer_init();

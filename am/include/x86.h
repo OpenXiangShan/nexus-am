@@ -111,6 +111,7 @@ typedef uint32_t PDE;
 #define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 #define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
 #define PTE_ADDR(pte)    ((uint32_t)(pte) & ~0xfff)
+#define PGADDR(d, t, o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 
 // Segment Descriptor
 typedef struct SegDesc {

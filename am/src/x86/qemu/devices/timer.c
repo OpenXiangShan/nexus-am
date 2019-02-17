@@ -1,4 +1,4 @@
-#include "../am-x86.h"
+#include "../../x86-qemu.h"
 
 static _DEV_TIMER_DATE_t boot_date;
 static uint32_t freq_mhz = 2000;

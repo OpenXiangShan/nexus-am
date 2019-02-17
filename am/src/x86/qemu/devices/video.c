@@ -1,4 +1,4 @@
-#include "../am-x86.h"
+#include "../../x86-qemu.h"
 
 struct VBEInfo {
   uint16_t attributes;

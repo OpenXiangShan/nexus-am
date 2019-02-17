@@ -1,4 +1,53 @@
-#include "boot.h"
+#include <stdint.h>
+
+struct ELFHeader {
+	uint32_t magic;
+	uint8_t  elf[12];
+	uint16_t type;
+	uint16_t machine;
+	uint32_t version;
+	uint32_t entry;
+	uint32_t phoff;
+	uint32_t shoff;
+	uint32_t flags;
+	uint16_t ehsize;
+	uint16_t phentsize;
+	uint16_t phnum;
+	uint16_t shentsize;
+	uint16_t shnum;
+	uint16_t shstrndx;
+};
+
+struct ProgramHeader {
+	uint32_t type;
+	uint32_t off;
+	uint32_t vaddr;
+	uint32_t paddr;
+	uint32_t filesz;
+	uint32_t memsz;
+	uint32_t flags;
+	uint32_t align;
+};
+
+static inline char in_byte(short port) {
+	char data;
+	__asm__ volatile ("in %1,%0" : "=a" (data) : "d" (port));
+	return data;
+}
+
+static inline int in_long(short port) {
+  int data;
+	__asm__ volatile ("in %1, %0" : "=a" (data) : "d" (port));
+	return data;
+}
+
+static inline void out_byte(short port, char data) {
+	__asm__ volatile ("out %0,%1" : : "a" (data), "d" (port));
+}
+
+static inline void hlt() {
+  __asm__ volatile ("hlt");
+}
 
 #define SECTSIZE 512
 

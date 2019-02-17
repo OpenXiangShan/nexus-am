@@ -1,4 +1,4 @@
-#include "am-x86.h"
+#include "../x86-qemu.h"
 #include <stdarg.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;

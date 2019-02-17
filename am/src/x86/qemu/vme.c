@@ -1,4 +1,4 @@
-#include "am-x86.h"
+#include "../x86-qemu.h"
 
 struct vm_area {
   _Area area;

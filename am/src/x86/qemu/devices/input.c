@@ -1,4 +1,4 @@
-#include "../am-x86.h"
+#include "../../x86-qemu.h"
 
 static int scan_code[] = {
    0, 1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
