@@ -19,4 +19,4 @@ image:
 	@objcopy -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).o $(BINARY).bin
 
 run:
-	make -C $(NEMU_HOME) ISA=x86 run ARGS="-b -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin"	
+	make -C $(NEMU_HOME) ISA=x86 run ARGS="-b -l $(shell dirname $(BINARY_ABS))/nemu-log.txt $(BINARY_ABS).bin"

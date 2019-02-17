@@ -8,6 +8,7 @@ APP_DIR ?= $(shell pwd)
 INC_DIR += $(APP_DIR)/include/
 DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
 BINARY  ?= $(shell realpath $(APP_DIR)/build/$(NAME)-$(ARCH) --relative-to .)
+BINARY_ABS = $(abspath $(BINARY))
 
 LIBS += klib compiler-rt
 
