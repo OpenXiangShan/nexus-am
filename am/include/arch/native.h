@@ -20,6 +20,7 @@ struct _Context {
       void *prot;
     };
   };
+  uintptr_t rdi;
   uintptr_t rax;
   uintptr_t rip;
 };
