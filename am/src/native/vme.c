@@ -18,9 +18,12 @@ typedef struct PageMap {
 void shm_mmap(void *va, void *pa, int prot);
 void shm_munmap(void *va);
 
+static int vme_enable = 0;
+
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   // we do not need to ask MM to get a page from OS,
   // since we can call malloc() in native
+  vme_enable = 1;
   return 0;
 }
 
@@ -40,6 +43,8 @@ void get_cur_as(_Context *c) {
 }
 
 void _switch(_Context *c) {
+  if (!vme_enable) return;
+
   _AddressSpace *p = c->prot;
   if (p == NULL || p == cur_as) return;
   PageMap *pp;
