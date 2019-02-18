@@ -17,7 +17,7 @@ $(shell mkdir -p $(DST_DIR))
 include $(AM_HOME)/Makefile.compile
 
 $(ARCHIVE): $(OBJS)
-	@echo + AR "->" $@
+	@echo + AR "->" $(shell realpath $@ --relative-to .)
 	@ar rcs $(ARCHIVE) $(OBJS)
 
 .PHONY: clean
