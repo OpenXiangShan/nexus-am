@@ -1,1 +1,0 @@
-# MIPS32-QEMU

@@ -1,12 +1,14 @@
 .DEFAULT_GOAL = app
 
 include $(AM_HOME)/Makefile.check
+-include $(AM_HOME)/am/arch/$(ARCH).mk
 $(info Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
 
 APP_DIR ?= $(shell pwd)
 INC_DIR += $(APP_DIR)/include/
 DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
-BINARY ?= $(APP_DIR)/build/$(NAME)-$(ARCH)
+BINARY  ?= $(shell realpath $(APP_DIR)/build/$(NAME)-$(ARCH) --relative-to .)
+BINARY_ABS = $(abspath $(BINARY))
 
 LIBS += klib compiler-rt
 
@@ -24,16 +26,16 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
   $(LINKLIBS) \
 ))
 
-.PHONY: app _app __dummy run clean
+.PHONY: app run image prompt
 
 $(OBJS): $(PREBUILD)
-_app: $(OBJS) am $(LIBS)
-	@bash $(AM_HOME)/am/arch/$(ARCH)/img/build $(BINARY) $(LINK_FILES)
-$(POSTBUILD) __dummy: _app
-app: $(POSTBUILD) __dummy
-
+image: $(OBJS) am $(LIBS) prompt
+prompt: $(OBJS) am $(LIBS)
+app: image
 run: app
-	@bash $(AM_HOME)/am/arch/$(ARCH)/img/run $(BINARY)
+
+prompt:
+	@echo Creating binary image [$(ARCH)]
 
 clean: 
 	rm -rf $(APP_DIR)/build/
