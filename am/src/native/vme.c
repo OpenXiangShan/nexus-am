@@ -36,7 +36,8 @@ int _protect(_AddressSpace *p) {
 void _unprotect(_AddressSpace *p) {
 }
 
-static _AddressSpace *cur_as = NULL;
+static _AddressSpace empty_as = { .ptr = NULL };
+static _AddressSpace *cur_as = &empty_as;
 
 void get_cur_as(_Context *c) {
   c->prot = cur_as;
@@ -46,16 +47,15 @@ void _switch(_Context *c) {
   if (!vme_enable) return;
 
   _AddressSpace *p = c->prot;
-  if (p == NULL || p == cur_as) return;
-  PageMap *pp;
+  assert(p != NULL);
+  if (p == cur_as) return;
 
-  if (cur_as != NULL) {
-    // munmap all mappings
-    list_foreach(pp, cur_as->ptr) {
-      if (pp->is_mapped) {
-        shm_munmap((void *)(pp->vpn << PGSHIFT));
-        pp->is_mapped = false;
-      }
+  PageMap *pp;
+  // munmap all mappings
+  list_foreach(pp, cur_as->ptr) {
+    if (pp->is_mapped) {
+      shm_munmap((void *)(pp->vpn << PGSHIFT));
+      pp->is_mapped = false;
     }
   }
 
