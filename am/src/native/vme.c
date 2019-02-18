@@ -18,9 +18,12 @@ typedef struct PageMap {
 void shm_mmap(void *va, void *pa, int prot);
 void shm_munmap(void *va);
 
+static int vme_enable = 0;
+
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   // we do not need to ask MM to get a page from OS,
   // since we can call malloc() in native
+  vme_enable = 1;
   return 0;
 }
 
@@ -33,24 +36,26 @@ int _protect(_AddressSpace *p) {
 void _unprotect(_AddressSpace *p) {
 }
 
-static _AddressSpace *cur_as = NULL;
+static _AddressSpace empty_as = { .ptr = NULL };
+static _AddressSpace *cur_as = &empty_as;
 
 void get_cur_as(_Context *c) {
   c->prot = cur_as;
 }
 
 void _switch(_Context *c) {
-  _AddressSpace *p = c->prot;
-  if (p == NULL || p == cur_as) return;
-  PageMap *pp;
+  if (!vme_enable) return;
 
-  if (cur_as != NULL) {
-    // munmap all mappings
-    list_foreach(pp, cur_as->ptr) {
-      if (pp->is_mapped) {
-        shm_munmap((void *)(pp->vpn << PGSHIFT));
-        pp->is_mapped = false;
-      }
+  _AddressSpace *p = c->prot;
+  assert(p != NULL);
+  if (p == cur_as) return;
+
+  PageMap *pp;
+  // munmap all mappings
+  list_foreach(pp, cur_as->ptr) {
+    if (pp->is_mapped) {
+      shm_munmap((void *)(pp->vpn << PGSHIFT));
+      pp->is_mapped = false;
     }
   }
 
