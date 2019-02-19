@@ -19,7 +19,7 @@ image: $(GEN_READMEMH)
 	@echo + LD "->" $(BINARY).elf
 	@$(LD) $(LDFLAGS) --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).elf --start-group $(LINK_FILES) --end-group
 	@$(OBJDUMP) -d $(BINARY).elf > $(BINARY).txt
-	@echo + OBJCOPY "->" $(BINARY).bin
+	@echo + OBJCOPY "->" $(BINARY)-readmemh
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O verilog --adjust-vma -0x80000000 $(BINARY).elf $(BINARY)-readmemh
 	@$(GEN_READMEMH) $(BINARY)-readmemh
 
