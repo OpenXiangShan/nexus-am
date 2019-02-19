@@ -21,7 +21,7 @@
 #define FB_ADDR      0xa0040000
 #endif
 
-#ifdef __ARCH_RISCV32_NEMU
+#if defined(__ARCH_RISCV32_NEMU) || defined(__ARCH_RISCV32_NOOP)
 #include <riscv32.h>
 #define SERIAL_PORT  0x43f8
 #define KBD_ADDR     0x4060
