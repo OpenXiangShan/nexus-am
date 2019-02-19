@@ -1,4 +1,6 @@
-NAME = am
-SRCS = $(shell find -L ./arch/$(ARCH)/src/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
-LIBS += klib
+NAME := am
+LIBS := klib
+include $(AM_HOME)/Makefile.check
+-include arch/$(ARCH).mk
+SRCS := $(addprefix src/, $(AM_SRCS))
 include $(AM_HOME)/Makefile.lib

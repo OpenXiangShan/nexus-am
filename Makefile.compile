@@ -1,7 +1,4 @@
 # Compilation flags
-ARCH_SPLIT = $(subst -, ,$(ARCH))
-ISA        = $(word 1,$(ARCH_SPLIT))
-PLATFORM   = $(word 2,$(ARCH_SPLIT))
 
 ifeq ($(ISA), mips32)
 CROSS_COMPILE = mips-linux-gnu-
@@ -20,16 +17,20 @@ AS = $(CROSS_COMPILE)gcc
 CC = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)ld
+OBJDUMP = $(CROSS_COMPILE)objdump
 OBJCOPY = $(CROSS_COMPILE)objcopy
 READELF = $(CROSS_COMPILE)readelf
 
 ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
+ARCH_DEF = __ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _)
 
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
-INCLUDES += -I$(AM_HOME)/am/arch/$(ARCH)/include
+INCLUDES += -I$(AM_HOME)/am/include
 
 CFLAGS_COMMON += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -D__ISA__=\"$(ISA)\" \
+                 -D__ARCH__=$(ARCH) -D$(ARCH_DEF) \
                  -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
+
 CFLAGS   += -std=gnu11
 CXXFLAGS += -std=c++11 -ffreestanding -fno-rtti -fno-exceptions
 ASFLAGS  += -MMD $(INCLUDES) -D$(ISA_DEF)
@@ -46,7 +47,7 @@ endif
 
 ifeq ($(ISA), x86)
 CFLAGS_COMMON += -m32 -fno-pic -fno-omit-frame-pointer -march=i386 -mstringop-strategy=loop -fno-reorder-functions
-ASFLAGS  += -m32
+ASFLAGS  += -m32 -fno-pic
 endif
 
 ifeq ($(ISA), riscv32)
@@ -85,6 +86,6 @@ DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
 # Dependent AM and libraries
 .PHONY: $(LIBS) am
 am:
-	@$(MAKE) -C $(AM_HOME)
+	@$(MAKE) -s -C $(AM_HOME)
 $(sort $(LIBS)): %:
-	@$(MAKE) -C $(AM_HOME)/libs/$*
+	@$(MAKE) -s -C $(AM_HOME)/libs/$*

@@ -1,3 +1,0 @@
-#!/bin/bash
-
-echo "Cannot run: should be loaded by an OS"
