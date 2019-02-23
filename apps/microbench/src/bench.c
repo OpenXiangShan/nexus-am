@@ -115,7 +115,6 @@ int main() {
     printk("\n");
   }
   printk("Total time: %d ms\n", t1 - t0);
-  _halt(0);
   return 0;
 }
 
