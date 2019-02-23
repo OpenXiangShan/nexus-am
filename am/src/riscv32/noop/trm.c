@@ -7,6 +7,8 @@ extern char _heap_end;
 extern int main();
 void init_uartlite(void);
 void uartlite_putchar(char ch);
+void init_perfcnt(void);
+void show_perfcnt(void);
 
 _Area _heap = {
   .start = &_heap_start,
@@ -27,6 +29,8 @@ void _halt(int code) {
 
 void _trm_init() {
   init_uartlite();
+  init_perfcnt();
   int ret = main();
+  show_perfcnt();
   _halt(ret);
 }
