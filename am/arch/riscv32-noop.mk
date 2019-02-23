@@ -1,4 +1,5 @@
-AM_SRCS := $(ISA)/nemu/trm.c \
+AM_SRCS := $(ISA)/noop/trm.c \
+           $(ISA)/noop/uartlite.c \
            $(ISA)/nemu/cte.c \
            $(ISA)/nemu/trap.S \
            $(ISA)/nemu/vme.c \
