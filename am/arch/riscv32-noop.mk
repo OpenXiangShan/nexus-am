@@ -13,7 +13,7 @@ LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
 GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/verilator-readmemh
 $(GEN_READMEMH):
-	$(MAKE) -C (@D)
+	$(MAKE) -C $(@D)
 
 image: $(GEN_READMEMH)
 	@echo + LD "->" $(BINARY).elf
