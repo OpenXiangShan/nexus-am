@@ -1,7 +1,7 @@
 AM_SRCS := $(ISA)/noop/trm.c \
            $(ISA)/noop/uartlite.c \
            $(ISA)/noop/perf.c \
-           $(ISA)/nemu/cte.c \
+           $(ISA)/noop/cte.c \
            $(ISA)/nemu/trap.S \
            $(ISA)/nemu/vme.c \
            nemu-devices/ioe.c \
