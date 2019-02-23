@@ -11,7 +11,7 @@ AM_SRCS := $(ISA)/nemu/trm.c \
 LDFLAGS := -melf32lriscv
 LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
-GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/verilator-readmemh
+GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/build/verilator-readmemh
 $(GEN_READMEMH):
 	$(MAKE) -C $(@D)
 
