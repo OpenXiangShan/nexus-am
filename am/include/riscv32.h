@@ -5,6 +5,10 @@
 
 #include <stdint.h>
 
+typedef uint8_t bool;
+#define true 1
+#define false 0
+
 #define MMIO_OFFSET(addr) (addr)
 
 static inline uint8_t  inb(uintptr_t addr) { return *(volatile uint8_t  *)MMIO_OFFSET(addr); }

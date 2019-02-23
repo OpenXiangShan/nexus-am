@@ -7,6 +7,8 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 void get_cur_as(_Context *c);
 void _switch(_Context *c);
 
+bool illegal_instr(_Context *c);
+
 _Context* irq_handle(_Context *c) {
   get_cur_as(c);
 
@@ -15,6 +17,9 @@ _Context* irq_handle(_Context *c) {
     _Event ev = {0};
     switch (c->cause) {
       //case 0: ev.event = _EVENT_IRQ_TIMER; break;
+      case 2:
+        if (illegal_instr(c)) c->epc += 4;
+        break;
       case 11:
         ev.event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
         c->epc += 4;

@@ -27,8 +27,13 @@ void _halt(int code) {
   while (1);
 }
 
+_Context *dummy_handler(_Event ev, _Context *c) {
+  return NULL;
+}
+
 void _trm_init() {
   init_uartlite();
+  _cte_init(dummy_handler);
   init_perfcnt();
   int ret = main();
   show_perfcnt();

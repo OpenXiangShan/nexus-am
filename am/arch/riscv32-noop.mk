@@ -3,6 +3,7 @@ AM_SRCS := $(ISA)/noop/trm.c \
            $(ISA)/noop/perf.c \
            $(ISA)/noop/cte.c \
            $(ISA)/nemu/trap.S \
+           $(ISA)/noop/instr.c \
            $(ISA)/nemu/vme.c \
            nemu-devices/ioe.c \
            nemu-devices/nemu-input.c \
