@@ -2,12 +2,7 @@
 #include <riscv32.h>
 #include <klib.h>
 
-typedef union {
-  struct { uint32_t lo, hi; };
-  int64_t val;
-} R64;
-
-static uint32_t mul(uint32_t a, uint32_t b, bool sign, bool hi) {
+static uint32_t mul(uint32_t a, uint32_t b, int sign, int hi) {
   if (a == 0x80000000 && b == 0x80000000) {
     // hard code the result for this special case
     const R64 res = {.val = 0x4000000000000000LL};
@@ -43,7 +38,7 @@ static uint32_t mul(uint32_t a, uint32_t b, bool sign, bool hi) {
   return (hi ? P.hi : P.lo);
 }
 
-static uint32_t div(uint32_t a, uint32_t b, bool sign, bool reminder) {
+static uint32_t div(uint32_t a, uint32_t b, int sign, int reminder) {
   int sign_a = 0, sign_b = 0;
   if (sign) {
     if ((int32_t)a < 0) { sign_a = 1; a = -a; }
@@ -76,7 +71,7 @@ static uint32_t div(uint32_t a, uint32_t b, bool sign, bool reminder) {
   return (reminder ? R.hi : R.lo);
 }
 
-bool illegal_instr(_Context *c) {
+int illegal_instr(_Context *c) {
   union {
     struct {
       uint32_t opcode :7;

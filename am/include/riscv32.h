@@ -5,7 +5,11 @@
 
 #include <stdint.h>
 
-typedef uint8_t bool;
+typedef union {
+  struct { uint32_t lo, hi; };
+  int64_t val;
+} R64;
+
 #define true 1
 #define false 0
 

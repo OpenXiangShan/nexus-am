@@ -7,7 +7,7 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 void get_cur_as(_Context *c);
 void _switch(_Context *c);
 
-bool illegal_instr(_Context *c);
+int illegal_instr(_Context *c);
 
 _Context* irq_handle(_Context *c) {
   get_cur_as(c);

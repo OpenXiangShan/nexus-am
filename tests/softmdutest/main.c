@@ -1,16 +1,14 @@
 #include <am.h>
 #include <klib.h>
 
-typedef uint8_t bool;
-#define true 1
-#define false 0
-
+#ifndef __ARCH_RISCV32_NOOP
 typedef union {
   struct { uint32_t lo, hi; };
   int64_t val;
 } R64;
+#endif
 
-uint32_t softmul(uint32_t a, uint32_t b, bool sign, bool hi) {
+uint32_t softmul(uint32_t a, uint32_t b, int sign, int hi) {
   if (a == 0x80000000 && b == 0x80000000) {
     // hard code the result for this special case
     const R64 res = {.val = 0x4000000000000000LL};
@@ -47,7 +45,7 @@ uint32_t softmul(uint32_t a, uint32_t b, bool sign, bool hi) {
   return (hi ? P.hi : P.lo);
 }
 
-uint32_t softdiv(uint32_t a, uint32_t b, bool sign, bool reminder) {
+uint32_t softdiv(uint32_t a, uint32_t b, int sign, int reminder) {
   int sign_a = 0, sign_b = 0;
   if (sign) {
     if ((int32_t)a < 0) { sign_a = 1; a = -a; }
