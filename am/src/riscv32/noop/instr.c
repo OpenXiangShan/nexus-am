@@ -47,7 +47,7 @@ static uint32_t div(uint32_t a, uint32_t b, int sign, int reminder) {
 
   // non-performing restoring division
 
-  R64 R = {.val = (sign ? (int32_t)a : a)};
+  R64 R = {.val = a};
   R.val <<= 1;
   int i;
   for (i = 32; i > 1; i --) {
