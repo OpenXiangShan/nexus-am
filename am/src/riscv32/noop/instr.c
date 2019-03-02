@@ -103,3 +103,14 @@ int illegal_instr(_Context *c) {
   _halt(1);
   return false;
 }
+
+uint32_t __mulsi3 (uint32_t a, uint32_t b) {
+  // mul a0, a0, a1
+  asm volatile(".word 0x02b50533");
+  return a;
+//  return mul(a, b, true, false);
+}
+uint32_t __divsi3 (uint32_t a, uint32_t b) { return div(a, b, true, false); }
+uint32_t __modsi3 (uint32_t a, uint32_t b) { return div(a, b, true, true); }
+uint32_t __umodsi3(uint32_t a, uint32_t b) { return div(a, b, false, true); }
+uint32_t __udivsi3(uint32_t a, uint32_t b) { return div(a, b, false, false); }
