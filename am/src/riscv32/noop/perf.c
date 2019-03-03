@@ -1,50 +1,59 @@
+#include <am.h>
 #include <klib.h>
 
-enum {
-  PERFCNT_CYCLE,
-  PERFCNT_INSTR,
-  NR_PERFCNT,
-};
+#define PERFCNT_BASE 0xb00
 
+#define CNT_NAME(cnt) #cnt,
 static const char *name [] = {
-  "cycle",
-  "instruction",
+  MAP(COUNTERS, CNT_NAME)
 };
 
-typedef union {
-  struct {
-    uint32_t lo, hi;
-  };
-  uint64_t val;
-} PerfCnt;
+void perfcnt_read(PerfCntSet *set) {
+#define READ_LO(cnt) \
+  asm volatile("csrr %0, %1" : "=r"(set->cnts[CNT_IDX(cnt)].lo) : "i"(PERFCNT_BASE + CNT_IDX(cnt)));
+#define READ_HI(cnt) \
+  asm volatile("csrr %0, %1" : "=r"(set->cnts[CNT_IDX(cnt)].hi) : "i"(PERFCNT_BASE + 0x80 + CNT_IDX(cnt)));
 
-typedef struct {
-  PerfCnt cnts[NR_PERFCNT];
-} PerfCntSet;
-
-static PerfCntSet t0;
-
-static void read_perfcnt(PerfCntSet *set) {
-  asm volatile("csrr %0, mcycle"    : "=r"(set->cnts[PERFCNT_CYCLE].lo));
-  asm volatile("csrr %0, minstret"  : "=r"(set->cnts[PERFCNT_INSTR].lo));
-  asm volatile("csrr %0, mcycleh"   : "=r"(set->cnts[PERFCNT_CYCLE].hi));
-  asm volatile("csrr %0, minstreth" : "=r"(set->cnts[PERFCNT_INSTR].hi));
+  MAP(COUNTERS, READ_LO)
+  MAP(COUNTERS, READ_HI)
 }
 
-static void diff_perfcntset(PerfCntSet *diff, PerfCntSet *t1, PerfCntSet *t0) {
+void perfcnt_sub(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
   int i;
   for (i = 0; i < NR_PERFCNT; i ++) {
-    diff->cnts[i].val = t1->cnts[i].val - t0->cnts[i].val;
-    printf("# %s = {%u, %u}\n", name[i], diff->cnts[i].hi, diff->cnts[i].lo);
+    if (i != CNT_IDX(time)) {
+      res->cnts[i].val = t1->cnts[i].val - t0->cnts[i].val;
+    }
   }
 }
 
-void init_perfcnt(void) {
-  read_perfcnt(&t0);
+void perfcnt_add(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
+  int i;
+  for (i = 0; i < NR_PERFCNT; i ++) {
+    if (i != CNT_IDX(time)) {
+      res->cnts[i].val = t1->cnts[i].val + t0->cnts[i].val;
+    }
+  }
 }
 
-void show_perfcnt(void) {
-  PerfCntSet t1, diff;
-  read_perfcnt(&t1);
-  diff_perfcntset(&diff, &t1, &t0);
+void perfcnt_show(PerfCntSet *t) {
+  int i;
+  for (i = 0; i < NR_PERFCNT; i ++) {
+    if (i != CNT_IDX(time)) {
+      printf("{%10u, %10u} <- %s\n", t->cnts[i].hi, t->cnts[i].lo, name[i]);
+    }
+  }
+}
+
+void perfcnt_excel(PerfCntSet *t) {
+  int i;
+  for (i = 0; i < NR_PERFCNT; i ++) {
+    if (i != CNT_IDX(time)) {
+      if (i == CNT_IDX(cycle)) {
+        printf("%u,", t->cnts[i].hi);
+      }
+      printf("%u,", t->cnts[i].lo);
+    }
+  }
+  printf("\n");
 }

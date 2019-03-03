@@ -27,15 +27,13 @@ void _halt(int code) {
   while (1);
 }
 
-_Context *dummy_handler(_Event ev, _Context *c) {
-  return NULL;
-}
-
 void _trm_init() {
+  PerfCntSet t0, t1, res;
   init_uartlite();
-  _cte_init(dummy_handler);
-  init_perfcnt();
+  perfcnt_read(&t0);
   int ret = main();
-  show_perfcnt();
+  perfcnt_read(&t1);
+  perfcnt_sub(&res, &t1, &t0);
+  perfcnt_show(&res);
   _halt(ret);
 }
