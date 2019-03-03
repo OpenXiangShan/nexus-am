@@ -33,11 +33,11 @@
 
 #ifdef __ARCH_RISCV32_NOOP
 #include <riscv32.h>
-#define KBD_ADDR     0x4060
+#define KBD_ADDR     0x40000060
 #define RTC_ADDR     0x40700000
-#define SCREEN_ADDR  0x4100
-#define SYNC_ADDR    0x4104
-#define FB_ADDR      0x40000
+#define SCREEN_ADDR  0x40800000
+#define SYNC_ADDR    0x40800004
+#define FB_ADDR      0x50000000
 #endif
 
 #define PMEM_SIZE (128 * 1024 * 1024)
