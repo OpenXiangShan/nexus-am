@@ -74,6 +74,8 @@ int main() {
   _ioe_init();
 
   unsigned long last = 0;
+  unsigned long fps_last = 0;
+  int fps = 0;
 
   while (true) {
     unsigned long upt = uptime();
@@ -81,6 +83,13 @@ int main() {
       update();
       redraw();
       last = upt;
+      fps ++;
+    }
+    if (upt - fps_last > 1000) {
+      // display fps every 1s
+      printf("%d: FPS = %d\n", upt, fps);
+      fps_last = upt;
+      fps = 0;
     }
   }
 
