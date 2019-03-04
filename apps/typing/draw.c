@@ -12,6 +12,12 @@ static struct draw_info_t {
 } last_draw[1000];
 
 extern char font8x8_basic[128][8];
+static int x_adjust;
+static int y_adjust;
+
+static inline void draw_rect_adjust(uint32_t *pixels, int x, int y, int w, int h) {
+  draw_rect(pixels, x + x_adjust, y + y_adjust, w, h);
+}
 
 void init_screen(void) {
   for (int y = 0; y < H; y ++)
@@ -20,7 +26,9 @@ void init_screen(void) {
 
   assert(screen_width() >= W);
   assert(screen_height() >= H);
-  draw_rect(&canvas[0][0], 0, 0, W, H);
+  x_adjust = (screen_width() - W) / 2;
+  y_adjust = (screen_height() - H) / 2;
+  draw_rect_adjust(&canvas[0][0], 0, 0, W, H);
   draw_sync();
 }
 
@@ -50,7 +58,7 @@ static inline void draw_character(char ch, int x, int y, int color) {
       }
     }
 
-  draw_rect(&buf[0][0], x, y, 8, 8);
+  draw_rect_adjust(&buf[0][0], x, y, 8, 8);
   last_draw[last_draw_idx ++] = (struct draw_info_t){ .x = x, .y = y };
 }
 
@@ -75,7 +83,7 @@ static void clear_character(int x, int y) {
       buf[i][j] = BACKGROUND_COLOR;
     }
 
-  draw_rect(&buf[0][0], x, y, 8, 8);
+  draw_rect_adjust(&buf[0][0], x, y, 8, 8);
 }
 
 static void clear_screen() {
