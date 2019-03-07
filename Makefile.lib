@@ -1,5 +1,5 @@
 include $(AM_HOME)/Makefile.check
-$(info Building lib-$(NAME) [$(ARCH)])
+$(info # Building lib-$(NAME) [$(ARCH)])
 
 LIB_DIR ?= $(shell pwd)
 INC_DIR += $(LIB_DIR)/include/

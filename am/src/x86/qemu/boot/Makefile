@@ -1,4 +1,4 @@
-$(info Building bootblock [$(ARCH)])
+$(info # Building bootblock [$(ARCH)])
 
 mbr: start.S main.c
 	@echo + CC start.S main.c

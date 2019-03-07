@@ -2,7 +2,7 @@
 
 include $(AM_HOME)/Makefile.check
 -include $(AM_HOME)/am/arch/$(ARCH).mk
-$(info Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
+$(info # Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
 
 APP_DIR ?= $(shell pwd)
 INC_DIR += $(APP_DIR)/include/
@@ -35,7 +35,7 @@ app: image
 run: app
 
 prompt:
-	@echo Creating binary image [$(ARCH)]
+	@echo \# Creating binary image [$(ARCH)]
 
 clean: 
 	rm -rf $(APP_DIR)/build/
