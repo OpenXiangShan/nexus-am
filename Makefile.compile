@@ -1,42 +1,41 @@
-AS  = $(CROSS_COMPILE)gcc
-CC  = $(CROSS_COMPILE)gcc
-CXX = $(CROSS_COMPILE)g++
-LD  = $(CROSS_COMPILE)ld
-OBJDUMP = $(CROSS_COMPILE)objdump
-OBJCOPY = $(CROSS_COMPILE)objcopy
-READELF = $(CROSS_COMPILE)readelf
+$(shell mkdir -p $(DST_DIR))
 
-ISA_DEF  = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
-ARCH_DEF = __ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _)
-
+OBJS      = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
+AS        = $(CROSS_COMPILE)gcc
+CC        = $(CROSS_COMPILE)gcc
+CXX       = $(CROSS_COMPILE)g++
+LD        = $(CROSS_COMPILE)ld
+OBJDUMP   = $(CROSS_COMPILE)objdump
+OBJCOPY   = $(CROSS_COMPILE)objcopy
+READELF   = $(CROSS_COMPILE)readelf
+ISA_DEF   = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
+ARCH_DEF  = __ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _)
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
 INCLUDES += -I$(AM_HOME)/am/include
+CFLAGS   += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) \
+            -D__ISA__=\"$(ISA)\" -D__ARCH__=$(ARCH) -D$(ARCH_DEF) \
+            -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
 
-CFLAGS += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -D__ISA__=\"$(ISA)\" \
-          -D__ARCH__=$(ARCH) -D$(ARCH_DEF) \
-          -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
-
-# Files to be compiled
-OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
-
-# Compilation patterns
 $(DST_DIR)/%.o: %.c
 	@mkdir -p $(dir $@) && echo + CC $<
 	@$(CC) -std=gnu11 $(CFLAGS) -c -o $@ $(realpath $<)
+
 $(DST_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@) && echo + CXX $<
 	@$(CXX) -std=c++11 -ffreestanding -fno-rtti -fno-exceptions $(CXXFLAGS) $(CFLAGS) -c -o $@ $(realpath $<)
+
 $(DST_DIR)/%.o: %.S
 	@mkdir -p $(dir $@) && echo + AS $<
 	@$(AS) -MMD $(INCLUDES) -D$(ISA_DEF) $(ASFLAGS) -c -o $@ $(realpath $<)
 
-# Depencies
-DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
--include $(DEPS)
+# Dependencies (gcc generated .d)
+-include $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
 
-# Dependent AM and libraries
-.PHONY: $(LIBS) am
+# Libraries
 am:
 	@$(MAKE) -s -C $(AM_HOME)
+
 $(sort $(LIBS)): %:
 	@$(MAKE) -s -C $(AM_HOME)/libs/$*
+
+.PHONY: $(LIBS) am

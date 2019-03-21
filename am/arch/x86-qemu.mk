@@ -18,9 +18,9 @@ ASFLAGS += -m32 -fno-pic
 
 image:
 	@make -s -C $(AM_HOME)/am/src/x86/qemu/boot
-	@echo + LD "->" $(BINARY).o
+	@echo + LD "->" $(BINARY_REL).o
 	@$(LD) $(LDFLAGS) -Ttext 0x00100000 -o $(BINARY).o --start-group $(LINK_FILES) --end-group 
-	@echo + CREATE "->" $(BINARY)
+	@echo + CREATE "->" $(BINARY_REL)
 	@cat $(AM_HOME)/am/src/x86/qemu/boot/mbr $(BINARY).o > $(BINARY)
 
 run:

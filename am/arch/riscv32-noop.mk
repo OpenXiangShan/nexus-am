@@ -20,12 +20,12 @@ $(GEN_READMEMH):
 	$(MAKE) -C (@D)
 
 image: $(GEN_READMEMH)
-	@echo + LD "->" $(BINARY).elf
+	@echo + LD "->" $(BINARY_REL).elf
 	@$(LD) $(LDFLAGS) --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).elf --start-group $(LINK_FILES) --end-group
 	@$(OBJDUMP) -d $(BINARY).elf > $(BINARY).txt
-	@echo + OBJCOPY "->" $(BINARY)-readmemh
+	@echo + OBJCOPY "->" $(BINARY_REL)-readmemh
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O verilog --adjust-vma -0x80000000 $(BINARY).elf $(BINARY)-readmemh
 	@$(GEN_READMEMH) $(BINARY)-readmemh
 
 run:
-	make -C $(NOOP_HOME) emu IMAGE="$(BINARY_ABS)-readmemh"
+	make -C $(NOOP_HOME) emu IMAGE="$(BINARY)-readmemh"
