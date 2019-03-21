@@ -1,3 +1,5 @@
+.DEFAULT_GOAL = default
+
 ifneq ($(MAKECMDGOALS),clean) # ignore check for make clean
 
 ifeq ($(AM_HOME),) # AM_HOME must exist
@@ -14,5 +16,7 @@ endif
 ARCH_SPLIT  = $(subst -, ,$(ARCH))
 ISA        ?= $(word 1,$(ARCH_SPLIT))
 PLATFORM   ?= $(word 2,$(ARCH_SPLIT))
+
+include $(AM_HOME)/am/arch/$(ARCH).mk
 
 endif

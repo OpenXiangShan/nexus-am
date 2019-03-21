@@ -1,7 +1,4 @@
-.DEFAULT_GOAL = app
-
 include $(AM_HOME)/Makefile.check
--include $(AM_HOME)/am/arch/$(ARCH).mk
 $(info # Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
 
 APP_DIR ?= $(shell pwd)
@@ -26,13 +23,13 @@ LINK_FILES += $(addsuffix -$(ARCH).a, $(join \
   $(LINKLIBS) \
 ))
 
-.PHONY: app run image prompt
+.PHONY: default run image prompt
 
 $(OBJS): $(PREBUILD)
 image: $(OBJS) am $(LIBS) prompt
 prompt: $(OBJS) am $(LIBS)
-app: image
-run: app
+default: image
+run: default
 
 prompt:
 	@echo \# Creating binary image [$(ARCH)]

@@ -1,9 +1,5 @@
 # Compilation flags
 
-ifeq ($(ISA), mips32)
-CROSS_COMPILE = mips-linux-gnu-
-endif
-
 ifeq ($(ISA), riscv32)
 CROSS_COMPILE = riscv-none-embed-
 endif
