@@ -8,8 +8,12 @@ AM_SRCS := $(ISA)/nemu/trm.c \
            nemu-devices/nemu-video.c \
            $(ISA)/nemu/boot/start.S
 
-LDFLAGS := -melf32lriscv
-LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
+CROSS_COMPILE := riscv-none-embed-
+CFLAGS        += -fno-pic -static -march=rv32im -mabi=ilp32
+LDFLAGS       += -melf32lriscv
+ASFLAGS       += -march=rv32im -mabi=ilp32 -O0 -fno-pic
+
+LD_SCRIPT     := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
 GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/verilator-readmemh
 $(GEN_READMEMH):

@@ -1,79 +1,34 @@
-# Compilation flags
-
-ifeq ($(ISA), riscv32)
-CROSS_COMPILE = riscv-none-embed-
-endif
-
-ifeq ($(PLATFORM), navy)
-NAVY_LIBS = libndl libos libc
-INC_DIR += $(addsuffix /include/, $(addprefix $(NAVY_HOME)/libs/, $(NAVY_LIBS)))
-endif
-
-AS = $(CROSS_COMPILE)gcc
-CC = $(CROSS_COMPILE)gcc
+AS  = $(CROSS_COMPILE)gcc
+CC  = $(CROSS_COMPILE)gcc
 CXX = $(CROSS_COMPILE)g++
-LD = $(CROSS_COMPILE)ld
+LD  = $(CROSS_COMPILE)ld
 OBJDUMP = $(CROSS_COMPILE)objdump
 OBJCOPY = $(CROSS_COMPILE)objcopy
 READELF = $(CROSS_COMPILE)readelf
 
-ISA_DEF = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
+ISA_DEF  = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
 ARCH_DEF = __ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _)
 
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
 INCLUDES += -I$(AM_HOME)/am/include
 
-CFLAGS_COMMON += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -D__ISA__=\"$(ISA)\" \
-                 -D__ARCH__=$(ARCH) -D$(ARCH_DEF) \
-                 -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
-
-CFLAGS   += -std=gnu11
-CXXFLAGS += -std=c++11 -ffreestanding -fno-rtti -fno-exceptions
-ASFLAGS  += -MMD $(INCLUDES) -D$(ISA_DEF)
-
-ifeq ($(ISA), native)
-CFLAGS_COMMON += -fpie
-ASFLAGS  += -fpie -pie
-endif
-
-ifeq ($(ISA), mips32)
-CFLAGS_COMMON += -fno-pic -static -fno-delayed-branch -mno-abicalls -march=mips32 -mno-check-zero-division -EL -mno-llsc -mno-imadd -mno-mad
-ASFLAGS  += -march=mips32 -EL -mno-check-zero-division -O0 -mno-abicalls -fno-pic -fno-delayed-branch
-endif
-
-ifeq ($(ISA), x86)
-CFLAGS_COMMON += -m32 -fno-pic -fno-omit-frame-pointer -march=i386 -mstringop-strategy=loop -fno-reorder-functions
-ASFLAGS  += -m32 -fno-pic
-endif
-
-ifeq ($(ISA), riscv32)
-CFLAGS_COMMON += -fno-pic -static -march=rv32im -mabi=ilp32
-ASFLAGS  += -march=rv32im -mabi=ilp32 -O0 -fno-pic
-endif
-
-ifeq ($(ISA), am_native)
-CFLAGS_COMMON += -fno-omit-frame-pointer -fno-reorder-functions
-endif
-
-CFLAGS   += $(CFLAGS_COMMON)
-CXXFLAGS += $(CFLAGS_COMMON)
+CFLAGS += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) -D__ISA__=\"$(ISA)\" \
+          -D__ARCH__=$(ARCH) -D$(ARCH_DEF) \
+          -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
 
 # Compilation patterns
-$(DST_DIR)/%.o: %.cpp
-	@echo + CXX $<
-	@mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS) -c -o $@ $(realpath $<)
 $(DST_DIR)/%.o: %.c
-	@echo + CC $<
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c -o $@ $(realpath $<)
+	@mkdir -p $(dir $@) && echo + CC $<
+	@$(CC) -std=gnu11 $(CFLAGS) -c -o $@ $(realpath $<)
+$(DST_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@) && echo + CXX $<
+	@$(CXX) -std=c++11 -ffreestanding -fno-rtti -fno-exceptions $(CXXFLAGS) $(CFLAGS) -c -o $@ $(realpath $<)
 $(DST_DIR)/%.o: %.S
-	@echo + AS $<
-	@mkdir -p $(dir $@)
-	@$(AS) $(ASFLAGS) -c -o $@ $(realpath $<)
+	@mkdir -p $(dir $@) && echo + AS $<
+	@$(AS) -MMD $(INCLUDES) -D$(ISA_DEF) $(ASFLAGS) -c -o $@ $(realpath $<)
 
 # Depencies
 DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
