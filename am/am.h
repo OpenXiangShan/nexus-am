@@ -6,13 +6,9 @@
 #ifndef __AM_H__
 #define __AM_H__
 
-#define __XSTR(x) #x
-#define __STR(x) __XSTR(x)
-#define ARCH_H_PATH __STR(arch/__ARCH__.h)
-
 #include <stdint.h>
 #include <stddef.h>
-#include ARCH_H_PATH // "arch/x86-qemu.h"
+#include ARCH_H // "arch/x86-qemu.h", "arch/native.h", ...
 
 #ifdef __cplusplus
 extern "C" {

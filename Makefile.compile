@@ -8,12 +8,12 @@ LD        = $(CROSS_COMPILE)ld
 OBJDUMP   = $(CROSS_COMPILE)objdump
 OBJCOPY   = $(CROSS_COMPILE)objcopy
 READELF   = $(CROSS_COMPILE)readelf
-ISA_DEF   = __ISA_$(shell echo $(ISA) | tr a-z A-Z)__
-ARCH_DEF  = __ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _)
 INCLUDES  = $(addprefix -I, $(INC_DIR)) -I$(AM_HOME)/am/
 INCLUDES += -I$(AM_HOME)/am/include
-CFLAGS   += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) -D$(ISA_DEF) \
-            -D__ISA__=\"$(ISA)\" -D__ARCH__=$(ARCH) -D$(ARCH_DEF) \
+CFLAGS   += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) \
+            -D__ISA__=\"$(ISA)\" -D__ISA_$(shell echo $(ISA) | tr a-z A-Z)__ \
+						-D__ARCH__=$(ARCH) -D__ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _) \
+						-DARCH_H=\"arch/$(ARCH).h\" \
             -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
 
 $(DST_DIR)/%.o: %.c
@@ -26,7 +26,7 @@ $(DST_DIR)/%.o: %.cpp
 
 $(DST_DIR)/%.o: %.S
 	@mkdir -p $(dir $@) && echo + AS $<
-	@$(AS) -MMD $(INCLUDES) -D$(ISA_DEF) $(ASFLAGS) -c -o $@ $(realpath $<)
+	@$(AS) -MMD $(INCLUDES) $(ASFLAGS) -c -o $@ $(realpath $<)
 
 # Dependencies (gcc generated .d)
 -include $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
