@@ -8,8 +8,8 @@ AM_SRCS := native/trm.c \
            native/devices/timer.c \
            native/devices/video.c \
 
-CFLAGS += -fpie
-ASFLAGS   += -fpie -pie
+CFLAGS  += -fpie
+ASFLAGS += -fpie -pie
 
 image:
 	@echo + LD "->" $(BINARY_REL)

@@ -1,3 +1,5 @@
+include $(AM_HOME)/am/arch/isa/x86.mk
+
 AM_SRCS := x86/qemu/trm.c \
            x86/qemu/ioe.c \
            x86/qemu/cte.c \
@@ -11,10 +13,6 @@ AM_SRCS := x86/qemu/trm.c \
            x86/qemu/devices/pcdev.c \
            x86/qemu/devices/timer.c \
            x86/qemu/devices/video.c \
-
-CFLAGS  += -m32 -fno-pic -fno-omit-frame-pointer -march=i386
-LDFLAGS += -melf_i386
-ASFLAGS += -m32 -fno-pic
 
 image:
 	@make -s -C $(AM_HOME)/am/src/x86/qemu/boot

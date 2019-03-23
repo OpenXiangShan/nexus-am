@@ -1,3 +1,5 @@
+include $(AM_HOME)/am/arch/isa/riscv32.mk
+
 AM_SRCS := $(ISA)/nemu/trm.c \
            $(ISA)/nemu/cte.c \
            $(ISA)/nemu/trap.S \
@@ -7,11 +9,6 @@ AM_SRCS := $(ISA)/nemu/trm.c \
            nemu-devices/nemu-timer.c \
            nemu-devices/nemu-video.c \
            $(ISA)/nemu/boot/start.S
-
-CROSS_COMPILE := riscv-none-embed-
-CFLAGS        += -fno-pic -static -march=rv32im -mabi=ilp32
-LDFLAGS       += -melf32lriscv
-ASFLAGS       += -march=rv32im -mabi=ilp32 -O0 -fno-pic
 
 LD_SCRIPT     := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
