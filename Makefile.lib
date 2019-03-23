@@ -1,18 +1,15 @@
 include $(AM_HOME)/Makefile.check
-$(info Building lib-$(NAME) [$(ARCH)])
+$(info # Building lib-$(NAME) [$(ARCH)])
 
 LIB_DIR ?= $(shell pwd)
 INC_DIR += $(LIB_DIR)/include/
 DST_DIR ?= $(LIB_DIR)/build/$(ARCH)/
 ARCHIVE ?= $(LIB_DIR)/build/$(NAME)-$(ARCH).a
 
-.DEFAULT_GOAL = $(ARCHIVE)
+default: $(ARCHIVE)
 
 INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
-
-CFLAGS += -fdata-sections -ffunction-sections -fno-builtin
-
-$(shell mkdir -p $(DST_DIR))
+CFLAGS  += -fdata-sections -ffunction-sections -fno-builtin
 
 include $(AM_HOME)/Makefile.compile
 
@@ -20,6 +17,7 @@ $(ARCHIVE): $(OBJS)
 	@echo + AR "->" $(shell realpath $@ --relative-to .)
 	@ar rcs $(ARCHIVE) $(OBJS)
 
-.PHONY: clean
 clean: 
 	rm -rf $(LIB_DIR)/build/
+
+.PHONY: default clean

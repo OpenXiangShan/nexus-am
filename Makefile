@@ -2,7 +2,7 @@ include Makefile.check
 
 AM_HOME ?= $(shell pwd)
 
-all:
+default:
 	@$(MAKE) -s -C am
 
 # clean everything
@@ -12,4 +12,4 @@ $(ALLMAKE):
 
 clean: $(ALLMAKE)
 
-.PHONY: all clean $(ALLMAKE)
+.PHONY: default clean $(ALLMAKE)
