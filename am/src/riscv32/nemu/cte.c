@@ -15,7 +15,7 @@ _Context* irq_handle(_Context *c) {
     _Event ev = {0};
     switch (c->cause) {
       //case 0: ev.event = _EVENT_IRQ_TIMER; break;
-      case 11:
+      case 9:
         ev.event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
         c->epc += 4;
         break;
@@ -37,7 +37,7 @@ extern void asm_trap(void);
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   // initialize exception entry
-  asm volatile("csrw mtvec, %0" : : "r"(asm_trap));
+  asm volatile("csrw stvec, %0" : : "r"(asm_trap));
 
   // register event handler
   user_handler = handler;
