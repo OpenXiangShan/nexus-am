@@ -75,7 +75,7 @@ _Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, v
 
   c->prot = p;
   c->epc = (uintptr_t)entry;
-  c->status = 0x3;
+  c->status = 0x1;
   return c;
 }
 

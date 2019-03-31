@@ -42,6 +42,12 @@ asm_trap:
   sw $t3, OFFSET_STATUS($sp)
   sw $t4, OFFSET_EPC($sp)
 
+  # allow nested exception
+ # ori $t3, $t3, 0x4  # set status.erl
+  li $a0, ~0x3
+  and $t3, $t3, $a0  # clear status.exl and status.ie
+  mtc0 $t3, $CP0_STATUS
+
   move $a0, $sp
   jal irq_handle
 
@@ -49,12 +55,14 @@ asm_trap:
 
   lw $t0, OFFSET_LO($sp)
   lw $t1, OFFSET_HI($sp)
-  lw $t2, OFFSET_CAUSE($sp)
   lw $t3, OFFSET_STATUS($sp)
   lw $t4, OFFSET_EPC($sp)
+
+  # set status.exl
+  ori $t3, $t3, 0x2
+
   mtlo $t0
   mthi $t1
-  mtc0 $t2, $CP0_CAUSE
   mtc0 $t3, $CP0_STATUS
   mtc0 $t4, $CP0_EPC
 
