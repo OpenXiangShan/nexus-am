@@ -2,9 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern void platform_dummy();
+#define HEAP_SIZE (8 * 1024 * 1024)
+static uint8_t heap[HEAP_SIZE];
+
+_Area _heap = {
+  .start = heap,
+  .end = heap + HEAP_SIZE
+};
+
 void _trm_init() {
-  platform_dummy();
 }
 
 void _putc(char ch) {
@@ -16,4 +22,3 @@ void _halt(int code) {
   exit(code);
 }
 
-_Area _heap;
