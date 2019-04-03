@@ -1,8 +1,11 @@
 include $(AM_HOME)/am/arch/isa/riscv32.mk
 
-AM_SRCS := $(ISA)/nemu/trm.c \
-           $(ISA)/nemu/cte.c \
+AM_SRCS := $(ISA)/noop/trm.c \
+           $(ISA)/noop/uartlite.c \
+           $(ISA)/noop/perf.c \
+           $(ISA)/noop/cte.c \
            $(ISA)/nemu/trap.S \
+           $(ISA)/noop/instr.c \
            $(ISA)/nemu/vme.c \
            nemu-devices/ioe.c \
            nemu-devices/nemu-input.c \
@@ -12,9 +15,9 @@ AM_SRCS := $(ISA)/nemu/trm.c \
 
 LD_SCRIPT     := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
-GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/verilator-readmemh
+GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/build/verilator-readmemh
 $(GEN_READMEMH):
-	$(MAKE) -C (@D)
+	$(MAKE) -C $(@D)
 
 image: $(GEN_READMEMH)
 	@echo + LD "->" $(BINARY_REL).elf
