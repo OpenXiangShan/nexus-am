@@ -15,6 +15,8 @@ Makefile.%: tests/%.c latest
 
 run: all
 
+default: all
+
 clean: 
 	rm -rf Makefile.* build/
 
