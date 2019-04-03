@@ -19,3 +19,6 @@ image:
 
 run:
 	make -C $(NEMU_HOME) ISA=$(ISA) run ARGS="-b -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin"
+
+gdb: image
+	make -C $(NEMU_HOME) ISA=$(ISA) gdb ARGS="-b -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin"
