@@ -1,5 +1,4 @@
 AM_SRCS := navy/trm.c \
-           navy/platform.cpp \
            navy/ioe.c \
            navy/dev/input.c \
            navy/dev/timer.c \
