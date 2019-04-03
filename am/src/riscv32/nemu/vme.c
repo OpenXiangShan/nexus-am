@@ -39,8 +39,8 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
       kpdirs[pdir_idx] = ((uintptr_t)ptab >> PGSHFT << 10) | PTE_V;
 
       // fill PTE
-      PTE pte = (PGADDR(pdir_idx, 0, 0) >> PGSHFT << 10) | PTE_V;
-      PTE pte_end = (PGADDR(pdir_idx + 1, 0, 0) >> PGSHFT << 10) | PTE_V;
+      PTE pte = (PGADDR(pdir_idx, 0, 0) >> PGSHFT << 10) | PTE_V | PTE_R | PTE_W | PTE_X;
+      PTE pte_end = (PGADDR(pdir_idx + 1, 0, 0) >> PGSHFT << 10) | PTE_V | PTE_R | PTE_W | PTE_X;
       for (; pte < pte_end; pte += (1 << 10)) {
         *ptab = pte;
         ptab ++;
@@ -87,7 +87,7 @@ int _map(_AddressSpace *p, void *va, void *pa, int mode) {
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_V)) {
-    *pte = PTE_V | PTE_R | PTE_W | PTE_X | PTE_U | ((uint32_t)pa >> PGSHFT << 10);
+    *pte = PTE_V | PTE_R | PTE_W | PTE_X | ((uint32_t)pa >> PGSHFT << 10);
   }
 
   return 0;
@@ -98,6 +98,6 @@ _Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, v
 
   c->prot = p;
   c->epc = (uintptr_t)entry;
-  //c->status = 0x3;
+  c->status = 0x000c0120;
   return c;
 }

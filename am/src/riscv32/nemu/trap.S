@@ -28,9 +28,9 @@ asm_trap:
   addi t0, t0, CONTEXT_SIZE
   sw t0, OFFSET_SP(sp)
 
-  csrr t0, mcause
-  csrr t1, mstatus
-  csrr t2, mepc
+  csrr t0, scause
+  csrr t1, sstatus
+  csrr t2, sepc
 
   sw t0, OFFSET_CAUSE(sp)
   sw t1, OFFSET_STATUS(sp)
@@ -41,15 +41,13 @@ asm_trap:
 
   mv sp, a0
 
-  lw t0, OFFSET_CAUSE(sp)
   lw t1, OFFSET_STATUS(sp)
   lw t2, OFFSET_EPC(sp)
-  csrw mcause, t0
-  csrw mstatus, t1
-  csrw mepc, t2
+  csrw sstatus, t1
+  csrw sepc, t2
 
   MAP(REGS, POP)
 
   addi sp, sp, CONTEXT_SIZE
 
-  mret
+  sret
