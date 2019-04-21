@@ -33,52 +33,53 @@ static inline void draw(int col, int row, int idx) {
 
 // PPUCTRL Functions
 
-inline word ppu_base_nametable_address()                            { return ppu_base_nametable_addresses[ppu.PPUCTRL & 0x3];  }
-inline byte ppu_vram_address_increment()                            { return common_bit_set(ppu.PPUCTRL, 2) ? 32 : 1;          }
-inline word ppu_sprite_pattern_table_address()                      { return common_bit_set(ppu.PPUCTRL, 3) ? 0x1000 : 0x0000; }
-inline word ppu_background_pattern_table_address()                  { return common_bit_set(ppu.PPUCTRL, 4) ? 0x1000 : 0x0000; }
-inline byte ppu_sprite_height()                                     { return common_bit_set(ppu.PPUCTRL, 5) ? 16 : 8;          }
+static inline word ppu_base_nametable_address()            { return ppu_base_nametable_addresses[ppu.PPUCTRL & 0x3];  }
+static inline byte ppu_vram_address_increment()            { return common_bit_set(ppu.PPUCTRL, 2) ? 32 : 1;          }
+static inline word ppu_sprite_pattern_table_address()      { return common_bit_set(ppu.PPUCTRL, 3) ? 0x1000 : 0x0000; }
+static inline word ppu_background_pattern_table_address()  { return common_bit_set(ppu.PPUCTRL, 4) ? 0x1000 : 0x0000; }
+static inline byte ppu_sprite_height()                     { return common_bit_set(ppu.PPUCTRL, 5) ? 16 : 8;          }
+
 inline bool ppu_generates_nmi()                                     { return common_bit_set(ppu.PPUCTRL, 7);                   }
 
 
 
 // PPUMASK Functions
 
-inline bool ppu_renders_grayscale()                                 { return common_bit_set(ppu.PPUMASK, 0); }
-inline bool ppu_shows_background_in_leftmost_8px()                  { return common_bit_set(ppu.PPUMASK, 1); }
-inline bool ppu_shows_sprites_in_leftmost_8px()                     { return common_bit_set(ppu.PPUMASK, 2); }
-inline bool ppu_shows_background()                                  { return common_bit_set(ppu.PPUMASK, 3); }
-inline bool ppu_shows_sprites()                                     { return common_bit_set(ppu.PPUMASK, 4); }
-inline bool ppu_intensifies_reds()                                  { return common_bit_set(ppu.PPUMASK, 5); }
-inline bool ppu_intensifies_greens()                                { return common_bit_set(ppu.PPUMASK, 6); }
-inline bool ppu_intensifies_blues()                                 { return common_bit_set(ppu.PPUMASK, 7); }
+static inline bool ppu_renders_grayscale()                 { return common_bit_set(ppu.PPUMASK, 0); }
+static inline bool ppu_shows_background_in_leftmost_8px()  { return common_bit_set(ppu.PPUMASK, 1); }
+static inline bool ppu_shows_sprites_in_leftmost_8px()     { return common_bit_set(ppu.PPUMASK, 2); }
+static inline bool ppu_shows_background()                  { return common_bit_set(ppu.PPUMASK, 3); }
+static inline bool ppu_shows_sprites()                     { return common_bit_set(ppu.PPUMASK, 4); }
+static inline bool ppu_intensifies_reds()                  { return common_bit_set(ppu.PPUMASK, 5); }
+static inline bool ppu_intensifies_greens()                { return common_bit_set(ppu.PPUMASK, 6); }
+static inline bool ppu_intensifies_blues()                 { return common_bit_set(ppu.PPUMASK, 7); }
 
-inline void ppu_set_renders_grayscale(bool yesno)                   { common_modify_bitb(&ppu.PPUMASK, 0, yesno); }
-inline void ppu_set_shows_background_in_leftmost_8px(bool yesno)    { common_modify_bitb(&ppu.PPUMASK, 1, yesno); }
-inline void ppu_set_shows_sprites_in_leftmost_8px(bool yesno)       { common_modify_bitb(&ppu.PPUMASK, 2, yesno); }
-inline void ppu_set_shows_background(bool yesno)                    { common_modify_bitb(&ppu.PPUMASK, 3, yesno); }
-inline void ppu_set_shows_sprites(bool yesno)                       { common_modify_bitb(&ppu.PPUMASK, 4, yesno); }
-inline void ppu_set_intensifies_reds(bool yesno)                    { common_modify_bitb(&ppu.PPUMASK, 5, yesno); }
-inline void ppu_set_intensifies_greens(bool yesno)                  { common_modify_bitb(&ppu.PPUMASK, 6, yesno); }
-inline void ppu_set_intensifies_blues(bool yesno)                   { common_modify_bitb(&ppu.PPUMASK, 7, yesno); }
+static inline void ppu_set_renders_grayscale(bool yesno)                 { common_modify_bitb(&ppu.PPUMASK, 0, yesno); }
+static inline void ppu_set_shows_background_in_leftmost_8px(bool yesno)  { common_modify_bitb(&ppu.PPUMASK, 1, yesno); }
+static inline void ppu_set_shows_sprites_in_leftmost_8px(bool yesno)     { common_modify_bitb(&ppu.PPUMASK, 2, yesno); }
+static inline void ppu_set_shows_background(bool yesno)                  { common_modify_bitb(&ppu.PPUMASK, 3, yesno); }
+static inline void ppu_set_shows_sprites(bool yesno)                     { common_modify_bitb(&ppu.PPUMASK, 4, yesno); }
+static inline void ppu_set_intensifies_reds(bool yesno)                  { common_modify_bitb(&ppu.PPUMASK, 5, yesno); }
+static inline void ppu_set_intensifies_greens(bool yesno)                { common_modify_bitb(&ppu.PPUMASK, 6, yesno); }
+static inline void ppu_set_intensifies_blues(bool yesno)                 { common_modify_bitb(&ppu.PPUMASK, 7, yesno); }
 
 
 
 // PPUSTATUS Functions
 
-inline bool ppu_sprite_overflow()                                   { return common_bit_set(ppu.PPUSTATUS, 5); }
-inline bool ppu_sprite_0_hit()                                      { return common_bit_set(ppu.PPUSTATUS, 6); }
-inline bool ppu_in_vblank()                                         { return common_bit_set(ppu.PPUSTATUS, 7); }
+static inline bool ppu_sprite_overflow()                      { return common_bit_set(ppu.PPUSTATUS, 5); }
+static inline bool ppu_sprite_0_hit()                         { return common_bit_set(ppu.PPUSTATUS, 6); }
+static inline bool ppu_in_vblank()                            { return common_bit_set(ppu.PPUSTATUS, 7); }
 
-inline void ppu_set_sprite_overflow(bool yesno)                     { common_modify_bitb(&ppu.PPUSTATUS, 5, yesno); }
-inline void ppu_set_sprite_0_hit(bool yesno)                        { common_modify_bitb(&ppu.PPUSTATUS, 6, yesno); }
-inline void ppu_set_in_vblank(bool yesno)                           { common_modify_bitb(&ppu.PPUSTATUS, 7, yesno); }
+static inline void ppu_set_sprite_overflow(bool yesno)        { common_modify_bitb(&ppu.PPUSTATUS, 5, yesno); }
+static inline void ppu_set_sprite_0_hit(bool yesno)           { common_modify_bitb(&ppu.PPUSTATUS, 6, yesno); }
+static inline void ppu_set_in_vblank(bool yesno)              { common_modify_bitb(&ppu.PPUSTATUS, 7, yesno); }
 
 
 // RAM
 
 
-inline word ppu_get_real_ram_address(word address)
+static inline word ppu_get_real_ram_address(word address)
 {
     if (address < 0x2000) {
         return address;
@@ -101,15 +102,19 @@ inline word ppu_get_real_ram_address(word address)
     return 0xFFFF;
 }
 
-inline byte ppu_ram_read(word address)
+static inline byte ppu_ram_read(word address)
 {
 	log("ppu_ram_read: address:%x, map:%x\n", address, ppu_ram_map[address]);
     return PPU_RAM[ppu_ram_map[address]];
 }
 
-inline void ppu_ram_write(word address, byte data)
+static inline void ppu_ram_write(word address, byte data)
 {
     PPU_RAM[ppu_ram_map[address]] = data;
+}
+
+int ppu_read_idx(void) {
+  return ppu_ram_read(0x3F00);
 }
 
 // 3F01 = 0F (00001111)
@@ -178,7 +183,7 @@ static void table_init() {
   log("ppu_ram_map[0x3F00]=0x%x\n", ppu_ram_map[0x3F00]);
 }
 
-void ppu_draw_background_scanline(bool mirror)
+static inline void ppu_draw_background_scanline(bool mirror)
 {
 	log("draw_background_scanline called\n");
     int tile_x, tile_y = ppu.scanline >> 3;
@@ -238,7 +243,7 @@ void ppu_draw_background_scanline(bool mirror)
     }
 }
 
-void ppu_draw_sprite_scanline()
+static inline void ppu_draw_sprite_scanline()
 {
 	log("====\n");
     int do_update = frame_cnt % 3 == 0;
@@ -305,16 +310,7 @@ void ppu_draw_sprite_scanline()
 
 // PPU Lifecycle
 
-void ppu_run(int cycles)
-{
-	log("cycles:%d\n", cycles);
-    while (cycles-- > 0) {
-        ppu_cycle();
-    }
-	log("cycles:%d\n", cycles);
-}
-
-void ppu_cycle()
+static inline void ppu_cycle()
 {
     if (!ppu.ready && cpu_clock() > 29658)
         ppu.ready = true;
@@ -345,6 +341,16 @@ void ppu_cycle()
         fce_update_screen();
     }
 }
+
+void ppu_run(int cycles)
+{
+	log("cycles:%d\n", cycles);
+    while (cycles-- > 0) {
+        ppu_cycle();
+    }
+	log("cycles:%d\n", cycles);
+}
+
 
 inline void ppu_copy(word address, byte *source, int length)
 {
