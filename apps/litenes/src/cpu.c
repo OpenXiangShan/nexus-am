@@ -5,8 +5,8 @@
 
 CPU_STATE cpu;
 
-byte op_code;             // Current instruction code
-int op_value, op_address; // Arguments for current instruction
+uint32_t op_code;             // Current instruction code
+uint32_t op_value, op_address; // Arguments for current instruction
 int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
 
 unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
@@ -17,16 +17,13 @@ unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 //char *cpu_op_name[256];                   // Instruction names
 //static int cpu_op_cycles[256];                   // CPU cycles used by instructions
 
-byte cpu_ram_read(word address);
-void cpu_ram_write(word address, byte data);
-
 // Interrupt Addresses
-word cpu_nmi_interrupt_address();
-word cpu_reset_interrupt_address();
-word cpu_irq_interrupt_address();
+//word cpu_nmi_interrupt_address();
+//word cpu_reset_interrupt_address();
+//word cpu_irq_interrupt_address();
 
 // Updates Zero and Negative flags in P
-void cpu_update_zn_flags(byte value);
+//void cpu_update_zn_flags(byte value);
 
 // If OP_TRACE, print current instruction with all registers into the console
 void cpu_trace_instruction();
@@ -98,7 +95,7 @@ static inline void cpu_address_relative() {
 }
 
 static inline void cpu_address_indirect() {
-  word arg_addr = memory_readw(cpu.PC);
+  uint32_t arg_addr = memory_readw(cpu.PC);
 
   // The famous 6502 bug when instead of reading from $C0FF/$C100 it reads from $C0FF/$C000
   if ((arg_addr & 0xFF) == 0xFF) {
@@ -113,14 +110,14 @@ static inline void cpu_address_indirect() {
 }
 
 static inline void cpu_address_indirect_x() {
-  byte arg_addr = memory_readb(cpu.PC);
+  uint32_t arg_addr = memory_readb(cpu.PC);
   op_address = (memory_readb((arg_addr + cpu.X + 1) & 0xFF) << 8) | memory_readb((arg_addr + cpu.X) & 0xFF);
   op_value = memory_readb(op_address);
   cpu.PC++;
 }
 
 static inline void cpu_address_indirect_y() {
-  byte arg_addr = memory_readb(cpu.PC);
+  uint32_t arg_addr = memory_readb(cpu.PC);
   op_address = (((memory_readb((arg_addr + 1) & 0xFF) << 8) | memory_readb(arg_addr)) + cpu.Y) & 0xFFFF;
   op_value = memory_readb(op_address);
   cpu.PC++;
@@ -130,64 +127,35 @@ static inline void cpu_address_indirect_y() {
   }
 }
 
-static const byte cpu_zn_flag_table[256] =
-{
-  zero_flag,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-  negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,negative_flag,
-};
-
-
 
 // CPU Memory
 
 byte CPU_RAM[0x8000];
 
-inline byte cpu_ram_read(word address) {
+inline uint32_t cpu_ram_read(uint32_t address) {
   return CPU_RAM[address & 0x7FF];
 }
 
-void cpu_ram_write(word address, byte data) {
-  CPU_RAM[address & 0x7FF] = data;
+void cpu_ram_write(uint32_t address, uint32_t byte_data) {
+  CPU_RAM[address & 0x7FF] = byte_data;
 }
 
 
 
 // Interrupt Addresses
 
-inline word cpu_nmi_interrupt_address()   { return memory_readw(0xFFFA); }
-inline word cpu_reset_interrupt_address() { return memory_readw(0xFFFC); }
-inline word cpu_irq_interrupt_address()   { return memory_readw(0xFFFE); }
+static inline uint32_t cpu_nmi_interrupt_address()   { return memory_readw(0xFFFA); }
+static inline uint32_t cpu_reset_interrupt_address() { return memory_readw(0xFFFC); }
+static inline uint32_t cpu_irq_interrupt_address()   { return memory_readw(0xFFFE); }
 
 
 
 // Stack Routines
 
-static inline void cpu_stack_pushb(byte data) { memory_writeb(0x100 + cpu.SP--, data);       }
-static inline void cpu_stack_pushw(word data) { memory_writew(0xFF + cpu.SP, data); cpu.SP -= 2; }
-static inline byte cpu_stack_popb()           { return memory_readb(0x100 + ++cpu.SP);       }
-static inline word cpu_stack_popw()           { cpu.SP += 2; return memory_readw(0xFF + cpu.SP); }
+static inline void cpu_stack_pushb(uint32_t byte_data) { memory_writeb(0x100 + cpu.SP--, byte_data);       }
+static inline void cpu_stack_pushw(uint32_t word_data) { memory_writew(0xFF + cpu.SP, word_data); cpu.SP -= 2; }
+static inline uint32_t cpu_stack_popb()           { return memory_readb(0x100 + ++cpu.SP);       }
+static inline uint32_t cpu_stack_popw()           { cpu.SP += 2; return memory_readw(0xFF + cpu.SP); }
 
 
 
@@ -195,19 +163,22 @@ static inline word cpu_stack_popw()           { cpu.SP += 2; return memory_readw
 
 static inline void ____FE____() { /* Instruction for future Extension */ }
 
-#define cpu_flag_set(flag) common_bit_set(cpu.P, flag)
-#define cpu_modify_flag(flag, value) common_modify_bitb(&cpu.P, flag, value)
-#define cpu_set_flag(flag) common_set_bitb(&cpu.P, flag)
-#define cpu_unset_flag(flag) common_unset_bitb(&cpu.P, flag)
+#define cpu_flag_set(flag) cpu.P[flag]
+#define cpu_modify_flag(flag, value) cpu.P[flag] = !!(value)
+#define cpu_set_flag(flag) cpu.P[flag] = 1
+#define cpu_unset_flag(flag) cpu.P[flag] = 0
 
-#define cpu_update_zn_flags(value) cpu.P = (cpu.P & ~(zero_flag | negative_flag)) | cpu_zn_flag_table[value]
+static inline void cpu_update_zn_flags(uint32_t value) {
+  cpu_modify_flag(zero_bp, (value & 0xff) == 0);
+  cpu_modify_flag(negative_bp, (value >> 7) & 1);
+}
 
 #define cpu_branch(flag) do { \
 	if (flag) { \
 		cpu.PC = op_address; \
 	} \
 } while(0)
-#define cpu_compare(reg) int result = reg - op_value; \
+#define cpu_compare(reg) int result = (reg) - op_value; \
                          cpu_modify_flag(carry_bp, result >= 0); \
                          cpu_modify_flag(zero_bp, result == 0); \
                          cpu_modify_flag(negative_bp, (result >> 7) & 1);
@@ -224,9 +195,9 @@ static inline void cpu_op_nop() { }
 
 static inline void cpu_op_adc()
 {
-    int result = cpu.A + op_value + (cpu_flag_set(carry_bp) ? 1 : 0);
-    cpu_modify_flag(carry_bp, !!(result & 0x100));
-    cpu_modify_flag(overflow_bp, !!(~(cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
+    int result = cpu.A + op_value + cpu_flag_set(carry_bp);
+    cpu_modify_flag(carry_bp, (result & 0x100));
+    cpu_modify_flag(overflow_bp, (~(cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
     cpu.A = result & 0xFF;
     cpu_update_zn_flags(cpu.A);
 }
@@ -235,9 +206,9 @@ static inline void cpu_op_adc()
 
 static inline void cpu_op_sbc()
 {
-    int result = cpu.A - op_value - (cpu_flag_set(carry_bp) ? 0 : 1);
+    int result = cpu.A - op_value - !cpu_flag_set(carry_bp);
     cpu_modify_flag(carry_bp, !(result & 0x100));
-    cpu_modify_flag(overflow_bp, !!((cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
+    cpu_modify_flag(overflow_bp, ((cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
     cpu.A = result & 0xFF;
     cpu_update_zn_flags(cpu.A);
 }
@@ -245,7 +216,11 @@ static inline void cpu_op_sbc()
 // Bit Manipulation Operations
 
 static inline void cpu_op_and() { cpu_update_zn_flags(cpu.A &= op_value); }
-static inline void cpu_op_bit() { cpu_modify_flag(zero_bp, !(cpu.A & op_value)); cpu.P = (cpu.P & 0x3F) | (0xC0 & op_value); }
+static inline void cpu_op_bit() {
+  cpu_modify_flag(zero_bp, !(cpu.A & op_value));
+  cpu_modify_flag(6, (op_value >> 6) & 0x1);
+  cpu_modify_flag(7, (op_value >> 7) & 0x1);
+}
 static inline void cpu_op_eor() { cpu_update_zn_flags(cpu.A ^= op_value); }
 static inline void cpu_op_ora() { cpu_update_zn_flags(cpu.A |= op_value); }
 static inline void cpu_op_asla()
@@ -264,7 +239,7 @@ static inline void cpu_op_asl()
 }
 static inline void cpu_op_lsra()
 {
-    int value = cpu.A >> 1;
+    int value = (cpu.A & 0xff) >> 1;
     cpu_modify_flag(carry_bp, cpu.A & 0x01);
     cpu.A = value & 0xFF;
     cpu_update_zn_flags(value);
@@ -280,7 +255,7 @@ static inline void cpu_op_lsr()
 
 static inline void cpu_op_rola()
 {
-    int value = cpu.A << 1;
+    int value = (cpu.A & 0xff) << 1;
     value |= cpu_flag_set(carry_bp) ? 1 : 0;
     cpu_modify_flag(carry_bp, value > 0xFF);
     cpu.A = value & 0xFF;
@@ -299,8 +274,8 @@ static inline void cpu_op_rora()
 {
     unsigned char carry = cpu_flag_set(carry_bp);
     cpu_modify_flag(carry_bp, cpu.A & 0x01);
-    cpu.A = (cpu.A >> 1) | (carry << 7);
-    cpu_modify_flag(zero_bp, cpu.A == 0);
+    cpu.A = ((cpu.A & 0xff) >> 1) | (carry << 7);
+    cpu_modify_flag(zero_bp, (cpu.A & 0xff) == 0);
     cpu_modify_flag(negative_bp, !!carry);
 }
 static inline void cpu_op_ror()
@@ -321,7 +296,7 @@ static inline void cpu_op_ldy() { cpu_update_zn_flags(cpu.Y = op_value); }
 
 // Storing
 
-static inline void cpu_op_sta() { memory_writeb(op_address, cpu.A); }
+static inline void cpu_op_sta() { memory_writeb(op_address, cpu.A & 0xff); }
 static inline void cpu_op_stx() { memory_writeb(op_address, cpu.X); }
 static inline void cpu_op_sty() { memory_writeb(op_address, cpu.Y); }
 
@@ -366,13 +341,15 @@ static inline void cpu_op_rts() { cpu.PC = cpu_stack_popw() + 1; }
 // Interruptions
 
 static inline void cpu_op_brk() {
-	cpu_stack_pushw(cpu.PC - 1);
-	cpu_stack_pushb(cpu.P);
-	cpu.P |= unused_flag | break_flag;
-	cpu.PC = cpu_nmi_interrupt_address();
+  cpu_stack_pushw(cpu.PC - 1);
+  cpu_stack_pushb(byte_pack(cpu.P));
+  cpu.P[unused_bp] = 1;
+  cpu.P[break_bp] = 1;
+  cpu.PC = cpu_nmi_interrupt_address();
 }
 static inline void cpu_op_rti() {
-	cpu.P = cpu_stack_popb() | unused_flag;
+  byte_unpack(cpu.P, cpu_stack_popb());
+  cpu.P[unused_bp] = 1;
 	cpu.PC = cpu_stack_popw();
 }
 
@@ -388,28 +365,33 @@ static inline void cpu_op_sei() { cpu_set_flag(interrupt_bp);   }
 
 // Comparison
 
-static inline void cpu_op_cmp() { cpu_compare(cpu.A); }
+static inline void cpu_op_cmp() { cpu_compare(cpu.A & 0xff); }
 static inline void cpu_op_cpx() { cpu_compare(cpu.X); }
 static inline void cpu_op_cpy() { cpu_compare(cpu.Y); }
 
 // Increment
 
-static inline void cpu_op_inc() { byte result = op_value + 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
+static inline void cpu_op_inc() { uint32_t result = op_value + 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
 static inline void cpu_op_inx() { cpu_update_zn_flags(++cpu.X); }
 static inline void cpu_op_iny() { cpu_update_zn_flags(++cpu.Y); }
 
 // Decrement
 
-static inline void cpu_op_dec() { byte result = op_value - 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
+static inline void cpu_op_dec() { uint32_t result = op_value - 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
 static inline void cpu_op_dex() { cpu_update_zn_flags(--cpu.X); }
 static inline void cpu_op_dey() { cpu_update_zn_flags(--cpu.Y); }
 
 // Stack
 
-static inline void cpu_op_php() { cpu_stack_pushb(cpu.P | 0x30); }
-static inline void cpu_op_pha() { cpu_stack_pushb(cpu.A); }
+static inline void cpu_op_php() { cpu_stack_pushb(byte_pack(cpu.P) | 0x30); }
+static inline void cpu_op_pha() { cpu_stack_pushb(cpu.A & 0xff); }
 static inline void cpu_op_pla() { cpu.A = cpu_stack_popb(); cpu_update_zn_flags(cpu.A); }
-static inline void cpu_op_plp() { cpu.P = (cpu_stack_popb() & 0xEF) | 0x20; }
+static inline void cpu_op_plp() {
+//  cpu.P = (cpu_stack_popb() & 0xEF) | 0x20;
+  byte_unpack(cpu.P, cpu_stack_popb());
+  cpu.P[break_bp] = 0;
+  cpu.P[unused_bp] = 1;
+}
 
 
 
@@ -718,7 +700,9 @@ void cpu_init()
     CPU_OP_NII(FC, absolute_x)
     */
 
-    cpu.P = 0x24;
+    //cpu.P = 0x24;
+    cpu.P[interrupt_bp] = 1;
+    cpu.P[unused_bp] = 1;
     cpu.SP = 0x00;
     cpu.A = cpu.X = cpu.Y = 0;
 }
@@ -727,17 +711,17 @@ void cpu_reset()
 {
     cpu.PC = cpu_reset_interrupt_address();
     cpu.SP -= 3;
-    cpu.P |= interrupt_flag;
+    cpu.P[interrupt_bp] = 1;
 }
 
 void cpu_interrupt()
 {
     // if (ppu_in_vblank()) {
         if (ppu_generates_nmi()) {
-            cpu.P |= interrupt_flag;
+            cpu.P[interrupt_bp] = 1;
             cpu_unset_flag(unused_bp);
             cpu_stack_pushw(cpu.PC);
-            cpu_stack_pushb(cpu.P);
+            cpu_stack_pushb(byte_pack(cpu.P));
             cpu.PC = cpu_nmi_interrupt_address();
         }
     // }
@@ -752,9 +736,7 @@ void cpu_run(long cycles)
 {
   int __cycles;
   while (cycles > 0) {
-    op_code = memory_readb(cpu.PC++);
-//      cpu_op_address_mode[op_code]();
-//      cpu_op_handler[op_code]();
+    op_code = instr_fetch(cpu.PC++); //memory_readb(cpu.PC++);
       switch (op_code) {
         CASE_CPU_OP_BIS(00, 7, brk, "BRK", implied)
         CASE_CPU_OP_BIS(01, 6, ora, "ORA", indirect_x)

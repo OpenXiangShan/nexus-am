@@ -9,7 +9,6 @@ static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x
 
 byte PPU_SPRRAM[0x100];
 byte PPU_RAM[0x4000];
-byte ppu_sprite_palette[4][4];
 bool ppu_2007_first_read;
 byte ppu_addr_latch;
 PPU_STATE ppu;
@@ -19,10 +18,10 @@ byte ppu_screen_background[264][264];
 
 
 // preprocess tables
-static byte XHL[8][256][256];
+static byte XHL[256][256][8]; // each valus is 0~3
 static uint64_t XHL64[256][256];
 static uint64_t XHLmask[256][256];
-static word ppu_ram_map[0x4000];
+static uint32_t ppu_ram_map[0x4000];
 
 static inline void draw(int col, int row, int idx) {
   canvas[row][col + 0xff] = idx;
@@ -33,35 +32,45 @@ static inline void draw(int col, int row, int idx) {
 
 // PPUCTRL Functions
 
-static inline word ppu_base_nametable_address()            { return ppu_base_nametable_addresses[ppu.PPUCTRL & 0x3];  }
-static inline byte ppu_vram_address_increment()            { return common_bit_set(ppu.PPUCTRL, 2) ? 32 : 1;          }
-static inline word ppu_sprite_pattern_table_address()      { return common_bit_set(ppu.PPUCTRL, 3) ? 0x1000 : 0x0000; }
-static inline word ppu_background_pattern_table_address()  { return common_bit_set(ppu.PPUCTRL, 4) ? 0x1000 : 0x0000; }
-static inline byte ppu_sprite_height()                     { return common_bit_set(ppu.PPUCTRL, 5) ? 16 : 8;          }
+static uint32_t base_nametable_address;
+static uint32_t vram_address_increment;
+static uint32_t sprite_pattern_table_address;
+static uint32_t background_pattern_table_address;
+static uint32_t sprite_height;
+static bool generates_nmi;
 
-inline bool ppu_generates_nmi()                                     { return common_bit_set(ppu.PPUCTRL, 7);                   }
+static inline void ppu_update_PPUCTRL_internal(byte PPUCTRL) {
+  base_nametable_address = ppu_base_nametable_addresses[PPUCTRL & 0x3];
+  vram_address_increment = common_bit_set(PPUCTRL, 2) ? 32 : 1;
+  sprite_pattern_table_address = common_bit_set(PPUCTRL, 3) ? 0x1000 : 0x0000;
+  background_pattern_table_address = common_bit_set(PPUCTRL, 4) ? 0x1000 : 0x0000;
+  sprite_height = common_bit_set(PPUCTRL, 5) ? 16 : 8;
+  generates_nmi = common_bit_set(PPUCTRL, 7);
+}
+
+inline bool ppu_generates_nmi() { return generates_nmi; }
 
 
 
 // PPUMASK Functions
 
-static inline bool ppu_renders_grayscale()                 { return common_bit_set(ppu.PPUMASK, 0); }
-static inline bool ppu_shows_background_in_leftmost_8px()  { return common_bit_set(ppu.PPUMASK, 1); }
-static inline bool ppu_shows_sprites_in_leftmost_8px()     { return common_bit_set(ppu.PPUMASK, 2); }
-static inline bool ppu_shows_background()                  { return common_bit_set(ppu.PPUMASK, 3); }
-static inline bool ppu_shows_sprites()                     { return common_bit_set(ppu.PPUMASK, 4); }
-static inline bool ppu_intensifies_reds()                  { return common_bit_set(ppu.PPUMASK, 5); }
-static inline bool ppu_intensifies_greens()                { return common_bit_set(ppu.PPUMASK, 6); }
-static inline bool ppu_intensifies_blues()                 { return common_bit_set(ppu.PPUMASK, 7); }
+static inline bool ppu_renders_grayscale()                 { return ppu.PPUMASK[0]; }
+static inline bool ppu_shows_background_in_leftmost_8px()  { return ppu.PPUMASK[1]; }
+static inline bool ppu_shows_sprites_in_leftmost_8px()     { return ppu.PPUMASK[2]; }
+static inline bool ppu_shows_background()                  { return ppu.PPUMASK[3]; }
+static inline bool ppu_shows_sprites()                     { return ppu.PPUMASK[4]; }
+static inline bool ppu_intensifies_reds()                  { return ppu.PPUMASK[5]; }
+static inline bool ppu_intensifies_greens()                { return ppu.PPUMASK[6]; }
+static inline bool ppu_intensifies_blues()                 { return ppu.PPUMASK[7]; }
 
-static inline void ppu_set_renders_grayscale(bool yesno)                 { common_modify_bitb(&ppu.PPUMASK, 0, yesno); }
-static inline void ppu_set_shows_background_in_leftmost_8px(bool yesno)  { common_modify_bitb(&ppu.PPUMASK, 1, yesno); }
-static inline void ppu_set_shows_sprites_in_leftmost_8px(bool yesno)     { common_modify_bitb(&ppu.PPUMASK, 2, yesno); }
-static inline void ppu_set_shows_background(bool yesno)                  { common_modify_bitb(&ppu.PPUMASK, 3, yesno); }
-static inline void ppu_set_shows_sprites(bool yesno)                     { common_modify_bitb(&ppu.PPUMASK, 4, yesno); }
-static inline void ppu_set_intensifies_reds(bool yesno)                  { common_modify_bitb(&ppu.PPUMASK, 5, yesno); }
-static inline void ppu_set_intensifies_greens(bool yesno)                { common_modify_bitb(&ppu.PPUMASK, 6, yesno); }
-static inline void ppu_set_intensifies_blues(bool yesno)                 { common_modify_bitb(&ppu.PPUMASK, 7, yesno); }
+static inline void ppu_set_renders_grayscale(bool yesno)                 { ppu.PPUMASK[0] = yesno; }
+static inline void ppu_set_shows_background_in_leftmost_8px(bool yesno)  { ppu.PPUMASK[1] = yesno; }
+static inline void ppu_set_shows_sprites_in_leftmost_8px(bool yesno)     { ppu.PPUMASK[2] = yesno; }
+static inline void ppu_set_shows_background(bool yesno)                  { ppu.PPUMASK[3] = yesno; }
+static inline void ppu_set_shows_sprites(bool yesno)                     { ppu.PPUMASK[4] = yesno; }
+static inline void ppu_set_intensifies_reds(bool yesno)                  { ppu.PPUMASK[5] = yesno; }
+static inline void ppu_set_intensifies_greens(bool yesno)                { ppu.PPUMASK[6] = yesno; }
+static inline void ppu_set_intensifies_blues(bool yesno)                 { ppu.PPUMASK[7] = yesno; }
 
 
 
@@ -102,10 +111,15 @@ static inline word ppu_get_real_ram_address(word address)
     return 0xFFFF;
 }
 
-static inline byte ppu_ram_read(word address)
+static inline uint32_t ppu_ram_read(uint32_t address)
 {
 	log("ppu_ram_read: address:%x, map:%x\n", address, ppu_ram_map[address]);
     return PPU_RAM[ppu_ram_map[address]];
+}
+
+static inline uint32_t ppu_ram_read_fast(uint32_t address)
+{
+    return PPU_RAM[address];
 }
 
 static inline void ppu_ram_write(word address, byte data)
@@ -154,7 +168,7 @@ static inline uint64_t int_shl(int n, int s) {
   int hi, lo;
   if (s < 32) {
     lo = n << s;
-    hi = n >> (32 - s);
+    hi = (s == 0 ? 0 : n >> (32 - s));
   }
   else {
     lo = 0;
@@ -165,11 +179,11 @@ static inline uint64_t int_shl(int n, int s) {
 
 // Rendering
 static void table_init() {
-  for (int x = 0; x < 8; x ++) {
-    for (int h = 0; h < 256; h ++)
-      for (int l = 0; l < 256; l ++) {
+  for (int h = 0; h < 256; h ++)
+    for (int l = 0; l < 256; l ++) {
+      for (int x = 0; x < 8; x ++) {
         int col = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-        XHL[x][h][l] = col;
+        XHL[h][l][x] = col;
         XHL64[h][l] |= int_shl(col, x * 8);
         if (col == 0) {
           XHLmask[h][l] |= int_shl(0xff,x * 8);
@@ -183,57 +197,78 @@ static void table_init() {
   log("ppu_ram_map[0x3F00]=0x%x\n", ppu_ram_map[0x3F00]);
 }
 
-static inline void ppu_draw_background_scanline(bool mirror)
-{
-	log("draw_background_scanline called\n");
+static int palette_cache[4][4];
+
+void palette_cache_read() {
+  int i;
+  for (i = 0; i < 4; i ++) {
+    word palette_address = 0x3F00 + (i << 2);
+    // still in the range of identify mapping, can bypass ppu_ram_map[]
+    palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
+    palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
+    palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+  }
+}
+
+void ppu_draw_background_scanline(bool mirror) {
     int tile_x, tile_y = ppu.scanline >> 3;
-    int taddr = ppu_base_nametable_address() + (tile_y << 5) + (mirror ? 0x400 : 0);
+    int taddr = base_nametable_address + (tile_y << 5) + (mirror ? 0x400 : 0);
     int y_in_tile = ppu.scanline & 0x7;
     int scroll_base = - ppu.PPUSCROLL_X + (mirror ? 256 : 0);
 
-    int palette_cache[4], do_update = frame_cnt % 3 == 0;
+    int do_update = frame_cnt % 3 == 0;
+    bool top = (ppu.scanline & 31) < 16;
 
-    word attribute_address = (ppu_base_nametable_address() + (mirror ? 0x400 : 0) + 0x3C0 +  -1 + ((ppu.scanline >> 5) << 3));
+    uint32_t attribute_address = (base_nametable_address + (mirror ? 0x400 : 0) + 0x3C0 +  -1 + ((ppu.scanline >> 5) << 3));
+    uint32_t palette_attribute = ppu_ram_read_fast(attribute_address);
+    if (!top) {
+      palette_attribute >>= 4;
+    }
+    palette_attribute &= 3;
+    int *palette_cache_line = palette_cache[palette_attribute];
+
+    int off_screen_idx = 256 + ppu.PPUSCROLL_X - (mirror ? 256 : 0);
 
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < 32; tile_x++) {
         // Skipping off-screen pixels
-        if (((tile_x << 3) - ppu.PPUSCROLL_X + (mirror ? 256 : 0)) > 256)
+        if ((tile_x << 3)  > off_screen_idx)
             continue;
 
-		log("call ppu_ram_read\n");
-        int tile_index = ppu_ram_read(taddr);
-        word tile_address = ppu_background_pattern_table_address() + (tile_index << 4);
+        int tile_index = ppu_ram_read_fast(taddr);
+        uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
 
-        byte l = ppu_ram_read(tile_address + y_in_tile);
-        byte h = ppu_ram_read(tile_address + y_in_tile + 8);
+        uint32_t l = ppu_ram_read_fast(tile_address + y_in_tile);
+        uint32_t h = ppu_ram_read_fast(tile_address + y_in_tile + 8);
 
         if (do_update) {
-            attribute_address += (tile_x & 3) == 0;
-            bool top = (ppu.scanline & 31) < 16;
-            bool left = ((tile_x & 31) < 16);
-			log("call ppu_ram_read\n");
-            byte palette_attribute = ppu_ram_read(attribute_address);
-            if (!top) {
+            if ((tile_x & 3) == 0) {
+              attribute_address ++;
+              palette_attribute = ppu_ram_read_fast(attribute_address);
+              bool left = (tile_x < 16);
+              if (!top) {
                 palette_attribute >>= 4;
-            }
-            if (!left) {
+              }
+              if (!left) {
                 palette_attribute >>= 2;
+              }
+              palette_attribute &= 3;
+              palette_cache_line = palette_cache[palette_attribute];
             }
-            palette_attribute &= 3;
 
-            word palette_address = 0x3F00 + (palette_attribute << 2);
-			log("call ppu_ram_read\n");
-            palette_cache[1] = ppu_ram_read(palette_address + 1);
-            palette_cache[2] = ppu_ram_read(palette_address + 2);
-            palette_cache[3] = ppu_ram_read(palette_address + 3);
-            for (int x = 0; x < 8; x ++) {
-                byte color = XHL[x][h][l];
-                // lookup-table is much faster on x86.
-                // byte color = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-                if (color != 0) {
-                    draw(scroll_base + x, ppu.scanline + 1, palette_cache[color]);
-                }
+            union {
+              uint64_t u64;
+              byte color[8];
+            } buf;
+            buf.u64 = XHL64[h][l];
+
+#define macro(x) \
+            if (buf.color[x] != 0) { \
+              draw(scroll_base + x, ppu.scanline + 1, palette_cache_line[buf.color[x]]); \
             }
+
+            // loop unrolling
+            macro(0); macro(1); macro(2); macro(3);
+            macro(4); macro(5); macro(6); macro(7);
         }
         uint64_t *ptr = (uint64_t*)&ppu_screen_background[ppu.scanline][(tile_x << 3)];
         *ptr = (XHL64[h][l]) | (XHLmask[h][l] & (*ptr)) ;
@@ -243,8 +278,7 @@ static inline void ppu_draw_background_scanline(bool mirror)
     }
 }
 
-static inline void ppu_draw_sprite_scanline()
-{
+void ppu_draw_sprite_scanline() {
 	log("====\n");
     int do_update = frame_cnt % 3 == 0;
     int scanline_sprite_count = 0;
@@ -254,7 +288,7 @@ static inline void ppu_draw_sprite_scanline()
         byte sprite_y = PPU_SPRRAM[n];
 
         // Skip if sprite not on scanline
-        if (sprite_y > ppu.scanline || sprite_y + ppu_sprite_height() < ppu.scanline)
+        if (sprite_y > ppu.scanline || sprite_y + sprite_height < ppu.scanline)
            continue;
 
         scanline_sprite_count++;
@@ -268,7 +302,7 @@ static inline void ppu_draw_sprite_scanline()
         bool vflip = PPU_SPRRAM[n + 2] & 0x80;
         bool hflip = PPU_SPRRAM[n + 2] & 0x40;
 
-        word tile_address = ppu_sprite_pattern_table_address() + 16 * PPU_SPRRAM[n + 1];
+        word tile_address = sprite_pattern_table_address + 16 * PPU_SPRRAM[n + 1];
         int y_in_tile = ppu.scanline & 0x7;
 		log("call ppu_ram_read\n");
         byte l = ppu_ram_read(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
@@ -279,7 +313,7 @@ static inline void ppu_draw_sprite_scanline()
         word palette_address = 0x3F10 + (palette_attribute << 2);
         int x;
         for (x = 0; x < 8; x++) {
-            int color = hflip ? XHL[7 - x][h][l] : XHL[x][h][l];
+            int color = hflip ? XHL[h][l][7 - x] : XHL[h][l][x];
 
             // Color 0 is transparent
             if (color != 0) {
@@ -319,6 +353,9 @@ static inline void ppu_cycle()
 	log("flag:%x, %x\n", ppu_shows_background(), ppu_shows_sprites());
     if (ppu_shows_background()) {
 		log("shows_background\n");
+        // preprocessing
+        palette_cache_read();
+
         ppu_draw_background_scanline(false);
         ppu_draw_background_scanline(true);
     }
@@ -391,7 +428,7 @@ inline byte ppu_io_read(word address)
                 ppu_2007_first_read = false;
             }
             else {
-                ppu.PPUADDR += ppu_vram_address_increment();
+                ppu.PPUADDR += vram_address_increment;
             }
             return data;
         }
@@ -406,8 +443,8 @@ inline void ppu_io_write(word address, byte data)
     ppu_latch = data;
     ppu.PPUADDR &= 0x3FFF;
     switch(address) {
-        case 0: if (ppu.ready) ppu.PPUCTRL = data; break;
-        case 1: if (ppu.ready) ppu.PPUMASK = data; break;
+        case 0: if (ppu.ready) ppu_update_PPUCTRL_internal(data); break;
+        case 1: if (ppu.ready) byte_unpack(ppu.PPUMASK, data); break;
         case 3: ppu.OAMADDR = data; break;
         case 4: PPU_SPRRAM[ppu.OAMADDR++] = data; break;
         case 5:
@@ -453,7 +490,9 @@ inline void ppu_io_write(word address, byte data)
 
 void ppu_init()
 {
-    ppu.PPUCTRL = ppu.PPUMASK = ppu.PPUSTATUS = ppu.OAMADDR = ppu.PPUSCROLL_X = ppu.PPUSCROLL_Y = ppu.PPUADDR = 0;
+    ppu.PPUSTATUS = ppu.OAMADDR = ppu.PPUSCROLL_X = ppu.PPUSCROLL_Y = ppu.PPUADDR = 0;
+    ppu_update_PPUCTRL_internal(0);
+    byte_unpack(ppu.PPUMASK, 0);
     ppu.PPUSTATUS |= 0xA0;
     ppu.PPUDATA = 0;
     ppu_2007_first_read = true;

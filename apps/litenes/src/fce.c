@@ -170,7 +170,7 @@ void fce_update_screen()
   for (int y = 0; y < h; y ++) {
     int y1 = y * (H - 1) / h + 1;
     for (int x = pad; x < w - pad; x ++) {
-      row[x] = palette[canvas[y1][xmap[x] + 0xff]];
+      row[x] = palette[canvas[y1][xmap[x]]];
     }
 	// log("x:%d,y:%d,w:%d,h:%d\n", pad, y, w - 2 * pad, 1);
 	// log("xmap[]:%d, canvas[y1][]:%d\n", xmap[10], canvas[5][5]);
@@ -191,7 +191,7 @@ void xmap_init() {
   int h = screen_height();
   int pad = (w - h) / 2;
   for (int x = pad; x < w - pad; x ++) {
-    xmap[x] = (x - pad) * W / h;
+    xmap[x] = (x - pad) * W / h + 0xff;
   }
 }
 

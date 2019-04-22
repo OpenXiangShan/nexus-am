@@ -3,8 +3,8 @@
 #ifndef CPU_H
 #define CPU_H
 
-byte cpu_ram_read(word address);
-void cpu_ram_write(word address, byte data);
+uint32_t cpu_ram_read(uint32_t address);
+void cpu_ram_write(uint32_t address, uint32_t byte_data);
 
 void cpu_init();
 void cpu_reset();
@@ -37,18 +37,18 @@ typedef enum {
 } cpu_p_bp;
 
 typedef struct {
-    word PC; // Program Counter,
-    byte SP; // Stack Pointer,
+    uint32_t PC; // Program Counter,
+    uint32_t SP; // Stack Pointer,
     byte A, X, Y; // Registers
-    byte P; // Flag Register
+    //word PC; // Program Counter,
+    //byte SP; // Stack Pointer,
+    //byte A, X, Y; // Registers
+    //byte P; // Flag Register
+    int P[8]; // Expended Flag Register
 } CPU_STATE;
 
 extern CPU_STATE cpu;
 
 extern byte CPU_RAM[0x8000];
-
-extern byte op_code;             // Current instruction code
-extern int op_value, op_address; // Arguments for current instruction
-extern int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
 
 #endif
