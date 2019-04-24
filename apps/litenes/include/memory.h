@@ -8,15 +8,14 @@
 #include <ppu.h>
 #include <psg.h>
 
-static inline uint32_t memory_readb(uint32_t address)
-{
-    switch (address >> 13) {
-        case 0:
-        case 3: return cpu_ram_read(address);
-        case 1: return ppu_io_read(address);
-        case 2: return psg_io_read(address);
-        default: return mmc_read(address);
-    }
+static inline uint32_t memory_readb(uint32_t address) {
+  int idx = address >> 13;
+  if (idx == 0) { return cpu_ram_read(address); }
+  else if (idx == 1) { return ppu_io_read(address); }
+  else if (idx > 3) { return mmc_read(address); }
+  else if (idx == 2) { return psg_io_read(address); }
+  else if (idx == 3) { return cpu_ram_read(address); }
+  else { assert(0); }
 }
 
 static inline uint32_t instr_fetch(uint32_t address) {
@@ -27,24 +26,25 @@ static inline uint32_t instr_fetch(uint32_t address) {
   return memory[address];
 }
 
-static inline void memory_writeb(uint32_t address, uint32_t byte_data)
-{
-    switch (address >> 13) {
-        case 0:
-        case 3: cpu_ram_write(address, byte_data); break;
-        case 1: ppu_io_write(address, byte_data); break;
-        case 2:
-          if (address == 0x4014) {
-            // DMA transfer
-            int i;
-              for (i = 0; i < 256; i++) {
-                  ppu_sprram_write(cpu_ram_read((0x100 * (byte_data & 0xff)) + i));
-              }
-              return;
-          }
-          psg_io_write(address, byte_data); break;
-          // for super mario, it does not write to mmc
+static inline void memory_writeb(uint32_t address, uint32_t byte_data) {
+  int idx = address >> 13;
+  if (idx == 0) { cpu_ram_write(address, byte_data); }
+  else if (idx == 1) { ppu_io_write(address, byte_data); }
+  else if (idx == 2) {
+    if (address == 0x4014) {
+      // DMA transfer
+      int i;
+      for (i = 0; i < 256; i++) {
+        ppu_sprram_write(cpu_ram_read((0x100 * (byte_data & 0xff)) + i));
+      }
     }
+    else psg_io_write(address, byte_data);
+  }
+  else if (idx == 3) { cpu_ram_write(address, byte_data); }
+  else {
+    // for super mario, it does not write to mmc
+    assert(0);
+  }
 }
 
 static inline uint32_t memory_readw(uint32_t address)
