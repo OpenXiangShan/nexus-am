@@ -345,15 +345,13 @@ void ppu_draw_sprite_scanline() {
 
 // PPU Lifecycle
 
-static inline void ppu_cycle()
-{
+static inline void ppu_cycle() {
     if (!ppu.ready && cpu_clock() > 29658)
         ppu.ready = true;
 
     ppu.scanline++;
-	log("flag:%x, %x\n", ppu_shows_background(), ppu_shows_sprites());
+
     if (ppu_shows_background()) {
-		log("shows_background\n");
         // preprocessing
         palette_cache_read();
 
@@ -362,9 +360,8 @@ static inline void ppu_cycle()
     }
     
     if (ppu_shows_sprites()) {
-		log("ppu_draw_sprite_scanline\n");
-		ppu_draw_sprite_scanline();
-	}
+      ppu_draw_sprite_scanline();
+    }
 
     if (ppu.scanline == 241) {
         ppu_set_in_vblank(true);
@@ -375,18 +372,14 @@ static inline void ppu_cycle()
         ppu.scanline = -1;
         ppu_sprite_hit_occured = false;
         ppu_set_in_vblank(false);
-		log("fce_update_screen\n");
         fce_update_screen();
     }
 }
 
-void ppu_run(int cycles)
-{
-	log("cycles:%d\n", cycles);
+void ppu_run(int cycles) {
     while (cycles-- > 0) {
         ppu_cycle();
     }
-	log("cycles:%d\n", cycles);
 }
 
 
@@ -397,7 +390,6 @@ inline void ppu_copy(word address, byte *source, int length)
 
 inline byte ppu_io_read(word address)
 {
-    ppu.PPUADDR &= 0x3FFF;
     switch (address & 7) {
         case 2:
         {
@@ -430,6 +422,7 @@ inline byte ppu_io_read(word address)
             }
             else {
                 ppu.PPUADDR += vram_address_increment;
+                ppu.PPUADDR &= 0x3FFF;
             }
             return data;
         }
@@ -442,7 +435,6 @@ inline void ppu_io_write(word address, byte data)
 {
     address &= 7;
     ppu_latch = data;
-    ppu.PPUADDR &= 0x3FFF;
     switch(address) {
         case 0: if (ppu.ready) ppu_update_PPUCTRL_internal(data); break;
         case 1: if (ppu.ready) byte_unpack(ppu.PPUMASK, data); break;
@@ -463,8 +455,10 @@ inline void ppu_io_write(word address, byte data)
             if (!ppu.ready)
                 return;
 
-            if (ppu.addr_received_high_byte)
-                ppu.PPUADDR = (ppu_addr_latch << 8) + data;
+            if (ppu.addr_received_high_byte) {
+              ppu.PPUADDR = (ppu_addr_latch << 8) + data;
+              ppu.PPUADDR &= 0x3FFF;
+            }
             else
                 ppu_addr_latch = data;
 
@@ -486,6 +480,7 @@ inline void ppu_io_write(word address, byte data)
             }
 
             ppu.PPUADDR += vram_address_increment;
+            ppu.PPUADDR &= 0x3FFF;
         }
     }
     ppu_latch = data;
