@@ -279,13 +279,22 @@ void ppu_draw_background_scanline(bool mirror) {
 }
 
 void ppu_draw_sprite_scanline() {
-	log("====\n");
     int do_update = frame_cnt % 3 == 0;
     int scanline_sprite_count = 0;
-    int n;
+    int i, n;
+
+    int sprite_palette_cache[4][4];
+    for (i = 0; i < 4; i ++) {
+      uint32_t palette_address = 0x3F10 + (i << 2);
+      // still in the range of identify mapping, can bypass ppu_ram_map[]
+      sprite_palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
+      sprite_palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
+      sprite_palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+    }
+
     for (n = 0; n < 0x100; n += 4) {
-        byte sprite_x = PPU_SPRRAM[n + 3];
-        byte sprite_y = PPU_SPRRAM[n];
+        uint32_t sprite_x = PPU_SPRRAM[n + 3];
+        uint32_t sprite_y = PPU_SPRRAM[n];
 
         // Skip if sprite not on scanline
         if (sprite_y > ppu.scanline || sprite_y + sprite_height < ppu.scanline)
@@ -296,42 +305,34 @@ void ppu_draw_sprite_scanline() {
         // PPU can't render > 8 sprites
         if (scanline_sprite_count > 8) {
             ppu_set_sprite_overflow(true);
+            return;
             // break;
         }
 
         bool vflip = PPU_SPRRAM[n + 2] & 0x80;
         bool hflip = PPU_SPRRAM[n + 2] & 0x40;
 
-        word tile_address = sprite_pattern_table_address + 16 * PPU_SPRRAM[n + 1];
+        uint32_t tile_address = sprite_pattern_table_address + 16 * PPU_SPRRAM[n + 1];
         int y_in_tile = ppu.scanline & 0x7;
-		log("call ppu_ram_read\n");
-        byte l = ppu_ram_read(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
-		log("call ppu_ram_read\n");
-        byte h = ppu_ram_read(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8);
+        uint32_t l = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
+        uint32_t h = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8);
 
-        byte palette_attribute = PPU_SPRRAM[n + 2] & 0x3;
-        word palette_address = 0x3F10 + (palette_attribute << 2);
+        uint32_t palette_attribute = PPU_SPRRAM[n + 2] & 0x3;
+        int *palette_cache_line = sprite_palette_cache[palette_attribute];
         int x;
         for (x = 0; x < 8; x++) {
-            int color = hflip ? XHL[h][l][7 - x] : XHL[h][l][x];
+            int color = XHL[h][l][ (hflip ? 7 - x : x) ];
 
             // Color 0 is transparent
             if (color != 0) {
                 int screen_x = sprite_x + x;
 
                 if (do_update) {
-					log("call ppu_ram_read\n");
-                    int idx = ppu_ram_read(palette_address + color);
-                    if (PPU_SPRRAM[n + 2] & 0x20) {
-                        draw(screen_x, sprite_y + y_in_tile + 1, idx); // bbg
-                    }
-                    else {
-                        draw(screen_x, sprite_y + y_in_tile + 1, idx); // fg
-                    }
+                    draw(screen_x, sprite_y + y_in_tile + 1, palette_cache_line[color]);
                 }
 
                 // Checking sprite 0 hit
-                if (ppu_shows_background() && !ppu_sprite_hit_occured && n == 0 && ppu_screen_background[sprite_y + y_in_tile][screen_x] == color) {
+                if (n == 0 && !ppu_sprite_hit_occured && ppu_shows_background() && ppu_screen_background[sprite_y + y_in_tile][screen_x] == color) {
                     ppu_set_sprite_0_hit(true);
                     ppu_sprite_hit_occured = true;
                 }
