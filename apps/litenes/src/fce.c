@@ -6,6 +6,7 @@
 #include <amdev.h>
 
 //#define NOGUI
+//#define PROFILE
 
 int key_state[256];
 int frame_cnt;
@@ -106,15 +107,29 @@ void fce_run()
     uint32_t last = gtime;
     while(1)
     {
-		log("gtime:%d\n", gtime);
         wait_for_frame();
         int scanlines = 262;
-        while (scanlines-- > 0)
-        {
-			log("ppu_run:1, scanlines:%d\n", scanlines);
-            ppu_run(1);
-            cpu_run(1364 / 12); // 1 scanline
+
+#ifdef PROFILE
+        uint32_t ppu_time = 0;
+        uint32_t cpu_time = 0;
+        while (scanlines-- > 0) {
+          uint32_t t0 = uptime();
+          ppu_run(1);
+          uint32_t t1 = uptime();
+          cpu_run(1364 / 12); // 1 scanline
+          uint32_t t2 = uptime();
+          ppu_time += t1 - t0;
+          cpu_time += t2 - t1;
         }
+        printf("ppu time = %d, cpu time = %d\n", ppu_time, cpu_time);
+#else
+        while (scanlines-- > 0) {
+          ppu_run(1);
+          cpu_run(1364 / 12); // 1 scanline
+        }
+#endif
+
         nr_draw ++;
         if (uptime() - last > 1000) {
           last = uptime();
