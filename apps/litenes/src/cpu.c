@@ -5,11 +5,9 @@
 
 CPU_STATE cpu;
 
-uint32_t op_code;             // Current instruction code
-uint32_t op_value, op_address; // Arguments for current instruction
-int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
+//int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
 
-unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
+static unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 
 //static void (*cpu_op_address_mode[256])();       // Array of address modes
 //static void (*cpu_op_handler[256])();            // Array of instruction function pointers
@@ -18,124 +16,190 @@ unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 //static int cpu_op_cycles[256];                   // CPU cycles used by instructions
 static int cpu_op_cnts[256];                   // CPU cycles used by instructions
 
-// Interrupt Addresses
-//word cpu_nmi_interrupt_address();
-//word cpu_reset_interrupt_address();
-//word cpu_irq_interrupt_address();
-
-// Updates Zero and Negative flags in P
-//void cpu_update_zn_flags(byte value);
-
 // If OP_TRACE, print current instruction with all registers into the console
 void cpu_trace_instruction();
 
+
 // CPU Adressing Modes
-static inline void cpu_address_implied() { }
+#define cpu_address_implied(exec) { exec(); }
 
-static inline void cpu_address_immediate() {
-  op_value = instr_fetch(cpu.PC);
-  cpu.PC++;
+#define cpu_address_immediate(exec) { \
+  uint32_t op_value = instr_fetch(cpu.PC); \
+  cpu.PC++; \
+  exec(); \
 }
 
-static inline void cpu_address_zero_page() {
-  op_address = instr_fetch(cpu.PC);
-  op_value = CPU_RAM[op_address];
-  cpu.PC++;
+#define cpu_address_zero_page(exec) { \
+  uint32_t op_address = instr_fetch(cpu.PC); \
+  uint32_t op_value = CPU_RAM[op_address]; \
+  cpu.PC++; \
+  exec(); \
 }
 
-static inline void cpu_address_zero_page_x() {
-  op_address = (instr_fetch(cpu.PC) + cpu.X) & 0xFF;
-  op_value = CPU_RAM[op_address];
-  cpu.PC++;
+#define cpu_address_zero_page_x(exec) { \
+  uint32_t op_address = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
+  uint32_t op_value = CPU_RAM[op_address]; \
+  cpu.PC++; \
+  exec(); \
 }
 
-static inline void cpu_address_zero_page_y() {
-  op_address = (instr_fetch(cpu.PC) + cpu.Y) & 0xFF;
-  op_value = CPU_RAM[op_address];
-  cpu.PC++;
+#define cpu_address_zero_page_y(exec) { \
+  uint32_t op_address = (instr_fetch(cpu.PC) + cpu.Y) & 0xFF; \
+  uint32_t op_value = CPU_RAM[op_address]; \
+  cpu.PC++; \
+  exec(); \
 }
 
-static inline void cpu_address_absolute() {
-  op_address = instr_fetchw(cpu.PC);
-  op_value = memory_readb(op_address);
-  cpu.PC += 2;
+#define cpu_address_absolute(exec) { \
+  uint32_t op_address = instr_fetchw(cpu.PC); \
+  uint32_t op_value = memory_readb(op_address); \
+  cpu.PC += 2; \
+  exec(); \
 }
 
-static inline void cpu_address_absolute_jmp() {
-  op_address = instr_fetchw(cpu.PC);
-  if (op_address == cpu.PC - 1) {
-    // spin to wait for interrupt, do not count
-    cpu_op_cnts[0x4c] --;
-  }
-//  op_value = memory_readb(op_address);
-//  cpu.PC += 2;
+#define cpu_address_absolute_x(exec) { \
+  uint32_t op_address = (instr_fetchw(cpu.PC) + cpu.X) & 0xffff; \
+  uint32_t op_value = memory_readb(op_address); \
+  cpu.PC += 2; \
+ \
+  if ((op_address ^ cpu.PC) >> 8) { \
+    op_cycles++; \
+  } \
+  exec(); \
 }
 
-static inline void cpu_address_absolute_x() {
-  op_address = (instr_fetchw(cpu.PC) + cpu.X) & 0xffff;
-  op_value = memory_readb(op_address);
-  cpu.PC += 2;
-
-  if ((op_address ^ cpu.PC) >> 8) {
-    op_cycles++;
-  }
+#define cpu_address_absolute_y(exec) { \
+  uint32_t op_address = (instr_fetchw(cpu.PC) + cpu.Y) & 0xFFFF; \
+  uint32_t op_value = memory_readb(op_address); \
+  cpu.PC += 2; \
+ \
+  if ((op_address ^ cpu.PC) >> 8) { \
+    op_cycles++; \
+  } \
+  exec(); \
 }
 
-static inline void cpu_address_absolute_y() {
-  op_address = (instr_fetchw(cpu.PC) + cpu.Y) & 0xFFFF;
-  op_value = memory_readb(op_address);
-  cpu.PC += 2;
-
-  if ((op_address ^ cpu.PC) >> 8) {
-    op_cycles++;
-  }
+#define cpu_address_relative(exec) { \
+  uint32_t op_address = instr_fetch(cpu.PC); \
+  cpu.PC++; \
+  op_address = cpu.PC + (int8_t)op_address; \
+ \
+  if ((op_address ^ cpu.PC) >> 8) { \
+    op_cycles++; \
+  } \
+  exec(); \
 }
 
-static inline void cpu_address_relative() {
-  op_address = instr_fetch(cpu.PC);
-  cpu.PC++;
-  op_address = cpu.PC + (int8_t)op_address;
-
-  if ((op_address ^ cpu.PC) >> 8) {
-    op_cycles++;
-  }
+#define cpu_address_indirect(exec) { \
+  uint32_t arg_addr = memory_readw(cpu.PC); \
+  uint32_t op_address; \
+ \
+  /* The famous 6502 bug when instead of reading from $C0FF/$C100 it reads from $C0FF/$C000 */ \
+  if ((arg_addr & 0xFF) == 0xFF) { \
+    op_address = (memory_readb(arg_addr & 0xFF00) << 8) | memory_readb(arg_addr); \
+  } \
+  else { \
+    op_address = memory_readw(arg_addr); \
+  } \
+  cpu.PC += 2; \
+  exec(); \
 }
 
-static inline void cpu_address_indirect() {
-  uint32_t arg_addr = memory_readw(cpu.PC);
-
-  // The famous 6502 bug when instead of reading from $C0FF/$C100 it reads from $C0FF/$C000
-  if ((arg_addr & 0xFF) == 0xFF) {
-    // Buggy code
-    op_address = (memory_readb(arg_addr & 0xFF00) << 8) | memory_readb(arg_addr);
-  }
-  else {
-    // Normal code
-    op_address = memory_readw(arg_addr);
-  }
-  cpu.PC += 2;
+#define cpu_address_indirect_x(exec) { \
+  uint32_t arg_addr = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
+  assert(0); \
+  uint32_t op_address = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  uint32_t op_value = memory_readb(op_address); \
+  cpu.PC++; \
+  exec(); \
 }
 
-static inline void cpu_address_indirect_x() {
-  uint32_t arg_addr = (instr_fetch(cpu.PC) + cpu.X) & 0xFF;
-  //op_address = (memory_readb((arg_addr + cpu.X + 1) & 0xFF) << 8) | memory_readb((arg_addr + cpu.X) & 0xFF);
-//  op_address = memory_readw((arg_addr + cpu.X) & 0xFF);
-  assert(0);
-  op_address = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr];
-  op_value = memory_readb(op_address);
-  cpu.PC++;
+#define cpu_address_indirect_y(exec) { \
+  uint32_t arg_addr = instr_fetch(cpu.PC); \
+  uint32_t temp = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  uint32_t op_address = (temp + (cpu.Y & 0xff)) & 0xFFFF; \
+  uint32_t op_value = memory_readb(op_address); \
+  cpu.PC++; \
+ \
+  if ((op_address ^ cpu.PC) >> 8) { \
+    op_cycles++; \
+  } \
+  exec(); \
 }
 
-static inline void cpu_address_indirect_y() {
-  uint32_t arg_addr = instr_fetch(cpu.PC);
-  uint32_t temp = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr];
-  op_address = (temp + (cpu.Y & 0xff)) & 0xFFFF;
-  op_value = memory_readb(op_address);
-  cpu.PC++;
+// addressing which does not load the op_value
 
-  if ((op_address ^ cpu.PC) >> 8) {
-    op_cycles++;
-  }
+#define cpu_address_zero_page_notload(exec) { \
+  uint32_t op_address = instr_fetch(cpu.PC); \
+  cpu.PC++; \
+  exec(); \
+}
+
+#define cpu_address_zero_page_x_notload(exec) { \
+  uint32_t op_address = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
+  cpu.PC++; \
+  exec(); \
+}
+
+#define cpu_address_zero_page_y_notload(exec) { \
+  uint32_t op_address = (instr_fetch(cpu.PC) + cpu.Y) & 0xFF; \
+  cpu.PC++; \
+  exec(); \
+}
+
+#define cpu_address_absolute_notload(exec) { \
+  uint32_t op_address = instr_fetchw(cpu.PC); \
+  cpu.PC += 2; \
+  exec(); \
+}
+
+#define cpu_address_absolute_jmp(exec) { \
+  uint32_t op_address = instr_fetchw(cpu.PC); \
+  if (op_address == cpu.PC - 1) { \
+    /* spin to wait for interrupt, do not count */ \
+    cpu_op_cnts[0x4c] --; \
+  } \
+  exec(); \
+}
+
+#define cpu_address_absolute_x_notload(exec) { \
+  uint32_t op_address = (instr_fetchw(cpu.PC) + cpu.X) & 0xffff; \
+  cpu.PC += 2; \
+ \
+  if ((op_address ^ cpu.PC) >> 8) { \
+    op_cycles++; \
+  } \
+  exec(); \
+}
+
+#define cpu_address_absolute_y_notload(exec) { \
+  uint32_t op_address = (instr_fetchw(cpu.PC) + cpu.Y) & 0xFFFF; \
+  cpu.PC += 2; \
+ \
+  if ((op_address ^ cpu.PC) >> 8) { \
+    op_cycles++; \
+  } \
+  exec(); \
+}
+
+#define cpu_address_indirect_x_notload(exec) { \
+  uint32_t arg_addr = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
+  assert(0); \
+  uint32_t op_address = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  cpu.PC++; \
+  exec(); \
+}
+
+#define cpu_address_indirect_y_notload(exec) { \
+  uint32_t arg_addr = instr_fetch(cpu.PC); \
+  uint32_t temp = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  uint32_t op_address = (temp + (cpu.Y & 0xff)) & 0xFFFF; \
+  cpu.PC++; \
+ \
+  if ((op_address ^ cpu.PC) >> 8) { \
+    op_cycles++; \
+  } \
+  exec(); \
 }
 
 
@@ -200,233 +264,221 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 
 // NOP
 
-static inline void cpu_op_nop() { }
+#define cpu_op_nop() { }
 
 // Addition
 
-static inline void cpu_op_adc()
-{
-    int result = (cpu.A & 0xff) + op_value + cpu_flag_set(carry_bp);
-    cpu_modify_flag(carry_bp, (result & 0x100));
-    cpu_modify_flag(overflow_bp, (~(cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
-    cpu_update_zn_flags(result);
-    cpu.A = result;
+#define cpu_op_adc() { \
+    int result = (cpu.A & 0xff) + op_value + cpu_flag_set(carry_bp); \
+    cpu_modify_flag(carry_bp, (result & 0x100)); \
+    cpu_modify_flag(overflow_bp, (~(cpu.A ^ op_value) & (cpu.A ^ result) & 0x80)); \
+    cpu_update_zn_flags(result); \
+    cpu.A = result; \
 }
 
 // Subtraction
 
-static inline void cpu_op_sbc()
-{
-    int result = (cpu.A & 0xff) - op_value - !cpu_flag_set(carry_bp);
-    cpu_modify_flag(carry_bp, !(result & 0x100));
-    cpu_modify_flag(overflow_bp, ((cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
-    cpu_update_zn_flags(result);
-    cpu.A = result;
+#define cpu_op_sbc() { \
+    int result = (cpu.A & 0xff) - op_value - !cpu_flag_set(carry_bp); \
+    cpu_modify_flag(carry_bp, !(result & 0x100)); \
+    cpu_modify_flag(overflow_bp, ((cpu.A ^ op_value) & (cpu.A ^ result) & 0x80)); \
+    cpu_update_zn_flags(result); \
+    cpu.A = result; \
 }
 
 // Bit Manipulation Operations
 
-static inline void cpu_op_and() { cpu_update_zn_flags(cpu.A &= op_value); }
-static inline void cpu_op_bit() {
-  cpu_modify_flag(zero_bp, !(cpu.A & op_value & 0xff));
-  cpu_modify_flag(6, (op_value >> 6) & 0x1);
-  cpu_modify_flag(7, (op_value >> 7) & 0x1);
+#define cpu_op_and() { cpu_update_zn_flags(cpu.A &= op_value); }
+#define cpu_op_bit() { \
+  cpu_modify_flag(zero_bp, !(cpu.A & op_value & 0xff)); \
+  cpu_modify_flag(6, (op_value >> 6) & 0x1); \
+  cpu_modify_flag(7, (op_value >> 7) & 0x1); \
 }
-static inline void cpu_op_eor() { cpu_update_zn_flags(cpu.A ^= op_value); }
-static inline void cpu_op_ora() { cpu_update_zn_flags(cpu.A |= op_value); }
-static inline void cpu_op_asla()
-{
-    cpu_modify_flag(carry_bp, cpu.A & 0x80);
-    cpu.A <<= 1;
-    cpu_update_zn_flags(cpu.A);
+#define cpu_op_eor() { cpu_update_zn_flags(cpu.A ^= op_value); }
+#define cpu_op_ora() { cpu_update_zn_flags(cpu.A |= op_value); }
+#define cpu_op_asla() { \
+    cpu_modify_flag(carry_bp, cpu.A & 0x80); \
+    cpu.A <<= 1; \
+    cpu_update_zn_flags(cpu.A); \
 }
-static inline void cpu_op_asl()
-{
-    cpu_modify_flag(carry_bp, op_value & 0x80);
-    op_value <<= 1;
-    op_value &= 0xFF;
-    cpu_update_zn_flags(op_value);
-    memory_writeb(op_address, op_value);
+#define cpu_op_asl() { \
+    cpu_modify_flag(carry_bp, op_value & 0x80); \
+    op_value <<= 1; \
+    op_value &= 0xFF; \
+    cpu_update_zn_flags(op_value); \
+    memory_writeb(op_address, op_value); \
 }
-static inline void cpu_op_lsra()
-{
-    int value = (cpu.A & 0xff) >> 1;
-    cpu_modify_flag(carry_bp, cpu.A & 0x01);
-    cpu_update_zn_flags(value);
-    cpu.A = value;
+#define cpu_op_lsra() { \
+    int value = (cpu.A & 0xff) >> 1; \
+    cpu_modify_flag(carry_bp, cpu.A & 0x01); \
+    cpu_update_zn_flags(value); \
+    cpu.A = value; \
 }
-static inline void cpu_op_lsr()
-{
-    cpu_modify_flag(carry_bp, op_value & 0x01);
-    op_value >>= 1;
-    op_value &= 0xFF;
-    memory_writeb(op_address, op_value);
-    cpu_update_zn_flags(op_value);
+#define cpu_op_lsr() { \
+    cpu_modify_flag(carry_bp, op_value & 0x01); \
+    op_value >>= 1; \
+    op_value &= 0xFF; \
+    memory_writeb(op_address, op_value); \
+    cpu_update_zn_flags(op_value); \
 }
 
-static inline void cpu_op_rola()
-{
-    int value = (cpu.A & 0xff) << 1;
-    value |= cpu_flag_set(carry_bp);
-    cpu_modify_flag(carry_bp, value > 0xFF);
-    cpu.A = value & 0xFF;
-    cpu_update_zn_flags(cpu.A);
+#define cpu_op_rola() { \
+    int value = (cpu.A & 0xff) << 1; \
+    value |= cpu_flag_set(carry_bp); \
+    cpu_modify_flag(carry_bp, value > 0xFF); \
+    cpu.A = value & 0xFF; \
+    cpu_update_zn_flags(cpu.A); \
 }
-static inline void cpu_op_rol()
-{
-    op_value <<= 1;
-    op_value |= cpu_flag_set(carry_bp);
-    cpu_modify_flag(carry_bp, op_value > 0xFF);
-    op_value &= 0xFF;
-    memory_writeb(op_address, op_value);
-    cpu_update_zn_flags(op_value);
+#define cpu_op_rol() { \
+    op_value <<= 1; \
+    op_value |= cpu_flag_set(carry_bp); \
+    cpu_modify_flag(carry_bp, op_value > 0xFF); \
+    op_value &= 0xFF; \
+    memory_writeb(op_address, op_value); \
+    cpu_update_zn_flags(op_value); \
 }
-static inline void cpu_op_rora()
-{
-    unsigned char carry = cpu_flag_set(carry_bp);
-    cpu_modify_flag(carry_bp, cpu.A & 0x01);
-    cpu.A = ((cpu.A & 0xff) >> 1) | (carry << 7);
-    cpu_modify_flag(zero_bp, (cpu.A & 0xff) == 0);
-    cpu_modify_flag(negative_bp, carry);
+#define cpu_op_rora() { \
+    unsigned char carry = cpu_flag_set(carry_bp); \
+    cpu_modify_flag(carry_bp, cpu.A & 0x01); \
+    cpu.A = ((cpu.A & 0xff) >> 1) | (carry << 7); \
+    cpu_modify_flag(zero_bp, (cpu.A & 0xff) == 0); \
+    cpu_modify_flag(negative_bp, carry); \
 }
-static inline void cpu_op_ror()
-{
-    unsigned char carry = cpu_flag_set(carry_bp);
-    cpu_modify_flag(carry_bp, op_value & 0x01);
-    op_value = ((op_value >> 1) | (carry << 7)) & 0xFF;
-    cpu_modify_flag(zero_bp, op_value == 0);
-    cpu_modify_flag(negative_bp, carry);
-    memory_writeb(op_address, op_value);
+#define cpu_op_ror() { \
+    unsigned char carry = cpu_flag_set(carry_bp); \
+    cpu_modify_flag(carry_bp, op_value & 0x01); \
+    op_value = ((op_value >> 1) | (carry << 7)) & 0xFF; \
+    cpu_modify_flag(zero_bp, op_value == 0); \
+    cpu_modify_flag(negative_bp, carry); \
+    memory_writeb(op_address, op_value); \
 }
 
 // Loading
 
-static inline void cpu_op_lda() { cpu_update_zn_flags(cpu.A = op_value); }
-static inline void cpu_op_ldx() { cpu_update_zn_flags(cpu.X = op_value); }
-static inline void cpu_op_ldy() { cpu_update_zn_flags(cpu.Y = op_value); }
+#define cpu_op_lda() { cpu_update_zn_flags(cpu.A = op_value); }
+#define cpu_op_ldx() { cpu_update_zn_flags(cpu.X = op_value); }
+#define cpu_op_ldy() { cpu_update_zn_flags(cpu.Y = op_value); }
 
 // Storing
 
-static inline void cpu_op_sta() { memory_writeb(op_address, cpu.A & 0xff); }
-static inline void cpu_op_stx() { memory_writeb(op_address, cpu.X & 0xff); }
-static inline void cpu_op_sty() { memory_writeb(op_address, cpu.Y & 0xff); }
+#define cpu_op_sta() { memory_writeb(op_address, cpu.A & 0xff); }
+#define cpu_op_stx() { memory_writeb(op_address, cpu.X & 0xff); }
+#define cpu_op_sty() { memory_writeb(op_address, cpu.Y & 0xff); }
 
 // Transfering
 
-static inline void cpu_op_tax() { cpu_update_zn_flags(cpu.X = cpu.A);  }
-static inline void cpu_op_txa() { cpu_update_zn_flags(cpu.A = cpu.X);  }
-static inline void cpu_op_tay() { cpu_update_zn_flags(cpu.Y = cpu.A);  }
-static inline void cpu_op_tya() { cpu_update_zn_flags(cpu.A = cpu.Y);  }
-static inline void cpu_op_tsx() { cpu_update_zn_flags(cpu.X = cpu.SP); }
-static inline void cpu_op_txs() { cpu.SP = cpu.X & 0xff; }
+#define cpu_op_tax() { cpu_update_zn_flags(cpu.X = cpu.A);  }
+#define cpu_op_txa() { cpu_update_zn_flags(cpu.A = cpu.X);  }
+#define cpu_op_tay() { cpu_update_zn_flags(cpu.Y = cpu.A);  }
+#define cpu_op_tya() { cpu_update_zn_flags(cpu.A = cpu.Y);  }
+#define cpu_op_tsx() { cpu_update_zn_flags(cpu.X = cpu.SP); }
+#define cpu_op_txs() { cpu.SP = cpu.X & 0xff; }
 
 // Branching Positive
 
-static inline void cpu_op_bcs() { cpu_branch(cpu_flag_set(carry_bp));     }
-static inline void cpu_op_beq() { cpu_branch(cpu_flag_set(zero_bp));      }
-static inline void cpu_op_bmi() { cpu_branch(cpu_flag_set(negative_bp));  }
-static inline void cpu_op_bvs() { cpu_branch(cpu_flag_set(overflow_bp));  }
+#define cpu_op_bcs() { cpu_branch(cpu_flag_set(carry_bp));     }
+#define cpu_op_beq() { cpu_branch(cpu_flag_set(zero_bp));      }
+#define cpu_op_bmi() { cpu_branch(cpu_flag_set(negative_bp));  }
+#define cpu_op_bvs() { cpu_branch(cpu_flag_set(overflow_bp));  }
 
 // Branching Negative
 
-static inline void cpu_op_bne() { cpu_branch(!cpu_flag_set(zero_bp));     }
-static inline void cpu_op_bcc() { cpu_branch(!cpu_flag_set(carry_bp));    }
-static inline void cpu_op_bpl() { cpu_branch(!cpu_flag_set(negative_bp)); }
-static inline void cpu_op_bvc() { cpu_branch(!cpu_flag_set(overflow_bp)); }
+#define cpu_op_bne() { cpu_branch(!cpu_flag_set(zero_bp));     }
+#define cpu_op_bcc() { cpu_branch(!cpu_flag_set(carry_bp));    }
+#define cpu_op_bpl() { cpu_branch(!cpu_flag_set(negative_bp)); }
+#define cpu_op_bvc() { cpu_branch(!cpu_flag_set(overflow_bp)); }
 
 // Jumping
 
-static inline void cpu_op_jmp() { cpu.PC = op_address; }
+#define cpu_op_jmp() { cpu.PC = op_address; }
 
 // Subroutines
 
-static inline void cpu_op_jsr() { cpu_stack_pushw(cpu.PC - 1); cpu.PC = op_address; }
-static inline void cpu_op_rts() { cpu.PC = cpu_stack_popw() + 1; }
+#define cpu_op_jsr() { cpu_stack_pushw(cpu.PC + 1); cpu.PC = op_address; }
+#define cpu_op_rts() { cpu.PC = cpu_stack_popw() + 1; }
 
 // Interruptions
 
-static inline void cpu_op_brk() {
-  cpu_stack_pushw(cpu.PC - 1);
-  cpu_stack_pushb(byte_pack(cpu.P));
-  cpu.P[unused_bp] = 1;
-  cpu.P[break_bp] = 1;
-  cpu.PC = cpu_nmi_interrupt_address();
+#define cpu_op_brk() { \
+  cpu_stack_pushw(cpu.PC - 1); \
+  cpu_stack_pushb(byte_pack(cpu.P)); \
+  cpu.P[unused_bp] = 1; \
+  cpu.P[break_bp] = 1; \
+  cpu.PC = cpu_nmi_interrupt_address(); \
 }
-static inline void cpu_op_rti() {
-  byte_unpack(cpu.P, cpu_stack_popb());
-  cpu.P[unused_bp] = 1;
-	cpu.PC = cpu_stack_popw();
+#define cpu_op_rti() { \
+  byte_unpack(cpu.P, cpu_stack_popb()); \
+  cpu.P[unused_bp] = 1; \
+	cpu.PC = cpu_stack_popw(); \
 }
 
 // Flags
 
-static inline void cpu_op_clc() { cpu_unset_flag(carry_bp);     }
-static inline void cpu_op_cld() { cpu_unset_flag(decimal_bp);   }
-static inline void cpu_op_cli() { cpu_unset_flag(interrupt_bp); }
-static inline void cpu_op_clv() { cpu_unset_flag(overflow_bp);  }
-static inline void cpu_op_sec() { cpu_set_flag(carry_bp);       }
-static inline void cpu_op_sed() { cpu_set_flag(decimal_bp);     }
-static inline void cpu_op_sei() { cpu_set_flag(interrupt_bp);   }
+#define cpu_op_clc() { cpu_unset_flag(carry_bp);     }
+#define cpu_op_cld() { cpu_unset_flag(decimal_bp);   }
+#define cpu_op_cli() { cpu_unset_flag(interrupt_bp); }
+#define cpu_op_clv() { cpu_unset_flag(overflow_bp);  }
+#define cpu_op_sec() { cpu_set_flag(carry_bp);       }
+#define cpu_op_sed() { cpu_set_flag(decimal_bp);     }
+#define cpu_op_sei() { cpu_set_flag(interrupt_bp);   }
 
 // Comparison
 
-static inline void cpu_op_cmp() { cpu_compare(cpu.A & 0xff); }
-static inline void cpu_op_cpx() { cpu_compare(cpu.X & 0xff); }
-static inline void cpu_op_cpy() { cpu_compare(cpu.Y & 0xff); }
+#define cpu_op_cmp() { cpu_compare(cpu.A & 0xff); }
+#define cpu_op_cpx() { cpu_compare(cpu.X & 0xff); }
+#define cpu_op_cpy() { cpu_compare(cpu.Y & 0xff); }
 
 // Increment
 
-static inline void cpu_op_inc() { uint32_t result = op_value + 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
-static inline void cpu_op_inx() { cpu.X = (cpu.X + 1) & 0xff; cpu_update_zn_flags(cpu.X); }
-static inline void cpu_op_iny() { cpu.Y = (cpu.Y + 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
+#define cpu_op_inc() { uint32_t result = op_value + 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
+#define cpu_op_inx() { cpu.X = (cpu.X + 1) & 0xff; cpu_update_zn_flags(cpu.X); }
+#define cpu_op_iny() { cpu.Y = (cpu.Y + 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
 
 // Decrement
 
-static inline void cpu_op_dec() { uint32_t result = op_value - 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
-static inline void cpu_op_dex() { cpu.X = (cpu.X - 1) & 0xff; cpu_update_zn_flags(cpu.X); }
-static inline void cpu_op_dey() { cpu.Y = (cpu.Y - 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
+#define cpu_op_dec() { uint32_t result = op_value - 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
+#define cpu_op_dex() { cpu.X = (cpu.X - 1) & 0xff; cpu_update_zn_flags(cpu.X); }
+#define cpu_op_dey() { cpu.Y = (cpu.Y - 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
 
 // Stack
 
-static inline void cpu_op_php() { cpu_stack_pushb(byte_pack(cpu.P) | 0x30); }
-static inline void cpu_op_pha() { cpu_stack_pushb(cpu.A & 0xff); }
-static inline void cpu_op_pla() { cpu.A = cpu_stack_popb(); cpu_update_zn_flags(cpu.A); }
-static inline void cpu_op_plp() {
-//  cpu.P = (cpu_stack_popb() & 0xEF) | 0x20;
-  byte_unpack(cpu.P, cpu_stack_popb());
-  cpu.P[break_bp] = 0;
-  cpu.P[unused_bp] = 1;
+#define cpu_op_php() { cpu_stack_pushb(byte_pack(cpu.P) | 0x30); }
+#define cpu_op_pha() { cpu_stack_pushb(cpu.A & 0xff); }
+#define cpu_op_pla() { cpu.A = cpu_stack_popb(); cpu_update_zn_flags(cpu.A); }
+#define cpu_op_plp() { \
+/*  cpu.P = (cpu_stack_popb() & 0xEF) | 0x20; */ \
+  byte_unpack(cpu.P, cpu_stack_popb()); \
+  cpu.P[break_bp] = 0; \
+  cpu.P[unused_bp] = 1; \
 }
 
 
 
 // Extended Instruction Set
 
-static inline void cpu_op_aso() { cpu_op_asl(); cpu_op_ora(); }
-static inline void cpu_op_axa() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff) & (op_address >> 8)); }
-static inline void cpu_op_axs() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff)); }
-static inline void cpu_op_dcm()
-{
-    op_value--;
-    op_value &= 0xFF;
-    memory_writeb(op_address, op_value);
-    cpu_op_cmp();
+#define cpu_op_aso() { cpu_op_asl(); cpu_op_ora(); }
+#define cpu_op_axa() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff) & (op_address >> 8)); }
+#define cpu_op_axs() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff)); }
+#define cpu_op_dcm() { \
+    op_value--;\
+    op_value &= 0xFF; \
+    memory_writeb(op_address, op_value); \
+    cpu_op_cmp(); \
 }
-static inline void cpu_op_ins()
-{
-    op_value = (op_value + 1) & 0xFF;
-    memory_writeb(op_address, op_value);
-    cpu_op_sbc();
+#define cpu_op_ins() { \
+    op_value = (op_value + 1) & 0xFF; \
+    memory_writeb(op_address, op_value); \
+    cpu_op_sbc(); \
 }
-static inline void cpu_op_lax() { cpu_update_zn_flags(cpu.A = cpu.X = op_value & 0xff); }
-static inline void cpu_op_lse() { cpu_op_lsr(); cpu_op_eor(); }
-static inline void cpu_op_rla() { cpu_op_rol(); cpu_op_and(); }
-static inline void cpu_op_rra() { cpu_op_ror(); cpu_op_adc(); }
+#define cpu_op_lax() { cpu_update_zn_flags(cpu.A = cpu.X = op_value & 0xff); }
+#define cpu_op_lse() { cpu_op_lsr(); cpu_op_eor(); }
+#define cpu_op_rla() { cpu_op_rol(); cpu_op_and(); }
+#define cpu_op_rra() { cpu_op_ror(); cpu_op_adc(); }
 
 
 
 
-
+#if 0
 // Base 6502 instruction set
 
 #define CPU_OP_BIS(o, c, f, n, a) cpu_op_cycles[0x##o] = c; \
@@ -450,19 +502,18 @@ static inline void cpu_op_rra() { cpu_op_ror(); cpu_op_adc(); }
                                   /*cpu_op_name[0x##o] = n; */ \
                                   cpu_op_address_mode[0x##o] = cpu_address_##a; \
                                   /*cpu_op_in_base_instruction_set[0x##o] = false;*/
+#endif
 
 
 #define CASE_CPU_OP_BIS(o, c, f, n, a) \
   case 0x##o: __cycles = c; \
-              cpu_address_##a(); \
-              cpu_op_##f(); \
+              cpu_address_##a(cpu_op_##f); \
               cpu_op_cnts[0x##o] ++; \
               break;
 
 #define CASE_CPU_OP_NII(o, a) \
   case 0x##o: __cycles = 1; \
-              cpu_address_##a(); \
-              ____FE____(); \
+              cpu_address_##a(____FE____); \
               cpu_op_cnts[0x##o] ++; \
               break;
 
@@ -767,8 +818,9 @@ inline unsigned long cpu_clock()
 void cpu_run(long cycles)
 {
   int __cycles;
+  int op_cycles;
   while (cycles > 0) {
-    op_code = instr_fetch(cpu.PC++); //memory_readb(cpu.PC++);
+    uint32_t op_code = instr_fetch(cpu.PC++); //memory_readb(cpu.PC++);
       switch (op_code) {
         CASE_CPU_OP_BIS(00, 7, brk, "BRK", implied)
         CASE_CPU_OP_BIS(01, 6, ora, "ORA", indirect_x)
@@ -787,7 +839,7 @@ void cpu_run(long cycles)
         CASE_CPU_OP_BIS(19, 4, ora, "ORA", absolute_y)
         CASE_CPU_OP_BIS(1D, 4, ora, "ORA", absolute_x)
         CASE_CPU_OP_BIS(1E, 7, asl, "ASL", absolute_x)
-        CASE_CPU_OP_BIS(20, 6, jsr, "JSR", absolute)
+        CASE_CPU_OP_BIS(20, 6, jsr, "JSR", absolute_jmp)
         CASE_CPU_OP_BIS(21, 6, and, "AND", indirect_x)
         CASE_CPU_OP_BIS(24, 3, bit, "BIT", zero_page)
         CASE_CPU_OP_BIS(25, 3, and, "AND", zero_page)
@@ -842,24 +894,24 @@ void cpu_run(long cycles)
         CASE_CPU_OP_BIS(79, 4, adc, "ADC", absolute_y)
         CASE_CPU_OP_BIS(7D, 4, adc, "ADC", absolute_x)
         CASE_CPU_OP_BIS(7E, 7, ror, "ROR", absolute_x)
-        CASE_CPU_OP_BIS(81, 6, sta, "STA", indirect_x)
-        CASE_CPU_OP_BIS(84, 3, sty, "STY", zero_page)
-        CASE_CPU_OP_BIS(85, 3, sta, "STA", zero_page)
-        CASE_CPU_OP_BIS(86, 3, stx, "STX", zero_page)
+        CASE_CPU_OP_BIS(81, 6, sta, "STA", indirect_x_notload)
+        CASE_CPU_OP_BIS(84, 3, sty, "STY", zero_page_notload)
+        CASE_CPU_OP_BIS(85, 3, sta, "STA", zero_page_notload)
+        CASE_CPU_OP_BIS(86, 3, stx, "STX", zero_page_notload)
         CASE_CPU_OP_BIS(88, 2, dey, "DEY", implied)
         CASE_CPU_OP_BIS(8A, 2, txa, "TXA", implied)
-        CASE_CPU_OP_BIS(8C, 4, sty, "STY", absolute)
-        CASE_CPU_OP_BIS(8D, 4, sta, "STA", absolute)
-        CASE_CPU_OP_BIS(8E, 4, stx, "STX", absolute)
+        CASE_CPU_OP_BIS(8C, 4, sty, "STY", absolute_notload)
+        CASE_CPU_OP_BIS(8D, 4, sta, "STA", absolute_notload)
+        CASE_CPU_OP_BIS(8E, 4, stx, "STX", absolute_notload)
         CASE_CPU_OP_BIS(90, 2, bcc, "BCC", relative)
-        CASE_CPU_OP_BIS(91, 6, sta, "STA", indirect_y)
-        CASE_CPU_OP_BIS(94, 4, sty, "STY", zero_page_x)
-        CASE_CPU_OP_BIS(95, 4, sta, "STA", zero_page_x)
-        CASE_CPU_OP_BIS(96, 4, stx, "STX", zero_page_y)
+        CASE_CPU_OP_BIS(91, 6, sta, "STA", indirect_y_notload)
+        CASE_CPU_OP_BIS(94, 4, sty, "STY", zero_page_x_notload)
+        CASE_CPU_OP_BIS(95, 4, sta, "STA", zero_page_x_notload)
+        CASE_CPU_OP_BIS(96, 4, stx, "STX", zero_page_y_notload)
         CASE_CPU_OP_BIS(98, 2, tya, "TYA", implied)
-        CASE_CPU_OP_BIS(99, 5, sta, "STA", absolute_y)
+        CASE_CPU_OP_BIS(99, 5, sta, "STA", absolute_y_notload)
         CASE_CPU_OP_BIS(9A, 2, txs, "TXS", implied)
-        CASE_CPU_OP_BIS(9D, 5, sta, "STA", absolute_x)
+        CASE_CPU_OP_BIS(9D, 5, sta, "STA", absolute_x_notload)
         CASE_CPU_OP_BIS(A0, 2, ldy, "LDY", immediate)
         CASE_CPU_OP_BIS(A1, 6, lda, "LDA", indirect_x)
         CASE_CPU_OP_BIS(A2, 2, ldx, "LDX", immediate)
@@ -950,12 +1002,12 @@ void cpu_run(long cycles)
         CASE_CPU_OP_EIS(77, 6, rra, "RRA", zero_page_x)
         CASE_CPU_OP_EIS(7B, 7, rra, "RRA", absolute_y)
         CASE_CPU_OP_EIS(7F, 7, rra, "RRA", absolute_x)
-        CASE_CPU_OP_EIS(83, 6, axs, "SAX", indirect_x)
-        CASE_CPU_OP_EIS(87, 3, axs, "SAX", zero_page)
-        CASE_CPU_OP_EIS(8F, 4, axs, "SAX", absolute)
-        CASE_CPU_OP_EIS(93, 6, axa, "SAX", indirect_y)
-        CASE_CPU_OP_EIS(97, 4, axs, "SAX", zero_page_y)
-        CASE_CPU_OP_EIS(9F, 5, axa, "SAX", absolute_y)
+        CASE_CPU_OP_EIS(83, 6, axs, "SAX", indirect_x_notload)
+        CASE_CPU_OP_EIS(87, 3, axs, "SAX", zero_page_notload)
+        CASE_CPU_OP_EIS(8F, 4, axs, "SAX", absolute_notload)
+        CASE_CPU_OP_EIS(93, 6, axa, "SAX", indirect_y_notload)
+        CASE_CPU_OP_EIS(97, 4, axs, "SAX", zero_page_y_notload)
+        CASE_CPU_OP_EIS(9F, 5, axa, "SAX", absolute_y_notload)
         CASE_CPU_OP_EIS(A3, 6, lax, "LAX", indirect_x)
         CASE_CPU_OP_EIS(A7, 3, lax, "LAX", zero_page)
         CASE_CPU_OP_EIS(AF, 4, lax, "LAX", absolute)
@@ -978,29 +1030,30 @@ void cpu_run(long cycles)
         CASE_CPU_OP_EIS(FB, 7, ins, "ISB", absolute_y)
         CASE_CPU_OP_EIS(FF, 7, ins, "ISB", absolute_x)
 
-        CASE_CPU_OP_NII(04, zero_page)
-        CASE_CPU_OP_NII(0C, absolute)
-        CASE_CPU_OP_NII(14, zero_page_x)
-        CASE_CPU_OP_NII(1A, implied)
-        CASE_CPU_OP_NII(1C, absolute_x)
-        CASE_CPU_OP_NII(34, zero_page_x)
-        CASE_CPU_OP_NII(3A, implied)
-        CASE_CPU_OP_NII(3C, absolute_x)
-        CASE_CPU_OP_NII(44, zero_page)
-        CASE_CPU_OP_NII(54, zero_page_x)
-        CASE_CPU_OP_NII(5A, implied)
-        CASE_CPU_OP_NII(5C, absolute_x)
-        CASE_CPU_OP_NII(64, zero_page)
-        CASE_CPU_OP_NII(74, zero_page_x)
-        CASE_CPU_OP_NII(7A, implied)
-        CASE_CPU_OP_NII(7C, absolute_x)
-        CASE_CPU_OP_NII(80, immediate)
-        CASE_CPU_OP_NII(D4, zero_page_x)
-        CASE_CPU_OP_NII(DA, implied)
-        CASE_CPU_OP_NII(DC, absolute_x)
-        CASE_CPU_OP_NII(F4, zero_page_x)
-        CASE_CPU_OP_NII(FA, implied)
-        CASE_CPU_OP_NII(FC, absolute_x)
+        default: printf("not implemented opcode = 0x%02x\n", op_code); assert(0);
+        //CASE_CPU_OP_NII(04, zero_page)
+        //CASE_CPU_OP_NII(0C, absolute)
+        //CASE_CPU_OP_NII(14, zero_page_x)
+        //CASE_CPU_OP_NII(1A, implied)
+        //CASE_CPU_OP_NII(1C, absolute_x)
+        //CASE_CPU_OP_NII(34, zero_page_x)
+        //CASE_CPU_OP_NII(3A, implied)
+        //CASE_CPU_OP_NII(3C, absolute_x)
+        //CASE_CPU_OP_NII(44, zero_page)
+        //CASE_CPU_OP_NII(54, zero_page_x)
+        //CASE_CPU_OP_NII(5A, implied)
+        //CASE_CPU_OP_NII(5C, absolute_x)
+        //CASE_CPU_OP_NII(64, zero_page)
+        //CASE_CPU_OP_NII(74, zero_page_x)
+        //CASE_CPU_OP_NII(7A, implied)
+        //CASE_CPU_OP_NII(7C, absolute_x)
+        //CASE_CPU_OP_NII(80, immediate)
+        //CASE_CPU_OP_NII(D4, zero_page_x)
+        //CASE_CPU_OP_NII(DA, implied)
+        //CASE_CPU_OP_NII(DC, absolute_x)
+        //CASE_CPU_OP_NII(F4, zero_page_x)
+        //CASE_CPU_OP_NII(FA, implied)
+        //CASE_CPU_OP_NII(FC, absolute_x)
       }
     cycles -= __cycles + op_cycles;
     cpu_cycles -= __cycles + op_cycles;

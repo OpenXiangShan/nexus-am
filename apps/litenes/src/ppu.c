@@ -483,6 +483,8 @@ inline void ppu_io_write(word address, byte data)
 				log("ppu_write.3(%x,%d)\n", ppu.PPUADDR, data);
                 ppu_ram_write(ppu.PPUADDR, data);
             }
+
+            ppu.PPUADDR += vram_address_increment;
         }
     }
     ppu_latch = data;
