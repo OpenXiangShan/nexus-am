@@ -39,10 +39,7 @@ typedef enum {
 typedef struct {
     uint32_t PC; // Program Counter,
     uint32_t SP; // Stack Pointer,
-    byte A, X, Y; // Registers
-    //word PC; // Program Counter,
-    //byte SP; // Stack Pointer,
-    //byte A, X, Y; // Registers
+    uint32_t A, X, Y; // Registers
     //byte P; // Flag Register
     int P[8]; // Expended Flag Register
 } CPU_STATE;

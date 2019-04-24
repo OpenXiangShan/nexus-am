@@ -16,6 +16,7 @@ unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 //bool cpu_op_in_base_instruction_set[256]; // true if instruction is in base 6502 instruction set
 //char *cpu_op_name[256];                   // Instruction names
 //static int cpu_op_cycles[256];                   // CPU cycles used by instructions
+static int cpu_op_cnts[256];                   // CPU cycles used by instructions
 
 // Interrupt Addresses
 //word cpu_nmi_interrupt_address();
@@ -32,64 +33,70 @@ void cpu_trace_instruction();
 static inline void cpu_address_implied() { }
 
 static inline void cpu_address_immediate() {
-  op_value = memory_readb(cpu.PC);
+  op_value = instr_fetch(cpu.PC);
   cpu.PC++;
 }
 
 static inline void cpu_address_zero_page() {
-  op_address = memory_readb(cpu.PC);
+  op_address = instr_fetch(cpu.PC);
   op_value = CPU_RAM[op_address];
   cpu.PC++;
 }
 
 static inline void cpu_address_zero_page_x() {
-  op_address = (memory_readb(cpu.PC) + cpu.X) & 0xFF;
+  op_address = (instr_fetch(cpu.PC) + cpu.X) & 0xFF;
   op_value = CPU_RAM[op_address];
   cpu.PC++;
 }
 
-void cpu_address_zero_page_y() {
-  op_address = (memory_readb(cpu.PC) + cpu.Y) & 0xFF;
+static inline void cpu_address_zero_page_y() {
+  op_address = (instr_fetch(cpu.PC) + cpu.Y) & 0xFF;
   op_value = CPU_RAM[op_address];
   cpu.PC++;
 }
 
 static inline void cpu_address_absolute() {
-  op_address = memory_readw(cpu.PC);
+  op_address = instr_fetchw(cpu.PC);
   op_value = memory_readb(op_address);
   cpu.PC += 2;
 }
 
+static inline void cpu_address_absolute_jmp() {
+  op_address = instr_fetchw(cpu.PC);
+  if (op_address == cpu.PC - 1) {
+    // spin to wait for interrupt, do not count
+    cpu_op_cnts[0x4c] --;
+  }
+//  op_value = memory_readb(op_address);
+//  cpu.PC += 2;
+}
+
 static inline void cpu_address_absolute_x() {
-  op_address = memory_readw(cpu.PC) + cpu.X;
+  op_address = (instr_fetchw(cpu.PC) + cpu.X) & 0xffff;
   op_value = memory_readb(op_address);
   cpu.PC += 2;
 
-  if ((op_address >> 8) != (cpu.PC >> 8)) {
+  if ((op_address ^ cpu.PC) >> 8) {
     op_cycles++;
   }
 }
 
 static inline void cpu_address_absolute_y() {
-  op_address = (memory_readw(cpu.PC) + cpu.Y) & 0xFFFF;
+  op_address = (instr_fetchw(cpu.PC) + cpu.Y) & 0xFFFF;
   op_value = memory_readb(op_address);
   cpu.PC += 2;
 
-  if ((op_address >> 8) != (cpu.PC >> 8)) {
+  if ((op_address ^ cpu.PC) >> 8) {
     op_cycles++;
   }
 }
 
 static inline void cpu_address_relative() {
-  op_address = memory_readb(cpu.PC);
+  op_address = instr_fetch(cpu.PC);
   cpu.PC++;
-  int flag = op_address & 0x80;
-  if (flag < 0 || flag > 0)
-    op_address -= 0x100;
-  op_address += cpu.PC;
+  op_address = cpu.PC + (int8_t)op_address;
 
-  flag = (op_address >> 8) != (cpu.PC >> 8);
-  if (flag < 0 || flag > 0) {
+  if ((op_address ^ cpu.PC) >> 8) {
     op_cycles++;
   }
 }
@@ -100,7 +107,7 @@ static inline void cpu_address_indirect() {
   // The famous 6502 bug when instead of reading from $C0FF/$C100 it reads from $C0FF/$C000
   if ((arg_addr & 0xFF) == 0xFF) {
     // Buggy code
-    op_address = (memory_readb(arg_addr & 0xFF00) << 8) + memory_readb(arg_addr);
+    op_address = (memory_readb(arg_addr & 0xFF00) << 8) | memory_readb(arg_addr);
   }
   else {
     // Normal code
@@ -110,19 +117,20 @@ static inline void cpu_address_indirect() {
 }
 
 static inline void cpu_address_indirect_x() {
-  uint32_t arg_addr = memory_readb(cpu.PC);
-  op_address = (memory_readb((arg_addr + cpu.X + 1) & 0xFF) << 8) | memory_readb((arg_addr + cpu.X) & 0xFF);
+  uint32_t arg_addr = instr_fetch(cpu.PC);
+  //op_address = (memory_readb((arg_addr + cpu.X + 1) & 0xFF) << 8) | memory_readb((arg_addr + cpu.X) & 0xFF);
+  op_address = memory_readw(arg_addr + cpu.X);
   op_value = memory_readb(op_address);
   cpu.PC++;
 }
 
 static inline void cpu_address_indirect_y() {
-  uint32_t arg_addr = memory_readb(cpu.PC);
-  op_address = (((memory_readb((arg_addr + 1) & 0xFF) << 8) | memory_readb(arg_addr)) + cpu.Y) & 0xFFFF;
+  uint32_t arg_addr = instr_fetch(cpu.PC);
+  op_address = (((memory_readb((arg_addr + 1) & 0xFF) << 8) | memory_readb(arg_addr)) + (cpu.Y & 0xff)) & 0xFFFF;
   op_value = memory_readb(op_address);
   cpu.PC++;
 
-  if ((op_address >> 8) != (cpu.PC >> 8)) {
+  if ((op_address ^ cpu.PC) >> 8) {
     op_cycles++;
   }
 }
@@ -178,7 +186,7 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 		cpu.PC = op_address; \
 	} \
 } while(0)
-#define cpu_compare(reg) int result = (reg) - op_value; \
+#define cpu_compare(reg) int result = (reg & 0xff) - op_value; \
                          cpu_modify_flag(carry_bp, result >= 0); \
                          cpu_modify_flag(zero_bp, result == 0); \
                          cpu_modify_flag(negative_bp, (result >> 7) & 1);
@@ -195,29 +203,29 @@ static inline void cpu_op_nop() { }
 
 static inline void cpu_op_adc()
 {
-    int result = cpu.A + op_value + cpu_flag_set(carry_bp);
+    int result = (cpu.A & 0xff) + op_value + cpu_flag_set(carry_bp);
     cpu_modify_flag(carry_bp, (result & 0x100));
     cpu_modify_flag(overflow_bp, (~(cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
-    cpu.A = result & 0xFF;
-    cpu_update_zn_flags(cpu.A);
+    cpu_update_zn_flags(result);
+    cpu.A = result;
 }
 
 // Subtraction
 
 static inline void cpu_op_sbc()
 {
-    int result = cpu.A - op_value - !cpu_flag_set(carry_bp);
+    int result = (cpu.A & 0xff) - op_value - !cpu_flag_set(carry_bp);
     cpu_modify_flag(carry_bp, !(result & 0x100));
     cpu_modify_flag(overflow_bp, ((cpu.A ^ op_value) & (cpu.A ^ result) & 0x80));
-    cpu.A = result & 0xFF;
-    cpu_update_zn_flags(cpu.A);
+    cpu_update_zn_flags(result);
+    cpu.A = result;
 }
 
 // Bit Manipulation Operations
 
 static inline void cpu_op_and() { cpu_update_zn_flags(cpu.A &= op_value); }
 static inline void cpu_op_bit() {
-  cpu_modify_flag(zero_bp, !(cpu.A & op_value));
+  cpu_modify_flag(zero_bp, !(cpu.A & op_value & 0xff));
   cpu_modify_flag(6, (op_value >> 6) & 0x1);
   cpu_modify_flag(7, (op_value >> 7) & 0x1);
 }
@@ -241,8 +249,8 @@ static inline void cpu_op_lsra()
 {
     int value = (cpu.A & 0xff) >> 1;
     cpu_modify_flag(carry_bp, cpu.A & 0x01);
-    cpu.A = value & 0xFF;
     cpu_update_zn_flags(value);
+    cpu.A = value;
 }
 static inline void cpu_op_lsr()
 {
@@ -256,7 +264,7 @@ static inline void cpu_op_lsr()
 static inline void cpu_op_rola()
 {
     int value = (cpu.A & 0xff) << 1;
-    value |= cpu_flag_set(carry_bp) ? 1 : 0;
+    value |= cpu_flag_set(carry_bp);
     cpu_modify_flag(carry_bp, value > 0xFF);
     cpu.A = value & 0xFF;
     cpu_update_zn_flags(cpu.A);
@@ -264,7 +272,7 @@ static inline void cpu_op_rola()
 static inline void cpu_op_rol()
 {
     op_value <<= 1;
-    op_value |= cpu_flag_set(carry_bp) ? 1 : 0;
+    op_value |= cpu_flag_set(carry_bp);
     cpu_modify_flag(carry_bp, op_value > 0xFF);
     op_value &= 0xFF;
     memory_writeb(op_address, op_value);
@@ -276,7 +284,7 @@ static inline void cpu_op_rora()
     cpu_modify_flag(carry_bp, cpu.A & 0x01);
     cpu.A = ((cpu.A & 0xff) >> 1) | (carry << 7);
     cpu_modify_flag(zero_bp, (cpu.A & 0xff) == 0);
-    cpu_modify_flag(negative_bp, !!carry);
+    cpu_modify_flag(negative_bp, carry);
 }
 static inline void cpu_op_ror()
 {
@@ -284,7 +292,7 @@ static inline void cpu_op_ror()
     cpu_modify_flag(carry_bp, op_value & 0x01);
     op_value = ((op_value >> 1) | (carry << 7)) & 0xFF;
     cpu_modify_flag(zero_bp, op_value == 0);
-    cpu_modify_flag(negative_bp, !!carry);
+    cpu_modify_flag(negative_bp, carry);
     memory_writeb(op_address, op_value);
 }
 
@@ -297,8 +305,8 @@ static inline void cpu_op_ldy() { cpu_update_zn_flags(cpu.Y = op_value); }
 // Storing
 
 static inline void cpu_op_sta() { memory_writeb(op_address, cpu.A & 0xff); }
-static inline void cpu_op_stx() { memory_writeb(op_address, cpu.X); }
-static inline void cpu_op_sty() { memory_writeb(op_address, cpu.Y); }
+static inline void cpu_op_stx() { memory_writeb(op_address, cpu.X & 0xff); }
+static inline void cpu_op_sty() { memory_writeb(op_address, cpu.Y & 0xff); }
 
 // Transfering
 
@@ -307,7 +315,7 @@ static inline void cpu_op_txa() { cpu_update_zn_flags(cpu.A = cpu.X);  }
 static inline void cpu_op_tay() { cpu_update_zn_flags(cpu.Y = cpu.A);  }
 static inline void cpu_op_tya() { cpu_update_zn_flags(cpu.A = cpu.Y);  }
 static inline void cpu_op_tsx() { cpu_update_zn_flags(cpu.X = cpu.SP); }
-static inline void cpu_op_txs() { cpu.SP = cpu.X; }
+static inline void cpu_op_txs() { cpu.SP = cpu.X & 0xff; }
 
 // Branching Positive
 
@@ -320,13 +328,7 @@ static inline void cpu_op_bvs() { cpu_branch(cpu_flag_set(overflow_bp));  }
 
 static inline void cpu_op_bne() { cpu_branch(!cpu_flag_set(zero_bp));     }
 static inline void cpu_op_bcc() { cpu_branch(!cpu_flag_set(carry_bp));    }
-static inline void cpu_op_bpl() {
-  int flag = !cpu_flag_set(negative_bp);
-	if (flag < 0 || flag > 0) {
-		cpu.PC = op_address;
-	}
-   	// cpu_branch(!cpu_flag_set(negative_bp));
-}
+static inline void cpu_op_bpl() { cpu_branch(!cpu_flag_set(negative_bp)); }
 static inline void cpu_op_bvc() { cpu_branch(!cpu_flag_set(overflow_bp)); }
 
 // Jumping
@@ -366,20 +368,20 @@ static inline void cpu_op_sei() { cpu_set_flag(interrupt_bp);   }
 // Comparison
 
 static inline void cpu_op_cmp() { cpu_compare(cpu.A & 0xff); }
-static inline void cpu_op_cpx() { cpu_compare(cpu.X); }
-static inline void cpu_op_cpy() { cpu_compare(cpu.Y); }
+static inline void cpu_op_cpx() { cpu_compare(cpu.X & 0xff); }
+static inline void cpu_op_cpy() { cpu_compare(cpu.Y & 0xff); }
 
 // Increment
 
 static inline void cpu_op_inc() { uint32_t result = op_value + 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
-static inline void cpu_op_inx() { cpu_update_zn_flags(++cpu.X); }
-static inline void cpu_op_iny() { cpu_update_zn_flags(++cpu.Y); }
+static inline void cpu_op_inx() { cpu.X = (cpu.X + 1) & 0xff; cpu_update_zn_flags(cpu.X); }
+static inline void cpu_op_iny() { cpu.Y = (cpu.Y + 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
 
 // Decrement
 
 static inline void cpu_op_dec() { uint32_t result = op_value - 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
-static inline void cpu_op_dex() { cpu_update_zn_flags(--cpu.X); }
-static inline void cpu_op_dey() { cpu_update_zn_flags(--cpu.Y); }
+static inline void cpu_op_dex() { cpu.X = (cpu.X - 1) & 0xff; cpu_update_zn_flags(cpu.X); }
+static inline void cpu_op_dey() { cpu.Y = (cpu.Y - 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
 
 // Stack
 
@@ -398,8 +400,8 @@ static inline void cpu_op_plp() {
 // Extended Instruction Set
 
 static inline void cpu_op_aso() { cpu_op_asl(); cpu_op_ora(); }
-static inline void cpu_op_axa() { memory_writeb(op_address, cpu.A & cpu.X & (op_address >> 8)); }
-static inline void cpu_op_axs() { memory_writeb(op_address, cpu.A & cpu.X); }
+static inline void cpu_op_axa() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff) & (op_address >> 8)); }
+static inline void cpu_op_axs() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff)); }
 static inline void cpu_op_dcm()
 {
     op_value--;
@@ -413,7 +415,7 @@ static inline void cpu_op_ins()
     memory_writeb(op_address, op_value);
     cpu_op_sbc();
 }
-static inline void cpu_op_lax() { cpu_update_zn_flags(cpu.A = cpu.X = op_value); }
+static inline void cpu_op_lax() { cpu_update_zn_flags(cpu.A = cpu.X = op_value & 0xff); }
 static inline void cpu_op_lse() { cpu_op_lsr(); cpu_op_eor(); }
 static inline void cpu_op_rla() { cpu_op_rol(); cpu_op_and(); }
 static inline void cpu_op_rra() { cpu_op_ror(); cpu_op_adc(); }
@@ -451,12 +453,14 @@ static inline void cpu_op_rra() { cpu_op_ror(); cpu_op_adc(); }
   case 0x##o: __cycles = c; \
               cpu_address_##a(); \
               cpu_op_##f(); \
+              cpu_op_cnts[0x##o] ++; \
               break;
 
 #define CASE_CPU_OP_NII(o, a) \
   case 0x##o: __cycles = 1; \
               cpu_address_##a(); \
               ____FE____(); \
+              cpu_op_cnts[0x##o] ++; \
               break;
 
 #define CASE_CPU_OP_EIS(o, c, f, n, a) CASE_CPU_OP_BIS(o, c, f, n, a)
@@ -781,7 +785,7 @@ void cpu_run(long cycles)
         CASE_CPU_OP_BIS(48, 3, pha, "PHA", implied)
         CASE_CPU_OP_BIS(49, 2, eor, "EOR", immediate)
         CASE_CPU_OP_BIS(4A, 2, lsra,"LSR", implied)
-        CASE_CPU_OP_BIS(4C, 3, jmp, "JMP", absolute)
+        CASE_CPU_OP_BIS(4C, 3, jmp, "JMP", absolute_jmp)
         CASE_CPU_OP_BIS(4D, 4, eor, "EOR", absolute)
         CASE_CPU_OP_BIS(4E, 6, lsr, "LSR", absolute)
         CASE_CPU_OP_BIS(50, 2, bvc, "BVC", relative)
@@ -976,5 +980,26 @@ void cpu_run(long cycles)
     //cpu_cycles -= cpu_op_cycles[op_code] + op_cycles;
     op_cycles = 0;
   }
+
+  static int num = 0;
+  if (num == 10000) {
+    num = 0;
+    int i;
+    int total = 0;
+    for (i = 0; i < 256; i += 8) {
+      printf("0x%02x: %8d %8d %8d %8d    %8d %8d %8d %8d\n", i,
+          cpu_op_cnts[i + 0], cpu_op_cnts[i + 1], cpu_op_cnts[i + 2], cpu_op_cnts[i + 3],
+          cpu_op_cnts[i + 4], cpu_op_cnts[i + 5], cpu_op_cnts[i + 6], cpu_op_cnts[i + 7]);
+      total += cpu_op_cnts[i + 0] + cpu_op_cnts[i + 1] + cpu_op_cnts[i + 2] + cpu_op_cnts[i + 3] +
+          cpu_op_cnts[i + 4] + cpu_op_cnts[i + 5] + cpu_op_cnts[i + 6] + cpu_op_cnts[i + 7];
+    }
+    printf("========== Total = %d ===========\n", total);
+  }
+  num ++;
 }
 
+
+// f0 - 399963 - beq
+// ad - 393468 - lda
+// c8 - 294519 - iny
+// d0 - 267988 - bne

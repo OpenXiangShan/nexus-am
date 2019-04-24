@@ -53,7 +53,12 @@ static inline void memory_writeb(uint32_t address, uint32_t byte_data)
 
 static inline uint32_t memory_readw(uint32_t address)
 {
-    return memory_readb(address) + (memory_readb(address + 1) << 8);
+    return memory_readb(address) | (memory_readb(address + 1) << 8);
+}
+
+static inline uint32_t instr_fetchw(uint32_t address)
+{
+    return instr_fetch(address) | (instr_fetch(address + 1) << 8);
 }
 
 static inline void memory_writew(uint32_t address, uint32_t word_data)

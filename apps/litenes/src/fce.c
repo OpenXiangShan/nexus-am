@@ -102,6 +102,8 @@ void fce_run()
 {
     key_state[0] = 1;
     gtime = uptime();
+    int nr_draw = 0;
+    uint32_t last = gtime;
     while(1)
     {
 		log("gtime:%d\n", gtime);
@@ -112,6 +114,12 @@ void fce_run()
 			log("ppu_run:1, scanlines:%d\n", scanlines);
             ppu_run(1);
             cpu_run(1364 / 12); // 1 scanline
+        }
+        nr_draw ++;
+        if (uptime() - last > 1000) {
+          last = uptime();
+          printf("FPS = %d\n", nr_draw);
+          nr_draw = 0;
         }
 
         int key = read_key();
