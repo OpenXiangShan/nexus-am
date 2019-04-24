@@ -41,40 +41,40 @@ void cpu_trace_instruction();
 
 
 // CPU Adressing Modes
-#define cpu_address_implied(exec) { exec(); }
+#define cpu_address_implied(exec) { exec(true); }
 
 #define cpu_address_immediate(exec) { \
   uint32_t op_value = instr_fetch(cpu.PC); \
   cpu.PC++; \
-  exec(); \
+  exec(true); \
 }
 
 #define cpu_address_zero_page(exec) { \
   uint32_t op_address = instr_fetch(cpu.PC); \
-  uint32_t op_value = CPU_RAM[op_address]; \
+  uint32_t op_value = cpu_ram_read(op_address); \
   cpu.PC++; \
-  exec(); \
+  exec(true); \
 }
 
 #define cpu_address_zero_page_x(exec) { \
   uint32_t op_address = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
-  uint32_t op_value = CPU_RAM[op_address]; \
+  uint32_t op_value = cpu_ram_read(op_address); \
   cpu.PC++; \
-  exec(); \
+  exec(true); \
 }
 
 #define cpu_address_zero_page_y(exec) { \
   uint32_t op_address = (instr_fetch(cpu.PC) + cpu.Y) & 0xFF; \
-  uint32_t op_value = CPU_RAM[op_address]; \
+  uint32_t op_value = cpu_ram_read(op_address); \
   cpu.PC++; \
-  exec(); \
+  exec(true); \
 }
 
 #define cpu_address_absolute(exec) { \
   uint32_t op_address = instr_fetchw(cpu.PC); \
   uint32_t op_value = memory_readb(op_address); \
   cpu.PC += 2; \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_absolute_x(exec) { \
@@ -85,7 +85,7 @@ void cpu_trace_instruction();
   if ((op_address ^ cpu.PC) >> 8) { \
     op_cycles++; \
   } \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_absolute_y(exec) { \
@@ -96,7 +96,7 @@ void cpu_trace_instruction();
   if ((op_address ^ cpu.PC) >> 8) { \
     op_cycles++; \
   } \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_relative(exec) { \
@@ -107,11 +107,11 @@ void cpu_trace_instruction();
   if ((op_address ^ cpu.PC) >> 8) { \
     op_cycles++; \
   } \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_indirect(exec) { \
-  uint32_t arg_addr = memory_readw(cpu.PC); \
+  uint32_t arg_addr = instr_fetchw(cpu.PC); \
   uint32_t op_address; \
  \
   /* The famous 6502 bug when instead of reading from $C0FF/$C100 it reads from $C0FF/$C000 */ \
@@ -122,21 +122,21 @@ void cpu_trace_instruction();
     op_address = memory_readw(arg_addr); \
   } \
   cpu.PC += 2; \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_indirect_x(exec) { \
   uint32_t arg_addr = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
   assert(0); \
-  uint32_t op_address = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  uint32_t op_address = cpu_ram_readw(arg_addr); \
   uint32_t op_value = memory_readb(op_address); \
   cpu.PC++; \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_indirect_y(exec) { \
   uint32_t arg_addr = instr_fetch(cpu.PC); \
-  uint32_t temp = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  uint32_t temp = cpu_ram_readw(arg_addr); \
   uint32_t op_address = (temp + (cpu.Y & 0xff)) & 0xFFFF; \
   uint32_t op_value = memory_readb(op_address); \
   cpu.PC++; \
@@ -144,7 +144,7 @@ void cpu_trace_instruction();
   if ((op_address ^ cpu.PC) >> 8) { \
     op_cycles++; \
   } \
-  exec(); \
+  exec(false); \
 }
 
 // addressing which does not load the op_value
@@ -152,25 +152,25 @@ void cpu_trace_instruction();
 #define cpu_address_zero_page_notload(exec) { \
   uint32_t op_address = instr_fetch(cpu.PC); \
   cpu.PC++; \
-  exec(); \
+  exec(true); \
 }
 
 #define cpu_address_zero_page_x_notload(exec) { \
   uint32_t op_address = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
   cpu.PC++; \
-  exec(); \
+  exec(true); \
 }
 
 #define cpu_address_zero_page_y_notload(exec) { \
   uint32_t op_address = (instr_fetch(cpu.PC) + cpu.Y) & 0xFF; \
   cpu.PC++; \
-  exec(); \
+  exec(true); \
 }
 
 #define cpu_address_absolute_notload(exec) { \
   uint32_t op_address = instr_fetchw(cpu.PC); \
   cpu.PC += 2; \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_absolute_jmp(exec) { \
@@ -179,7 +179,7 @@ void cpu_trace_instruction();
     /* spin to wait for interrupt, do not count */ \
     /*cpu_op_cnts[0x4c] --; */\
   } \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_absolute_x_notload(exec) { \
@@ -189,7 +189,7 @@ void cpu_trace_instruction();
   if ((op_address ^ cpu.PC) >> 8) { \
     op_cycles++; \
   } \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_absolute_y_notload(exec) { \
@@ -199,27 +199,27 @@ void cpu_trace_instruction();
   if ((op_address ^ cpu.PC) >> 8) { \
     op_cycles++; \
   } \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_indirect_x_notload(exec) { \
   uint32_t arg_addr = (instr_fetch(cpu.PC) + cpu.X) & 0xFF; \
   assert(0); \
-  uint32_t op_address = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  uint32_t op_address = cpu_ram_readw(arg_addr); \
   cpu.PC++; \
-  exec(); \
+  exec(false); \
 }
 
 #define cpu_address_indirect_y_notload(exec) { \
   uint32_t arg_addr = instr_fetch(cpu.PC); \
-  uint32_t temp = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr]; \
+  uint32_t temp = cpu_ram_readw(arg_addr); \
   uint32_t op_address = (temp + (cpu.Y & 0xff)) & 0xFFFF; \
   cpu.PC++; \
  \
   if ((op_address ^ cpu.PC) >> 8) { \
     op_cycles++; \
   } \
-  exec(); \
+  exec(false); \
 }
 
 
@@ -228,13 +228,21 @@ void cpu_trace_instruction();
 byte CPU_RAM[0x8000];
 
 inline uint32_t cpu_ram_read(uint32_t address) {
-  return CPU_RAM[address & 0x7FF];
+  return CPU_RAM[address];
 }
 
-void cpu_ram_write(uint32_t address, uint32_t byte_data) {
-  CPU_RAM[address & 0x7FF] = byte_data;
+inline void cpu_ram_write(uint32_t address, uint32_t byte_data) {
+  CPU_RAM[address] = byte_data;
 }
 
+static inline uint32_t cpu_ram_readw(uint32_t address) {
+  return cpu_ram_read(address) | (cpu_ram_read(address + 1) << 8);
+}
+
+static inline void cpu_ram_writew(uint32_t address, uint32_t word_data) {
+  cpu_ram_write(address, word_data & 0xff);
+  cpu_ram_write(address + 1, word_data >> 8);
+}
 
 
 // Interrupt Addresses
@@ -247,10 +255,10 @@ static inline uint32_t cpu_irq_interrupt_address()   { return memory_readw(0xFFF
 
 // Stack Routines
 
-static inline void cpu_stack_pushb(uint32_t byte_data) { memory_writeb(0x100 + cpu.SP--, byte_data);       }
-static inline void cpu_stack_pushw(uint32_t word_data) { memory_writew(0xFF + cpu.SP, word_data); cpu.SP -= 2; }
-static inline uint32_t cpu_stack_popb()           { return memory_readb(0x100 + ++cpu.SP);       }
-static inline uint32_t cpu_stack_popw()           { cpu.SP += 2; return memory_readw(0xFF + cpu.SP); }
+static inline void cpu_stack_pushb(uint32_t byte_data) { cpu_ram_write(0x100 + cpu.SP--, byte_data);       }
+static inline void cpu_stack_pushw(uint32_t word_data) { cpu_ram_writew(0xFF + cpu.SP, word_data); cpu.SP -= 2; }
+static inline uint32_t cpu_stack_popb()           { return cpu_ram_read(0x100 + ++cpu.SP);       }
+static inline uint32_t cpu_stack_popw()           { cpu.SP += 2; return cpu_ram_readw(0xFF + cpu.SP); }
 
 
 
@@ -300,11 +308,11 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 // NOP
 
-#define cpu_op_nop() { }
+#define cpu_op_nop(in_zero_page) { }
 
 // Addition
 
-#define cpu_op_adc() { \
+#define cpu_op_adc(in_zero_page) { \
     int result = (cpu.A & 0xff) + op_value + cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, (result & 0x100)); \
     cpu_modify_flag(overflow_bp, (~(cpu.A ^ op_value) & (cpu.A ^ result) & 0x80)); \
@@ -314,7 +322,7 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 // Subtraction
 
-#define cpu_op_sbc() { \
+#define cpu_op_sbc(in_zero_page) { \
     uint32_t result = (cpu.A & 0xff) - op_value - !cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, !(result & 0x100)); \
     cpu_modify_flag(overflow_bp, ((cpu.A ^ op_value) & (cpu.A ^ result) & 0x80)); \
@@ -324,8 +332,8 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 // Bit Manipulation Operations
 
-#define cpu_op_and() { cpu_update_zn_flags(cpu.A &= op_value); }
-#define cpu_op_bit() { \
+#define cpu_op_and(in_zero_page) { cpu_update_zn_flags(cpu.A &= op_value); }
+#define cpu_op_bit(in_zero_page) { \
   cpu_modify_flag(overflow_bp, (op_value >> 6) & 0x1); \
   cpu_modify_flag(zero_bp, !(cpu.A & op_value & 0xff)); \
   cpu_modify_flag(negative_bp, (op_value >> 7) & 0x1); \
@@ -333,83 +341,98 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
   lz_set_z_uptodate(); \
   lz_set_n_uptodate(); \
 }
-#define cpu_op_eor() { cpu_update_zn_flags(cpu.A ^= op_value); }
-#define cpu_op_ora() { cpu_update_zn_flags(cpu.A |= op_value); }
-#define cpu_op_asla() { \
+#define cpu_op_eor(in_zero_page) { cpu_update_zn_flags(cpu.A ^= op_value); }
+#define cpu_op_ora(in_zero_page) { cpu_update_zn_flags(cpu.A |= op_value); }
+#define cpu_op_asla(in_zero_page) { \
     cpu_modify_flag(carry_bp, cpu.A & 0x80); \
     cpu.A <<= 1; \
     cpu_update_zn_flags(cpu.A); \
 }
-#define cpu_op_asl() { \
+#define cpu_op_asl(in_zero_page) { \
     cpu_modify_flag(carry_bp, op_value & 0x80); \
     op_value <<= 1; \
     /*op_value &= 0xFF; */\
     cpu_update_zn_flags(op_value); \
-    memory_writeb(op_address, op_value); \
+    if (in_zero_page) { cpu_ram_write(op_address, op_value); } \
+    else { memory_writeb(op_address, op_value); } \
 }
-#define cpu_op_lsra() { \
+#define cpu_op_lsra(in_zero_page) { \
     uint32_t value = (cpu.A & 0xff) >> 1; \
     cpu_modify_flag(carry_bp, cpu.A & 0x01); \
     cpu_update_zn_flags(value); \
     cpu.A = value; \
 }
-#define cpu_op_lsr() { \
+#define cpu_op_lsr(in_zero_page) { \
     cpu_modify_flag(carry_bp, op_value & 0x01); \
     op_value >>= 1; \
     /*op_value &= 0xFF; */\
     cpu_update_zn_flags(op_value); \
-    memory_writeb(op_address, op_value); \
+    if (in_zero_page) { cpu_ram_write(op_address, op_value); } \
+    else { memory_writeb(op_address, op_value); } \
 }
 
-#define cpu_op_rola() { \
+#define cpu_op_rola(in_zero_page) { \
     uint32_t value = (cpu.A & 0xff) << 1; \
     value |= cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, value > 0xFF); \
     cpu_update_zn_flags(value); \
     cpu.A = value; \
 }
-#define cpu_op_rol() { \
+#define cpu_op_rol(in_zero_page) { \
     op_value <<= 1; \
     op_value |= cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, op_value > 0xFF); \
     /* op_value &= 0xFF; */\
     cpu_update_zn_flags(op_value); \
-    memory_writeb(op_address, op_value); \
+    if (in_zero_page) { cpu_ram_write(op_address, op_value); } \
+    else { memory_writeb(op_address, op_value); } \
 }
-#define cpu_op_rora() { \
+#define cpu_op_rora(in_zero_page) { \
     unsigned char carry = cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, cpu.A & 0x01); \
     cpu.A = ((cpu.A & 0xff) >> 1) | (carry << 7); \
     cpu_update_zn_flags(cpu.A); \
 }
-#define cpu_op_ror() { \
+#define cpu_op_ror(in_zero_page) { \
     unsigned char carry = cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, op_value & 0x01); \
     op_value = (op_value >> 1) | (carry << 7); \
     cpu_update_zn_flags(op_value); \
-    memory_writeb(op_address, op_value); \
+    if (in_zero_page) { cpu_ram_write(op_address, op_value); } \
+    else { memory_writeb(op_address, op_value); } \
 }
 
 // Loading
 
-#define cpu_op_lda() { cpu_update_zn_flags(cpu.A = op_value); }
-#define cpu_op_ldx() { cpu_update_zn_flags(cpu.X = op_value); }
-#define cpu_op_ldy() { cpu_update_zn_flags(cpu.Y = op_value); }
+#define cpu_op_lda(in_zero_page) { cpu_update_zn_flags(cpu.A = op_value); }
+#define cpu_op_ldx(in_zero_page) { cpu_update_zn_flags(cpu.X = op_value); }
+#define cpu_op_ldy(in_zero_page) { cpu_update_zn_flags(cpu.Y = op_value); }
 
 // Storing
 
-#define cpu_op_sta() { memory_writeb(op_address, cpu.A & 0xff); }
-#define cpu_op_stx() { memory_writeb(op_address, cpu.X & 0xff); }
-#define cpu_op_sty() { memory_writeb(op_address, cpu.Y & 0xff); }
+#define cpu_op_sta(in_zero_page) { \
+  if (in_zero_page) { cpu_ram_write(op_address, cpu.A); } \
+  else { memory_writeb(op_address, cpu.A); } \
+}
+
+#define cpu_op_stx(in_zero_page) { \
+  if (in_zero_page) { cpu_ram_write(op_address, cpu.X); } \
+  else { memory_writeb(op_address, cpu.X); } \
+}
+
+#define cpu_op_sty(in_zero_page) { \
+  if (in_zero_page) { cpu_ram_write(op_address, cpu.Y); } \
+  else { memory_writeb(op_address, cpu.Y); } \
+}
 
 // Transfering
 
-#define cpu_op_tax() { cpu_update_zn_flags(cpu.X = cpu.A);  }
-#define cpu_op_txa() { cpu_update_zn_flags(cpu.A = cpu.X);  }
-#define cpu_op_tay() { cpu_update_zn_flags(cpu.Y = cpu.A);  }
-#define cpu_op_tya() { cpu_update_zn_flags(cpu.A = cpu.Y);  }
-#define cpu_op_tsx() { cpu_update_zn_flags(cpu.X = cpu.SP); }
-#define cpu_op_txs() { cpu.SP = cpu.X & 0xff; }
+#define cpu_op_tax(in_zero_page) { cpu_update_zn_flags(cpu.X = cpu.A);  }
+#define cpu_op_txa(in_zero_page) { cpu_update_zn_flags(cpu.A = cpu.X);  }
+#define cpu_op_tay(in_zero_page) { cpu_update_zn_flags(cpu.Y = cpu.A);  }
+#define cpu_op_tya(in_zero_page) { cpu_update_zn_flags(cpu.A = cpu.Y);  }
+#define cpu_op_tsx(in_zero_page) { cpu_update_zn_flags(cpu.X = cpu.SP); }
+#define cpu_op_txs(in_zero_page) { cpu.SP = cpu.X & 0xff; }
 
 #define cpu_branch(flag) do { \
 	if (flag) { \
@@ -419,30 +442,30 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 // Branching Positive
 
-#define cpu_op_bcs() { cpu_branch(cpu_flag_set(carry_bp));     }
-#define cpu_op_beq() { lz_compute_z(); cpu_branch(cpu_flag_set(zero_bp));      }
-#define cpu_op_bmi() { lz_compute_n(); cpu_branch(cpu_flag_set(negative_bp));  }
-#define cpu_op_bvs() { cpu_branch(cpu_flag_set(overflow_bp));  }
+#define cpu_op_bcs(in_zero_page) { cpu_branch(cpu_flag_set(carry_bp));     }
+#define cpu_op_beq(in_zero_page) { lz_compute_z(); cpu_branch(cpu_flag_set(zero_bp));      }
+#define cpu_op_bmi(in_zero_page) { lz_compute_n(); cpu_branch(cpu_flag_set(negative_bp));  }
+#define cpu_op_bvs(in_zero_page) { cpu_branch(cpu_flag_set(overflow_bp));  }
 
 // Branching Negative
 
-#define cpu_op_bne() { lz_compute_z(); cpu_branch(!cpu_flag_set(zero_bp));     }
-#define cpu_op_bcc() { cpu_branch(!cpu_flag_set(carry_bp));    }
-#define cpu_op_bpl() { lz_compute_n(); cpu_branch(!cpu_flag_set(negative_bp)); }
-#define cpu_op_bvc() { cpu_branch(!cpu_flag_set(overflow_bp)); }
+#define cpu_op_bne(in_zero_page) { lz_compute_z(); cpu_branch(!cpu_flag_set(zero_bp));     }
+#define cpu_op_bcc(in_zero_page) { cpu_branch(!cpu_flag_set(carry_bp));    }
+#define cpu_op_bpl(in_zero_page) { lz_compute_n(); cpu_branch(!cpu_flag_set(negative_bp)); }
+#define cpu_op_bvc(in_zero_page) { cpu_branch(!cpu_flag_set(overflow_bp)); }
 
 // Jumping
 
-#define cpu_op_jmp() { cpu.PC = op_address; }
+#define cpu_op_jmp(in_zero_page) { cpu.PC = op_address; }
 
 // Subroutines
 
-#define cpu_op_jsr() { cpu_stack_pushw(cpu.PC + 1); cpu.PC = op_address; }
-#define cpu_op_rts() { cpu.PC = cpu_stack_popw() + 1; }
+#define cpu_op_jsr(in_zero_page) { cpu_stack_pushw(cpu.PC + 1); cpu.PC = op_address; }
+#define cpu_op_rts(in_zero_page) { cpu.PC = cpu_stack_popw(in_zero_page) + 1; }
 
 // Interruptions
 
-#define cpu_op_brk() { \
+#define cpu_op_brk(in_zero_page) { \
   cpu_stack_pushw(cpu.PC - 1); \
   lz_compute_n(); \
   lz_compute_z(); \
@@ -451,7 +474,7 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
   cpu.P[break_bp] = 1; \
   cpu.PC = cpu_nmi_interrupt_address(); \
 }
-#define cpu_op_rti() { \
+#define cpu_op_rti(in_zero_page) { \
   byte_unpack(cpu.P, cpu_stack_popb()); \
   lz_set_z_uptodate(); \
   lz_set_n_uptodate(); \
@@ -461,13 +484,13 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 // Flags
 
-#define cpu_op_clc() { cpu_unset_flag(carry_bp);     }
-#define cpu_op_cld() { cpu_unset_flag(decimal_bp);   }
-#define cpu_op_cli() { cpu_unset_flag(interrupt_bp); }
-#define cpu_op_clv() { cpu_unset_flag(overflow_bp);  }
-#define cpu_op_sec() { cpu_set_flag(carry_bp);       }
-#define cpu_op_sed() { cpu_set_flag(decimal_bp);     }
-#define cpu_op_sei() { cpu_set_flag(interrupt_bp);   }
+#define cpu_op_clc(in_zero_page) { cpu_unset_flag(carry_bp);     }
+#define cpu_op_cld(in_zero_page) { cpu_unset_flag(decimal_bp);   }
+#define cpu_op_cli(in_zero_page) { cpu_unset_flag(interrupt_bp); }
+#define cpu_op_clv(in_zero_page) { cpu_unset_flag(overflow_bp);  }
+#define cpu_op_sec(in_zero_page) { cpu_set_flag(carry_bp);       }
+#define cpu_op_sed(in_zero_page) { cpu_set_flag(decimal_bp);     }
+#define cpu_op_sei(in_zero_page) { cpu_set_flag(interrupt_bp);   }
 
 // Comparison
 
@@ -475,28 +498,38 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
                          cpu_modify_flag(carry_bp, result >= 0); \
                          cpu_update_zn_flags(result & 0xff);
 
-#define cpu_op_cmp() { cpu_compare(cpu.A); }
-#define cpu_op_cpx() { cpu_compare(cpu.X); }
-#define cpu_op_cpy() { cpu_compare(cpu.Y); }
+#define cpu_op_cmp(in_zero_page) { cpu_compare(cpu.A); }
+#define cpu_op_cpx(in_zero_page) { cpu_compare(cpu.X); }
+#define cpu_op_cpy(in_zero_page) { cpu_compare(cpu.Y); }
 
 // Increment
 
-#define cpu_op_inc() { uint32_t result = op_value + 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
-#define cpu_op_inx() { cpu.X = (cpu.X + 1) & 0xff; cpu_update_zn_flags(cpu.X); }
-#define cpu_op_iny() { cpu.Y = (cpu.Y + 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
+#define cpu_op_inc(in_zero_page) { \
+  uint32_t result = op_value + 1; \
+  if (in_zero_page) { cpu_ram_write(op_address, result); } \
+  else { memory_writeb(op_address, result); } \
+  cpu_update_zn_flags(result); \
+}
+#define cpu_op_inx(in_zero_page) { cpu.X = (cpu.X + 1) & 0xff; cpu_update_zn_flags(cpu.X); }
+#define cpu_op_iny(in_zero_page) { cpu.Y = (cpu.Y + 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
 
 // Decrement
 
-#define cpu_op_dec() { uint32_t result = (op_value - 1) & 0xff; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
-#define cpu_op_dex() { cpu.X = (cpu.X - 1) & 0xff; cpu_update_zn_flags(cpu.X); }
-#define cpu_op_dey() { cpu.Y = (cpu.Y - 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
+#define cpu_op_dec(in_zero_page) { \
+  uint32_t result = (op_value - 1) & 0xff; \
+  if (in_zero_page) { cpu_ram_write(op_address, result); } \
+  else { memory_writeb(op_address, result); } \
+  cpu_update_zn_flags(result); \
+}
+#define cpu_op_dex(in_zero_page) { cpu.X = (cpu.X - 1) & 0xff; cpu_update_zn_flags(cpu.X); }
+#define cpu_op_dey(in_zero_page) { cpu.Y = (cpu.Y - 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
 
 // Stack
 
-#define cpu_op_php() { lz_compute_z(); lz_compute_n(); cpu_stack_pushb(byte_pack(cpu.P) | 0x30); }
-#define cpu_op_pha() { cpu_stack_pushb(cpu.A & 0xff); }
-#define cpu_op_pla() { cpu.A = cpu_stack_popb(); cpu_update_zn_flags(cpu.A); }
-#define cpu_op_plp() { \
+#define cpu_op_php(in_zero_page) { lz_compute_z(); lz_compute_n(); cpu_stack_pushb(byte_pack(cpu.P) | 0x30); }
+#define cpu_op_pha(in_zero_page) { cpu_stack_pushb(cpu.A & 0xff); }
+#define cpu_op_pla(in_zero_page) { cpu.A = cpu_stack_popb(); cpu_update_zn_flags(cpu.A); }
+#define cpu_op_plp(in_zero_page) { \
 /*  cpu.P = (cpu_stack_popb() & 0xEF) | 0x20; */ \
   byte_unpack(cpu.P, cpu_stack_popb()); \
   cpu.P[break_bp] = 0; \
@@ -509,24 +542,34 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 // Extended Instruction Set
 
-#define cpu_op_aso() { cpu_op_asl(); cpu_op_ora(); }
-#define cpu_op_axa() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff) & (op_address >> 8)); }
-#define cpu_op_axs() { memory_writeb(op_address, cpu.A & (cpu.X & 0xff)); }
-#define cpu_op_dcm() { \
-    op_value--;\
-    op_value &= 0xFF; \
-    memory_writeb(op_address, op_value); \
-    cpu_op_cmp(); \
+#define cpu_op_aso(in_zero_page) { cpu_op_asl(in_zero_page); cpu_op_ora(in_zero_page); }
+#define cpu_op_axa(in_zero_page) { \
+  uint32_t result = cpu.A & (cpu.X & 0xff) & (op_address >> 8); \
+  if (in_zero_page) { cpu_ram_write(op_address, result); } \
+  else { memory_writeb(op_address, result); } \
 }
-#define cpu_op_ins() { \
-    op_value = (op_value + 1) & 0xFF; \
-    memory_writeb(op_address, op_value); \
-    cpu_op_sbc(); \
+#define cpu_op_axs(in_zero_page) { \
+  uint32_t result = cpu.A & (cpu.X & 0xff); \
+  if (in_zero_page) { cpu_ram_write(op_address, result); } \
+  else { memory_writeb(op_address, result); } \
 }
-#define cpu_op_lax() { cpu_update_zn_flags(cpu.A = cpu.X = op_value & 0xff); }
-#define cpu_op_lse() { cpu_op_lsr(); cpu_op_eor(); }
-#define cpu_op_rla() { cpu_op_rol(); cpu_op_and(); }
-#define cpu_op_rra() { cpu_op_ror(); cpu_op_adc(); }
+#define cpu_op_dcm(in_zero_page) { \
+  op_value--;\
+  op_value &= 0xFF; \
+  if (in_zero_page) { cpu_ram_write(op_address, op_value); } \
+  else { memory_writeb(op_address, op_value); } \
+  cpu_op_cmp(in_zero_page); \
+}
+#define cpu_op_ins(in_zero_page) { \
+  op_value = (op_value + 1) & 0xFF; \
+  if (in_zero_page) { cpu_ram_write(op_address, op_value); } \
+  else { memory_writeb(op_address, op_value); } \
+  cpu_op_sbc(in_zero_page); \
+}
+#define cpu_op_lax(in_zero_page) { cpu_update_zn_flags(cpu.A = cpu.X = op_value & 0xff); }
+#define cpu_op_lse(in_zero_page) { cpu_op_lsr(in_zero_page); cpu_op_eor(in_zero_page); }
+#define cpu_op_rla(in_zero_page) { cpu_op_rol(in_zero_page); cpu_op_and(in_zero_page); }
+#define cpu_op_rra(in_zero_page) { cpu_op_ror(in_zero_page); cpu_op_adc(in_zero_page); }
 
 
 
