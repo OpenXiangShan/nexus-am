@@ -234,9 +234,17 @@ static inline uint32_t cpu_stack_popw()           { cpu.SP += 2; return memory_r
 
 
 
-// CPU Instructions
+// flags
 
-static inline void ____FE____() { /* Instruction for future Extension */ }
+// lazy flag computation
+static int lz_zn_result; // for zero and negative flags
+int lz_ov_result, lz_ov_src1, lz_ov_src1, lz_ov_state; // for overflow flag
+int lz_c_result, lz_c_src1, lz_c_src1, lz_c_state; // for carry flag
+
+enum { FLAG_STATE_UPTODATE, FLAG_STATE_LAZY = 1, FLAG_STATE_OP };
+
+#define lz_is_z_lazy() (lz_zn_result & (1 << 24))
+#define lz_is_n_lazy() (lz_zn_result & (1 << 25))
 
 #define cpu_flag_set(flag) cpu.P[flag]
 #define cpu_modify_flag(flag, value) cpu.P[flag] = !!(value)
@@ -244,23 +252,31 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 #define cpu_unset_flag(flag) cpu.P[flag] = 0
 
 static inline void cpu_update_zn_flags(uint32_t value) {
-  cpu_modify_flag(zero_bp, (value & 0xff) == 0);
-  cpu_modify_flag(negative_bp, (value >> 7) & 1);
+  lz_zn_result = value | (1 << 25) | (1 << 24);
+  //cpu_modify_flag(zero_bp, (value & 0xff) == 0);
+  //cpu_modify_flag(negative_bp, (value >> 7) & 1);
 }
 
-#define cpu_branch(flag) do { \
-	if (flag) { \
-		cpu.PC = op_address; \
-	} \
-} while(0)
-#define cpu_compare(reg) int result = (reg & 0xff) - op_value; \
-                         cpu_modify_flag(carry_bp, result >= 0); \
-                         cpu_modify_flag(zero_bp, result == 0); \
-                         cpu_modify_flag(negative_bp, (result >> 7) & 1);
+static inline void lz_set_z_uptodate(void) { lz_zn_result &= ~(1 << 24); }
+static inline void lz_set_n_uptodate(void) { lz_zn_result &= ~(1 << 25); }
 
+static inline void lz_compute_z(void) {
+  if (lz_is_z_lazy()) {
+    cpu.P[zero_bp] = (lz_zn_result & 0xff) == 0;
+    lz_set_z_uptodate();
+  }
+}
 
+static inline void lz_compute_n(void) {
+  if (lz_is_n_lazy()) {
+    cpu.P[negative_bp] = (lz_zn_result >> 7) & 1;
+    lz_set_n_uptodate();
+  }
+}
 
 // CPU Instructions
+
+static inline void ____FE____() { /* Instruction for future Extension */ }
 
 // NOP
 
@@ -279,10 +295,10 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 // Subtraction
 
 #define cpu_op_sbc() { \
-    int result = (cpu.A & 0xff) - op_value - !cpu_flag_set(carry_bp); \
+    uint32_t result = (cpu.A & 0xff) - op_value - !cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, !(result & 0x100)); \
     cpu_modify_flag(overflow_bp, ((cpu.A ^ op_value) & (cpu.A ^ result) & 0x80)); \
-    cpu_update_zn_flags(result); \
+    cpu_update_zn_flags(result & 0xff); \
     cpu.A = result; \
 }
 
@@ -290,9 +306,12 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 
 #define cpu_op_and() { cpu_update_zn_flags(cpu.A &= op_value); }
 #define cpu_op_bit() { \
+  cpu_modify_flag(overflow_bp, (op_value >> 6) & 0x1); \
   cpu_modify_flag(zero_bp, !(cpu.A & op_value & 0xff)); \
-  cpu_modify_flag(6, (op_value >> 6) & 0x1); \
-  cpu_modify_flag(7, (op_value >> 7) & 0x1); \
+  cpu_modify_flag(negative_bp, (op_value >> 7) & 0x1); \
+  /*cpu_update_zn_flags(op_value); */\
+  lz_set_z_uptodate(); \
+  lz_set_n_uptodate(); \
 }
 #define cpu_op_eor() { cpu_update_zn_flags(cpu.A ^= op_value); }
 #define cpu_op_ora() { cpu_update_zn_flags(cpu.A |= op_value); }
@@ -304,12 +323,12 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 #define cpu_op_asl() { \
     cpu_modify_flag(carry_bp, op_value & 0x80); \
     op_value <<= 1; \
-    op_value &= 0xFF; \
+    /*op_value &= 0xFF; */\
     cpu_update_zn_flags(op_value); \
     memory_writeb(op_address, op_value); \
 }
 #define cpu_op_lsra() { \
-    int value = (cpu.A & 0xff) >> 1; \
+    uint32_t value = (cpu.A & 0xff) >> 1; \
     cpu_modify_flag(carry_bp, cpu.A & 0x01); \
     cpu_update_zn_flags(value); \
     cpu.A = value; \
@@ -317,39 +336,37 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 #define cpu_op_lsr() { \
     cpu_modify_flag(carry_bp, op_value & 0x01); \
     op_value >>= 1; \
-    op_value &= 0xFF; \
-    memory_writeb(op_address, op_value); \
+    /*op_value &= 0xFF; */\
     cpu_update_zn_flags(op_value); \
+    memory_writeb(op_address, op_value); \
 }
 
 #define cpu_op_rola() { \
-    int value = (cpu.A & 0xff) << 1; \
+    uint32_t value = (cpu.A & 0xff) << 1; \
     value |= cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, value > 0xFF); \
-    cpu.A = value & 0xFF; \
-    cpu_update_zn_flags(cpu.A); \
+    cpu_update_zn_flags(value); \
+    cpu.A = value; \
 }
 #define cpu_op_rol() { \
     op_value <<= 1; \
     op_value |= cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, op_value > 0xFF); \
-    op_value &= 0xFF; \
-    memory_writeb(op_address, op_value); \
+    /* op_value &= 0xFF; */\
     cpu_update_zn_flags(op_value); \
+    memory_writeb(op_address, op_value); \
 }
 #define cpu_op_rora() { \
     unsigned char carry = cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, cpu.A & 0x01); \
     cpu.A = ((cpu.A & 0xff) >> 1) | (carry << 7); \
-    cpu_modify_flag(zero_bp, (cpu.A & 0xff) == 0); \
-    cpu_modify_flag(negative_bp, carry); \
+    cpu_update_zn_flags(cpu.A); \
 }
 #define cpu_op_ror() { \
     unsigned char carry = cpu_flag_set(carry_bp); \
     cpu_modify_flag(carry_bp, op_value & 0x01); \
-    op_value = ((op_value >> 1) | (carry << 7)) & 0xFF; \
-    cpu_modify_flag(zero_bp, op_value == 0); \
-    cpu_modify_flag(negative_bp, carry); \
+    op_value = (op_value >> 1) | (carry << 7); \
+    cpu_update_zn_flags(op_value); \
     memory_writeb(op_address, op_value); \
 }
 
@@ -374,18 +391,24 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 #define cpu_op_tsx() { cpu_update_zn_flags(cpu.X = cpu.SP); }
 #define cpu_op_txs() { cpu.SP = cpu.X & 0xff; }
 
+#define cpu_branch(flag) do { \
+	if (flag) { \
+		cpu.PC = op_address; \
+	} \
+} while(0)
+
 // Branching Positive
 
 #define cpu_op_bcs() { cpu_branch(cpu_flag_set(carry_bp));     }
-#define cpu_op_beq() { cpu_branch(cpu_flag_set(zero_bp));      }
-#define cpu_op_bmi() { cpu_branch(cpu_flag_set(negative_bp));  }
+#define cpu_op_beq() { lz_compute_z(); cpu_branch(cpu_flag_set(zero_bp));      }
+#define cpu_op_bmi() { lz_compute_n(); cpu_branch(cpu_flag_set(negative_bp));  }
 #define cpu_op_bvs() { cpu_branch(cpu_flag_set(overflow_bp));  }
 
 // Branching Negative
 
-#define cpu_op_bne() { cpu_branch(!cpu_flag_set(zero_bp));     }
+#define cpu_op_bne() { lz_compute_z(); cpu_branch(!cpu_flag_set(zero_bp));     }
 #define cpu_op_bcc() { cpu_branch(!cpu_flag_set(carry_bp));    }
-#define cpu_op_bpl() { cpu_branch(!cpu_flag_set(negative_bp)); }
+#define cpu_op_bpl() { lz_compute_n(); cpu_branch(!cpu_flag_set(negative_bp)); }
 #define cpu_op_bvc() { cpu_branch(!cpu_flag_set(overflow_bp)); }
 
 // Jumping
@@ -401,6 +424,8 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 
 #define cpu_op_brk() { \
   cpu_stack_pushw(cpu.PC - 1); \
+  lz_compute_n(); \
+  lz_compute_z(); \
   cpu_stack_pushb(byte_pack(cpu.P)); \
   cpu.P[unused_bp] = 1; \
   cpu.P[break_bp] = 1; \
@@ -408,6 +433,8 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 }
 #define cpu_op_rti() { \
   byte_unpack(cpu.P, cpu_stack_popb()); \
+  lz_set_z_uptodate(); \
+  lz_set_n_uptodate(); \
   cpu.P[unused_bp] = 1; \
 	cpu.PC = cpu_stack_popw(); \
 }
@@ -424,9 +451,13 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 
 // Comparison
 
-#define cpu_op_cmp() { cpu_compare(cpu.A & 0xff); }
-#define cpu_op_cpx() { cpu_compare(cpu.X & 0xff); }
-#define cpu_op_cpy() { cpu_compare(cpu.Y & 0xff); }
+#define cpu_compare(reg) int result = (reg & 0xff) - op_value; \
+                         cpu_modify_flag(carry_bp, result >= 0); \
+                         cpu_update_zn_flags(result & 0xff);
+
+#define cpu_op_cmp() { cpu_compare(cpu.A); }
+#define cpu_op_cpx() { cpu_compare(cpu.X); }
+#define cpu_op_cpy() { cpu_compare(cpu.Y); }
 
 // Increment
 
@@ -436,13 +467,13 @@ static inline void cpu_update_zn_flags(uint32_t value) {
 
 // Decrement
 
-#define cpu_op_dec() { uint32_t result = op_value - 1; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
+#define cpu_op_dec() { uint32_t result = (op_value - 1) & 0xff; memory_writeb(op_address, result); cpu_update_zn_flags(result); }
 #define cpu_op_dex() { cpu.X = (cpu.X - 1) & 0xff; cpu_update_zn_flags(cpu.X); }
 #define cpu_op_dey() { cpu.Y = (cpu.Y - 1) & 0xff; cpu_update_zn_flags(cpu.Y); }
 
 // Stack
 
-#define cpu_op_php() { cpu_stack_pushb(byte_pack(cpu.P) | 0x30); }
+#define cpu_op_php() { lz_compute_z(); lz_compute_n(); cpu_stack_pushb(byte_pack(cpu.P) | 0x30); }
 #define cpu_op_pha() { cpu_stack_pushb(cpu.A & 0xff); }
 #define cpu_op_pla() { cpu.A = cpu_stack_popb(); cpu_update_zn_flags(cpu.A); }
 #define cpu_op_plp() { \
@@ -450,6 +481,8 @@ static inline void cpu_update_zn_flags(uint32_t value) {
   byte_unpack(cpu.P, cpu_stack_popb()); \
   cpu.P[break_bp] = 0; \
   cpu.P[unused_bp] = 1; \
+  lz_set_z_uptodate(); \
+  lz_set_n_uptodate(); \
 }
 
 
@@ -799,15 +832,17 @@ static void display_statistic() {
 
 void cpu_interrupt()
 {
-    // if (ppu_in_vblank()) {
-        if (ppu_generates_nmi()) {
-            cpu.P[interrupt_bp] = 1;
-            cpu_unset_flag(unused_bp);
-            cpu_stack_pushw(cpu.PC);
-            cpu_stack_pushb(byte_pack(cpu.P));
-            cpu.PC = cpu_nmi_interrupt_address();
-        }
-    // }
+  // if (ppu_in_vblank()) {
+  if (ppu_generates_nmi()) {
+    lz_compute_n();
+    lz_compute_z();
+    cpu.P[interrupt_bp] = 1;
+    cpu_unset_flag(unused_bp);
+    cpu_stack_pushw(cpu.PC);
+    cpu_stack_pushb(byte_pack(cpu.P));
+    cpu.PC = cpu_nmi_interrupt_address();
+  }
+  // }
 }
 
 inline unsigned long cpu_clock()
