@@ -11,6 +11,25 @@ CPU_STATE cpu;
 
 static unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 
+static int cycle_table[256] = {
+/*0x00*/ 7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6,
+/*0x10*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+/*0x20*/ 6,6,2,8,3,3,5,5,4,2,2,2,4,4,6,6,
+/*0x30*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+/*0x40*/ 6,6,2,8,3,3,5,5,3,2,2,2,3,4,6,6,
+/*0x50*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+/*0x60*/ 6,6,2,8,3,3,5,5,4,2,2,2,5,4,6,6,
+/*0x70*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+/*0x80*/ 2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,
+/*0x90*/ 2,6,2,6,4,4,4,4,2,5,2,5,5,5,5,5,
+/*0xA0*/ 2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,
+/*0xB0*/ 2,5,2,5,4,4,4,4,2,4,2,4,4,4,4,4,
+/*0xC0*/ 2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,
+/*0xD0*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+/*0xE0*/ 2,6,3,8,3,3,5,5,2,2,2,2,4,4,6,6,
+/*0xF0*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+};
+
 //static void (*cpu_op_address_mode[256])();       // Array of address modes
 //static void (*cpu_op_handler[256])();            // Array of instruction function pointers
 //bool cpu_op_in_base_instruction_set[256]; // true if instruction is in base 6502 instruction set
@@ -540,14 +559,10 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 
 #define CASE_CPU_OP_BIS(o, c, f, n, a) \
-  case 0x##o: __cycles = c; \
-              cpu_address_##a(cpu_op_##f); \
-              break;
+  case 0x##o: cpu_address_##a(cpu_op_##f); break;
 
 #define CASE_CPU_OP_NII(o, a) \
-  case 0x##o: __cycles = 1; \
-              cpu_address_##a(____FE____); \
-              break;
+  case 0x##o: cpu_address_##a(____FE____); break;
 
 #define CASE_CPU_OP_EIS(o, c, f, n, a) CASE_CPU_OP_BIS(o, c, f, n, a)
 
@@ -854,10 +869,10 @@ inline unsigned long cpu_clock()
 
 void cpu_run(long cycles)
 {
-  int __cycles;
-  int op_cycles;
+  long c = cycles;
   while (cycles > 0) {
     uint32_t op_code = instr_fetch(cpu.PC++); //memory_readb(cpu.PC++);
+    int op_cycles = cycle_table[op_code];
       switch (op_code) {
         CASE_CPU_OP_BIS(00, 7, brk, "BRK", implied)
         CASE_CPU_OP_BIS(01, 6, ora, "ORA", indirect_x)
@@ -1092,15 +1107,12 @@ void cpu_run(long cycles)
         //CASE_CPU_OP_NII(FA, implied)
         //CASE_CPU_OP_NII(FC, absolute_x)
       }
-    cycles -= __cycles + op_cycles;
-    cpu_cycles -= __cycles + op_cycles;
-    //cycles -= cpu_op_cycles[op_code] + op_cycles;
-    //cpu_cycles -= cpu_op_cycles[op_code] + op_cycles;
-    op_cycles = 0;
+    cycles -= op_cycles;
 #ifdef STATISTIC
     cpu_op_cnts[op_code] ++;
 #endif
   }
+  cpu_cycles += (c - cycles);
 
 #ifdef STATISTIC
   static int num = 0;

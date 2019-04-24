@@ -38,7 +38,7 @@ static inline void memory_writeb(uint32_t address, uint32_t byte_data)
             // DMA transfer
             int i;
               for (i = 0; i < 256; i++) {
-                  ppu_sprram_write(cpu_ram_read((0x100 * byte_data) + i));
+                  ppu_sprram_write(cpu_ram_read((0x100 * (byte_data & 0xff)) + i));
               }
               return;
           }
