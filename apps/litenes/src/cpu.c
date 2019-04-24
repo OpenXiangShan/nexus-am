@@ -117,16 +117,19 @@ static inline void cpu_address_indirect() {
 }
 
 static inline void cpu_address_indirect_x() {
-  uint32_t arg_addr = instr_fetch(cpu.PC);
+  uint32_t arg_addr = (instr_fetch(cpu.PC) + cpu.X) & 0xFF;
   //op_address = (memory_readb((arg_addr + cpu.X + 1) & 0xFF) << 8) | memory_readb((arg_addr + cpu.X) & 0xFF);
-  op_address = memory_readw(arg_addr + cpu.X);
+//  op_address = memory_readw((arg_addr + cpu.X) & 0xFF);
+  assert(0);
+  op_address = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr];
   op_value = memory_readb(op_address);
   cpu.PC++;
 }
 
 static inline void cpu_address_indirect_y() {
   uint32_t arg_addr = instr_fetch(cpu.PC);
-  op_address = (((memory_readb((arg_addr + 1) & 0xFF) << 8) | memory_readb(arg_addr)) + (cpu.Y & 0xff)) & 0xFFFF;
+  uint32_t temp = (CPU_RAM[arg_addr + 1] << 8) | CPU_RAM[arg_addr];
+  op_address = (temp + (cpu.Y & 0xff)) & 0xFFFF;
   op_value = memory_readb(op_address);
   cpu.PC++;
 
@@ -718,6 +721,31 @@ void cpu_reset()
     cpu.P[interrupt_bp] = 1;
 }
 
+static void display_statistic() {
+  int i;
+  int total = 0;
+  for (i = 0; i < 256; i += 8) {
+    total += cpu_op_cnts[i + 0] + cpu_op_cnts[i + 1] + cpu_op_cnts[i + 2] + cpu_op_cnts[i + 3] +
+      cpu_op_cnts[i + 4] + cpu_op_cnts[i + 5] + cpu_op_cnts[i + 6] + cpu_op_cnts[i + 7];
+  }
+
+  for (i = 0; i < 256; i ++) {
+    cpu_op_cnts[i] = (cpu_op_cnts[i] * 1000) / total;
+  }
+
+  for (i = 0; i < 256; i += 8) {
+    printf("0x%02x: %8d %8d %8d %8d    %8d %8d %8d %8d\n", i,
+        cpu_op_cnts[i + 0], cpu_op_cnts[i + 1], cpu_op_cnts[i + 2], cpu_op_cnts[i + 3],
+        cpu_op_cnts[i + 4], cpu_op_cnts[i + 5], cpu_op_cnts[i + 6], cpu_op_cnts[i + 7]);
+  }
+
+  for (i = 0; i < 256; i ++) {
+    cpu_op_cnts[i] = 0;
+  }
+
+  printf("========== Total = %d ===========\n", total);
+}
+
 void cpu_interrupt()
 {
     // if (ppu_in_vblank()) {
@@ -983,17 +1011,8 @@ void cpu_run(long cycles)
 
   static int num = 0;
   if (num == 10000) {
+    display_statistic();
     num = 0;
-    int i;
-    int total = 0;
-    for (i = 0; i < 256; i += 8) {
-      printf("0x%02x: %8d %8d %8d %8d    %8d %8d %8d %8d\n", i,
-          cpu_op_cnts[i + 0], cpu_op_cnts[i + 1], cpu_op_cnts[i + 2], cpu_op_cnts[i + 3],
-          cpu_op_cnts[i + 4], cpu_op_cnts[i + 5], cpu_op_cnts[i + 6], cpu_op_cnts[i + 7]);
-      total += cpu_op_cnts[i + 0] + cpu_op_cnts[i + 1] + cpu_op_cnts[i + 2] + cpu_op_cnts[i + 3] +
-          cpu_op_cnts[i + 4] + cpu_op_cnts[i + 5] + cpu_op_cnts[i + 6] + cpu_op_cnts[i + 7];
-    }
-    printf("========== Total = %d ===========\n", total);
   }
   num ++;
 }

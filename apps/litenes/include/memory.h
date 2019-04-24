@@ -21,22 +21,18 @@ static inline uint32_t memory_readb(uint32_t address)
 
 static inline uint32_t instr_fetch(uint32_t address) {
   extern byte memory[0x10000]; // mmc
-  extern byte CPU_RAM[0x8000]; // CPU Memory
+  //extern byte CPU_RAM[0x8000]; // CPU Memory
 
-  if ((address >> 15) == 0) {
-    return CPU_RAM[address & 0x7FF];
-  }
-  else {
-    return memory[address];
-  }
+  // for super mairo, all fetch are from mmc
+  return memory[address];
 }
 
 static inline void memory_writeb(uint32_t address, uint32_t byte_data)
 {
     switch (address >> 13) {
         case 0:
-        case 3: return cpu_ram_write(address, byte_data);
-        case 1: return ppu_io_write(address, byte_data);
+        case 3: cpu_ram_write(address, byte_data); break;
+        case 1: ppu_io_write(address, byte_data); break;
         case 2:
           if (address == 0x4014) {
             // DMA transfer
@@ -46,8 +42,8 @@ static inline void memory_writeb(uint32_t address, uint32_t byte_data)
               }
               return;
           }
-          return psg_io_write(address, byte_data);
-        default: return mmc_write(address, byte_data);
+          psg_io_write(address, byte_data); break;
+          // for super mario, it does not write to mmc
     }
 }
 
