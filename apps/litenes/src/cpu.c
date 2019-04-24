@@ -3,6 +3,8 @@
 #include <ppu.h>
 #include <klib.h>
 
+//#define STATISTIC
+
 CPU_STATE cpu;
 
 //int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
@@ -14,7 +16,6 @@ static unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 //bool cpu_op_in_base_instruction_set[256]; // true if instruction is in base 6502 instruction set
 //char *cpu_op_name[256];                   // Instruction names
 //static int cpu_op_cycles[256];                   // CPU cycles used by instructions
-static int cpu_op_cnts[256];                   // CPU cycles used by instructions
 
 // If OP_TRACE, print current instruction with all registers into the console
 void cpu_trace_instruction();
@@ -157,7 +158,7 @@ void cpu_trace_instruction();
   uint32_t op_address = instr_fetchw(cpu.PC); \
   if (op_address == cpu.PC - 1) { \
     /* spin to wait for interrupt, do not count */ \
-    cpu_op_cnts[0x4c] --; \
+    /*cpu_op_cnts[0x4c] --; */\
   } \
   exec(); \
 }
@@ -541,13 +542,11 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 #define CASE_CPU_OP_BIS(o, c, f, n, a) \
   case 0x##o: __cycles = c; \
               cpu_address_##a(cpu_op_##f); \
-              cpu_op_cnts[0x##o] ++; \
               break;
 
 #define CASE_CPU_OP_NII(o, a) \
   case 0x##o: __cycles = 1; \
               cpu_address_##a(____FE____); \
-              cpu_op_cnts[0x##o] ++; \
               break;
 
 #define CASE_CPU_OP_EIS(o, c, f, n, a) CASE_CPU_OP_BIS(o, c, f, n, a)
@@ -805,6 +804,8 @@ void cpu_reset()
     cpu.P[interrupt_bp] = 1;
 }
 
+#ifdef STATISTIC
+static int cpu_op_cnts[256];
 static void display_statistic() {
   int i;
   int total = 0;
@@ -829,6 +830,7 @@ static void display_statistic() {
 
   printf("========== Total = %d ===========\n", total);
 }
+#endif
 
 void cpu_interrupt()
 {
@@ -1095,14 +1097,19 @@ void cpu_run(long cycles)
     //cycles -= cpu_op_cycles[op_code] + op_cycles;
     //cpu_cycles -= cpu_op_cycles[op_code] + op_cycles;
     op_cycles = 0;
+#ifdef STATISTIC
+    cpu_op_cnts[op_code] ++;
+#endif
   }
 
+#ifdef STATISTIC
   static int num = 0;
   if (num == 10000) {
     display_statistic();
     num = 0;
   }
   num ++;
+#endif
 }
 
 
