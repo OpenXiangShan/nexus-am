@@ -272,7 +272,7 @@ static int g_lz_zn_result = FLAG_STATE_UPTODATE; // for zero and negative flags
 int lz_ov_result, lz_ov_src1, lz_ov_src1, lz_ov_state; // for overflow flag
 int lz_c_result, lz_c_src1, lz_c_src1, lz_c_state; // for carry flag
 
-#define lz_is_z_lazy(lz_zn_result) (lz_zn_result & (1 << 24))
+#define lz_is_z_lazy(lz_zn_result) (lz_zn_result & (1 << 31))
 #define lz_is_n_lazy(lz_zn_result) (lz_zn_result & (1 << 25))
 
 #define cpu_flag_set(flag) cpu.P[flag]
@@ -281,12 +281,12 @@ int lz_c_result, lz_c_src1, lz_c_src1, lz_c_state; // for carry flag
 #define cpu_unset_flag(flag) cpu.P[flag] = 0
 
 #define cpu_update_zn_flags(value) { \
-  lz_zn_result = (value) | (1 << 25) | (1 << 24); \
+  lz_zn_result = (value) | (1 << 25) | (1 << 31); \
   /* cpu_modify_flag(zero_bp, (value & 0xff) == 0); */ \
   /* cpu_modify_flag(negative_bp, (value >> 7) & 1); */ \
 }
 
-#define lz_set_z_uptodate(lz_zn_result) { lz_zn_result &= ~(1 << 24); }
+#define lz_set_z_uptodate(lz_zn_result) { lz_zn_result &= ~(1 << 31); }
 #define lz_set_n_uptodate(lz_zn_result) { lz_zn_result &= ~(1 << 25); }
 
 #define lz_compute_z(lz_zn_result) { \
