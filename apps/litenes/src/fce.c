@@ -134,7 +134,7 @@ void fce_run()
 
 // Rendering
 
-static const uint32_t palette[64] = {
+const uint32_t palette[64] = {
   0x808080, 0x0000BB, 0x3700BF, 0x8400A6, 0xBB006A, 0xB7001E,
   0xB30000, 0x912600, 0x7B2B00, 0x003E00, 0x00480D, 0x003C22,
   0x002F66, 0x000000, 0x050505, 0x050505, 0xC8C8C8, 0x0059FF,
@@ -150,23 +150,14 @@ static const uint32_t palette[64] = {
 
 byte canvas[257][520];
 
+#ifdef STRETCH
 static int xmap[1024];
 static uint32_t row[1024];
+#else
+uint32_t screen[H][W];
+#endif
 
-void fce_update_screen()
-{
-  /*
-  static int count = 0;
-  count ++;
-  if(count > 30) _halt(0);
-  */
-
-  int idx = ppu_read_idx();
-//  log("PPU_RAM[0]:%d, idx:%d\n", PPU_RAM[0x3f00], idx);
-
-  int w = screen_width();
-  int h = screen_height();
-
+void fce_update_screen() {
   frame_cnt ++;
 #ifdef NOGUI
   if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
@@ -174,33 +165,53 @@ void fce_update_screen()
 #endif
   if (frame_cnt % 3 != 0) return;
 
+  int w = screen_width();
+  int h = screen_height();
+
+#ifdef STRETCH
   int pad = (w - h) / 2;
   for (int y = 0; y < h; y ++) {
     int y1 = y * (H - 1) / h + 1;
     for (int x = pad; x < w - pad; x ++) {
       row[x] = palette[canvas[y1][xmap[x]]];
     }
-	// log("x:%d,y:%d,w:%d,h:%d\n", pad, y, w - 2 * pad, 1);
-	// log("xmap[]:%d, canvas[y1][]:%d\n", xmap[10], canvas[5][5]);
-	// log("(row + pad)[-]: %x, %x\n", row[pad + 15], row[pad + 50]);
     draw_rect(row + pad, pad, y, w - 2 * pad, 1);
   }
+#else
+  int xpad = (w - W) / 2;
+  int ypad = (h - H) / 2;
+  assert(xpad >= 0 && ypad >= 0);
+  draw_rect(&screen[0][0], xpad, ypad, W, H);
+#endif
 
   draw_sync();
 
+  int idx = ppu_read_idx();
+#ifdef STRETCH
   assert(sizeof(byte) == 1);
-  log("memset to %d, canvas[5][5]:%d\n", idx, canvas[5][5]);
   memset(canvas, idx, sizeof(canvas));
-  log("memset after:%d\n", canvas[5][5]);
+#else
+  int nr64 = sizeof(screen) / sizeof(uint64_t);
+  int i;
+  uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
+  uint64_t *p = (void *)screen;
+  for (i = 0; i < nr64; i += 8) {
+#define macro(x)  p[i + x] = v
+    macro(0); macro(1); macro(2); macro(3);
+    macro(4); macro(5); macro(6); macro(7);
+  }
+#endif
 }
 
 void xmap_init() {
+#ifdef STRETCH
   int w = screen_width();
   int h = screen_height();
   int pad = (w - h) / 2;
   for (int x = pad; x < w - pad; x ++) {
     xmap[x] = (x - pad) * W / h + 0xff;
   }
+#endif
 }
 
 int main() {

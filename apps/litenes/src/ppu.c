@@ -23,13 +23,6 @@ static uint64_t XHL64[256][256];
 static uint64_t XHLmask[256][256];
 static uint32_t ppu_ram_map[0x4000];
 
-static inline void draw(int col, int row, int idx) {
-  canvas[row][col + 0xff] = idx;
-  if(idx != 0) {
-	  log("row:%d, col:%d, idx:%d\n", row, col, idx);
-  }
-}
-
 // PPUCTRL Functions
 
 static uint32_t base_nametable_address;
