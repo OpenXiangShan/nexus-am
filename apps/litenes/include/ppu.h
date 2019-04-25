@@ -28,7 +28,7 @@ void ppu_sprram_write(byte data);
 
 // PPU Memory and State
 typedef struct {
-//    byte PPUCTRL;   // $2000 write only
+    byte PPUCTRL;   // $2000 write only
     int PPUMASK[8];   // $2001 write only, expanded ppu mask
     byte PPUSTATUS; // $2002 read only
     byte OAMADDR;   // $2003 write only

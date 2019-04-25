@@ -39,6 +39,8 @@ static inline void ppu_update_PPUCTRL_internal(byte PPUCTRL) {
   background_pattern_table_address = common_bit_set(PPUCTRL, 4) ? 0x1000 : 0x0000;
   sprite_height = common_bit_set(PPUCTRL, 5) ? 16 : 8;
   generates_nmi = common_bit_set(PPUCTRL, 7);
+
+  ppu.PPUCTRL = PPUCTRL;
 }
 
 inline bool ppu_generates_nmi() { return generates_nmi; }
@@ -117,6 +119,7 @@ static inline uint32_t ppu_ram_read_fast(uint32_t address)
 
 static inline void ppu_ram_write(word address, byte data)
 {
+    assert(!(ppu_shows_background() && ppu_shows_sprites()));
     PPU_RAM[ppu_ram_map[address]] = data;
 }
 
@@ -191,8 +194,9 @@ static void table_init() {
 }
 
 static int palette_cache[4][4];
+static int palette_attr_cache[4][2][256 >> 5][W >> 3 >> 2];
 
-void palette_cache_read() {
+static void palette_cache_read() {
   int i;
   for (i = 0; i < 4; i ++) {
     word palette_address = 0x3F00 + (i << 2);
@@ -200,6 +204,30 @@ void palette_cache_read() {
     palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
     palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
     palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+  }
+}
+
+static void ppu_preprocess(void) {
+  palette_cache_read();
+
+  uint32_t palette_attr;
+  int x, y, i;
+  for (i = 0; i < 4; i ++) {
+    uint32_t attribute_address = ppu_base_nametable_addresses[i] + 0x3C0;
+    for (y = 0; y < (256 >> 5); y ++) {
+      for (x = 0; x < W >> 3; x += 4) {
+        palette_attr = ppu_ram_read_fast(attribute_address);
+        bool left = x < 16;
+        if (!left) { palette_attr >>= 2; }
+
+        // !top
+        palette_attr_cache[i][0][y][x >> 2] = (palette_attr >> 4) & 3;
+        // top
+        palette_attr_cache[i][1][y][x >> 2] = palette_attr & 3;
+
+        attribute_address ++;
+      }
+    }
   }
 }
 
@@ -212,20 +240,12 @@ void ppu_draw_background_scanline(bool mirror) {
     int do_update = frame_cnt % 3 == 0;
     bool top = (ppu.scanline & 31) < 16;
 
-    uint32_t attribute_address = (base_nametable_address + (mirror ? 0x400 : 0) + 0x3C0 +  -1 + ((ppu.scanline >> 5) << 3));
-    uint32_t palette_attribute = ppu_ram_read_fast(attribute_address);
-    if (!top) {
-      palette_attribute >>= 4;
-    }
-    palette_attribute &= 3;
-    int *palette_cache_line = palette_cache[palette_attribute];
-
-    int off_screen_idx = 256 + ppu.PPUSCROLL_X - (mirror ? 256 : 0);
+    int off_screen_idx = 256 - scroll_base;
 
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < 32; tile_x++) {
         // Skipping off-screen pixels
         if ((tile_x << 3)  > off_screen_idx)
-            continue;
+            break;
 
         int tile_index = ppu_ram_read_fast(taddr);
         uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
@@ -233,20 +253,10 @@ void ppu_draw_background_scanline(bool mirror) {
         uint32_t l = ppu_ram_read_fast(tile_address + y_in_tile);
         uint32_t h = ppu_ram_read_fast(tile_address + y_in_tile + 8);
 
-        if (do_update) {
-            if ((tile_x & 3) == 0) {
-              attribute_address ++;
-              palette_attribute = ppu_ram_read_fast(attribute_address);
-              bool left = (tile_x < 16);
-              if (!top) {
-                palette_attribute >>= 4;
-              }
-              if (!left) {
-                palette_attribute >>= 2;
-              }
-              palette_attribute &= 3;
-              palette_cache_line = palette_cache[palette_attribute];
-            }
+        if (do_update && ppu.scanline < H) {
+            uint32_t palette_attribute = palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
+              [top][ppu.scanline >> 5][tile_x >> 2];
+            int *palette_cache_line = palette_cache[palette_attribute];
 
             union {
               uint64_t u64;
@@ -345,9 +355,6 @@ static inline void ppu_cycle() {
     ppu.scanline++;
 
     if (ppu_shows_background()) {
-        // preprocessing
-        palette_cache_read();
-
         ppu_draw_background_scanline(false);
         ppu_draw_background_scanline(true);
     }
@@ -403,7 +410,7 @@ inline byte ppu_io_read(word address)
             byte data;
             
             if (ppu.PPUADDR < 0x3F00) {
-                data = ppu_latch = ppu_ram_read(ppu.PPUADDR);
+                data = ppu_latch = ppu_ram_read_fast(ppu.PPUADDR);
             }
             else {
                 data = ppu_ram_read(ppu.PPUADDR);
@@ -430,7 +437,11 @@ inline void ppu_io_write(word address, byte data)
     ppu_latch = data;
     switch(address) {
         case 0: if (ppu.ready) ppu_update_PPUCTRL_internal(data); break;
-        case 1: if (ppu.ready) byte_unpack(ppu.PPUMASK, data); break;
+        case 1: if (ppu.ready) byte_unpack(ppu.PPUMASK, data);
+                  if (ppu_shows_background() && ppu_shows_sprites()) {
+                    ppu_preprocess();
+                  }
+                  break;
         case 3: ppu.OAMADDR = data; break;
         case 4: PPU_SPRRAM[ppu.OAMADDR++] = data; break;
         case 5:
@@ -462,13 +473,10 @@ inline void ppu_io_write(word address, byte data)
         case 7:
         {
             if (ppu.PPUADDR > 0x1FFF || ppu.PPUADDR < 0x4000) {
-				log("ppu_write.1(%x,%d)\n", ppu.PPUADDR ^ ppu.mirroring_xor, data);
                 ppu_ram_write(ppu.PPUADDR ^ ppu.mirroring_xor, data);
-				log("ppu_write.2(%x,%d)\n", ppu.PPUADDR, data);
                 ppu_ram_write(ppu.PPUADDR, data);
             }
             else {
-				log("ppu_write.3(%x,%d)\n", ppu.PPUADDR, data);
                 ppu_ram_write(ppu.PPUADDR, data);
             }
 
