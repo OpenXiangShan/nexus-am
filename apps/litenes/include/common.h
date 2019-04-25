@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <am.h>
+#include <klib.h>
 
 typedef uint8_t byte;
 typedef uint16_t word;
@@ -39,23 +40,30 @@ void common_unset_bitd(dword *variable, byte position);
 void common_toggle_bitd(dword *variable, byte position);
 void common_modify_bitd(dword *variable, byte position, bool set);
 
-static inline void* memcpy(void *dest, const void *src, size_t n) {
-  char *csrc = (char*)src, *cdest = (char*)dest;
-  for (int i = 0; i < n; i ++) {
-    cdest[i] = csrc[i];
-  }
-  return dest;
-}
-
-static inline int memcmp(const void *dest, const void *src, size_t n) {
-  unsigned char *csrc = (unsigned char*)src, *cdest = (unsigned char*)dest;
-  for (int i = 0; i < n; i ++) {
-    if (csrc[i] < cdest[i]) return -1;
-    if (csrc[i] > cdest[i]) return 1;
-  }
-  return 0;
-}
-
 static inline bool common_bit_set(unsigned long value, byte position) { return value & (1L << position); }
+
+static inline byte byte_pack(int expand[8]) {
+  byte v = 0;
+  v |= (expand[0] << 0);
+  v |= (expand[1] << 1);
+  v |= (expand[2] << 2);
+  v |= (expand[3] << 3);
+  v |= (expand[4] << 4);
+  v |= (expand[5] << 5);
+  v |= (expand[6] << 6);
+  v |= (expand[7] << 7);
+  return v;
+}
+
+static inline void byte_unpack(int expand[8], byte b) {
+  expand[0] = (b >> 0) & 1;
+  expand[1] = (b >> 1) & 1;
+  expand[2] = (b >> 2) & 1;
+  expand[3] = (b >> 3) & 1;
+  expand[4] = (b >> 4) & 1;
+  expand[5] = (b >> 5) & 1;
+  expand[6] = (b >> 6) & 1;
+  expand[7] = (b >> 7) & 1;
+}
 
 #endif

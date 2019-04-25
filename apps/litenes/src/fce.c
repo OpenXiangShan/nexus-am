@@ -6,6 +6,7 @@
 #include <amdev.h>
 
 //#define NOGUI
+//#define PROFILE
 
 int key_state[256];
 int frame_cnt;
@@ -102,16 +103,38 @@ void fce_run()
 {
     key_state[0] = 1;
     gtime = uptime();
+    int nr_draw = 0;
+    uint32_t last = gtime;
     while(1)
     {
-		log("gtime:%d\n", gtime);
         wait_for_frame();
         int scanlines = 262;
-        while (scanlines-- > 0)
-        {
-			log("ppu_run:1, scanlines:%d\n", scanlines);
-            ppu_run(1);
-            cpu_run(1364 / 12); // 1 scanline
+
+#ifdef PROFILE
+        uint32_t ppu_time = 0;
+        uint32_t cpu_time = 0;
+        while (scanlines-- > 0) {
+          uint32_t t0 = uptime();
+          ppu_run(1);
+          uint32_t t1 = uptime();
+          cpu_run(1364 / 12); // 1 scanline
+          uint32_t t2 = uptime();
+          ppu_time += t1 - t0;
+          cpu_time += t2 - t1;
+        }
+        printf("ppu time = %d, cpu time = %d\n", ppu_time, cpu_time);
+#else
+        while (scanlines-- > 0) {
+          ppu_run(1);
+          cpu_run(1364 / 12); // 1 scanline
+        }
+#endif
+
+        nr_draw ++;
+        if (uptime() - last > 1000) {
+          last = uptime();
+          printf("FPS = %d\n", nr_draw);
+          nr_draw = 0;
         }
 
         int key = read_key();
@@ -126,7 +149,7 @@ void fce_run()
 
 // Rendering
 
-static const uint32_t palette[64] = {
+const uint32_t palette[64] = {
   0x808080, 0x0000BB, 0x3700BF, 0x8400A6, 0xBB006A, 0xB7001E,
   0xB30000, 0x912600, 0x7B2B00, 0x003E00, 0x00480D, 0x003C22,
   0x002F66, 0x000000, 0x050505, 0x050505, 0xC8C8C8, 0x0059FF,
@@ -142,23 +165,14 @@ static const uint32_t palette[64] = {
 
 byte canvas[257][520];
 
+#ifdef STRETCH
 static int xmap[1024];
 static uint32_t row[1024];
+#else
+uint32_t screen[H][W];
+#endif
 
-void fce_update_screen()
-{
-  /*
-  static int count = 0;
-  count ++;
-  if(count > 30) _halt(0);
-  */
-
-  int idx = ppu_ram_read(0x3F00);
-  log("PPU_RAM[0]:%d, idx:%d\n", PPU_RAM[0x3f00], idx);
-
-  int w = screen_width();
-  int h = screen_height();
-
+void fce_update_screen() {
   frame_cnt ++;
 #ifdef NOGUI
   if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
@@ -166,33 +180,53 @@ void fce_update_screen()
 #endif
   if (frame_cnt % 3 != 0) return;
 
+  int w = screen_width();
+  int h = screen_height();
+
+#ifdef STRETCH
   int pad = (w - h) / 2;
   for (int y = 0; y < h; y ++) {
     int y1 = y * (H - 1) / h + 1;
     for (int x = pad; x < w - pad; x ++) {
-      row[x] = palette[canvas[y1][xmap[x] + 0xff]];
+      row[x] = palette[canvas[y1][xmap[x]]];
     }
-	// log("x:%d,y:%d,w:%d,h:%d\n", pad, y, w - 2 * pad, 1);
-	// log("xmap[]:%d, canvas[y1][]:%d\n", xmap[10], canvas[5][5]);
-	// log("(row + pad)[-]: %x, %x\n", row[pad + 15], row[pad + 50]);
     draw_rect(row + pad, pad, y, w - 2 * pad, 1);
   }
+#else
+  int xpad = (w - W) / 2;
+  int ypad = (h - H) / 2;
+  assert(xpad >= 0 && ypad >= 0);
+  draw_rect(&screen[0][0], xpad, ypad, W, H);
+#endif
 
   draw_sync();
 
+  int idx = ppu_read_idx();
+#ifdef STRETCH
   assert(sizeof(byte) == 1);
-  log("memset to %d, canvas[5][5]:%d\n", idx, canvas[5][5]);
   memset(canvas, idx, sizeof(canvas));
-  log("memset after:%d\n", canvas[5][5]);
+#else
+  int nr64 = sizeof(screen) / sizeof(uint64_t);
+  int i;
+  uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
+  uint64_t *p = (void *)screen;
+  for (i = 0; i < nr64; i += 8) {
+#define macro(x)  p[i + x] = v
+    macro(0); macro(1); macro(2); macro(3);
+    macro(4); macro(5); macro(6); macro(7);
+  }
+#endif
 }
 
 void xmap_init() {
+#ifdef STRETCH
   int w = screen_width();
   int h = screen_height();
   int pad = (w - h) / 2;
   for (int x = pad; x < w - pad; x ++) {
-    xmap[x] = (x - pad) * W / h;
+    xmap[x] = (x - pad) * W / h + 0xff;
   }
+#endif
 }
 
 int main() {
