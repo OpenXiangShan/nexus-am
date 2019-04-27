@@ -183,7 +183,7 @@ static void table_init() {
 }
 
 static int palette_cache[4][4];
-static int palette_attr_cache[4][2][256 >> 5][W >> 3 >> 2];
+static uint32_t palette_attr_cache[4][2][256 >> 5][W >> 3 >> 2];
 
 static void palette_cache_read() {
   int i;
@@ -233,6 +233,9 @@ void ppu_draw_background_scanline(bool mirror) {
     int off_screen_idx = ((512 - scroll_base) >> 3) + 1;
     int tile_x_max = off_screen_idx < 32 ? off_screen_idx : 32;
 
+    uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
+              [top][ppu.scanline >> 5][0];
+
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
         uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
@@ -244,16 +247,15 @@ void ppu_draw_background_scanline(bool mirror) {
         uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
         *ptr = color16 | (XHLmask16[h][l] & (*ptr)) ;
 
+        byte *pXHL = &XHL[h][l][0];
+
         if (do_update) {
-            uint32_t palette_attribute = palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
-              [top][ppu.scanline >> 5][tile_x >> 2];
-            int *palette_cache_line = palette_cache[palette_attribute];
+            int *palette_cache_line = palette_cache[p_palette_attribute[tile_x >> 2]];
 
 #define macro(x) \
-            if ((color16 & 0x3) != 0) { \
-              draw(scroll_base + x, ppu.scanline, palette_cache_line[color16 & 0x3]); \
+            if (pXHL[x] != 0) { \
+              draw(scroll_base + x, ppu.scanline, palette_cache_line[pXHL[x]]); \
             } \
-            color16 >>= 2;
 
             // loop unrolling
             macro(0); macro(1); macro(2); macro(3);
