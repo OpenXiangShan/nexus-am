@@ -229,13 +229,11 @@ void ppu_draw_background_scanline(bool mirror) {
     int do_update = frame_cnt % 3 == 0;
     bool top = (ppu.scanline & 31) < 16;
 
-    int off_screen_idx = 256 - scroll_base;
+    // Skipping off-screen pixels
+    int off_screen_idx = ((256 - scroll_base) >> 3) + 1;
+    int tile_x_max = off_screen_idx < 32 ? off_screen_idx : 32;
 
-    for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < 32; tile_x++) {
-        // Skipping off-screen pixels
-        if ((tile_x << 3)  > off_screen_idx)
-            break;
-
+    for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
         uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
 
