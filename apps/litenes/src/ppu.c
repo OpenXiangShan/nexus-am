@@ -9,7 +9,13 @@
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
-byte PPU_SPRRAM[0x100];
+// sprite
+static byte PPU_SPRRAM[0x100];
+typedef struct {
+  uint8_t y, tile, atr, x;
+} SPR;
+static const SPR *spr_array = (void *)PPU_SPRRAM;
+
 byte PPU_RAM[0x4000];
 bool ppu_2007_first_read;
 byte ppu_addr_latch;
@@ -281,9 +287,9 @@ void ppu_draw_sprite_scanline() {
       sprite_palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
     }
 
-    for (n = 0; n < 0x100; n += 4) {
-        uint32_t sprite_x = PPU_SPRRAM[n + 3] + 256;
-        uint32_t sprite_y = PPU_SPRRAM[n];
+    for (n = 0; n < sizeof(PPU_SPRRAM) / sizeof(SPR); n ++) {
+        uint32_t sprite_x = spr_array[n].x + 256;
+        uint32_t sprite_y = spr_array[n].y;
 
         // Skip if sprite not on scanline
         if (sprite_y > ppu.scanline || sprite_y + sprite_height < ppu.scanline)
@@ -298,15 +304,15 @@ void ppu_draw_sprite_scanline() {
             // break;
         }
 
-        bool vflip = PPU_SPRRAM[n + 2] & 0x80;
-        bool hflip = PPU_SPRRAM[n + 2] & 0x40;
+        bool vflip = spr_array[n].atr & 0x80;
+        bool hflip = spr_array[n].atr & 0x40;
 
-        uint32_t tile_address = sprite_pattern_table_address + 16 * PPU_SPRRAM[n + 1];
+        uint32_t tile_address = sprite_pattern_table_address + 16 * spr_array[n].tile;
         int y_in_tile = ppu.scanline & 0x7;
         uint32_t l = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
         uint32_t h = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8);
 
-        uint32_t palette_attribute = PPU_SPRRAM[n + 2] & 0x3;
+        uint32_t palette_attribute = spr_array[n].atr & 0x3;
         int *palette_cache_line = sprite_palette_cache[palette_attribute];
         int x;
         for (x = 0; x < 8; x++) {
