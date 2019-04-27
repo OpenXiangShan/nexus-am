@@ -16,14 +16,15 @@ byte ppu_addr_latch;
 PPU_STATE ppu;
 byte ppu_latch;
 bool ppu_sprite_hit_occured = false;
-byte ppu_screen_background[264][264];
+uint16_t ppu_screen_background[264][264 / 8];
 
 
 // preprocess tables
 static byte XHL[256][256][8]; // each valus is 0~3
-static uint64_t XHL64[256][256];
-static uint64_t XHLmask[256][256];
 static uint32_t ppu_ram_map[0x4000];
+
+static uint16_t XHL16[256][256];
+static uint16_t XHLmask16[256][256];
 
 // PPUCTRL Functions
 
@@ -161,20 +162,6 @@ int ppu_read_idx(void) {
 // 3F1F = 11 (00010001)
 // 3F20 = 2B (00101011)
 
-static inline uint64_t int_shl(int n, int s) {
-  // compute (uint64_t)n << s without generating shld instruction in x86
-  int hi, lo;
-  if (s < 32) {
-    lo = n << s;
-    hi = (s == 0 ? 0 : n >> (32 - s));
-  }
-  else {
-    lo = 0;
-    hi = n << (s - 32);
-  }
-  return ((uint64_t)hi << 32) | lo;
-}
-
 // Rendering
 static void table_init() {
   for (int h = 0; h < 256; h ++)
@@ -182,9 +169,9 @@ static void table_init() {
       for (int x = 0; x < 8; x ++) {
         int col = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
         XHL[h][l][x] = col;
-        XHL64[h][l] |= int_shl(col, x * 8);
+        XHL16[h][l] |= col << (x * 2);
         if (col == 0) {
-          XHLmask[h][l] |= int_shl(0xff,x * 8);
+          XHLmask16[h][l] |= 0x3 << (x * 2);
         }
       }
   }
@@ -255,28 +242,25 @@ void ppu_draw_background_scanline(bool mirror) {
         uint32_t l = ppu_ram_read_fast(tile_address + y_in_tile);
         uint32_t h = ppu_ram_read_fast(tile_address + y_in_tile + 8);
 
-        if (do_update && ppu.scanline < H) {
+        uint32_t color16 = XHL16[h][l];
+        uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
+        *ptr = color16 | (XHLmask16[h][l] & (*ptr)) ;
+
+        if (do_update) {
             uint32_t palette_attribute = palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
               [top][ppu.scanline >> 5][tile_x >> 2];
             int *palette_cache_line = palette_cache[palette_attribute];
 
-            union {
-              uint64_t u64;
-              byte color[8];
-            } buf;
-            buf.u64 = XHL64[h][l];
-
 #define macro(x) \
-            if (buf.color[x] != 0) { \
-              draw(scroll_base + x, ppu.scanline + 1, palette_cache_line[buf.color[x]]); \
-            }
+            if ((color16 & 0x3) != 0) { \
+              draw(scroll_base + x, ppu.scanline + 1, palette_cache_line[color16 & 0x3]); \
+            } \
+            color16 >>= 2;
 
             // loop unrolling
             macro(0); macro(1); macro(2); macro(3);
             macro(4); macro(5); macro(6); macro(7);
         }
-        uint64_t *ptr = (uint64_t*)&ppu_screen_background[ppu.scanline][(tile_x << 3)];
-        *ptr = (XHL64[h][l]) | (XHLmask[h][l] & (*ptr)) ;
 
         taddr ++;
         scroll_base += 8;
@@ -337,9 +321,13 @@ void ppu_draw_sprite_scanline() {
                 }
 
                 // Checking sprite 0 hit
-                if (n == 0 && !ppu_sprite_hit_occured && ppu_shows_background() && ppu_screen_background[sprite_y + y_in_tile][screen_x] == color) {
+                if (!ppu_sprite_hit_occured && n == 0 && ppu_shows_background()) {
+                  uint32_t bg16 = ppu_screen_background[sprite_y + y_in_tile][screen_x >> 3];
+                  uint32_t bg = (bg16 >> ((screen_x & 0x7) * 2)) & 0x3;
+                  if (bg == color) {
                     ppu_set_sprite_0_hit(true);
                     ppu_sprite_hit_occured = true;
+                  }
                 }
             }
         }
