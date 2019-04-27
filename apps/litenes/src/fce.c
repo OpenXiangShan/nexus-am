@@ -152,7 +152,8 @@ byte canvas[257][520];
 static int xmap[1024];
 static uint32_t row[1024];
 #else
-uint32_t screen[H][W];
+// add align attribute here to enable fast memcpy
+uint32_t screen[H][W + 8 + 256] __attribute((aligned(8)));
 #endif
 
 void fce_update_screen() {
@@ -166,6 +167,8 @@ void fce_update_screen() {
   int w = screen_width();
   int h = screen_height();
 
+  int idx = ppu_read_idx();
+
 #ifdef STRETCH
   int pad = (w - h) / 2;
   for (int y = 0; y < h; y ++) {
@@ -175,30 +178,35 @@ void fce_update_screen() {
     }
     draw_rect(row + pad, pad, y, w - 2 * pad, 1);
   }
+
+  assert(sizeof(byte) == 1);
+  memset(canvas, idx, sizeof(canvas));
 #else
   int xpad = (w - W) / 2;
   int ypad = (h - H) / 2;
   assert(xpad >= 0 && ypad >= 0);
-  draw_rect(&screen[0][0], xpad, ypad, W, H);
+
+  for (int y = 0; y < H; y ++) {
+    draw_rect(&screen[y][256], xpad, ypad + y, W, 1);
+  }
+
+//  draw_rect(&screen[0][0], xpad, ypad, W, H);
+
+  int nr64 = sizeof(screen[0][0]) * W / sizeof(uint64_t);
+  int i;
+  uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
+  for (int y = 0; y < H; y ++) {
+    uint64_t *p = (void *)&screen[y][256];
+    for (i = 0; i < nr64; i += 8) {
+#define macro(x)  p[i + x] = v
+      macro(0); macro(1); macro(2); macro(3);
+      macro(4); macro(5); macro(6); macro(7);
+    }
+  }
 #endif
 
   draw_sync();
 
-  int idx = ppu_read_idx();
-#ifdef STRETCH
-  assert(sizeof(byte) == 1);
-  memset(canvas, idx, sizeof(canvas));
-#else
-  int nr64 = sizeof(screen) / sizeof(uint64_t);
-  int i;
-  uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
-  uint64_t *p = (void *)screen;
-  for (i = 0; i < nr64; i += 8) {
-#define macro(x)  p[i + x] = v
-    macro(0); macro(1); macro(2); macro(3);
-    macro(4); macro(5); macro(6); macro(7);
-  }
-#endif
 }
 
 void xmap_init() {

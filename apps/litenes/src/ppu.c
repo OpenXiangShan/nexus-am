@@ -224,13 +224,13 @@ void ppu_draw_background_scanline(bool mirror) {
     int tile_x, tile_y = ppu.scanline >> 3;
     int taddr = base_nametable_address + (tile_y << 5) + (mirror ? 0x400 : 0);
     int y_in_tile = ppu.scanline & 0x7;
-    int scroll_base = - ppu.PPUSCROLL_X + (mirror ? 256 : 0);
+    int scroll_base = 256 - ppu.PPUSCROLL_X + (mirror ? 256 : 0);
 
     int do_update = frame_cnt % 3 == 0;
     bool top = (ppu.scanline & 31) < 16;
 
     // Skipping off-screen pixels
-    int off_screen_idx = ((256 - scroll_base) >> 3) + 1;
+    int off_screen_idx = ((512 - scroll_base) >> 3) + 1;
     int tile_x_max = off_screen_idx < 32 ? off_screen_idx : 32;
 
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < tile_x_max; tile_x ++) {
@@ -251,7 +251,7 @@ void ppu_draw_background_scanline(bool mirror) {
 
 #define macro(x) \
             if ((color16 & 0x3) != 0) { \
-              draw(scroll_base + x, ppu.scanline + 1, palette_cache_line[color16 & 0x3]); \
+              draw(scroll_base + x, ppu.scanline, palette_cache_line[color16 & 0x3]); \
             } \
             color16 >>= 2;
 
@@ -280,7 +280,7 @@ void ppu_draw_sprite_scanline() {
     }
 
     for (n = 0; n < 0x100; n += 4) {
-        uint32_t sprite_x = PPU_SPRRAM[n + 3];
+        uint32_t sprite_x = PPU_SPRRAM[n + 3] + 256;
         uint32_t sprite_y = PPU_SPRRAM[n];
 
         // Skip if sprite not on scanline
@@ -315,12 +315,12 @@ void ppu_draw_sprite_scanline() {
                 int screen_x = sprite_x + x;
 
                 if (do_update) {
-                    draw(screen_x, sprite_y + y_in_tile + 1, palette_cache_line[color]);
+                    draw(screen_x, sprite_y + y_in_tile, palette_cache_line[color]);
                 }
 
                 // Checking sprite 0 hit
                 if (!ppu_sprite_hit_occured && n == 0 && ppu_shows_background()) {
-                  uint32_t bg16 = ppu_screen_background[sprite_y + y_in_tile][screen_x >> 3];
+                  uint32_t bg16 = ppu_screen_background[sprite_y + y_in_tile][(screen_x - 256) >> 3];
                   uint32_t bg = (bg16 >> ((screen_x & 0x7) * 2)) & 0x3;
                   if (bg == color) {
                     ppu_set_sprite_0_hit(true);
@@ -348,7 +348,7 @@ void ppu_cycle() {
 
     ppu.scanline++;
 
-    if (ppu.scanline < 240 && ppu_shows_background()) {
+    if (ppu.scanline < H && ppu_shows_background()) {
         ppu_draw_background_scanline(false);
         ppu_draw_background_scanline(true);
     }
@@ -357,7 +357,7 @@ void ppu_cycle() {
     cpu_run(85 - 16);
     t3 = uptime();
 
-    if (ppu.scanline < 240 && ppu_shows_sprites()) {
+    if (ppu.scanline < H && ppu_shows_sprites()) {
       ppu_draw_sprite_scanline();
     }
 

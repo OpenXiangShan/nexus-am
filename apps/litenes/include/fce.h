@@ -28,10 +28,8 @@ static inline void draw(int col, int row, int idx) {
   }
 #else
   extern const uint32_t palette[64];
-  extern uint32_t screen[H][W];
-  if (col >= 0 && col < W && row < H) {
-    screen[row][col] = palette[idx];
-  }
+  extern uint32_t screen[H][W + 8 + 256];
+  screen[row][col] = palette[idx];
 #endif
 }
 
