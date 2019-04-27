@@ -5,6 +5,8 @@
 #include <klib.h>
 #include <stdint.h>
 
+#define PROFILE
+
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
 byte PPU_SPRRAM[0x100];
@@ -345,23 +347,41 @@ void ppu_draw_sprite_scanline() {
 }
 
 
+static uint32_t background_time, sprite_time, cpu_time;
 
 // PPU Lifecycle
 
-static inline void ppu_cycle() {
+void ppu_cycle() {
+  uint32_t t0, t1, t2, t3, t4, t5;
     if (!ppu.ready && cpu_clock() > 29658)
         ppu.ready = true;
 
+    t0 = uptime();
+    cpu_run(256);
+    t1 = uptime();
+
     ppu.scanline++;
 
-    if (ppu_shows_background()) {
+    if (ppu.scanline < 240 && ppu_shows_background()) {
         ppu_draw_background_scanline(false);
         ppu_draw_background_scanline(true);
     }
-    
-    if (ppu_shows_sprites()) {
+
+    t2 = uptime();
+    cpu_run(85 - 16);
+    t3 = uptime();
+
+    if (ppu.scanline < 240 && ppu_shows_sprites()) {
       ppu_draw_sprite_scanline();
     }
+
+    t4 = uptime();
+    cpu_run(16);
+    t5 = uptime();
+
+    cpu_time += (t1 - t0) + (t3 - t2) + (t5 - t4);
+    background_time += t2 - t1;
+    sprite_time += t4 - t3;
 
     if (ppu.scanline == 241) {
         ppu_set_in_vblank(true);
@@ -372,7 +392,17 @@ static inline void ppu_cycle() {
         ppu.scanline = -1;
         ppu_sprite_hit_occured = false;
         ppu_set_in_vblank(false);
+
+        t0 = uptime();
         fce_update_screen();
+        t1 = uptime();
+
+#ifdef PROFILE
+        printf("Time: cpu | bg | spr | scr = (%d | %d | %d | %d)\n", cpu_time, background_time, sprite_time, t1 - t0);
+#endif
+        cpu_time = 0;
+        background_time = 0;
+        sprite_time = 0;
     }
 }
 

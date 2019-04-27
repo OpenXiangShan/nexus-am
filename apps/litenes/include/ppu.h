@@ -19,8 +19,8 @@ void ppu_set_generates_nmi(bool yesno);
 
 void ppu_set_mirroring(byte mirroring);
 
-void ppu_run(int cycles);
-//void ppu_cycle();
+//void ppu_run(int cycles);
+void ppu_cycle();
 int ppu_scanline();
 void ppu_set_scanline(int s);
 void ppu_copy(word address, byte *source, int length);

@@ -915,6 +915,7 @@ void cpu_run(long cycles)
 {
   int lz_zn_result = g_lz_zn_result; // for zero and negative flags
   uint32_t PCreg = cpu.PC, Areg = cpu.A, Xreg = cpu.X, Yreg = cpu.Y;
+  cycles /= 3;
   long c = cycles;
   while (cycles > 0) {
 #ifdef STATISTIC
