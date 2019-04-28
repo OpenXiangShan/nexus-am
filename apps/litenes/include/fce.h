@@ -15,8 +15,6 @@ void fce_init();
 void fce_run();
 void fce_update_screen();
 
-extern int frame_cnt;
-
 extern char rom_mario_nes[];
 
 static inline void draw(int col, int row, int idx) {

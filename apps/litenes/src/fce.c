@@ -8,7 +8,8 @@
 //#define NOGUI
 
 int key_state[256];
-int frame_cnt;
+static int frame_cnt;
+bool do_update = false;
 static byte *buf;
 
 typedef struct {
@@ -156,12 +157,14 @@ uint32_t screen[H][W + 8 + 256] __attribute((aligned(8)));
 #endif
 
 void fce_update_screen() {
+  do_update = (frame_cnt == 0);
   frame_cnt ++;
 #ifdef NOGUI
-  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
+//  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
   return;
 #endif
-  if (frame_cnt % 3 != 0) return;
+  if (frame_cnt != 2) return;
+  frame_cnt = 0;
 
   int w = screen_width();
   int h = screen_height();

@@ -189,7 +189,6 @@ static void table_init() {
 }
 
 static int palette_cache[4][4];
-static uint32_t palette_attr_cache[4][2][256 >> 5][W >> 3 >> 2];
 
 static void palette_cache_read() {
   int i;
@@ -202,6 +201,8 @@ static void palette_cache_read() {
   }
 }
 
+static uint32_t palette_attr_cache[4][256 >> 4][W >> 5];
+
 static void ppu_preprocess(void) {
   palette_cache_read();
 
@@ -209,16 +210,16 @@ static void ppu_preprocess(void) {
   int x, y, i;
   for (i = 0; i < 4; i ++) {
     uint32_t attribute_address = ppu_base_nametable_addresses[i] + 0x3C0;
-    for (y = 0; y < (256 >> 5); y ++) {
-      for (x = 0; x < W >> 3; x += 4) {
+    for (y = 0; y < (256 >> 4); y += 2) {
+      for (x = 0; x < W >> 5; x ++) {
         palette_attr = ppu_ram_read_fast(attribute_address);
-        bool left = x < 16;
+        bool left = x < 4;
         if (!left) { palette_attr >>= 2; }
 
         // !top
-        palette_attr_cache[i][0][y][x >> 2] = (palette_attr >> 4) & 3;
+        palette_attr_cache[i][y + 1][x] = (palette_attr >> 4) & 3;
         // top
-        palette_attr_cache[i][1][y][x >> 2] = palette_attr & 3;
+        palette_attr_cache[i][y][x] = palette_attr & 3;
 
         attribute_address ++;
       }
@@ -226,27 +227,30 @@ static void ppu_preprocess(void) {
   }
 }
 
+extern bool do_update;
+
 void ppu_draw_background_scanline(bool mirror) {
     int tile_x, tile_y = ppu.scanline >> 3;
-    int taddr = base_nametable_address + (tile_y << 5) + (mirror ? 0x400 : 0);
-    int y_in_tile = ppu.scanline & 0x7;
-    int scroll_base = 256 - ppu.PPUSCROLL_X + (mirror ? 256 : 0);
+    int taddr = base_nametable_address | (tile_y << 5);
+    int pattern_table_base = background_pattern_table_address | (ppu.scanline & 0x7);
 
-    int do_update = frame_cnt % 3 == 0;
-    bool top = (ppu.scanline & 31) < 16;
-
-    // Skipping off-screen pixels
-    int off_screen_idx = ((512 - scroll_base) >> 3) + 1;
-    int tile_x_max = off_screen_idx < 32 ? off_screen_idx : 32;
+    int scroll_base = 256 - ppu.PPUSCROLL_X;
+    int tile_x_max = 32;
+    if (mirror) {
+      scroll_base += 256;
+      taddr += 0x400;
+      // Skipping off-screen pixels
+      tile_x_max = (ppu.PPUSCROLL_X >> 3) + 1;
+    }
 
     uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
-              [top][ppu.scanline >> 5][0];
+      [ppu.scanline >> 4][0];
 
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
-        uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
-        uint32_t l = ppu_ram_read_fast(tile_address + y_in_tile);
-        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + y_in_tile + 8) << 8) | l;
+        uint32_t tile_address = pattern_table_base | (tile_index << 4);
+        uint32_t l = ppu_ram_read_fast(tile_address);
+        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
 
         // most of the tiles of bg are transparent, which are unnecessary to process
         if (XHLidx != 0) {
@@ -276,7 +280,6 @@ void ppu_draw_background_scanline(bool mirror) {
 }
 
 void ppu_draw_sprite_scanline() {
-    int do_update = frame_cnt % 3 == 0;
     int scanline_sprite_count = 0;
     int i, n;
 
