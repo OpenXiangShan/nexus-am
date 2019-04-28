@@ -26,11 +26,11 @@ uint16_t ppu_screen_background[264][264 / 8];
 
 
 // preprocess tables
-static byte XHL[256][256][8]; // each valus is 0~3
+static byte XHL[256 * 256][8]; // each valus is 0~3
 static uint32_t ppu_ram_map[0x4000];
 
-static uint16_t XHL16[256][256];
-static uint16_t XHLmask16[256][256];
+static uint16_t XHL16[256 * 256];
+static uint16_t XHLmask16[256 * 256];
 
 // PPUCTRL Functions
 
@@ -174,10 +174,10 @@ static void table_init() {
     for (int l = 0; l < 256; l ++) {
       for (int x = 0; x < 8; x ++) {
         int col = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-        XHL[h][l][x] = col;
-        XHL16[h][l] |= col << (x * 2);
+        XHL[h * 256 + l][x] = col;
+        XHL16[h * 256 + l] |= col << (x * 2);
         if (col == 0) {
-          XHLmask16[h][l] |= 0x3 << (x * 2);
+          XHLmask16[h * 256] |= 0x3 << (x * 2);
         }
       }
   }
@@ -247,13 +247,13 @@ void ppu_draw_background_scanline(bool mirror) {
         uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
 
         uint32_t l = ppu_ram_read_fast(tile_address + y_in_tile);
-        uint32_t h = ppu_ram_read_fast(tile_address + y_in_tile + 8);
+        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + y_in_tile + 8) << 8) | l;
 
-        uint32_t color16 = XHL16[h][l];
+        uint32_t color16 = XHL16[XHLidx];
         uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
-        *ptr = color16 | (XHLmask16[h][l] & (*ptr)) ;
+        *ptr = color16 | (XHLmask16[XHLidx] & (*ptr)) ;
 
-        byte *pXHL = &XHL[h][l][0];
+        byte *pXHL = &XHL[XHLidx][0];
 
         if (do_update) {
             int *palette_cache_line = palette_cache[p_palette_attribute[tile_x >> 2]];
@@ -310,13 +310,13 @@ void ppu_draw_sprite_scanline() {
         uint32_t tile_address = sprite_pattern_table_address + 16 * spr_array[n].tile;
         int y_in_tile = ppu.scanline & 0x7;
         uint32_t l = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
-        uint32_t h = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8);
+        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8) << 8) | l;
 
         uint32_t palette_attribute = spr_array[n].atr & 0x3;
         int *palette_cache_line = sprite_palette_cache[palette_attribute];
         int x;
         for (x = 0; x < 8; x++) {
-            int color = XHL[h][l][ (hflip ? 7 - x : x) ];
+            int color = XHL[XHLidx][ (hflip ? 7 - x : x) ];
 
             // Color 0 is transparent
             if (color != 0) {
