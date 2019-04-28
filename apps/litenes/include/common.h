@@ -15,13 +15,6 @@ typedef int bool;
 // #define log(fmt, ...) printk("%s:%d: " fmt, __func__, __LINE__, ## __VA_ARGS__)
 #define log(fmt, ...)
 
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
-static inline uint8_t R(uint32_t p) { return p >> 16; }
-static inline uint8_t G(uint32_t p) { return p >> 8; }
-static inline uint8_t B(uint32_t p) { return p; }
-
 // Byte Bit Operations
 void common_set_bitb(byte *variable, byte position);
 void common_unset_bitb(byte *variable, byte position);

@@ -7,6 +7,13 @@
 
 #define PROFILE
 
+static PPU_STATE ppu;
+static byte PPU_RAM[0x4000];
+static bool ppu_2007_first_read;
+static byte ppu_addr_latch;
+static bool ppu_sprite_hit_occured = false;
+static uint16_t ppu_screen_background[264][264 / 8];
+
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
 // sprite
@@ -16,19 +23,22 @@ typedef struct {
 } SPR;
 static const SPR *spr_array = (void *)PPU_SPRRAM;
 
-byte PPU_RAM[0x4000];
-bool ppu_2007_first_read;
-byte ppu_addr_latch;
-PPU_STATE ppu;
-byte ppu_latch;
-bool ppu_sprite_hit_occured = false;
-uint16_t ppu_screen_background[264][264 / 8];
+static inline void ppu_sprram_write(byte data) {
+  PPU_SPRRAM[ppu.OAMADDR++] = data;
+}
 
+void W4014(uint32_t address, byte data) {
+  // DMA transfer
+  extern byte CPU_RAM[0x8000];
+  int i;
+  for (i = 0; i < 256; i++) {
+    ppu_sprram_write(CPU_RAM[(0x100 * data) + i]);
+  }
+}
 
 // preprocess tables
 static byte XHL[256 * 256][8]; // each valus is 0~3
 static uint32_t ppu_ram_map[0x4000];
-
 static uint16_t XHL16[256 * 256];
 static uint16_t XHLmask16[256 * 256];
 
@@ -427,22 +437,20 @@ inline byte ppu_io_read(word address)
             ppu.scroll_received_x = 0;
             ppu.PPUSCROLL = 0;
             ppu.addr_received_high_byte = 0;
-            ppu_latch = value;
             ppu_addr_latch = 0;
             ppu_2007_first_read = true;
             return value;
         }
-        case 4: return ppu_latch = PPU_SPRRAM[ppu.OAMADDR];
+        case 4: return PPU_SPRRAM[ppu.OAMADDR];
         case 7:
         {
             byte data;
             
             if (ppu.PPUADDR < 0x3F00) {
-                data = ppu_latch = ppu_ram_read_fast(ppu.PPUADDR);
+                data = ppu_ram_read_fast(ppu.PPUADDR);
             }
             else {
                 data = ppu_ram_read(ppu.PPUADDR);
-                ppu_latch = 0;
             }
             
             if (ppu_2007_first_read) {
@@ -462,7 +470,6 @@ inline byte ppu_io_read(word address)
 inline void ppu_io_write(word address, byte data)
 {
     address &= 7;
-    ppu_latch = data;
     switch(address) {
         case 0: if (ppu.ready) ppu_update_PPUCTRL_internal(data); break;
         case 1: if (ppu.ready) byte_unpack(ppu.PPUMASK, data);
@@ -512,7 +519,6 @@ inline void ppu_io_write(word address, byte data)
             ppu.PPUADDR &= 0x3FFF;
         }
     }
-    ppu_latch = data;
 }
 
 void ppu_init()
@@ -524,11 +530,6 @@ void ppu_init()
     ppu.PPUDATA = 0;
     ppu_2007_first_read = true;
     table_init();
-}
-
-void ppu_sprram_write(byte data)
-{
-    PPU_SPRRAM[ppu.OAMADDR++] = data;
 }
 
 void ppu_set_background_color(byte color)

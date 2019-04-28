@@ -32,11 +32,8 @@ static inline void memory_writeb(uint32_t address, uint32_t byte_data) {
   else if (idx == 1) { ppu_io_write(address, byte_data); }
   else if (idx == 2) {
     if (address == 0x4014) {
-      // DMA transfer
-      int i;
-      for (i = 0; i < 256; i++) {
-        ppu_sprram_write(cpu_ram_read((0x100 * (byte_data & 0xff)) + i));
-      }
+      extern void W4014(uint32_t address, byte data);
+      W4014(address, byte_data);
     }
     else psg_io_write(address, byte_data);
   }
