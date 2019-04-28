@@ -111,6 +111,13 @@ void fce_run()
 
         while (scanlines-- > 0) {
           ppu_cycle();
+
+          int key = read_key();
+          for (; key != _KEY_NONE; key = read_key()) {
+            int down = (key & 0x8000) != 0;
+            int code = key & ~0x8000;
+            key_state[code] = down;
+          }
         }
 
         nr_draw ++;
@@ -118,14 +125,6 @@ void fce_run()
           last = uptime();
           printf("FPS = %d\n", nr_draw);
           nr_draw = 0;
-        }
-
-        int key = read_key();
-		log("readkey:%d\n", key);
-        if (key != _KEY_NONE) {
-          int down = (key & 0x8000) != 0;
-          int code = key & ~0x8000;
-          key_state[code] = down;
         }
     }
 }
