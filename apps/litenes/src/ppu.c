@@ -245,17 +245,18 @@ void ppu_draw_background_scanline(bool mirror) {
     for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
         uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
-
         uint32_t l = ppu_ram_read_fast(tile_address + y_in_tile);
         uint32_t XHLidx = (ppu_ram_read_fast(tile_address + y_in_tile + 8) << 8) | l;
 
-        uint32_t color16 = XHL16[XHLidx];
-        uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
-        *ptr = color16 | (XHLmask16[XHLidx] & (*ptr)) ;
+        // most of the tiles of bg are transparent, which are unnecessary to process
+        if (XHLidx != 0) {
+          uint32_t color16 = XHL16[XHLidx];
+          uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
+          *ptr = color16 | (XHLmask16[XHLidx] & (*ptr)) ;
 
-        byte *pXHL = &XHL[XHLidx][0];
+          byte *pXHL = &XHL[XHLidx][0];
 
-        if (do_update) {
+          if (do_update) {
             int *palette_cache_line = palette_cache[p_palette_attribute[tile_x >> 2]];
 
 #define macro(x) \
@@ -266,6 +267,7 @@ void ppu_draw_background_scanline(bool mirror) {
             // loop unrolling
             macro(0); macro(1); macro(2); macro(3);
             macro(4); macro(5); macro(6); macro(7);
+          }
         }
 
         taddr ++;
