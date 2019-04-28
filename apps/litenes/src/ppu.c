@@ -189,15 +189,22 @@ static void table_init() {
 }
 
 static int palette_cache[4][4];
+static int sprite_palette_cache[4][4];
 
 static void palette_cache_read() {
   int i;
   for (i = 0; i < 4; i ++) {
-    word palette_address = 0x3F00 + (i << 2);
+    uint32_t palette_address = 0x3F00 + (i << 2);
     // still in the range of identify mapping, can bypass ppu_ram_map[]
     palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
     palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
     palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+
+    palette_address = 0x3F10 + (i << 2);
+    // still in the range of identify mapping, can bypass ppu_ram_map[]
+    sprite_palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
+    sprite_palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
+    sprite_palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
   }
 }
 
@@ -281,19 +288,9 @@ void ppu_draw_background_scanline(bool mirror) {
 
 void ppu_draw_sprite_scanline() {
     int scanline_sprite_count = 0;
-    int i, n;
-
-    int sprite_palette_cache[4][4];
-    for (i = 0; i < 4; i ++) {
-      uint32_t palette_address = 0x3F10 + (i << 2);
-      // still in the range of identify mapping, can bypass ppu_ram_map[]
-      sprite_palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
-      sprite_palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
-      sprite_palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
-    }
+    int n;
 
     for (n = 0; n < sizeof(PPU_SPRRAM) / sizeof(SPR); n ++) {
-        uint32_t sprite_x = spr_array[n].x + 256;
         uint32_t sprite_y = spr_array[n].y;
 
         // Skip if sprite not on scanline
@@ -309,13 +306,15 @@ void ppu_draw_sprite_scanline() {
             // break;
         }
 
+        uint32_t sprite_x = spr_array[n].x + 256;
+
         bool vflip = spr_array[n].atr & 0x80;
         bool hflip = spr_array[n].atr & 0x40;
 
-        uint32_t tile_address = sprite_pattern_table_address + 16 * spr_array[n].tile;
         int y_in_tile = ppu.scanline & 0x7;
-        uint32_t l = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
-        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8) << 8) | l;
+        uint32_t tile_address = sprite_pattern_table_address + 16 * spr_array[n].tile + (vflip ? (7 - y_in_tile) : y_in_tile);
+        uint32_t l = ppu_ram_read_fast(tile_address);
+        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
 
         uint32_t palette_attribute = spr_array[n].atr & 0x3;
         int *palette_cache_line = sprite_palette_cache[palette_attribute];
@@ -333,7 +332,7 @@ void ppu_draw_sprite_scanline() {
 
                 // Checking sprite 0 hit
                 if (!ppu_sprite_hit_occured && n == 0 && ppu_shows_background()) {
-                  uint32_t bg16 = ppu_screen_background[sprite_y + y_in_tile][(screen_x - 256) >> 3];
+                  uint32_t bg16 = ppu_screen_background[sprite_y + y_in_tile][(screen_x >> 3) - 32];
                   uint32_t bg = (bg16 >> ((screen_x & 0x7) * 2)) & 0x3;
                   if (bg == color) {
                     ppu_set_sprite_0_hit(true);
