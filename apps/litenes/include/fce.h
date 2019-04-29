@@ -15,8 +15,6 @@ void fce_init();
 void fce_run();
 void fce_update_screen();
 
-extern int frame_cnt;
-
 extern char rom_mario_nes[];
 
 static inline void draw(int col, int row, int idx) {
@@ -28,10 +26,18 @@ static inline void draw(int col, int row, int idx) {
   }
 #else
   extern const uint32_t palette[64];
-  extern uint32_t screen[H][W];
-  if (col >= 0 && col < W && row < H) {
-    screen[row][col] = palette[idx];
-  }
+  extern uint32_t screen[H][W + 8 + 256];
+  screen[row][col] = palette[idx];
+#endif
+}
+
+static inline void draw_color(int col, int row, uint32_t c) {
+#ifdef STRETCH
+  // not support stretch mode yet
+  assert(0);
+#else
+  extern uint32_t screen[H][W + 8 + 256];
+  screen[row][col] = c;
 #endif
 }
 

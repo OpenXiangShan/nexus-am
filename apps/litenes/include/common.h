@@ -15,13 +15,6 @@ typedef int bool;
 // #define log(fmt, ...) printk("%s:%d: " fmt, __func__, __LINE__, ## __VA_ARGS__)
 #define log(fmt, ...)
 
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
-static inline uint8_t R(uint32_t p) { return p >> 16; }
-static inline uint8_t G(uint32_t p) { return p >> 8; }
-static inline uint8_t B(uint32_t p) { return p; }
-
 // Byte Bit Operations
 void common_set_bitb(byte *variable, byte position);
 void common_unset_bitb(byte *variable, byte position);
@@ -44,14 +37,14 @@ static inline bool common_bit_set(unsigned long value, byte position) { return v
 
 static inline byte byte_pack(int expand[8]) {
   byte v = 0;
-  v |= (expand[0] << 0);
-  v |= (expand[1] << 1);
-  v |= (expand[2] << 2);
-  v |= (expand[3] << 3);
-  v |= (expand[4] << 4);
-  v |= (expand[5] << 5);
-  v |= (expand[6] << 6);
-  v |= (expand[7] << 7);
+  v |= (!!expand[0] << 0);
+  v |= (!!expand[1] << 1);
+  v |= (!!expand[2] << 2);
+  v |= (!!expand[3] << 3);
+  v |= (!!expand[4] << 4);
+  v |= (!!expand[5] << 5);
+  v |= (!!expand[6] << 6);
+  v |= (!!expand[7] << 7);
   return v;
 }
 

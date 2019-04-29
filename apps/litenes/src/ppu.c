@@ -5,23 +5,30 @@
 #include <klib.h>
 #include <stdint.h>
 
+//#define PROFILE
+//#define HAS_US_TIMER
+
+static PPU_STATE ppu;
+static byte PPU_RAM[0x4000];
+static bool ppu_2007_first_read;
+static byte ppu_addr_latch;
+static bool ppu_sprite_hit_occured = false;
+static uint16_t ppu_screen_background[264][264 / 8];
+
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
+// sprite
 byte PPU_SPRRAM[0x100];
-byte PPU_RAM[0x4000];
-bool ppu_2007_first_read;
-byte ppu_addr_latch;
-PPU_STATE ppu;
-byte ppu_latch;
-bool ppu_sprite_hit_occured = false;
-byte ppu_screen_background[264][264];
-
+typedef struct {
+  uint8_t y, tile, atr, x;
+} SPR;
+static const SPR *spr_array = (void *)PPU_SPRRAM;
 
 // preprocess tables
-static byte XHL[256][256][8]; // each valus is 0~3
-static uint64_t XHL64[256][256];
-static uint64_t XHLmask[256][256];
+static byte XHL[256 * 256][8]; // each valus is 0~3
 static uint32_t ppu_ram_map[0x4000];
+static uint16_t XHL16[256 * 256];
+static uint16_t XHLmask16[256 * 256];
 
 // PPUCTRL Functions
 
@@ -39,6 +46,8 @@ static inline void ppu_update_PPUCTRL_internal(byte PPUCTRL) {
   background_pattern_table_address = common_bit_set(PPUCTRL, 4) ? 0x1000 : 0x0000;
   sprite_height = common_bit_set(PPUCTRL, 5) ? 16 : 8;
   generates_nmi = common_bit_set(PPUCTRL, 7);
+
+  ppu.PPUCTRL = PPUCTRL;
 }
 
 inline bool ppu_generates_nmi() { return generates_nmi; }
@@ -117,6 +126,7 @@ static inline uint32_t ppu_ram_read_fast(uint32_t address)
 
 static inline void ppu_ram_write(word address, byte data)
 {
+    //assert(!(ppu_shows_background() && ppu_shows_sprites()));
     PPU_RAM[ppu_ram_map[address]] = data;
 }
 
@@ -156,30 +166,16 @@ int ppu_read_idx(void) {
 // 3F1F = 11 (00010001)
 // 3F20 = 2B (00101011)
 
-static inline uint64_t int_shl(int n, int s) {
-  // compute (uint64_t)n << s without generating shld instruction in x86
-  int hi, lo;
-  if (s < 32) {
-    lo = n << s;
-    hi = (s == 0 ? 0 : n >> (32 - s));
-  }
-  else {
-    lo = 0;
-    hi = n << (s - 32);
-  }
-  return ((uint64_t)hi << 32) | lo;
-}
-
 // Rendering
 static void table_init() {
   for (int h = 0; h < 256; h ++)
     for (int l = 0; l < 256; l ++) {
       for (int x = 0; x < 8; x ++) {
         int col = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
-        XHL[h][l][x] = col;
-        XHL64[h][l] |= int_shl(col, x * 8);
+        XHL[h * 256 + l][x] = col;
+        XHL16[h * 256 + l] |= col << (x * 2);
         if (col == 0) {
-          XHLmask[h][l] |= int_shl(0xff,x * 8);
+          XHLmask16[h * 256] |= 0x3 << (x * 2);
         }
       }
   }
@@ -190,171 +186,255 @@ static void table_init() {
   log("ppu_ram_map[0x3F00]=0x%x\n", ppu_ram_map[0x3F00]);
 }
 
-static int palette_cache[4][4];
+static uint32_t color_cache[4][4];
+static uint32_t sprite_color_cache[4][4];
 
-void palette_cache_read() {
+static void make_color_cache(void) {
+  extern const uint32_t palette[64];
   int i;
   for (i = 0; i < 4; i ++) {
-    word palette_address = 0x3F00 + (i << 2);
+    uint32_t palette_address = 0x3F00 + (i << 2);
     // still in the range of identify mapping, can bypass ppu_ram_map[]
-    palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
-    palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
-    palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+    color_cache[i][1] = palette[ppu_ram_read_fast(palette_address + 1)];
+    color_cache[i][2] = palette[ppu_ram_read_fast(palette_address + 2)];
+    color_cache[i][3] = palette[ppu_ram_read_fast(palette_address + 3)];
+
+    palette_address = 0x3F10 + (i << 2);
+    // still in the range of identify mapping, can bypass ppu_ram_map[]
+    sprite_color_cache[i][1] = palette[ppu_ram_read_fast(palette_address + 1)];
+    sprite_color_cache[i][2] = palette[ppu_ram_read_fast(palette_address + 2)];
+    sprite_color_cache[i][3] = palette[ppu_ram_read_fast(palette_address + 3)];
   }
 }
 
+static uint32_t palette_attr_cache[4][256 >> 4][W >> 5];
+
+static void make_attr_cache(void) {
+  uint32_t palette_attr;
+  int x, y, i;
+  for (i = 0; i < 4; i ++) {
+    uint32_t attribute_address = ppu_base_nametable_addresses[i] + 0x3C0;
+    for (y = 0; y < (256 >> 4); y += 2) {
+      for (x = 0; x < W >> 5; x ++) {
+        palette_attr = ppu_ram_read_fast(attribute_address);
+        bool left = x < 4;
+        if (!left) { palette_attr >>= 2; }
+
+        // !top
+        palette_attr_cache[i][y + 1][x] = (palette_attr >> 4) & 3;
+        // top
+        palette_attr_cache[i][y][x] = palette_attr & 3;
+
+        attribute_address ++;
+      }
+    }
+  }
+}
+
+static uint32_t sprite_list[256][64];
+static uint8_t sprite_list_cnt[256];
+
+static void make_sprite_list(void) {
+  memset(sprite_list_cnt, 0, sizeof(sprite_list_cnt));
+
+  int i;
+  for (i = 0; i < 64; i ++) {
+    int y = spr_array[i].y;
+    if (y < 0xef) {
+#define macro(x) sprite_list[y + x][sprite_list_cnt[y + x] ++] = i
+      macro(0); macro(1); macro(2); macro(3);
+      macro(4); macro(5); macro(6); macro(7);
+      if (sprite_height == 16) {
+        macro( 8); macro( 9); macro(10); macro(11);
+        macro(12); macro(13); macro(14); macro(15);
+      }
+#undef macro
+    }
+  }
+}
+
+static void ppu_preprocess(void) {
+  make_color_cache();
+  make_attr_cache();
+  make_sprite_list();
+}
+
+extern bool do_update;
+
 void ppu_draw_background_scanline(bool mirror) {
     int tile_x, tile_y = ppu.scanline >> 3;
-    int taddr = base_nametable_address + (tile_y << 5) + (mirror ? 0x400 : 0);
-    int y_in_tile = ppu.scanline & 0x7;
-    int scroll_base = - ppu.PPUSCROLL_X + (mirror ? 256 : 0);
+    int taddr = base_nametable_address | (tile_y << 5);
+    int pattern_table_base = background_pattern_table_address | (ppu.scanline & 0x7);
 
-    int do_update = frame_cnt % 3 == 0;
-    bool top = (ppu.scanline & 31) < 16;
-
-    uint32_t attribute_address = (base_nametable_address + (mirror ? 0x400 : 0) + 0x3C0 +  -1 + ((ppu.scanline >> 5) << 3));
-    uint32_t palette_attribute = ppu_ram_read_fast(attribute_address);
-    if (!top) {
-      palette_attribute >>= 4;
+    int scroll_base = 256 - ppu.PPUSCROLL_X;
+    int tile_x_max = 32;
+    if (mirror) {
+      scroll_base += 256;
+      taddr += 0x400;
+      // Skipping off-screen pixels
+      tile_x_max = (ppu.PPUSCROLL_X >> 3) + 1;
     }
-    palette_attribute &= 3;
-    int *palette_cache_line = palette_cache[palette_attribute];
 
-    int off_screen_idx = 256 + ppu.PPUSCROLL_X - (mirror ? 256 : 0);
+    uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
+      [ppu.scanline >> 4][0];
 
-    for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < 32; tile_x++) {
-        // Skipping off-screen pixels
-        if ((tile_x << 3)  > off_screen_idx)
-            continue;
-
+    for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
-        uint32_t tile_address = background_pattern_table_address + (tile_index << 4);
+        uint32_t tile_address = pattern_table_base | (tile_index << 4);
+        uint32_t l = ppu_ram_read_fast(tile_address);
+        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
 
-        uint32_t l = ppu_ram_read_fast(tile_address + y_in_tile);
-        uint32_t h = ppu_ram_read_fast(tile_address + y_in_tile + 8);
+        // most of the tiles of bg are transparent, which are unnecessary to process
+        if (XHLidx != 0) {
+          uint32_t color16 = XHL16[XHLidx];
+          uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
+          *ptr = color16 | (XHLmask16[XHLidx] & (*ptr)) ;
 
-        if (do_update) {
-            if ((tile_x & 3) == 0) {
-              attribute_address ++;
-              palette_attribute = ppu_ram_read_fast(attribute_address);
-              bool left = (tile_x < 16);
-              if (!top) {
-                palette_attribute >>= 4;
-              }
-              if (!left) {
-                palette_attribute >>= 2;
-              }
-              palette_attribute &= 3;
-              palette_cache_line = palette_cache[palette_attribute];
-            }
-
-            union {
-              uint64_t u64;
-              byte color[8];
-            } buf;
-            buf.u64 = XHL64[h][l];
+          if (do_update) {
+            uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
+            byte *pXHL = &XHL[XHLidx][0];
 
 #define macro(x) \
-            if (buf.color[x] != 0) { \
-              draw(scroll_base + x, ppu.scanline + 1, palette_cache_line[buf.color[x]]); \
-            }
+            if (pXHL[x] != 0) { \
+              draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]); \
+            } \
 
             // loop unrolling
             macro(0); macro(1); macro(2); macro(3);
             macro(4); macro(5); macro(6); macro(7);
+#undef macro
+          }
         }
-        uint64_t *ptr = (uint64_t*)&ppu_screen_background[ppu.scanline][(tile_x << 3)];
-        *ptr = (XHL64[h][l]) | (XHLmask[h][l] & (*ptr)) ;
 
         taddr ++;
         scroll_base += 8;
     }
 }
 
-void ppu_draw_sprite_scanline() {
-    int do_update = frame_cnt % 3 == 0;
-    int scanline_sprite_count = 0;
-    int i, n;
+static inline void check_sprite0_hit(int XHLidx, int y, int hflip) {
+  int x;
+  if (!ppu_sprite_hit_occured && ppu_shows_background()) {
+    for (x = 0; x < 8; x ++) {
+      int color = XHL[XHLidx][ (hflip ? 7 - x : x) ];
+      if (color != 0) {
+        uint32_t bg16 = ppu_screen_background[y][(spr_array[0].x + x) >> 3];
+        uint32_t bg = (bg16 >> (((spr_array[0].x + x) & 0x7) * 2)) & 0x3;
+        if (bg == color) {
+          ppu_set_sprite_0_hit(true);
+          ppu_sprite_hit_occured = true;
+        }
+      }
+    }
+  }
+}
 
-    int sprite_palette_cache[4][4];
-    for (i = 0; i < 4; i ++) {
-      uint32_t palette_address = 0x3F10 + (i << 2);
-      // still in the range of identify mapping, can bypass ppu_ram_map[]
-      sprite_palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
-      sprite_palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
-      sprite_palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+void ppu_draw_sprite_scanline() {
+    int n, i;
+    int nr_sprite = sprite_list_cnt[ppu.scanline];
+
+    // PPU can't render > 8 sprites
+    if (nr_sprite > 8) {
+      ppu_set_sprite_overflow(true);
+      nr_sprite = 8;
     }
 
-    for (n = 0; n < 0x100; n += 4) {
-        uint32_t sprite_x = PPU_SPRRAM[n + 3];
-        uint32_t sprite_y = PPU_SPRRAM[n];
+    for (i = 0; i < nr_sprite; i ++) {
+        n = sprite_list[ppu.scanline][i];
 
-        // Skip if sprite not on scanline
-        if (sprite_y > ppu.scanline || sprite_y + sprite_height < ppu.scanline)
-           continue;
+        bool vflip = spr_array[n].atr & 0x80;
+        bool hflip = spr_array[n].atr & 0x40;
 
-        scanline_sprite_count++;
-
-        // PPU can't render > 8 sprites
-        if (scanline_sprite_count > 8) {
-            ppu_set_sprite_overflow(true);
-            return;
-            // break;
-        }
-
-        bool vflip = PPU_SPRRAM[n + 2] & 0x80;
-        bool hflip = PPU_SPRRAM[n + 2] & 0x40;
-
-        uint32_t tile_address = sprite_pattern_table_address + 16 * PPU_SPRRAM[n + 1];
         int y_in_tile = ppu.scanline & 0x7;
-        uint32_t l = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile));
-        uint32_t h = ppu_ram_read_fast(tile_address + (vflip ? (7 - y_in_tile) : y_in_tile) + 8);
+        uint32_t y = spr_array[n].y + y_in_tile;
+        uint32_t tile_address = sprite_pattern_table_address + 16 * spr_array[n].tile + (vflip ? (7 - y_in_tile) : y_in_tile);
+        uint32_t l = ppu_ram_read_fast(tile_address);
+        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
 
-        uint32_t palette_attribute = PPU_SPRRAM[n + 2] & 0x3;
-        int *palette_cache_line = sprite_palette_cache[palette_attribute];
-        int x;
-        for (x = 0; x < 8; x++) {
-            int color = XHL[h][l][ (hflip ? 7 - x : x) ];
+        if (n == 0) check_sprite0_hit(XHLidx, y, hflip);
 
-            // Color 0 is transparent
-            if (color != 0) {
-                int screen_x = sprite_x + x;
+        if (do_update) {
+          uint32_t palette_attribute = spr_array[n].atr & 0x3;
+          uint32_t *color_cache_line = sprite_color_cache[palette_attribute];
+          uint32_t sprite_x = spr_array[n].x + 256;
 
-                if (do_update) {
-                    draw(screen_x, sprite_y + y_in_tile + 1, palette_cache_line[color]);
-                }
-
-                // Checking sprite 0 hit
-                if (n == 0 && !ppu_sprite_hit_occured && ppu_shows_background() && ppu_screen_background[sprite_y + y_in_tile][screen_x] == color) {
-                    ppu_set_sprite_0_hit(true);
-                    ppu_sprite_hit_occured = true;
-                }
+          byte *pXHL = &XHL[XHLidx][0];
+          if (hflip) {
+#define macro(x) \
+            if (pXHL[x] != 0) { \
+              draw_color(sprite_x + 7 - x, y, color_cache_line[pXHL[x]]); \
             }
+
+            macro(0); macro(1); macro(2); macro(3);
+            macro(4); macro(5); macro(6); macro(7);
+#undef macro
+          }
+          else {
+#define macro(x) \
+            if (pXHL[x] != 0) { \
+              draw_color(sprite_x + x, y, color_cache_line[pXHL[x]]); \
+            }
+
+            macro(0); macro(1); macro(2); macro(3);
+            macro(4); macro(5); macro(6); macro(7);
+#undef macro
+          }
         }
     }
 }
 
 
+static uint32_t background_time, sprite_time, cpu_time;
+#ifdef PROFILE
+#ifdef HAS_US_TIMER
+# define time_read(x) read_us(&x)
+# define time_diff(t1, t0) us_timediff(&t1, &t0)
+# define TIME_TYPE amtime
+#else
+# define time_read(x) x = uptime()
+# define time_diff(t1, t0) (t1 - t0)
+# define TIME_TYPE uint32_t
+#endif
+#else
+# define time_read(x)
+# define time_diff(t1, t0) 0
+#endif
 
 // PPU Lifecycle
 
-static inline void ppu_cycle() {
+void ppu_cycle() {
+#ifdef PROFILE
+  TIME_TYPE t0, t1, t2, t3, t4, t5;
+#endif
+
     if (!ppu.ready && cpu_clock() > 29658)
         ppu.ready = true;
 
+    time_read(t0);
+    cpu_run(256);
+    time_read(t1);
+
     ppu.scanline++;
 
-    if (ppu_shows_background()) {
-        // preprocessing
-        palette_cache_read();
-
+    if (ppu.scanline < H && ppu_shows_background()) {
         ppu_draw_background_scanline(false);
         ppu_draw_background_scanline(true);
     }
-    
-    if (ppu_shows_sprites()) {
+
+    time_read(t2);
+    cpu_run(85 - 16);
+    time_read(t3);
+
+    if (ppu.scanline < H && ppu_shows_sprites()) {
       ppu_draw_sprite_scanline();
     }
+
+    time_read(t4);
+    cpu_run(16);
+    time_read(t5);
+
+    cpu_time += time_diff(t1, t0) + time_diff(t3, t2) + time_diff(t5, t4);
+    background_time += time_diff(t2, t1);
+    sprite_time += time_diff(t4, t3);
 
     if (ppu.scanline == 241) {
         ppu_set_in_vblank(true);
@@ -365,7 +445,19 @@ static inline void ppu_cycle() {
         ppu.scanline = -1;
         ppu_sprite_hit_occured = false;
         ppu_set_in_vblank(false);
+
+        time_read(t0);
         fce_update_screen();
+        time_read(t1);
+
+#ifdef PROFILE
+        uint32_t total = cpu_time + background_time + sprite_time + time_diff(t1, t0);
+        printf("Time(us): cpu + bg + spr + scr = (%d + %d + %d + %d)\t= %d\n",
+            cpu_time, background_time, sprite_time, time_diff(t1, t0), total);
+#endif
+        cpu_time = 0;
+        background_time = 0;
+        sprite_time = 0;
     }
 }
 
@@ -392,22 +484,20 @@ inline byte ppu_io_read(word address)
             ppu.scroll_received_x = 0;
             ppu.PPUSCROLL = 0;
             ppu.addr_received_high_byte = 0;
-            ppu_latch = value;
             ppu_addr_latch = 0;
             ppu_2007_first_read = true;
             return value;
         }
-        case 4: return ppu_latch = PPU_SPRRAM[ppu.OAMADDR];
+        case 4: return PPU_SPRRAM[ppu.OAMADDR];
         case 7:
         {
             byte data;
             
             if (ppu.PPUADDR < 0x3F00) {
-                data = ppu_latch = ppu_ram_read(ppu.PPUADDR);
+                data = ppu_ram_read_fast(ppu.PPUADDR);
             }
             else {
                 data = ppu_ram_read(ppu.PPUADDR);
-                ppu_latch = 0;
             }
             
             if (ppu_2007_first_read) {
@@ -426,11 +516,13 @@ inline byte ppu_io_read(word address)
 
 inline void ppu_io_write(word address, byte data)
 {
-    address &= 7;
-    ppu_latch = data;
-    switch(address) {
+    switch (address & 7) {
         case 0: if (ppu.ready) ppu_update_PPUCTRL_internal(data); break;
-        case 1: if (ppu.ready) byte_unpack(ppu.PPUMASK, data); break;
+        case 1: if (ppu.ready) byte_unpack(ppu.PPUMASK, data);
+                  if (ppu_shows_background() && ppu_shows_sprites()) {
+                    ppu_preprocess();
+                  }
+                  break;
         case 3: ppu.OAMADDR = data; break;
         case 4: PPU_SPRRAM[ppu.OAMADDR++] = data; break;
         case 5:
@@ -461,22 +553,15 @@ inline void ppu_io_write(word address, byte data)
         }
         case 7:
         {
-            if (ppu.PPUADDR > 0x1FFF || ppu.PPUADDR < 0x4000) {
-				log("ppu_write.1(%x,%d)\n", ppu.PPUADDR ^ ppu.mirroring_xor, data);
+            if (ppu.PPUADDR > 0x1FFF && ppu.PPUADDR < 0x4000) {
                 ppu_ram_write(ppu.PPUADDR ^ ppu.mirroring_xor, data);
-				log("ppu_write.2(%x,%d)\n", ppu.PPUADDR, data);
-                ppu_ram_write(ppu.PPUADDR, data);
             }
-            else {
-				log("ppu_write.3(%x,%d)\n", ppu.PPUADDR, data);
-                ppu_ram_write(ppu.PPUADDR, data);
-            }
+            ppu_ram_write(ppu.PPUADDR, data);
 
             ppu.PPUADDR += vram_address_increment;
             ppu.PPUADDR &= 0x3FFF;
         }
     }
-    ppu_latch = data;
 }
 
 void ppu_init()
@@ -488,11 +573,6 @@ void ppu_init()
     ppu.PPUDATA = 0;
     ppu_2007_first_read = true;
     table_init();
-}
-
-void ppu_sprram_write(byte data)
-{
-    PPU_SPRRAM[ppu.OAMADDR++] = data;
 }
 
 void ppu_set_background_color(byte color)

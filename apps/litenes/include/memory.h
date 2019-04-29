@@ -20,7 +20,6 @@ static inline uint32_t memory_readb(uint32_t address) {
 
 static inline uint32_t instr_fetch(uint32_t address) {
   extern byte memory[0x10000]; // mmc
-  //extern byte CPU_RAM[0x8000]; // CPU Memory
 
   // for super mairo, all fetch are from mmc
   return memory[address];
@@ -31,13 +30,7 @@ static inline void memory_writeb(uint32_t address, uint32_t byte_data) {
   if (idx == 0) { cpu_ram_write(address, byte_data); }
   else if (idx == 1) { ppu_io_write(address, byte_data); }
   else if (idx == 2) {
-    if (address == 0x4014) {
-      // DMA transfer
-      int i;
-      for (i = 0; i < 256; i++) {
-        ppu_sprram_write(cpu_ram_read((0x100 * (byte_data & 0xff)) + i));
-      }
-    }
+    if (address == 0x4014) W4014(byte_data);
     else psg_io_write(address, byte_data);
   }
   else if (idx == 3) { cpu_ram_write(address, byte_data); }

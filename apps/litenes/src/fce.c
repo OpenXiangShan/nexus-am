@@ -6,10 +6,10 @@
 #include <amdev.h>
 
 //#define NOGUI
-//#define PROFILE
 
 int key_state[256];
-int frame_cnt;
+static int frame_cnt;
+bool do_update = false;
 static byte *buf;
 
 typedef struct {
@@ -110,39 +110,22 @@ void fce_run()
         wait_for_frame();
         int scanlines = 262;
 
-#ifdef PROFILE
-        uint32_t ppu_time = 0;
-        uint32_t cpu_time = 0;
         while (scanlines-- > 0) {
-          uint32_t t0 = uptime();
-          ppu_run(1);
-          uint32_t t1 = uptime();
-          cpu_run(1364 / 12); // 1 scanline
-          uint32_t t2 = uptime();
-          ppu_time += t1 - t0;
-          cpu_time += t2 - t1;
+          ppu_cycle();
+
+          int key = read_key();
+          for (; key != _KEY_NONE; key = read_key()) {
+            int down = (key & 0x8000) != 0;
+            int code = key & ~0x8000;
+            key_state[code] = down;
+          }
         }
-        printf("ppu time = %d, cpu time = %d\n", ppu_time, cpu_time);
-#else
-        while (scanlines-- > 0) {
-          ppu_run(1);
-          cpu_run(1364 / 12); // 1 scanline
-        }
-#endif
 
         nr_draw ++;
         if (uptime() - last > 1000) {
           last = uptime();
           printf("FPS = %d\n", nr_draw);
           nr_draw = 0;
-        }
-
-        int key = read_key();
-		log("readkey:%d\n", key);
-        if (key != _KEY_NONE) {
-          int down = (key & 0x8000) != 0;
-          int code = key & ~0x8000;
-          key_state[code] = down;
         }
     }
 }
@@ -169,19 +152,24 @@ byte canvas[257][520];
 static int xmap[1024];
 static uint32_t row[1024];
 #else
-uint32_t screen[H][W];
+// add align attribute here to enable fast memcpy
+uint32_t screen[H][W + 8 + 256] __attribute((aligned(8)));
 #endif
 
 void fce_update_screen() {
+  do_update = (frame_cnt == 0);
   frame_cnt ++;
 #ifdef NOGUI
-  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
+//  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
   return;
 #endif
-  if (frame_cnt % 3 != 0) return;
+  if (frame_cnt != 2) return;
+  frame_cnt = -1;
 
   int w = screen_width();
   int h = screen_height();
+
+  int idx = ppu_read_idx();
 
 #ifdef STRETCH
   int pad = (w - h) / 2;
@@ -192,30 +180,35 @@ void fce_update_screen() {
     }
     draw_rect(row + pad, pad, y, w - 2 * pad, 1);
   }
+
+  assert(sizeof(byte) == 1);
+  memset(canvas, idx, sizeof(canvas));
 #else
   int xpad = (w - W) / 2;
   int ypad = (h - H) / 2;
   assert(xpad >= 0 && ypad >= 0);
-  draw_rect(&screen[0][0], xpad, ypad, W, H);
+
+  for (int y = 0; y < H; y ++) {
+    draw_rect(&screen[y][256], xpad, ypad + y, W, 1);
+  }
+
+//  draw_rect(&screen[0][0], xpad, ypad, W, H);
+
+  int nr64 = sizeof(screen[0][0]) * W / sizeof(uint64_t);
+  int i;
+  uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
+  for (int y = 0; y < H; y ++) {
+    uint64_t *p = (void *)&screen[y][256];
+    for (i = 0; i < nr64; i += 8) {
+#define macro(x)  p[i + x] = v
+      macro(0); macro(1); macro(2); macro(3);
+      macro(4); macro(5); macro(6); macro(7);
+    }
+  }
 #endif
 
   draw_sync();
 
-  int idx = ppu_read_idx();
-#ifdef STRETCH
-  assert(sizeof(byte) == 1);
-  memset(canvas, idx, sizeof(canvas));
-#else
-  int nr64 = sizeof(screen) / sizeof(uint64_t);
-  int i;
-  uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
-  uint64_t *p = (void *)screen;
-  for (i = 0; i < nr64; i += 8) {
-#define macro(x)  p[i + x] = v
-    macro(0); macro(1); macro(2); macro(3);
-    macro(4); macro(5); macro(6); macro(7);
-  }
-#endif
 }
 
 void xmap_init() {

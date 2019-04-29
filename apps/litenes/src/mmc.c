@@ -6,15 +6,10 @@
 
 byte mmc_id;
 
-byte mmc_chr_pages[MMC_MAX_PAGE_COUNT][0x2000];
-int mmc_chr_pages_number;
+static byte mmc_chr_pages[MMC_MAX_PAGE_COUNT][0x2000];
+static int mmc_chr_pages_number;
 
 byte memory[0x10000];
-
-inline byte mmc_read(word address)
-{
-    return memory[address];
-}
 
 inline void mmc_write(word address, byte data)
 {

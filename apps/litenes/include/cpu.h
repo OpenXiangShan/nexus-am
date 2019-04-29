@@ -44,8 +44,4 @@ typedef struct {
     int P[8]; // Expended Flag Register
 } CPU_STATE;
 
-extern CPU_STATE cpu;
-
-extern byte CPU_RAM[0x8000];
-
 #endif
