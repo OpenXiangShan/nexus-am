@@ -164,7 +164,7 @@ void fce_update_screen() {
   return;
 #endif
   if (frame_cnt != 2) return;
-  frame_cnt = 0;
+  frame_cnt = -1;
 
   int w = screen_width();
   int h = screen_height();
