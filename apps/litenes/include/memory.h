@@ -20,7 +20,6 @@ static inline uint32_t memory_readb(uint32_t address) {
 
 static inline uint32_t instr_fetch(uint32_t address) {
   extern byte memory[0x10000]; // mmc
-  //extern byte CPU_RAM[0x8000]; // CPU Memory
 
   // for super mairo, all fetch are from mmc
   return memory[address];
