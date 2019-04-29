@@ -90,13 +90,6 @@ static int cycle_table[256] = {
 }
 
 #define cpu_address_relative(exec) { \
-  uint32_t op_address = instr_fetch(PCreg); \
-  PCreg++; \
-  op_address = PCreg + (int8_t)op_address; \
- \
-  if ((op_address ^ PCreg) >> 8) { \
-    op_cycles++; \
-  } \
   exec(false); \
 }
 
@@ -426,9 +419,15 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 #define cpu_op_txs(in_zero_page) { cpu.SP = Xreg & 0xff; }
 
 #define cpu_branch(flag) do { \
-	if (flag) { \
-		PCreg = op_address; \
-	} \
+  if (flag) { \
+    int8_t offset = instr_fetch(PCreg); \
+    word oldpc = PCreg; \
+    PCreg += offset + 1; \
+    if ((oldpc ^ PCreg) >> 8) { \
+      op_cycles++; \
+    } \
+  } \
+  else PCreg ++; \
 } while(0)
 
 // Branching Positive
