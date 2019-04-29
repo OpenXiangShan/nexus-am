@@ -198,30 +198,31 @@ static void table_init() {
   log("ppu_ram_map[0x3F00]=0x%x\n", ppu_ram_map[0x3F00]);
 }
 
-static int palette_cache[4][4];
-static int sprite_palette_cache[4][4];
+static uint32_t color_cache[4][4];
+static uint32_t sprite_color_cache[4][4];
 
-static void palette_cache_read() {
+static void make_color_cache(void) {
+  extern const uint32_t palette[64];
   int i;
   for (i = 0; i < 4; i ++) {
     uint32_t palette_address = 0x3F00 + (i << 2);
     // still in the range of identify mapping, can bypass ppu_ram_map[]
-    palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
-    palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
-    palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+    color_cache[i][1] = palette[ppu_ram_read_fast(palette_address + 1)];
+    color_cache[i][2] = palette[ppu_ram_read_fast(palette_address + 2)];
+    color_cache[i][3] = palette[ppu_ram_read_fast(palette_address + 3)];
 
     palette_address = 0x3F10 + (i << 2);
     // still in the range of identify mapping, can bypass ppu_ram_map[]
-    sprite_palette_cache[i][1] = ppu_ram_read_fast(palette_address + 1);
-    sprite_palette_cache[i][2] = ppu_ram_read_fast(palette_address + 2);
-    sprite_palette_cache[i][3] = ppu_ram_read_fast(palette_address + 3);
+    sprite_color_cache[i][1] = palette[ppu_ram_read_fast(palette_address + 1)];
+    sprite_color_cache[i][2] = palette[ppu_ram_read_fast(palette_address + 2)];
+    sprite_color_cache[i][3] = palette[ppu_ram_read_fast(palette_address + 3)];
   }
 }
 
 static uint32_t palette_attr_cache[4][256 >> 4][W >> 5];
 
 static void ppu_preprocess(void) {
-  palette_cache_read();
+  make_color_cache();
 
   uint32_t palette_attr;
   int x, y, i;
@@ -278,11 +279,11 @@ void ppu_draw_background_scanline(bool mirror) {
           byte *pXHL = &XHL[XHLidx][0];
 
           if (do_update) {
-            int *palette_cache_line = palette_cache[p_palette_attribute[tile_x >> 2]];
+            uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
 
 #define macro(x) \
             if (pXHL[x] != 0) { \
-              draw(scroll_base + x, ppu.scanline, palette_cache_line[pXHL[x]]); \
+              draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]); \
             } \
 
             // loop unrolling
@@ -327,7 +328,7 @@ void ppu_draw_sprite_scanline() {
         uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
 
         uint32_t palette_attribute = spr_array[n].atr & 0x3;
-        int *palette_cache_line = sprite_palette_cache[palette_attribute];
+        uint32_t *color_cache_line = sprite_color_cache[palette_attribute];
         int x;
         for (x = 0; x < 8; x++) {
             int color = XHL[XHLidx][ (hflip ? 7 - x : x) ];
@@ -337,7 +338,7 @@ void ppu_draw_sprite_scanline() {
                 int screen_x = sprite_x + x;
 
                 if (do_update) {
-                    draw(screen_x, sprite_y + y_in_tile, palette_cache_line[color]);
+                    draw_color(screen_x, sprite_y + y_in_tile, color_cache_line[color]);
                 }
 
                 // Checking sprite 0 hit

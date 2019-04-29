@@ -31,4 +31,14 @@ static inline void draw(int col, int row, int idx) {
 #endif
 }
 
+static inline void draw_color(int col, int row, uint32_t c) {
+#ifdef STRETCH
+  // not support stretch mode yet
+  assert(0);
+#else
+  extern uint32_t screen[H][W + 8 + 256];
+  screen[row][col] = c;
+#endif
+}
+
 #endif
