@@ -5,7 +5,8 @@
 #include <klib.h>
 #include <stdint.h>
 
-#define PROFILE
+//#define PROFILE
+//#define HAS_US_TIMER
 
 static PPU_STATE ppu;
 static byte PPU_RAM[0x4000];
@@ -384,26 +385,33 @@ void ppu_draw_sprite_scanline() {
 
 static uint32_t background_time, sprite_time, cpu_time;
 #ifdef PROFILE
-# define my_read_us(x) read_us(x)
-# define my_us_timediff(t1, t0) us_timediff(t1, t0)
+#ifdef HAS_US_TIMER
+# define time_read(x) read_us(&x)
+# define time_diff(t1, t0) us_timediff(&t1, &t0)
+# define TIME_TYPE amtime
 #else
-# define my_read_us(x)
-# define my_us_timediff(t1, t0) 0
+# define time_read(x) x = uptime()
+# define time_diff(t1, t0) (t1 - t0)
+# define TIME_TYPE uint32_t
+#endif
+#else
+# define time_read(x)
+# define time_diff(t1, t0) 0
 #endif
 
 // PPU Lifecycle
 
 void ppu_cycle() {
 #ifdef PROFILE
-  amtime t0, t1, t2, t3, t4, t5;
+  TIME_TYPE t0, t1, t2, t3, t4, t5;
 #endif
 
     if (!ppu.ready && cpu_clock() > 29658)
         ppu.ready = true;
 
-    my_read_us(&t0);
+    time_read(t0);
     cpu_run(256);
-    my_read_us(&t1);
+    time_read(t1);
 
     ppu.scanline++;
 
@@ -412,21 +420,21 @@ void ppu_cycle() {
         ppu_draw_background_scanline(true);
     }
 
-    my_read_us(&t2);
+    time_read(t2);
     cpu_run(85 - 16);
-    my_read_us(&t3);
+    time_read(t3);
 
     if (ppu.scanline < H && ppu_shows_sprites()) {
       ppu_draw_sprite_scanline();
     }
 
-    my_read_us(&t4);
+    time_read(t4);
     cpu_run(16);
-    my_read_us(&t5);
+    time_read(t5);
 
-    cpu_time += my_us_timediff(&t1, &t0) + my_us_timediff(&t3, &t2) + my_us_timediff(&t5, &t4);
-    background_time += my_us_timediff(&t2, &t1);
-    sprite_time += my_us_timediff(&t4, &t3);
+    cpu_time += time_diff(t1, t0) + time_diff(t3, t2) + time_diff(t5, t4);
+    background_time += time_diff(t2, t1);
+    sprite_time += time_diff(t4, t3);
 
     if (ppu.scanline == 241) {
         ppu_set_in_vblank(true);
@@ -438,14 +446,14 @@ void ppu_cycle() {
         ppu_sprite_hit_occured = false;
         ppu_set_in_vblank(false);
 
-        my_read_us(&t0);
+        time_read(t0);
         fce_update_screen();
-        my_read_us(&t1);
+        time_read(t1);
 
 #ifdef PROFILE
-        uint32_t total = cpu_time + background_time + sprite_time + my_us_timediff(&t1, &t0);
+        uint32_t total = cpu_time + background_time + sprite_time + time_diff(t1, t0);
         printf("Time(us): cpu + bg + spr + scr = (%d + %d + %d + %d)\t= %d\n",
-            cpu_time, background_time, sprite_time, my_us_timediff(&t1, &t0), total);
+            cpu_time, background_time, sprite_time, time_diff(t1, t0), total);
 #endif
         cpu_time = 0;
         background_time = 0;
