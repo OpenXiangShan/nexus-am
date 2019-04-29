@@ -231,7 +231,6 @@ static int g_lz_zn_result = FLAG_STATE_UPTODATE; // for zero and negative flags
 int lz_ov_result, lz_ov_src1, lz_ov_src1, lz_ov_state; // for overflow flag
 int lz_c_result, lz_c_src1, lz_c_src1, lz_c_state; // for carry flag
 
-#define lz_is_z_lazy(lz_zn_result) (lz_zn_result & (1 << 31))
 #define lz_is_n_lazy(lz_zn_result) (lz_zn_result & (1 << 25))
 
 #define cpu_flag_set(flag) cpu.P[flag]
@@ -241,19 +240,17 @@ int lz_c_result, lz_c_src1, lz_c_src1, lz_c_state; // for carry flag
 #define cpu_unset_flag(flag) cpu.P[flag] = 0
 
 #define cpu_update_zn_flags(value) { \
-  lz_zn_result = (value) | (1 << 25) | (1 << 31); \
+  lz_zn_result = (value) | (1 << 25); \
   /* cpu_modify_flag(zero_bp, (value & 0xff) == 0); */ \
   /* cpu_modify_flag(negative_bp, (value >> 7) & 1); */ \
 }
 
-#define lz_set_z_uptodate(lz_zn_result) { lz_zn_result &= ~(1 << 31); }
 #define lz_set_n_uptodate(lz_zn_result) { lz_zn_result &= ~(1 << 25); }
 
+#define lz_query_z(lz_zn_result) ((lz_zn_result & 0xff) == 0)
+
 #define lz_compute_z(lz_zn_result) { \
-  if (lz_is_z_lazy(lz_zn_result)) { \
-    cpu_modify_flag(zero_bp, (lz_zn_result & 0xff) == 0); \
-    lz_set_z_uptodate(lz_zn_result); \
-  } \
+  cpu_modify_flag(zero_bp, lz_query_z(lz_zn_result)); \
 }
 
 #define lz_compute_n(lz_zn_result) { \
@@ -296,10 +293,9 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 #define cpu_op_and(in_zero_page) { cpu_update_zn_flags(Areg &= op_value); }
 #define cpu_op_bit(in_zero_page) { \
   cpu_modify_flag(overflow_bp, op_value & 0x40); \
-  cpu_modify_flag(zero_bp, !(Areg & op_value & 0xff)); \
+  /*cpu_modify_flag(zero_bp, (Areg & op_value & 0xff) == 0); */\
+  cpu_update_zn_flags(Areg & op_value); \
   cpu_modify_flag(negative_bp, op_value & 0x80); \
-  /*cpu_update_zn_flags(op_value); */\
-  lz_set_z_uptodate(lz_zn_result); \
   lz_set_n_uptodate(lz_zn_result); \
 }
 #define cpu_op_eor(in_zero_page) { cpu_update_zn_flags(Areg ^= op_value); }
@@ -406,13 +402,13 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 // Branching Positive
 
 #define cpu_op_bcs(in_zero_page) { cpu_branch(cpu_flag_set(carry_bp));     }
-#define cpu_op_beq(in_zero_page) { lz_compute_z(lz_zn_result); cpu_branch(cpu_flag_set(zero_bp));      }
+#define cpu_op_beq(in_zero_page) { cpu_branch(lz_query_z(lz_zn_result));      }
 #define cpu_op_bmi(in_zero_page) { lz_compute_n(lz_zn_result); cpu_branch(cpu_flag_set(negative_bp));  }
 #define cpu_op_bvs(in_zero_page) { cpu_branch(cpu_flag_set(overflow_bp));  }
 
 // Branching Negative
 
-#define cpu_op_bne(in_zero_page) { lz_compute_z(lz_zn_result); cpu_branch(!cpu_flag_set(zero_bp));     }
+#define cpu_op_bne(in_zero_page) { cpu_branch(!lz_query_z(lz_zn_result));     }
 #define cpu_op_bcc(in_zero_page) { cpu_branch(!cpu_flag_set(carry_bp));    }
 #define cpu_op_bpl(in_zero_page) { lz_compute_n(lz_zn_result); cpu_branch(!cpu_flag_set(negative_bp)); }
 #define cpu_op_bvc(in_zero_page) { cpu_branch(!cpu_flag_set(overflow_bp)); }
@@ -439,7 +435,7 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 }
 #define cpu_op_rti(in_zero_page) { \
   byte_unpack(cpu.P, cpu_stack_popb()); \
-  lz_set_z_uptodate(lz_zn_result); \
+  cpu_update_zn_flags(!cpu.P[zero_bp]); \
   lz_set_n_uptodate(lz_zn_result); \
   cpu.P[unused_bp] = 1; \
 	PCreg = cpu_stack_popw(); \
@@ -497,7 +493,7 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
   byte_unpack(cpu.P, cpu_stack_popb()); \
   cpu.P[break_bp] = 0; \
   cpu.P[unused_bp] = 1; \
-  lz_set_z_uptodate(lz_zn_result); \
+  cpu_update_zn_flags(!cpu.P[zero_bp]); \
   lz_set_n_uptodate(lz_zn_result); \
 }
 
