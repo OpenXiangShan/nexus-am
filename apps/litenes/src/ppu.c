@@ -17,24 +17,11 @@ static uint16_t ppu_screen_background[264][264 / 8];
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
 // sprite
-static byte PPU_SPRRAM[0x100];
+byte PPU_SPRRAM[0x100];
 typedef struct {
   uint8_t y, tile, atr, x;
 } SPR;
 static const SPR *spr_array = (void *)PPU_SPRRAM;
-
-static inline void ppu_sprram_write(byte data) {
-  PPU_SPRRAM[ppu.OAMADDR++] = data;
-}
-
-void W4014(uint32_t address, byte data) {
-  // DMA transfer
-  extern byte CPU_RAM[0x8000];
-  int i;
-  for (i = 0; i < 256; i++) {
-    ppu_sprram_write(CPU_RAM[(0x100 * data) + i]);
-  }
-}
 
 // preprocess tables
 static byte XHL[256 * 256][8]; // each valus is 0~3

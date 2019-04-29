@@ -30,10 +30,7 @@ static inline void memory_writeb(uint32_t address, uint32_t byte_data) {
   if (idx == 0) { cpu_ram_write(address, byte_data); }
   else if (idx == 1) { ppu_io_write(address, byte_data); }
   else if (idx == 2) {
-    if (address == 0x4014) {
-      extern void W4014(uint32_t address, byte data);
-      W4014(address, byte_data);
-    }
+    if (address == 0x4014) W4014(byte_data);
     else psg_io_write(address, byte_data);
   }
   else if (idx == 3) { cpu_ram_write(address, byte_data); }
