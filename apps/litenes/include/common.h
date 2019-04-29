@@ -37,14 +37,14 @@ static inline bool common_bit_set(unsigned long value, byte position) { return v
 
 static inline byte byte_pack(int expand[8]) {
   byte v = 0;
-  v |= (expand[0] << 0);
-  v |= (expand[1] << 1);
-  v |= (expand[2] << 2);
-  v |= (expand[3] << 3);
-  v |= (expand[4] << 4);
-  v |= (expand[5] << 5);
-  v |= (expand[6] << 6);
-  v |= (expand[7] << 7);
+  v |= (!!expand[0] << 0);
+  v |= (!!expand[1] << 1);
+  v |= (!!expand[2] << 2);
+  v |= (!!expand[3] << 3);
+  v |= (!!expand[4] << 4);
+  v |= (!!expand[5] << 5);
+  v |= (!!expand[6] << 6);
+  v |= (!!expand[7] << 7);
   return v;
 }
 

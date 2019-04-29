@@ -259,7 +259,8 @@ int lz_c_result, lz_c_src1, lz_c_src1, lz_c_state; // for carry flag
 #define lz_is_n_lazy(lz_zn_result) (lz_zn_result & (1 << 25))
 
 #define cpu_flag_set(flag) cpu.P[flag]
-#define cpu_modify_flag(flag, value) cpu.P[flag] = !!(value)
+#define cpu_flag_setbit(flag) !!cpu.P[flag]
+#define cpu_modify_flag(flag, value) cpu.P[flag] = (value)
 #define cpu_set_flag(flag) cpu.P[flag] = 1
 #define cpu_unset_flag(flag) cpu.P[flag] = 0
 
@@ -274,14 +275,14 @@ int lz_c_result, lz_c_src1, lz_c_src1, lz_c_state; // for carry flag
 
 #define lz_compute_z(lz_zn_result) { \
   if (lz_is_z_lazy(lz_zn_result)) { \
-    cpu.P[zero_bp] = (lz_zn_result & 0xff) == 0; \
+    cpu_modify_flag(zero_bp, (lz_zn_result & 0xff) == 0); \
     lz_set_z_uptodate(lz_zn_result); \
   } \
 }
 
 #define lz_compute_n(lz_zn_result) { \
   if (lz_is_n_lazy(lz_zn_result)) { \
-    cpu.P[negative_bp] = (lz_zn_result >> 7) & 1; \
+    cpu_modify_flag(negative_bp, lz_zn_result & 0x80); \
     lz_set_n_uptodate(lz_zn_result); \
   } \
 }
@@ -297,9 +298,9 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 // Addition
 
 #define cpu_op_adc(in_zero_page) { \
-    int result = (Areg & 0xff) + op_value + cpu_flag_set(carry_bp); \
-    cpu_modify_flag(carry_bp, (result & 0x100)); \
-    cpu_modify_flag(overflow_bp, (~(Areg ^ op_value) & (Areg ^ result) & 0x80)); \
+    int result = (Areg & 0xff) + op_value + cpu_flag_setbit(carry_bp); \
+    cpu_modify_flag(carry_bp, result & 0x100); \
+    cpu_modify_flag(overflow_bp, ~(Areg ^ op_value) & (Areg ^ result) & 0x80); \
     cpu_update_zn_flags(result); \
     Areg = result; \
 }
@@ -307,9 +308,9 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 // Subtraction
 
 #define cpu_op_sbc(in_zero_page) { \
-    uint32_t result = (Areg & 0xff) - op_value - !cpu_flag_set(carry_bp); \
+    uint32_t result = (Areg & 0xff) - op_value - !cpu_flag_setbit(carry_bp); \
     cpu_modify_flag(carry_bp, !(result & 0x100)); \
-    cpu_modify_flag(overflow_bp, ((Areg ^ op_value) & (Areg ^ result) & 0x80)); \
+    cpu_modify_flag(overflow_bp, (Areg ^ op_value) & (Areg ^ result) & 0x80); \
     cpu_update_zn_flags(result & 0xff); \
     Areg = result; \
 }
@@ -318,9 +319,9 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 #define cpu_op_and(in_zero_page) { cpu_update_zn_flags(Areg &= op_value); }
 #define cpu_op_bit(in_zero_page) { \
-  cpu_modify_flag(overflow_bp, (op_value >> 6) & 0x1); \
+  cpu_modify_flag(overflow_bp, op_value & 0x40); \
   cpu_modify_flag(zero_bp, !(Areg & op_value & 0xff)); \
-  cpu_modify_flag(negative_bp, (op_value >> 7) & 0x1); \
+  cpu_modify_flag(negative_bp, op_value & 0x80); \
   /*cpu_update_zn_flags(op_value); */\
   lz_set_z_uptodate(lz_zn_result); \
   lz_set_n_uptodate(lz_zn_result); \
@@ -357,28 +358,28 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 
 #define cpu_op_rola(in_zero_page) { \
     uint32_t value = (Areg & 0xff) << 1; \
-    value |= cpu_flag_set(carry_bp); \
-    cpu_modify_flag(carry_bp, value > 0xFF); \
+    value |= cpu_flag_setbit(carry_bp); \
+    cpu_modify_flag(carry_bp, value & 0x100); \
     cpu_update_zn_flags(value); \
     Areg = value; \
 }
 #define cpu_op_rol(in_zero_page) { \
     op_value <<= 1; \
-    op_value |= cpu_flag_set(carry_bp); \
-    cpu_modify_flag(carry_bp, op_value > 0xFF); \
+    op_value |= cpu_flag_setbit(carry_bp); \
+    cpu_modify_flag(carry_bp, op_value & 0x100); \
     /* op_value &= 0xFF; */\
     cpu_update_zn_flags(op_value); \
     if (in_zero_page) { cpu_ram_write(op_address, op_value); } \
     else { memory_writeb(op_address, op_value); } \
 }
 #define cpu_op_rora(in_zero_page) { \
-    unsigned char carry = cpu_flag_set(carry_bp); \
+    unsigned char carry = cpu_flag_setbit(carry_bp); \
     cpu_modify_flag(carry_bp, Areg & 0x01); \
     Areg = ((Areg & 0xff) >> 1) | (carry << 7); \
     cpu_update_zn_flags(Areg); \
 }
 #define cpu_op_ror(in_zero_page) { \
-    unsigned char carry = cpu_flag_set(carry_bp); \
+    unsigned char carry = cpu_flag_setbit(carry_bp); \
     cpu_modify_flag(carry_bp, op_value & 0x01); \
     op_value = (op_value >> 1) | (carry << 7); \
     cpu_update_zn_flags(op_value); \
