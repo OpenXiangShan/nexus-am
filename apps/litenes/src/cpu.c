@@ -71,10 +71,6 @@ static int cycle_table[256] = {
   uint32_t op_address = (instr_fetchw(PCreg) + Xreg) & 0xffff; \
   uint32_t op_value = memory_readb(op_address); \
   PCreg += 2; \
- \
-  if ((op_address ^ PCreg) >> 8) { \
-    op_cycles++; \
-  } \
   exec(false); \
 }
 
@@ -82,10 +78,6 @@ static int cycle_table[256] = {
   uint32_t op_address = (instr_fetchw(PCreg) + Yreg) & 0xFFFF; \
   uint32_t op_value = memory_readb(op_address); \
   PCreg += 2; \
- \
-  if ((op_address ^ PCreg) >> 8) { \
-    op_cycles++; \
-  } \
   exec(false); \
 }
 
@@ -123,10 +115,6 @@ static int cycle_table[256] = {
   uint32_t op_address = (temp + (Yreg & 0xff)) & 0xFFFF; \
   uint32_t op_value = memory_readb(op_address); \
   PCreg++; \
- \
-  if ((op_address ^ PCreg) >> 8) { \
-    op_cycles++; \
-  } \
   exec(false); \
 }
 
@@ -168,20 +156,12 @@ static int cycle_table[256] = {
 #define cpu_address_absolute_x_notload(exec) { \
   uint32_t op_address = (instr_fetchw(PCreg) + Xreg) & 0xffff; \
   PCreg += 2; \
- \
-  if ((op_address ^ PCreg) >> 8) { \
-    op_cycles++; \
-  } \
   exec(false); \
 }
 
 #define cpu_address_absolute_y_notload(exec) { \
   uint32_t op_address = (instr_fetchw(PCreg) + Yreg) & 0xFFFF; \
   PCreg += 2; \
- \
-  if ((op_address ^ PCreg) >> 8) { \
-    op_cycles++; \
-  } \
   exec(false); \
 }
 
@@ -198,10 +178,6 @@ static int cycle_table[256] = {
   uint32_t temp = cpu_ram_readw(arg_addr); \
   uint32_t op_address = (temp + (Yreg & 0xff)) & 0xFFFF; \
   PCreg++; \
- \
-  if ((op_address ^ PCreg) >> 8) { \
-    op_cycles++; \
-  } \
   exec(false); \
 }
 
@@ -422,11 +398,7 @@ static inline void ____FE____() { /* Instruction for future Extension */ }
 #define cpu_branch(flag) do { \
   if (flag) { \
     int8_t offset = instr_fetch(PCreg); \
-    word oldpc = PCreg; \
     PCreg += offset + 1; \
-    if ((oldpc ^ PCreg) >> 8) { \
-      op_cycles++; \
-    } \
   } \
   else PCreg ++; \
 } while(0)
