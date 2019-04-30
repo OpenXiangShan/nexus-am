@@ -195,6 +195,8 @@ static void make_color_cache(void) {
   for (i = 0; i < 4; i ++) {
     uint32_t palette_address = 0x3F00 + (i << 2);
     // still in the range of identify mapping, can bypass ppu_ram_map[]
+    // 0 for bbg
+    color_cache[i][0] = palette[ppu_ram_read_fast(0x3f00)];
     color_cache[i][1] = palette[ppu_ram_read_fast(palette_address + 1)];
     color_cache[i][2] = palette[ppu_ram_read_fast(palette_address + 2)];
     color_cache[i][3] = palette[ppu_ram_read_fast(palette_address + 3)];
@@ -296,9 +298,7 @@ static inline void ppu_draw_background_scanline(bool mirror) {
             byte *pXHL = &XHL[XHLidx][0];
 
 #define macro(x) \
-            if (pXHL[x] != 0) { \
-              draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]); \
-            } \
+              draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]);
 
             // loop unrolling
             macro(0); macro(1); macro(2); macro(3);
