@@ -47,7 +47,10 @@ static inline uint32_t memory_readw(uint32_t address)
 
 static inline uint32_t instr_fetchw(uint32_t address)
 {
-    return instr_fetch(address) | (instr_fetch(address + 1) << 8);
+  extern byte memory[0x10000]; // mmc
+
+  // for super mairo, all fetch are from mmc
+  return *(uint16_t *)(memory + address);
 }
 
 static inline void memory_writew(uint32_t address, uint32_t word_data)
