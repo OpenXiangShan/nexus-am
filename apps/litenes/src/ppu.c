@@ -264,23 +264,30 @@ static void ppu_preprocess(void) {
 extern bool do_update;
 
 static inline void ppu_draw_background_scanline(bool mirror) {
-    int tile_x, tile_y = ppu.scanline >> 3;
+    int tile_y = ppu.scanline >> 3;
     int taddr = base_nametable_address | (tile_y << 5);
     int pattern_table_base = background_pattern_table_address | (ppu.scanline & 0x7);
 
     int scroll_base = 256 - ppu.PPUSCROLL_X;
     int tile_x_max = 32;
+    int tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
+    int skip_tiles = ppu.PPUSCROLL_X >> 3;
     if (mirror) {
       scroll_base += 256;
       taddr += 0x400;
       // Skipping off-screen pixels
-      tile_x_max = (ppu.PPUSCROLL_X >> 3) + 1;
+      tile_x_max = skip_tiles + 1;
+    }
+    else if (ppu.PPUSCROLL_X > 0) {
+      tile_x += skip_tiles;
+      taddr += skip_tiles;
+      scroll_base += ppu.PPUSCROLL_X & ~0x7;
     }
 
     uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
       [ppu.scanline >> 4][0];
 
-    for (tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1; tile_x < tile_x_max; tile_x ++) {
+    for (; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
         uint32_t tile_address = pattern_table_base | (tile_index << 4);
         uint32_t l = ppu_ram_read_fast(tile_address);
