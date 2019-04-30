@@ -261,7 +261,7 @@ static void ppu_preprocess(void) {
 
 extern bool do_update;
 
-void ppu_draw_background_scanline(bool mirror) {
+static inline void ppu_draw_background_scanline(bool mirror) {
     int tile_x, tile_y = ppu.scanline >> 3;
     int taddr = base_nametable_address | (tile_y << 5);
     int pattern_table_base = background_pattern_table_address | (ppu.scanline & 0x7);
@@ -288,7 +288,8 @@ void ppu_draw_background_scanline(bool mirror) {
         if (XHLidx != 0) {
           uint32_t color16 = XHL16[XHLidx];
           uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
-          *ptr = color16 | (XHLmask16[XHLidx] & (*ptr)) ;
+          if (!mirror) { *ptr = color16; }
+          else { *ptr = color16 | (XHLmask16[XHLidx] & (*ptr)) ; }
 
           if (do_update) {
             uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
