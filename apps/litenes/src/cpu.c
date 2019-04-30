@@ -6,9 +6,6 @@
 //#define STATISTIC
 
 static CPU_STATE cpu;
-
-//int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
-
 static unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 
 static int cycle_table[256] = {
@@ -147,8 +144,8 @@ static int cycle_table[256] = {
 #define cpu_address_absolute_jmp(exec) { \
   uint32_t op_address = instr_fetchw(PCreg); \
   if (op_address == PCreg - 1) { \
-    /* spin to wait for interrupt, do not count */ \
-    /*cpu_op_cnts[0x4c] --; */\
+    /* spin to wait for interrupt, just end the cpu run directly */ \
+    cycles = 0; \
   } \
   exec(false); \
 }
@@ -642,9 +639,6 @@ void cpu_run(long cycles)
   cycles /= 3;
   long c = cycles;
   while (cycles > 0) {
-#ifdef STATISTIC
-    uint32_t oldPC = PCreg;
-#endif
     uint32_t op_code = instr_fetch(PCreg++);
     int op_cycles = cycle_table[op_code];
       switch (op_code) {
@@ -883,7 +877,7 @@ void cpu_run(long cycles)
       }
     cycles -= op_cycles;
 #ifdef STATISTIC
-    if (oldPC != PCreg) cpu_op_cnts[op_code] ++;
+    cpu_op_cnts[op_code] ++;
 #endif
   }
   cpu_cycles += (c - cycles);
