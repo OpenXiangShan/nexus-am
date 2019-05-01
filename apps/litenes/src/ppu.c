@@ -295,10 +295,7 @@ static inline void ppu_draw_background_scanline(bool mirror) {
 
         // most of the tiles of bg are transparent, which are unnecessary to process
         if (XHLidx != 0) {
-          uint32_t color16 = XHL16[XHLidx];
-          uint16_t *ptr = &ppu_screen_background[ppu.scanline][tile_x];
-          if (!mirror) { *ptr = color16; }
-          else { *ptr = color16 | (XHLmask16[XHLidx] & (*ptr)) ; }
+          ppu_screen_background[ppu.scanline][tile_x] = XHL16[XHLidx];
 
           if (do_update) {
             uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
