@@ -13,7 +13,8 @@ static byte PPU_RAM[0x4000];
 static bool ppu_2007_first_read;
 static byte ppu_addr_latch;
 static bool ppu_sprite_hit_occured = false;
-static uint16_t ppu_bg_XHLidx[264][264 / 8];
+static uint16_t ppu_bg_XHLidx_for_sprite0_check[264][264 / 8];
+static uint16_t ppu_bg_XHLidx[264][(264 + W) / 8];
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
@@ -268,12 +269,10 @@ static inline void ppu_draw_background_scanline(bool mirror) {
     int taddr = base_nametable_address | (tile_y << 5);
     int pattern_table_base = background_pattern_table_address | (ppu.scanline & 0x7);
 
-    int scroll_base = 256 - ppu.PPUSCROLL_X;
     int tile_x_max = 32;
     int tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
     int skip_tiles = ppu.PPUSCROLL_X >> 3;
     if (mirror) {
-      scroll_base += 256;
       taddr += 0x400;
       // Skipping off-screen pixels
       tile_x_max = skip_tiles + 1;
@@ -281,12 +280,10 @@ static inline void ppu_draw_background_scanline(bool mirror) {
     else if (ppu.PPUSCROLL_X > 0) {
       tile_x += skip_tiles;
       taddr += skip_tiles;
-      scroll_base += ppu.PPUSCROLL_X & ~0x7;
     }
 
-    uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
-      [ppu.scanline >> 4][0];
-    uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][0];
+    uint16_t *p_bg_sprite0 = &ppu_bg_XHLidx_for_sprite0_check[ppu.scanline][0];
+    uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][mirror ? W / 8 : 0];
 
     for (; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
@@ -295,24 +292,51 @@ static inline void ppu_draw_background_scanline(bool mirror) {
         uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
 
         // most of the tiles of bg are transparent, which are unnecessary to process
+        p_bg[tile_x] = XHLidx;
         if (XHLidx != 0) {
-          p_bg[tile_x] = XHLidx;
-
-          if (do_update) {
-            uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
-            byte *pXHL = &XHL[XHLidx][0];
-
-#define macro(x) \
-              draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]);
-
-            // loop unrolling
-            macro(0); macro(1); macro(2); macro(3);
-            macro(4); macro(5); macro(6); macro(7);
-#undef macro
-          }
+          p_bg_sprite0[tile_x] = XHLidx;
         }
 
         taddr ++;
+    }
+}
+
+static inline void ppu_update_background_scanline(bool mirror) {
+    int scroll_base = 256 - ppu.PPUSCROLL_X;
+    int tile_x_max = 32;
+    int tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
+    int skip_tiles = ppu.PPUSCROLL_X >> 3;
+    if (mirror) {
+      scroll_base += 256;
+      // Skipping off-screen pixels
+      tile_x_max = skip_tiles + 1;
+    }
+    else if (ppu.PPUSCROLL_X > 0) {
+      tile_x += skip_tiles;
+      scroll_base += ppu.PPUSCROLL_X & ~0x7;
+    }
+
+    uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
+      [ppu.scanline >> 4][0];
+    uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][mirror ? W / 8 : 0];
+
+    for (; tile_x < tile_x_max; tile_x ++) {
+        uint32_t XHLidx = p_bg[tile_x];
+
+        // most of the tiles of bg are transparent, which are unnecessary to process
+        if (XHLidx != 0) {
+          uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
+          byte *pXHL = &XHL[XHLidx][0];
+
+#define macro(x) \
+          draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]);
+
+          // loop unrolling
+          macro(0); macro(1); macro(2); macro(3);
+          macro(4); macro(5); macro(6); macro(7);
+#undef macro
+        }
+
         scroll_base += 8;
     }
 }
@@ -323,7 +347,7 @@ static inline void check_sprite0_hit(int XHLidx, int y, int hflip) {
     for (x = 0; x < 8; x ++) {
       int color = XHL[XHLidx][ (hflip ? 7 - x : x) ];
       if (color != 0) {
-        uint32_t bg16 = XHL16[ppu_bg_XHLidx[y][(spr_array[0].x + x) >> 3]];
+        uint32_t bg16 = XHL16[ppu_bg_XHLidx_for_sprite0_check[y][(spr_array[0].x + x) >> 3]];
         uint32_t bg = (bg16 >> (((spr_array[0].x + x) & 0x7) * 2)) & 0x3;
         if (bg == color) {
           ppu_set_sprite_0_hit(true);
@@ -424,6 +448,10 @@ void ppu_cycle() {
     if (ppu.scanline < H && ppu_shows_background()) {
         ppu_draw_background_scanline(false);
         ppu_draw_background_scanline(true);
+        if (do_update) {
+          ppu_update_background_scanline(false);
+          ppu_update_background_scanline(true);
+        }
     }
 
     time_read(t2);
