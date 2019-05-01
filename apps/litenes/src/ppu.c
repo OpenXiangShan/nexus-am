@@ -15,6 +15,7 @@ static byte ppu_addr_latch;
 static bool ppu_sprite_hit_occured = false;
 static uint16_t ppu_bg_XHLidx_for_sprite0_check[264][264 / 8];
 static uint16_t ppu_bg_XHLidx[264][(264 + W) / 8];
+static uint16_t pattern2XHLidx[16][256];
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
@@ -185,6 +186,18 @@ static void table_init() {
     ppu_ram_map[x] = ppu_get_real_ram_address(x);
   }
   log("ppu_ram_map[0x3F00]=0x%x\n", ppu_ram_map[0x3F00]);
+
+  // pattern table is read only!
+  // re-organize the pattern table to fetch XHLidx friendly
+  uint32_t addr;
+  for (addr = 0; addr < 0x2000; addr ++) {
+    uint32_t y_in_tile = addr & 0x7;
+    uint32_t bitplane = (addr >> 3) & 1;
+    uint32_t lr_idx = addr >> 12;
+    uint32_t tile_idx = (addr >> 4) & 0xff;
+    if (bitplane) pattern2XHLidx[(lr_idx << 3) | y_in_tile][tile_idx] |= (PPU_RAM[addr] << 8);
+    else pattern2XHLidx[(lr_idx << 3) | y_in_tile][tile_idx] = PPU_RAM[addr];
+  }
 }
 
 static uint32_t color_cache[4][4];
@@ -267,7 +280,6 @@ extern bool do_update;
 static inline void ppu_draw_background_scanline(bool mirror) {
     int tile_y = ppu.scanline >> 3;
     int taddr = base_nametable_address | (tile_y << 5);
-    int pattern_table_base = background_pattern_table_address | (ppu.scanline & 0x7);
 
     int tile_x_max = 32;
     int tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
@@ -279,25 +291,20 @@ static inline void ppu_draw_background_scanline(bool mirror) {
     }
     else if (ppu.PPUSCROLL_X > 0) {
       tile_x += skip_tiles;
-      taddr += skip_tiles;
     }
 
     uint16_t *p_bg_sprite0 = &ppu_bg_XHLidx_for_sprite0_check[ppu.scanline][0];
     uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][mirror ? W / 8 : 0];
+    uint16_t *p_XHLidx = &pattern2XHLidx[(background_pattern_table_address >> 9) | (ppu.scanline & 7)][0];
 
     for (; tile_x < tile_x_max; tile_x ++) {
-        int tile_index = ppu_ram_read_fast(taddr);
-        uint32_t tile_address = pattern_table_base | (tile_index << 4);
-        uint32_t l = ppu_ram_read_fast(tile_address);
-        uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
+        int tile_index = ppu_ram_read_fast(taddr + tile_x);
+        uint32_t XHLidx = p_XHLidx[tile_index];
 
-        // most of the tiles of bg are transparent, which are unnecessary to process
         p_bg[tile_x] = XHLidx;
         if (XHLidx != 0) {
           p_bg_sprite0[tile_x] = XHLidx;
         }
-
-        taddr ++;
     }
 }
 
