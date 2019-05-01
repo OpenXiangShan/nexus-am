@@ -13,7 +13,6 @@ static byte PPU_RAM[0x4000];
 static bool ppu_2007_first_read;
 static byte ppu_addr_latch;
 static bool ppu_sprite_hit_occured = false;
-static uint16_t ppu_bg_XHLidx_for_sprite0_check[264][264 / 8];
 static uint16_t ppu_bg_XHLidx[264][(264 + W) / 8];
 static uint16_t pattern2XHLidx[16][256];
 
@@ -276,8 +275,9 @@ static void ppu_preprocess(void) {
 }
 
 extern bool do_update;
+static uint16_t ppu_sprite0_bg_scanline[W / 8];
 
-static inline void ppu_draw_background_scanline(bool mirror) {
+void ppu_draw_background_scanline(bool mirror) {
     int tile_y = ppu.scanline >> 3;
     int taddr = base_nametable_address | (tile_y << 5);
 
@@ -293,22 +293,32 @@ static inline void ppu_draw_background_scanline(bool mirror) {
       tile_x += skip_tiles;
     }
 
-    uint16_t *p_bg_sprite0 = &ppu_bg_XHLidx_for_sprite0_check[ppu.scanline][0];
     uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][mirror ? W / 8 : 0];
     uint16_t *p_XHLidx = &pattern2XHLidx[(background_pattern_table_address >> 9) | (ppu.scanline & 7)][0];
 
-    for (; tile_x < tile_x_max; tile_x ++) {
+    bool is_in_sprite0_scanline = (ppu.scanline >= spr_array[0].y && ppu.scanline < spr_array[0].y + 8);
+    if (!ppu_sprite_hit_occured && is_in_sprite0_scanline) {
+      for (; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr + tile_x);
         uint32_t XHLidx = p_XHLidx[tile_index];
 
         p_bg[tile_x] = XHLidx;
         if (XHLidx != 0) {
-          p_bg_sprite0[tile_x] = XHLidx;
+          ppu_sprite0_bg_scanline[tile_x] = XHLidx;
         }
+      }
+    }
+    else {
+      for (; tile_x < tile_x_max; tile_x ++) {
+        int tile_index = ppu_ram_read_fast(taddr + tile_x);
+        uint32_t XHLidx = p_XHLidx[tile_index];
+
+        p_bg[tile_x] = XHLidx;
+      }
     }
 }
 
-static inline void ppu_update_background_scanline(bool mirror) {
+void ppu_update_background_scanline(bool mirror) {
     int scroll_base = 256 - ppu.PPUSCROLL_X;
     int tile_x_max = 32;
     int tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
@@ -354,7 +364,7 @@ static inline void check_sprite0_hit(int XHLidx, int y, int hflip) {
     for (x = 0; x < 8; x ++) {
       int color = XHL[XHLidx][ (hflip ? 7 - x : x) ];
       if (color != 0) {
-        uint32_t bg16 = XHL16[ppu_bg_XHLidx_for_sprite0_check[y][(spr_array[0].x + x) >> 3]];
+        uint32_t bg16 = XHL16[ppu_sprite0_bg_scanline[(spr_array[0].x + x) >> 3]];
         uint32_t bg = (bg16 >> (((spr_array[0].x + x) & 0x7) * 2)) & 0x3;
         if (bg == color) {
           ppu_set_sprite_0_hit(true);
