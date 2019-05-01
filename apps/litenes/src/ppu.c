@@ -13,7 +13,7 @@ static byte PPU_RAM[0x4000];
 static bool ppu_2007_first_read;
 static byte ppu_addr_latch;
 static bool ppu_sprite_hit_occured = false;
-static uint16_t ppu_screen_background[264][264 / 8];
+static uint16_t ppu_bg_XHLidx[264][264 / 8];
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 
@@ -286,6 +286,7 @@ static inline void ppu_draw_background_scanline(bool mirror) {
 
     uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
       [ppu.scanline >> 4][0];
+    uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][0];
 
     for (; tile_x < tile_x_max; tile_x ++) {
         int tile_index = ppu_ram_read_fast(taddr);
@@ -295,7 +296,7 @@ static inline void ppu_draw_background_scanline(bool mirror) {
 
         // most of the tiles of bg are transparent, which are unnecessary to process
         if (XHLidx != 0) {
-          ppu_screen_background[ppu.scanline][tile_x] = XHL16[XHLidx];
+          p_bg[tile_x] = XHLidx;
 
           if (do_update) {
             uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
@@ -322,7 +323,7 @@ static inline void check_sprite0_hit(int XHLidx, int y, int hflip) {
     for (x = 0; x < 8; x ++) {
       int color = XHL[XHLidx][ (hflip ? 7 - x : x) ];
       if (color != 0) {
-        uint32_t bg16 = ppu_screen_background[y][(spr_array[0].x + x) >> 3];
+        uint32_t bg16 = XHL16[ppu_bg_XHLidx[y][(spr_array[0].x + x) >> 3]];
         uint32_t bg = (bg16 >> (((spr_array[0].x + x) & 0x7) * 2)) & 0x3;
         if (bg == color) {
           ppu_set_sprite_0_hit(true);
