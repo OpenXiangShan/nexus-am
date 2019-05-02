@@ -153,7 +153,7 @@ static int xmap[1024];
 static uint32_t row[1024];
 #else
 // add align attribute here to enable fast memcpy
-uint32_t screen[H][W + 8 + 256] __attribute((aligned(8)));
+uint32_t screen[H][W + 16] __attribute((aligned(8)));
 #endif
 
 void fce_update_screen() {
@@ -189,7 +189,7 @@ void fce_update_screen() {
   assert(xpad >= 0 && ypad >= 0);
 
   for (int y = 0; y < H; y ++) {
-    draw_rect(&screen[y][256], xpad, ypad + y, W, 1);
+    draw_rect(&screen[y][8], xpad, ypad + y, W, 1);
   }
 
 //  draw_rect(&screen[0][0], xpad, ypad, W, H);
@@ -198,7 +198,7 @@ void fce_update_screen() {
   int i;
   uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
   for (int y = 0; y < H; y ++) {
-    uint64_t *p = (void *)&screen[y][256];
+    uint64_t *p = (void *)&screen[y][8];
     for (i = 0; i < nr64; i += 8) {
 #define macro(x)  p[i + x] = v
       macro(0); macro(1); macro(2); macro(3);

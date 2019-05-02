@@ -339,7 +339,7 @@ void ppu_bg_scanline_wrapper(void) {
   }
 
   if (do_update) {
-    int scroll_base = 256 - ppu.PPUSCROLL_X;
+    int scroll_base = 8 - ppu.PPUSCROLL_X;
     int scroll_base_mirror = scroll_base + 256;
     int scroll_base_nonmirror = scroll_base + (ppu.PPUSCROLL_X > 0 ? (ppu.PPUSCROLL_X & ~0x7) : 0);
 
@@ -402,7 +402,7 @@ void ppu_draw_sprite_scanline() {
         if (do_update) {
           uint32_t palette_attribute = spr_array[n].atr & 0x3;
           uint32_t *color_cache_line = sprite_color_cache[palette_attribute];
-          uint32_t sprite_x = spr_array[n].x + 256;
+          uint32_t sprite_x = spr_array[n].x + 8;
 
           byte *pXHL = &XHL[XHLidx][0];
           if (hflip) {
