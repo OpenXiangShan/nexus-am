@@ -13,7 +13,6 @@ static byte PPU_RAM[0x4000];
 static bool ppu_2007_first_read;
 static byte ppu_addr_latch;
 static bool ppu_sprite_hit_occured = false;
-static uint16_t ppu_bg_XHLidx[264][(264 + W) / 8];
 static uint16_t pattern2XHLidx[16][256];
 
 static const word ppu_base_nametable_addresses[4] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
@@ -277,88 +276,89 @@ static void ppu_preprocess(void) {
 extern bool do_update;
 static uint16_t ppu_sprite0_bg_scanline[W / 8];
 
-void ppu_draw_background_scanline(bool mirror) {
-    int tile_y = ppu.scanline >> 3;
-    int taddr = base_nametable_address | (tile_y << 5);
+static inline void ppu_check_sprite0_bg_scanline(
+    int taddr, int tile_x, int tile_x_max, uint16_t *p_XHLidx) {
 
-    int tile_x_max = 32;
-    int tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
-    int skip_tiles = ppu.PPUSCROLL_X >> 3;
-    if (mirror) {
-      taddr += 0x400;
-      // Skipping off-screen pixels
-      tile_x_max = skip_tiles + 1;
+  for (; tile_x < tile_x_max; tile_x ++) {
+    int tile_index = ppu_ram_read_fast(taddr + tile_x);
+    uint32_t XHLidx = p_XHLidx[tile_index];
+
+    if (XHLidx != 0) {
+      ppu_sprite0_bg_scanline[tile_x] = XHLidx;
     }
-    else if (ppu.PPUSCROLL_X > 0) {
-      tile_x += skip_tiles;
-    }
-
-    uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][mirror ? W / 8 : 0];
-    uint16_t *p_XHLidx = &pattern2XHLidx[(background_pattern_table_address >> 9) | (ppu.scanline & 7)][0];
-
-    bool is_in_sprite0_scanline = (ppu.scanline >= spr_array[0].y && ppu.scanline < spr_array[0].y + 8);
-    if (!ppu_sprite_hit_occured && is_in_sprite0_scanline) {
-      for (; tile_x < tile_x_max; tile_x ++) {
-        int tile_index = ppu_ram_read_fast(taddr + tile_x);
-        uint32_t XHLidx = p_XHLidx[tile_index];
-
-        p_bg[tile_x] = XHLidx;
-        if (XHLidx != 0) {
-          ppu_sprite0_bg_scanline[tile_x] = XHLidx;
-        }
-      }
-    }
-    else {
-      for (; tile_x < tile_x_max; tile_x ++) {
-        int tile_index = ppu_ram_read_fast(taddr + tile_x);
-        uint32_t XHLidx = p_XHLidx[tile_index];
-
-        p_bg[tile_x] = XHLidx;
-      }
-    }
+  }
 }
 
-void ppu_update_background_scanline(bool mirror) {
-    int scroll_base = 256 - ppu.PPUSCROLL_X;
-    int tile_x_max = 32;
-    int tile_x = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
-    int skip_tiles = ppu.PPUSCROLL_X >> 3;
-    if (mirror) {
-      scroll_base += 256;
-      // Skipping off-screen pixels
-      tile_x_max = skip_tiles + 1;
-    }
-    else if (ppu.PPUSCROLL_X > 0) {
-      tile_x += skip_tiles;
-      scroll_base += ppu.PPUSCROLL_X & ~0x7;
-    }
+void ppu_draw_bg_scanline(
+    int taddr, int scroll_base, int tile_x, int tile_x_max,
+    uint16_t *p_XHLidx, uint32_t *p_palette_attribute) {
 
-    uint32_t *p_palette_attribute = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + mirror]
-      [ppu.scanline >> 4][0];
-    uint16_t *p_bg = &ppu_bg_XHLidx[ppu.scanline][mirror ? W / 8 : 0];
+  for (; tile_x < tile_x_max; tile_x ++) {
+    int tile_index = ppu_ram_read_fast(taddr + tile_x);
+    uint32_t XHLidx = p_XHLidx[tile_index];
 
-    for (; tile_x < tile_x_max; tile_x ++) {
-        uint32_t XHLidx = p_bg[tile_x];
-
-        // most of the tiles of bg are transparent, which are unnecessary to process
-        if (XHLidx != 0) {
-          uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
-          byte *pXHL = &XHL[XHLidx][0];
+    if (XHLidx != 0) {
+      uint32_t *color_cache_line = color_cache[p_palette_attribute[tile_x >> 2]];
+      byte *pXHL = &XHL[XHLidx][0];
 
 #define macro(x) \
-          draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]);
+      draw_color(scroll_base + x, ppu.scanline, color_cache_line[pXHL[x]]);
 
-          // loop unrolling
-          macro(0); macro(1); macro(2); macro(3);
-          macro(4); macro(5); macro(6); macro(7);
+      // loop unrolling
+      macro(0); macro(1); macro(2); macro(3);
+      macro(4); macro(5); macro(6); macro(7);
 #undef macro
-        }
-
-        scroll_base += 8;
     }
+    scroll_base += 8;
+  }
 }
 
-static inline void check_sprite0_hit(int XHLidx, int y, int hflip) {
+void ppu_bg_scanline_wrapper(void) {
+  bool is_in_sprite0_scanline = (ppu.scanline >= spr_array[0].y && ppu.scanline < spr_array[0].y + 8);
+  bool check_sprite0 = (!ppu_sprite_hit_occured && is_in_sprite0_scanline);
+
+  int tile_y = ppu.scanline >> 3;
+  int taddr_nonmirror = base_nametable_address | (tile_y << 5);
+  int taddr_mirror = taddr_nonmirror + 0x400;
+
+  int skip_tiles = ppu.PPUSCROLL_X >> 3;
+  int tile_x_max_nonmirror = 32;
+  int tile_x_max_mirror = skip_tiles + 1;
+
+  int tile_x_mirror = ppu_shows_background_in_leftmost_8px() ? 0 : 1;
+  int tile_x_nonmirror = tile_x_mirror + (ppu.PPUSCROLL_X > 0 ? skip_tiles : 0);
+
+  uint16_t *p_XHLidx = &pattern2XHLidx[(background_pattern_table_address >> 9) | (ppu.scanline & 7)][0];
+
+  if (check_sprite0) {
+    // non-mirror pass
+    ppu_check_sprite0_bg_scanline(taddr_nonmirror, tile_x_nonmirror, tile_x_max_nonmirror, p_XHLidx);
+
+    // mirror pass
+    ppu_check_sprite0_bg_scanline(taddr_mirror, tile_x_mirror, tile_x_max_mirror, p_XHLidx);
+  }
+
+  if (do_update) {
+    int scroll_base = 256 - ppu.PPUSCROLL_X;
+    int scroll_base_mirror = scroll_base + 256;
+    int scroll_base_nonmirror = scroll_base + (ppu.PPUSCROLL_X > 0 ? (ppu.PPUSCROLL_X & ~0x7) : 0);
+
+    uint32_t *p_palette_attr_mirror = &palette_attr_cache[(ppu.PPUCTRL & 0x3) + 1][ppu.scanline >> 4][0];
+    uint32_t *p_palette_attr_nonmirror = &palette_attr_cache[(ppu.PPUCTRL & 0x3)][ppu.scanline >> 4][0];
+
+    // non-mirror pass
+    ppu_draw_bg_scanline(
+        taddr_nonmirror, scroll_base_nonmirror, tile_x_nonmirror, tile_x_max_nonmirror,
+        p_XHLidx, p_palette_attr_nonmirror);
+
+    // mirror pass
+    ppu_draw_bg_scanline(
+        taddr_mirror, scroll_base_mirror, tile_x_mirror, tile_x_max_mirror,
+        p_XHLidx, p_palette_attr_mirror);
+  }
+}
+
+void check_sprite0_hit(int XHLidx, int y, int hflip) {
   int x;
   if (!ppu_sprite_hit_occured && ppu_shows_background()) {
     for (x = 0; x < 8; x ++) {
@@ -463,12 +463,7 @@ void ppu_cycle() {
     ppu.scanline++;
 
     if (ppu.scanline < H && ppu_shows_background()) {
-        ppu_draw_background_scanline(false);
-        ppu_draw_background_scanline(true);
-        if (do_update) {
-          ppu_update_background_scanline(false);
-          ppu_update_background_scanline(true);
-        }
+      ppu_bg_scanline_wrapper();
     }
 
     time_read(t2);
