@@ -364,8 +364,7 @@ void check_sprite0_hit(int XHLidx, int y, int hflip) {
     for (x = 0; x < 8; x ++) {
       int color = XHL[XHLidx][ (hflip ? 7 - x : x) ];
       if (color != 0) {
-        uint32_t bg16 = XHL16[ppu_sprite0_bg_scanline[(spr_array[0].x + x) >> 3]];
-        uint32_t bg = (bg16 >> (((spr_array[0].x + x) & 0x7) * 2)) & 0x3;
+        uint32_t bg = XHL[ppu_sprite0_bg_scanline[(spr_array[0].x + x) >> 3]][(spr_array[0].x + x) & 0x7];
         if (bg == color) {
           ppu_set_sprite_0_hit(true);
           ppu_sprite_hit_occured = true;
@@ -525,12 +524,9 @@ inline byte ppu_io_read(word address)
         case 2:
         {
             byte value = ppu.PPUSTATUS;
-            ppu_set_in_vblank(false);
-            ppu_set_sprite_0_hit(false);
+            ppu.PPUSTATUS &= ~0xc0;
             ppu.scroll_received_x = 0;
-            ppu.PPUSCROLL = 0;
             ppu.addr_received_high_byte = 0;
-            ppu_addr_latch = 0;
             ppu_2007_first_read = true;
             return value;
         }
