@@ -146,9 +146,8 @@ const uint32_t palette[64] = {
   0xB3EEFF, 0xDDDDDD, 0x111111, 0x111111
 }; 
 
-byte canvas[257][520];
-
 #ifdef STRETCH
+byte canvas[257][520];
 static int xmap[1024];
 static uint32_t row[1024];
 #else

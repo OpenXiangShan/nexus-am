@@ -27,8 +27,8 @@ static const SPR *spr_array = (void *)PPU_SPRRAM;
 // preprocess tables
 static byte XHL[256 * 256][8]; // each valus is 0~3
 static uint32_t ppu_ram_map[0x4000];
-static uint16_t XHL16[256 * 256];
-static uint16_t XHLmask16[256 * 256];
+//static uint16_t XHL16[256 * 256];
+//static uint16_t XHLmask16[256 * 256];
 
 // PPUCTRL Functions
 
@@ -173,10 +173,10 @@ static void table_init() {
       for (int x = 0; x < 8; x ++) {
         int col = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
         XHL[h * 256 + l][x] = col;
-        XHL16[h * 256 + l] |= col << (x * 2);
-        if (col == 0) {
-          XHLmask16[h * 256] |= 0x3 << (x * 2);
-        }
+        //XHL16[h * 256 + l] |= col << (x * 2);
+        //if (col == 0) {
+        //  XHLmask16[h * 256] |= 0x3 << (x * 2);
+        //}
       }
   }
 
@@ -245,17 +245,17 @@ static void make_attr_cache(void) {
   }
 }
 
-static uint32_t sprite_list[256][64];
-static uint8_t sprite_list_cnt[256];
+static uint8_t sprite_per_scanline_list[256][64];
+static uint8_t sprite_per_scanline_cnt[256];
 
-static void make_sprite_list(void) {
-  memset(sprite_list_cnt, 0, sizeof(sprite_list_cnt));
+static void make_sprite_per_scanline_list(void) {
+  memset(sprite_per_scanline_cnt, 0, sizeof(sprite_per_scanline_cnt));
 
   int i;
   for (i = 0; i < 64; i ++) {
     int y = spr_array[i].y;
     if (y < 0xef) {
-#define macro(x) sprite_list[y + x][sprite_list_cnt[y + x] ++] = i
+#define macro(x) sprite_per_scanline_list[y + x][sprite_per_scanline_cnt[y + x] ++] = i
       macro(0); macro(1); macro(2); macro(3);
       macro(4); macro(5); macro(6); macro(7);
       if (sprite_height == 16) {
@@ -270,7 +270,7 @@ static void make_sprite_list(void) {
 static void ppu_preprocess(void) {
   make_color_cache();
   make_attr_cache();
-  make_sprite_list();
+  make_sprite_per_scanline_list();
 }
 
 extern bool do_update;
@@ -376,7 +376,7 @@ void check_sprite0_hit(int XHLidx, int y, int hflip) {
 
 void ppu_draw_sprite_scanline() {
     int n, i;
-    int nr_sprite = sprite_list_cnt[ppu.scanline];
+    int nr_sprite = sprite_per_scanline_cnt[ppu.scanline];
 
     // PPU can't render > 8 sprites
     if (nr_sprite > 8) {
@@ -385,7 +385,7 @@ void ppu_draw_sprite_scanline() {
     }
 
     for (i = 0; i < nr_sprite; i ++) {
-        n = sprite_list[ppu.scanline][i];
+        n = sprite_per_scanline_list[ppu.scanline][i];
 
         bool vflip = spr_array[n].atr & 0x80;
         bool hflip = spr_array[n].atr & 0x40;
