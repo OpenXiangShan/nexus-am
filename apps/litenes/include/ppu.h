@@ -23,7 +23,7 @@ static inline void W4014(byte data) {
 bool ppu_generates_nmi();
 void ppu_set_mirroring(byte mirroring);
 
-void ppu_cycle();
+void ppu_frame();
 void ppu_copy(word address, byte *source, int length);
 
 // PPU Memory and State

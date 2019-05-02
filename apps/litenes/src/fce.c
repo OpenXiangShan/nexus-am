@@ -108,17 +108,14 @@ void fce_run()
     while(1)
     {
         wait_for_frame();
-        int scanlines = 262;
 
-        while (scanlines-- > 0) {
-          ppu_cycle();
+        ppu_frame();
 
-          int key = read_key();
-          for (; key != _KEY_NONE; key = read_key()) {
-            int down = (key & 0x8000) != 0;
-            int code = key & ~0x8000;
-            key_state[code] = down;
-          }
+        int key = read_key();
+        for (; key != _KEY_NONE; key = read_key()) {
+          int down = (key & 0x8000) != 0;
+          int code = key & ~0x8000;
+          key_state[code] = down;
         }
 
         nr_draw ++;
