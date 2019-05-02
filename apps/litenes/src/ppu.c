@@ -386,12 +386,13 @@ void ppu_draw_sprite_scanline() {
 
     for (i = 0; i < nr_sprite; i ++) {
         n = sprite_per_scanline_list[ppu.scanline][i];
+        int y_in_tile = ppu.scanline & 0x7;
+        uint32_t y = spr_array[n].y + y_in_tile;
+        if (y >= H) continue;
 
         bool vflip = spr_array[n].atr & 0x80;
         bool hflip = spr_array[n].atr & 0x40;
 
-        int y_in_tile = ppu.scanline & 0x7;
-        uint32_t y = spr_array[n].y + y_in_tile;
         uint32_t tile_address = sprite_pattern_table_address + 16 * spr_array[n].tile + (vflip ? (7 - y_in_tile) : y_in_tile);
         uint32_t l = ppu_ram_read_fast(tile_address);
         uint32_t XHLidx = (ppu_ram_read_fast(tile_address + 8) << 8) | l;
