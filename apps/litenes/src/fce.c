@@ -8,7 +8,6 @@
 //#define NOGUI
 
 int key_state[256];
-static int frame_cnt;
 bool do_update = false;
 static byte *buf;
 
@@ -92,6 +91,8 @@ void wait_for_frame() {
 #ifdef NOGUI
   return;
 #endif
+  if (!do_update) return;
+
   unsigned long cur = uptime();
   while (cur - gtime < 1000 / FPS) {
     cur = uptime();
@@ -153,14 +154,17 @@ uint32_t screen[H][W + 16] __attribute((aligned(8)));
 #endif
 
 void fce_update_screen() {
+#ifdef NOGUI
+  return;
+#elif defined(__ISA_NATIVE__)
+  do_update = 1;
+#else
+  static int frame_cnt;
   do_update = (frame_cnt == 0);
   frame_cnt ++;
-#ifdef NOGUI
-//  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
-  return;
-#endif
   if (frame_cnt != 2) return;
   frame_cnt = -1;
+#endif
 
   int w = screen_width();
   int h = screen_height();
