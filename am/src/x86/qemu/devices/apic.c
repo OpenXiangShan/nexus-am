@@ -37,23 +37,47 @@
 #define TCCR    (0x0390/4)   // Timer Current Count
 #define TDCR    (0x03E0/4)   // Timer Divide Configuration
 
-volatile unsigned int *lapic;  // Initialized in mp.c
+// The I/O APIC manages hardware interrupts for an SMP system.
+// http://www.intel.com/design/chipsets/datashts/29056601.pdf
+// See also picirq.c.
+#define IOAPIC_ADDR  0xFEC00000   // Default physical address of IO APIC
+#define REG_ID     0x00  // Register index: ID
+#define REG_VER    0x01  // Register index: version
+#define REG_TABLE  0x10  // Redirection table base
+
+// The redirection table starts at REG_TABLE and uses
+// two registers to configure each interrupt.  
+// The first (low) register in a pair contains configuration bits.
+// The second (high) register contains a bitmask telling which
+// CPUs can serve that interrupt.
+#define INT_DISABLED   0x00010000  // Interrupt disabled
+#define INT_LEVEL      0x00008000  // Level-triggered (vs edge-)
+#define INT_ACTIVELOW  0x00002000  // Active low (vs high)
+#define INT_LOGICAL    0x00000800  // Destination is CPU id (vs APIC ID)
+
+volatile unsigned int *__am_lapic;  // Initialized in mp.c
+struct IOAPIC {
+    uint32_t reg, pad[3], data;
+};
+typedef struct IOAPIC IOAPIC;
+
+static volatile IOAPIC *ioapic;
 
 static void
 lapicw(int index, int value)
 {
-  lapic[index] = value;
-  lapic[ID];  // wait for write to finish, by reading
+  __am_lapic[index] = value;
+  __am_lapic[ID];  // wait for write to finish, by reading
 }
 
 void
-percpu_initlapic(void)
+__am_percpu_initlapic(void)
 {
   // Enable local APIC; set spurious interrupt vector.
   lapicw(SVR, ENABLE | (T_IRQ0 + IRQ_SPURIOUS));
 
   // The timer repeatedly counts down at bus frequency
-  // from lapic[TICR] and then issues an interrupt.  
+  // from __am_lapic[TICR] and then issues an interrupt.  
   // If xv6 cared more about precise timekeeping,
   // TICR would be calibrated using an external time source.
   lapicw(TDCR, X1);
@@ -66,7 +90,7 @@ percpu_initlapic(void)
 
   // Disable performance counter overflow interrupts
   // on machines that provide that interrupt entry.
-  if(((lapic[VER]>>16) & 0xFF) >= 4)
+  if(((__am_lapic[VER]>>16) & 0xFF) >= 4)
     lapicw(PCINT, MASKED);
 
   // Map error interrupt to IRQ_ERROR.
@@ -82,7 +106,7 @@ percpu_initlapic(void)
   // Send an Init Level De-Assert to synchronise arbitration ID's.
   lapicw(ICRHI, 0);
   lapicw(ICRLO, BCAST | INIT | LEVEL);
-  while(lapic[ICRLO] & DELIVS)
+  while(__am_lapic[ICRLO] & DELIVS)
     ;
 
   // Enable interrupts on the APIC (but not on the processor).
@@ -91,9 +115,9 @@ percpu_initlapic(void)
 
 // Acknowledge interrupt.
 void
-lapic_eoi(void)
+__am_lapic_eoi(void)
 {
-  if(lapic)
+  if(__am_lapic)
     lapicw(EOI, 0);
 }
 
@@ -110,7 +134,7 @@ microdelay(int us)
 // Start additional processor running entry code at addr.
 // See Appendix B of MultiProcessor Specification.
 void
-lapic_bootap(unsigned int apicid, unsigned int addr)
+__am_lapic_bootap(unsigned int apicid, unsigned int addr)
 {
   int i;
   unsigned short *wrv;
@@ -144,38 +168,6 @@ lapic_bootap(unsigned int apicid, unsigned int addr)
   }
 }
 
-
-
-// The I/O APIC manages hardware interrupts for an SMP system.
-// http://www.intel.com/design/chipsets/datashts/29056601.pdf
-// See also picirq.c.
-
-#include <am.h>
-#include <x86.h>
-
-struct IOAPIC {
-    uint32_t reg, pad[3], data;
-};
-typedef struct IOAPIC IOAPIC;
-
-static volatile IOAPIC *ioapic;
-
-#define IOAPIC_ADDR  0xFEC00000   // Default physical address of IO APIC
-
-#define REG_ID     0x00  // Register index: ID
-#define REG_VER    0x01  // Register index: version
-#define REG_TABLE  0x10  // Redirection table base
-
-// The redirection table starts at REG_TABLE and uses
-// two registers to configure each interrupt.  
-// The first (low) register in a pair contains configuration bits.
-// The second (high) register contains a bitmask telling which
-// CPUs can serve that interrupt.
-#define INT_DISABLED   0x00010000  // Interrupt disabled
-#define INT_LEVEL      0x00008000  // Level-triggered (vs edge-)
-#define INT_ACTIVELOW  0x00002000  // Active low (vs high)
-#define INT_LOGICAL    0x00000800  // Destination is CPU id (vs APIC ID)
-
 static unsigned int
 ioapicread(int reg)
 {
@@ -191,7 +183,7 @@ ioapicwrite(int reg, unsigned int data)
 }
 
 void
-ioapic_init(void)
+__am_ioapic_init(void)
 {
   int i, maxintr;
 
@@ -207,7 +199,7 @@ ioapic_init(void)
 }
 
 void
-ioapic_enable(int irq, int cpunum)
+__am_ioapic_enable(int irq, int cpunum)
 {
   // Mark interrupt edge-triggered, active high,
   // enabled, and routed to the given cpunum,

@@ -15,7 +15,8 @@ include $(AM_HOME)/Makefile.compile
 
 $(ARCHIVE): $(OBJS)
 	@echo + AR "->" $(shell realpath $@ --relative-to .)
-	@ar rcs $(ARCHIVE) $(OBJS)
+#	@ar rcs $(ARCHIVE) $(OBJS)
+	@ld -r -o $(ARCHIVE) $(LDFLAGS) $(OBJS)
 
 clean: 
 	rm -rf $(LIB_DIR)/build/

@@ -26,7 +26,7 @@ int vme_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
   pgfree_usr = pgfree_f;
 
   kpt = pgalloc();
-  for (int i = 0; i < NELEM(areas); i++) {
+  for (int i = 0; i < LENGTH(areas); i++) {
     const struct vm_area *seg = &areas[i];
     if (!seg->physical) continue;
     for (uint32_t pa =  (uint32_t)seg->area.start;
@@ -42,11 +42,11 @@ int vme_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
       ptab[PTX(pa)] = PTE_P | PTE_W | pa;
     }
   }
-  percpu_initpg(); // set CR3 and CR0 if kpt is not NULL
+  __am_percpu_initpg(); // set CR3 and CR0 if kpt is not NULL
   return 0;
 }
 
-void percpu_initpg() { // called by all cpus
+void __am_percpu_initpg() { // called by all cpus
   if (kpt) {
     set_cr3(kpt);
     set_cr0(get_cr0() | CR0_PG);

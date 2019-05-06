@@ -19,29 +19,29 @@ struct cpu_local {
   TSS tss;
   uint8_t stack[4096];
 };
-extern volatile uint32_t *lapic;
-extern volatile struct boot_info *bootrec;
-extern int ncpu;
-extern struct cpu_local cpuinfo[MAX_CPU];
-#define CPU (&cpuinfo[_cpu()])
+extern volatile uint32_t *__am_lapic;
+extern volatile struct boot_info *__am_bootrec;
+extern int __am_ncpu;
+extern struct cpu_local __am_cpuinfo[MAX_CPU];
+#define CPU (&__am_cpuinfo[_cpu()])
 
-#define NELEM(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // apic utils
-void lapic_eoi();
-void ioapic_init();
-void lapic_bootap(unsigned int cpu, uint32_t address);
-void ioapic_enable(int irq, int cpu);
+void __am_lapic_eoi();
+void __am_ioapic_init();
+void __am_lapic_bootap(unsigned int cpu, uint32_t address);
+void __am_ioapic_enable(int irq, int cpu);
 
 // per-cpu x86-specific operations
-void bootcpu_init();
-void percpu_initirq();
-void percpu_initgdt();
-void percpu_initlapic();
-void percpu_initpg();
-void thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
-void thiscpu_halt() __attribute__((__noreturn__));
-void othercpu_halt();
+void __am_bootcpu_init();
+void __am_percpu_initirq();
+void __am_percpu_initgdt();
+void __am_percpu_initlapic();
+void __am_percpu_initpg();
+void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
+void __am_thiscpu_halt() __attribute__((__noreturn__));
+void __am_othercpu_halt();
 
 // simple spin locks
 #define LOCKDECL(name) \

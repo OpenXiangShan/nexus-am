@@ -13,7 +13,7 @@ ASFLAGS += -fpie -pie
 
 image:
 	@echo + LD "->" $(BINARY_REL)
-	@g++ -pie -o $(BINARY) -Wl,--start-group $(LINK_FILES) -Wl,--end-group -lSDL2 -lGL -lrt
+	@g++ -pie -o $(BINARY) $(LINK_FILES) -lSDL2 -lGL -lrt
 
 run:
 	$(BINARY)

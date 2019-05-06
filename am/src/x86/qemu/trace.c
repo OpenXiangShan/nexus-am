@@ -1,6 +1,6 @@
 #include "../x86-qemu.h"
 
-volatile uint32_t trace_flags = 0; // current trace status
+static volatile uint32_t trace_flags = 0; // current trace status
 LOCKDEF(trace);
 
 void _trace_on(uint32_t flags) {

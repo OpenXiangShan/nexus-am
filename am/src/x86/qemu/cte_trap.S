@@ -10,7 +10,7 @@ trap:
   movw %ax, %es
 
   pushl %esp
-  call irq_handle // iret in the C code
+  call __am_irq_handle // iret in the C code
 
 #define NOERR     pushl $0
 #define ERR

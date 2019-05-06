@@ -2,7 +2,7 @@
 
 static _DEV_TIMER_DATE_t boot_date;
 static uint32_t freq_mhz = 2000;
-uint64_t uptsc;
+static uint64_t uptsc;
 
 static inline uint64_t rdtsc() {
   uint32_t lo, hi;
@@ -58,13 +58,13 @@ static void get_date(_DEV_TIMER_DATE_t *rtc) {
   } while (tmp != rtc->second);
 }
 
-void timer_init() {
+void __am_timer_init() {
   freq_mhz = estimate_freq();
   get_date(&boot_date);
   uptsc = rdtsc();
 }
 
-size_t timer_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
       uint64_t tsc = rdtsc() - uptsc;

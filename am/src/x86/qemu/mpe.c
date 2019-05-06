@@ -1,10 +1,11 @@
 #include "../x86-qemu.h"
 
-int ncpu = 0;
-struct cpu_local cpuinfo[MAX_CPU];
+int __am_ncpu = 0;
+struct cpu_local __am_cpuinfo[MAX_CPU];
+volatile struct boot_info *__am_bootrec = (void *)0x7000;
+
 static void (* volatile user_entry)();
 static volatile intptr_t apboot_done = 0;
-volatile struct boot_info *bootrec = (void *)0x7000;
 
 static void percpu_entry();
 static void ap_entry();
@@ -18,11 +19,11 @@ int _mpe_init(void (*entry)()) {
 }
 
 int _ncpu() {
-  return ncpu;
+  return __am_ncpu;
 }
 
 int _cpu(void) {
-  return lapic[8] >> 24;
+  return __am_lapic[8] >> 24;
 }
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
@@ -34,10 +35,10 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
 
 static void percpu_entry() {
   if (_cpu() == 0) { // bootstrap cpu, boot all aps
-    for (int cpu = 1; cpu < ncpu; cpu++) {
-      bootrec->is_ap = 1;
-      bootrec->entry = percpu_entry;
-      lapic_bootap(cpu, 0x7c00);
+    for (int cpu = 1; cpu < __am_ncpu; cpu++) {
+      __am_bootrec->is_ap = 1;
+      __am_bootrec->entry = percpu_entry;
+      __am_lapic_bootap(cpu, 0x7c00);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
       }
@@ -49,10 +50,10 @@ static void percpu_entry() {
 }
 
 static void ap_entry() {
-  percpu_initgdt();
-  percpu_initirq();
-  percpu_initlapic();
-  percpu_initpg();
+  __am_percpu_initgdt();
+  __am_percpu_initirq();
+  __am_percpu_initlapic();
+  __am_percpu_initpg();
   _atomic_xchg(&apboot_done, 1);
   user_entry();
 }

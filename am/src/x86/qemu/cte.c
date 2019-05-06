@@ -19,7 +19,7 @@ int cte_init(_Context *(*handler)(_Event, _Context *)) {
   IRQS(IDT_ENTRY)
 
   user_handler = handler;
-  percpu_initirq();
+  __am_percpu_initirq();
   return 0;
 }
 
@@ -57,7 +57,7 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
 
   void *values[] = { panic_on_return, arg }; // copy to stack
   ctx->esp0 -= sizeof(values);
-  for (int i = 0; i < NELEM(values); i++) {
+  for (int i = 0; i < LENGTH(values); i++) {
     ((uintptr_t *)ctx->esp0)[i] = (uintptr_t)values[i];
   }
   return ctx;
@@ -72,7 +72,7 @@ _Context *_cb_irq(_Event ev, _Context *ctx) {
   return user_handler(ev, ctx);
 }
 
-void irq_handle(TrapFrame *tf) {
+void __am_irq_handle(TrapFrame *tf) {
   // saving processor context
   _Context ctx = {
     .eax = tf->eax, .ebx = tf->ebx, .ecx  = tf->ecx, .edx  = tf->edx,
@@ -93,7 +93,7 @@ void irq_handle(TrapFrame *tf) {
 
   // sending end-of-interrupt
   if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
-    lapic_eoi();
+    __am_lapic_eoi();
   }
 
   // creating an event
@@ -169,7 +169,7 @@ void irq_handle(TrapFrame *tf) {
     if (prot) {
       set_cr3(prot->ptr);
     }
-    thiscpu_setstk0(ret_ctx->ss0, ret_ctx->esp0);
+    __am_thiscpu_setstk0(ret_ctx->ss0, ret_ctx->esp0);
     asm volatile goto (
       "movl %[esp], %%esp;" // move stack
       REGS_USER(push)       // push reg context onto stack
@@ -193,9 +193,9 @@ iret:
   );
 }
 
-void percpu_initirq() {
+void __am_percpu_initirq() {
   if (user_handler) {
-    ioapic_enable(IRQ_KBD, 0);
+    __am_ioapic_enable(IRQ_KBD, 0);
     set_idt(idt, sizeof(idt));
   }
 }
