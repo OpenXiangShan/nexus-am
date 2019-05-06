@@ -2,7 +2,6 @@
 
 int __am_ncpu = 0;
 struct cpu_local __am_cpuinfo[MAX_CPU];
-volatile struct boot_info *__am_bootrec = (void *)0x7000;
 
 static void (* volatile user_entry)();
 static volatile intptr_t apboot_done = 0;
@@ -36,8 +35,8 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
 static void percpu_entry() {
   if (_cpu() == 0) { // bootstrap cpu, boot all aps
     for (int cpu = 1; cpu < __am_ncpu; cpu++) {
-      __am_bootrec->is_ap = 1;
-      __am_bootrec->entry = percpu_entry;
+      BOOTREC->is_ap = 1;
+      BOOTREC->entry = percpu_entry;
       __am_lapic_bootap(cpu, 0x7c00);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();

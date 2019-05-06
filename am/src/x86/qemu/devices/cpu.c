@@ -44,8 +44,8 @@ void __am_thiscpu_halt() {
 }
 
 void __am_othercpu_halt() {
-  __am_bootrec->is_ap = 1;
-  __am_bootrec->entry = __am_thiscpu_halt;
+  BOOTREC->is_ap = 1;
+  BOOTREC->entry = __am_thiscpu_halt;
   for (int cpu = 0; cpu < __am_ncpu; cpu++) {
     if (cpu != _cpu()) {
       __am_lapic_bootap(cpu, 0x7c00);

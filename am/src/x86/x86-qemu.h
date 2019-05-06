@@ -20,10 +20,10 @@ struct cpu_local {
   uint8_t stack[4096];
 };
 extern volatile uint32_t *__am_lapic;
-extern volatile struct boot_info *__am_bootrec;
 extern int __am_ncpu;
 extern struct cpu_local __am_cpuinfo[MAX_CPU];
 #define CPU (&__am_cpuinfo[_cpu()])
+#define BOOTREC ((volatile struct boot_info *)0x7000)
 
 #define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -42,27 +42,6 @@ void __am_percpu_initpg();
 void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
 void __am_thiscpu_halt() __attribute__((__noreturn__));
 void __am_othercpu_halt();
-
-// simple spin locks
-#define LOCKDECL(name) \
-  void name##_lock(); \
-  void name##_unlock();
-
-#define LOCKDEF(name) \
-  static volatile intptr_t name##_locked = 0; \
-  static int name##_lock_flags[MAX_CPU]; \
-  void name##_lock() { \
-    name##_lock_flags[_cpu()] = get_efl() & FL_IF; \
-    cli(); \
-    while (1) { \
-      if (0 == _atomic_xchg(&name##_locked, 1)) break; \
-      pause(); \
-    } \
-  } \
-  void name##_unlock() { \
-    _atomic_xchg(&name##_locked, 0); \
-    if (name##_lock_flags[_cpu()]) sti(); \
-  }
 
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
 static inline int in_range(void *ptr, _Area area) {
