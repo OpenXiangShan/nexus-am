@@ -26,7 +26,7 @@ static inline void draw(int col, int row, int idx) {
   }
 #else
   extern const uint32_t palette[64];
-  extern uint32_t screen[H][W + 8 + 256];
+  extern uint32_t screen[H][W + 16];
   screen[row][col] = palette[idx];
 #endif
 }
@@ -36,7 +36,7 @@ static inline void draw_color(int col, int row, uint32_t c) {
   // not support stretch mode yet
   assert(0);
 #else
-  extern uint32_t screen[H][W + 8 + 256];
+  extern uint32_t screen[H][W + 16];
   screen[row][col] = c;
 #endif
 }

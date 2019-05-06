@@ -24,13 +24,14 @@ size_t video_write(uintptr_t reg, void *buf, size_t size) {
       _DEV_VIDEO_FBCTL_t *ctl = (_DEV_VIDEO_FBCTL_t *)buf;
       int x = ctl->x, y = ctl->y, w = ctl->w, h = ctl->h;
       uint32_t *pixels = ctl->pixels;
-      int len = sizeof(uint32_t) * ( (x + w >= W) ? W - x : w );
+      assert(x + w <= W && y + h <= H);
+      //int len = sizeof(uint32_t) * ( (x + w >= W) ? W - x : w );
+      int len = sizeof(uint32_t) * w;
       uint32_t *p_fb = &fb[y * W + x];
       int j;
 
       for (j = 0; j < h; j ++) {
-        if (y + j < H) { memcpy(p_fb, pixels, len); }
-        else { break; }
+        memcpy(p_fb, pixels, len);
         p_fb += W;
         pixels += w;
       }

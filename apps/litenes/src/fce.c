@@ -8,7 +8,6 @@
 //#define NOGUI
 
 int key_state[256];
-static int frame_cnt;
 bool do_update = false;
 static byte *buf;
 
@@ -92,6 +91,8 @@ void wait_for_frame() {
 #ifdef NOGUI
   return;
 #endif
+  if (!do_update) return;
+
   unsigned long cur = uptime();
   while (cur - gtime < 1000 / FPS) {
     cur = uptime();
@@ -108,17 +109,14 @@ void fce_run()
     while(1)
     {
         wait_for_frame();
-        int scanlines = 262;
 
-        while (scanlines-- > 0) {
-          ppu_cycle();
+        ppu_frame();
 
-          int key = read_key();
-          for (; key != _KEY_NONE; key = read_key()) {
-            int down = (key & 0x8000) != 0;
-            int code = key & ~0x8000;
-            key_state[code] = down;
-          }
+        int key = read_key();
+        for (; key != _KEY_NONE; key = read_key()) {
+          int down = (key & 0x8000) != 0;
+          int code = key & ~0x8000;
+          key_state[code] = down;
         }
 
         nr_draw ++;
@@ -146,25 +144,27 @@ const uint32_t palette[64] = {
   0xB3EEFF, 0xDDDDDD, 0x111111, 0x111111
 }; 
 
-byte canvas[257][520];
-
 #ifdef STRETCH
+byte canvas[257][520];
 static int xmap[1024];
 static uint32_t row[1024];
 #else
 // add align attribute here to enable fast memcpy
-uint32_t screen[H][W + 8 + 256] __attribute((aligned(8)));
+uint32_t screen[H][W + 16] __attribute((aligned(8)));
 #endif
 
 void fce_update_screen() {
+#ifdef NOGUI
+  return;
+#elif defined(__ISA_NATIVE__)
+  do_update = 1;
+#else
+  static int frame_cnt;
   do_update = (frame_cnt == 0);
   frame_cnt ++;
-#ifdef NOGUI
-//  if (frame_cnt % 1000 == 0) printf("Frame %d (%d FPS)\n", frame_cnt, frame_cnt * 1000 / uptime());
-  return;
-#endif
   if (frame_cnt != 2) return;
   frame_cnt = -1;
+#endif
 
   int w = screen_width();
   int h = screen_height();
@@ -189,7 +189,7 @@ void fce_update_screen() {
   assert(xpad >= 0 && ypad >= 0);
 
   for (int y = 0; y < H; y ++) {
-    draw_rect(&screen[y][256], xpad, ypad + y, W, 1);
+    draw_rect(&screen[y][8], xpad, ypad + y, W, 1);
   }
 
 //  draw_rect(&screen[0][0], xpad, ypad, W, H);
@@ -198,7 +198,7 @@ void fce_update_screen() {
   int i;
   uint64_t v = ((uint64_t)palette[idx] << 32) | palette[idx];
   for (int y = 0; y < H; y ++) {
-    uint64_t *p = (void *)&screen[y][256];
+    uint64_t *p = (void *)&screen[y][8];
     for (i = 0; i < nr64; i += 8) {
 #define macro(x)  p[i + x] = v
       macro(0); macro(1); macro(2); macro(3);

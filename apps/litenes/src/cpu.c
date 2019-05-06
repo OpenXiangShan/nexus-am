@@ -6,9 +6,6 @@
 //#define STATISTIC
 
 static CPU_STATE cpu;
-
-//int op_cycles;            // Additional instruction cycles used (e.g. when paging occurs)
-
 static unsigned long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 
 static int cycle_table[256] = {
@@ -147,8 +144,8 @@ static int cycle_table[256] = {
 #define cpu_address_absolute_jmp(exec) { \
   uint32_t op_address = instr_fetchw(PCreg); \
   if (op_address == PCreg - 1) { \
-    /* spin to wait for interrupt, do not count */ \
-    /*cpu_op_cnts[0x4c] --; */\
+    /* spin to wait for interrupt, just end the cpu run directly */ \
+    cycles = 0; \
   } \
   exec(false); \
 }
@@ -195,12 +192,11 @@ inline void cpu_ram_write(uint32_t address, uint32_t byte_data) {
 }
 
 static inline uint32_t cpu_ram_readw(uint32_t address) {
-  return cpu_ram_read(address) | (cpu_ram_read(address + 1) << 8);
+  return *(uint16_t *)(CPU_RAM + address);
 }
 
 static inline void cpu_ram_writew(uint32_t address, uint32_t word_data) {
-  cpu_ram_write(address, word_data & 0xff);
-  cpu_ram_write(address + 1, word_data >> 8);
+  *(uint16_t *)(CPU_RAM + address) = word_data;
 }
 
 
@@ -642,9 +638,6 @@ void cpu_run(long cycles)
   cycles /= 3;
   long c = cycles;
   while (cycles > 0) {
-#ifdef STATISTIC
-    uint32_t oldPC = PCreg;
-#endif
     uint32_t op_code = instr_fetch(PCreg++);
     int op_cycles = cycle_table[op_code];
       switch (op_code) {
@@ -883,7 +876,7 @@ void cpu_run(long cycles)
       }
     cycles -= op_cycles;
 #ifdef STATISTIC
-    if (oldPC != PCreg) cpu_op_cnts[op_code] ++;
+    cpu_op_cnts[op_code] ++;
 #endif
   }
   cpu_cycles += (c - cycles);
