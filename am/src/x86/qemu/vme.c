@@ -87,7 +87,7 @@ int _map(_AddressSpace *p, void *va, void *pa, int prot) {
       (uintptr_t)pa != ROUNDDOWN(pa, PGSIZE)) {
     panic("unaligned memory address");
   }
-  if (!in_range(va, uvm_area)) {
+  if (!IN_RANGE(va, uvm_area)) {
     return 1; // mapping an out-of-range address
   }
   PDE *upt = (PDE*)p->ptr;
