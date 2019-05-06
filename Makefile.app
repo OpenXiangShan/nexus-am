@@ -14,7 +14,7 @@ INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 
 include $(AM_HOME)/Makefile.compile
 
-LINK_LIBS  = $(LIBS)
+LINK_LIBS  = $(sort $(LIBS))
 LINK_FILES = \
   $(OBJS) \
   $(AM_HOME)/am/build/am-$(ARCH).a \

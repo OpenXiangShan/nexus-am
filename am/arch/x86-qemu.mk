@@ -6,7 +6,6 @@ AM_SRCS := x86/qemu/trm.c \
            x86/qemu/cte_trap.S \
            x86/qemu/vme.c \
            x86/qemu/mpe.c \
-           x86/qemu/trace.c \
            x86/qemu/devices/apic.c \
            x86/qemu/devices/cpu.c \
            x86/qemu/devices/input.c \

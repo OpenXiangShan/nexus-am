@@ -4,18 +4,18 @@
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 static GateDesc idt[NR_IRQ];
 
-#define IRQHANDLE_DECL(id, dpl, err)  void irq##id();
+#define IRQHANDLE_DECL(id, dpl, err)  void __am_irq##id();
 IRQS(IRQHANDLE_DECL)
-void irqall();
+void __am_irqall();
 
-int cte_init(_Context *(*handler)(_Event, _Context *)) {
+int _cte_init(_Context *(*handler)(_Event, _Context *)) {
   if (_cpu() != 0) panic("init CTE in non-bootstrap CPU");
 
   for (int i = 0; i < NR_IRQ; i ++) {
-    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), irqall, DPL_KERN);
+    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_irqall, DPL_KERN);
   }
 #define IDT_ENTRY(id, dpl, err) \
-  idt[id] = GATE(STS_TG32, KSEL(SEG_KCODE), irq##id, DPL_##dpl);
+  idt[id] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_irq##id, DPL_##dpl);
   IRQS(IDT_ENTRY)
 
   user_handler = handler;
@@ -23,17 +23,17 @@ int cte_init(_Context *(*handler)(_Event, _Context *)) {
   return 0;
 }
 
-void yield() {
+void _yield() {
   if (!user_handler) panic("no interrupt handler");
   asm volatile ("int $0x80" : : "a"(-1));
 }
 
-int intr_read() {
+int _intr_read() {
   if (!user_handler) panic("no interrupt handler");
   return (get_efl() & FL_IF) != 0;
 }
 
-void intr_write(int enable) {
+void _intr_write(int enable) {
   if (!user_handler) panic("no interrupt handler");
   if (enable) {
     sti();
@@ -44,7 +44,7 @@ void intr_write(int enable) {
 
 static void panic_on_return() { panic("kernel context returns"); }
 
-_Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
+_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *ctx = (_Context *)stack.start;
   *ctx = (_Context) {
     .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
@@ -65,12 +65,6 @@ _Context *kcontext(_Area stack, void (*entry)(void *), void *arg) {
 
 #define IRQ    T_IRQ0 + 
 #define MSG(m) ev.msg = m;
-
-_Context *__cb_irq(_Event ev, _Context *ctx);
-
-_Context *_cb_irq(_Event ev, _Context *ctx) {
-  return user_handler(ev, ctx);
-}
 
 void __am_irq_handle(TrapFrame *tf) {
   // saving processor context
@@ -147,7 +141,7 @@ void __am_irq_handle(TrapFrame *tf) {
   // call user handlers (registered in _cte_init)
   _Context *ret_ctx = &ctx;
   if (user_handler) {
-    _Context *next = __cb_irq(ev, &ctx);
+    _Context *next = user_handler(ev, &ctx);
     if (!next) {
       panic("return to a null context");
     }
