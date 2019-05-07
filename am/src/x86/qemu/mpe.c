@@ -1,7 +1,7 @@
 #include "../x86-qemu.h"
 
 int __am_ncpu = 0;
-struct cpu_local __am_cpuinfo[MAX_CPU];
+struct cpu_local __am_cpuinfo[MAX_CPU] = {};
 
 static void (* volatile user_entry)();
 static volatile intptr_t apboot_done = 0;

@@ -43,7 +43,7 @@
 #define INT_ACTIVELOW  0x00002000  // Active low (vs high)
 #define INT_LOGICAL    0x00000800  // Destination is CPU id (vs APIC ID)
 
-volatile unsigned int *__am_lapic;  // Initialized in mp.c
+volatile unsigned int *__am_lapic = NULL;  // Initialized in mp.c
 struct IOAPIC {
     uint32_t reg, pad[3], data;
 };

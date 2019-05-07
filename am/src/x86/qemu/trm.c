@@ -1,6 +1,6 @@
 #include "../x86-qemu.h"
 
-_Area _heap; // the heap memory defined in AM spec
+_Area _heap = {}; // the heap memory defined in AM spec
 
 int main();
 static void heap_init();
