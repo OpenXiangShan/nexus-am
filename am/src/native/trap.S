@@ -1,7 +1,7 @@
-.global ret_from_trap
-.global asm_trap
+.global __am_ret_from_trap
+.global __am_asm_trap
 
-asm_trap:
+__am_asm_trap:
   # getcontext() does not preserve %rax, save it manually
   pushq %rax
   pushq %rdi
@@ -9,9 +9,9 @@ asm_trap:
   subq $1024, %rsp
 
   movq %rsp, %rdi
-  call irq_handle
+  call __am_irq_handle
 
-ret_from_trap:
+__am_ret_from_trap:
 
   addq $1024, %rsp
   popq %rdi

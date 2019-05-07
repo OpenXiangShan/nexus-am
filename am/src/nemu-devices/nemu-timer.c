@@ -2,9 +2,9 @@
 #include <amdev.h>
 #include <nemu.h>
 
-static unsigned long boot_time;
+static unsigned long boot_time = 0;
 
-size_t timer_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
       _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
@@ -26,6 +26,6 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
   return 0;
 }
 
-void timer_init() {
+void __am_timer_init() {
   boot_time = inl(RTC_ADDR);
 }

@@ -1,13 +1,15 @@
 #include <am.h>
 #include <amdev.h>
 
-uint32_t systime;
-int event_thread(void);
+static uint32_t systime = 0;
+int __am_event_thread(void);
 
-size_t timer_read(uintptr_t reg, void *buf, size_t size) {
+void __am_set_systime(uint32_t t) { systime = t; }
+
+size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
-      while (event_thread());
+      while (__am_event_thread());
       _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
       uptime->hi = 0;
       uptime->lo = systime;

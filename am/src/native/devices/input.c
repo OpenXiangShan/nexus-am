@@ -5,9 +5,9 @@
 #define KEYDOWN_MASK 0x8000
 
 #define KEY_QUEUE_LEN 1024
-static int key_queue[KEY_QUEUE_LEN];
+static int key_queue[KEY_QUEUE_LEN] = {};
 static int key_f = 0, key_r = 0;
-static SDL_mutex *key_queue_lock;
+static SDL_mutex *key_queue_lock = NULL;
 
 #define XX(k) [SDL_SCANCODE_##k] = _KEY_##k,
 static int keymap[256] = {
@@ -39,12 +39,12 @@ static int event_thread(void *args) {
   }
 }
 
-void input_init() {
+void __am_input_init() {
   key_queue_lock = SDL_CreateMutex();
   SDL_CreateThread(event_thread, "event thread", NULL);
 }
 
-size_t input_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_INPUT_KBD: {
       _DEV_INPUT_KBD_t *kbd = (_DEV_INPUT_KBD_t *)buf;

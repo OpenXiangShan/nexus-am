@@ -5,7 +5,7 @@
 #define KEYDOWN_MASK 0x8000
 
 #define KEY_QUEUE_LEN 1024
-static int key_queue[KEY_QUEUE_LEN];
+static int key_queue[KEY_QUEUE_LEN] = {};
 static int key_f = 0, key_r = 0;
 
 #define XX(k) [NDL_SCANCODE_##k] = _KEY_##k,
@@ -13,14 +13,14 @@ static int keymap[256] = {
   _KEYS(XX)
 };
 
-extern uint32_t systime;
+void __am_set_systime(uint32_t t);
 
-int event_thread(void) {
+int __am_event_thread(void) {
   NDL_Event event;
   NDL_WaitEvent(&event);
 
   if (event.type == NDL_EVENT_TIMER) {
-    systime = event.data;
+    __am_set_systime(event.data);
   }
   
   if (event.type == NDL_EVENT_KEYUP || event.type == NDL_EVENT_KEYDOWN) {
@@ -37,10 +37,10 @@ int event_thread(void) {
   return false;
 }
 
-size_t input_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_INPUT_KBD: {
-      while (event_thread());
+      while (__am_event_thread());
       _DEV_INPUT_KBD_t *kbd = (_DEV_INPUT_KBD_t *)buf;
       int k = _KEY_NONE;
 

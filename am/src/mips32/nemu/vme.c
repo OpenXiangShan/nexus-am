@@ -4,14 +4,8 @@
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-static void* (*pgalloc_usr)(size_t);
-static void (*pgfree_usr)(void*);
-
-_Area segments[] = {      // Kernel memory mappings
-  {.start = (void*)0,          .end = (void*)PMEM_SIZE}
-};
-
-#define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
+static void* (*pgalloc_usr)(size_t) = NULL;
+static void (*pgfree_usr)(void*) = NULL;
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
@@ -31,14 +25,14 @@ void _unprotect(_AddressSpace *p) {
 }
 
 static _AddressSpace *cur_as = NULL;
-void get_cur_as(_Context *c) {
+void __am_get_cur_as(_Context *c) {
   c->prot = cur_as;
 }
 
-void tlb_clear();
-void _switch(_Context *c) {
+void __am_tlb_clear();
+void __am_switch(_Context *c) {
   if (cur_as != NULL && cur_as->ptr != c->prot->ptr) {
-    tlb_clear();
+    __am_tlb_clear();
   }
   cur_as = c->prot;
 }
@@ -79,7 +73,7 @@ _Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, v
   return c;
 }
 
-void tlb_refill() {
+void __am_tlb_refill() {
   uint32_t hi; //, lo0, lo1;
   asm volatile ("mfc0 %0, $10": "=r"(hi));
 
@@ -110,7 +104,7 @@ void tlb_refill() {
   }
 }
 
-void tlb_clear() {
+void __am_tlb_clear() {
   asm volatile ("mtc0 %0, $10": :"r"(0)); // hi
   asm volatile ("mtc0 %0, $2": : "r"(0)); // lo0
   asm volatile ("mtc0 %0, $3": : "r"(0)); // lo1

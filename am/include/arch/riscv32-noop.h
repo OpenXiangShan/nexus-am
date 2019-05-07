@@ -39,10 +39,10 @@ typedef struct {
   R64 cnts[NR_PERFCNT];
 } PerfCntSet;
 
-void perfcnt_read(PerfCntSet *t);
-void perfcnt_sub(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0);
-void perfcnt_add(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0);
-void perfcnt_show(PerfCntSet *t);
-void perfcnt_excel(PerfCntSet *t);
+void __am_perfcnt_read(PerfCntSet *t);
+void __am_perfcnt_sub(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0);
+void __am_perfcnt_add(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0);
+void __am_perfcnt_show(PerfCntSet *t);
+void __am_perfcnt_excel(PerfCntSet *t);
 
 #endif

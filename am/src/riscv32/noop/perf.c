@@ -8,7 +8,7 @@ static const char *name [] = {
   MAP(COUNTERS, CNT_NAME)
 };
 
-void perfcnt_read(PerfCntSet *set) {
+void __am_perfcnt_read(PerfCntSet *set) {
 #define READ_LO(cnt) \
   asm volatile("csrr %0, %1" : "=r"(set->cnts[CNT_IDX(cnt)].lo) : "i"(PERFCNT_BASE + CNT_IDX(cnt)));
 #define READ_HI(cnt) \
@@ -18,7 +18,7 @@ void perfcnt_read(PerfCntSet *set) {
   MAP(COUNTERS, READ_HI)
 }
 
-void perfcnt_sub(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
+void __am_perfcnt_sub(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
   int i;
   for (i = 0; i < NR_PERFCNT; i ++) {
     if (i != CNT_IDX(time)) {
@@ -27,7 +27,7 @@ void perfcnt_sub(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
   }
 }
 
-void perfcnt_add(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
+void __am_perfcnt_add(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
   int i;
   for (i = 0; i < NR_PERFCNT; i ++) {
     if (i != CNT_IDX(time)) {
@@ -36,7 +36,7 @@ void perfcnt_add(PerfCntSet *res, PerfCntSet *t1, PerfCntSet *t0) {
   }
 }
 
-void perfcnt_show(PerfCntSet *t) {
+void __am_perfcnt_show(PerfCntSet *t) {
   int i;
   for (i = 0; i < NR_PERFCNT; i ++) {
     if (i != CNT_IDX(time)) {
@@ -45,7 +45,7 @@ void perfcnt_show(PerfCntSet *t) {
   }
 }
 
-void perfcnt_excel(PerfCntSet *t) {
+void __am_perfcnt_excel(PerfCntSet *t) {
   int i;
   for (i = 0; i < NR_PERFCNT; i ++) {
     if (i != CNT_IDX(time)) {
