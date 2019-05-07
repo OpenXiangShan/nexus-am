@@ -4,11 +4,11 @@
 
 extern char _heap_start;
 extern char _heap_end;
-extern int main();
-void init_uartlite(void);
-void uartlite_putchar(char ch);
-void init_perfcnt(void);
-void show_perfcnt(void);
+int main();
+void __am_init_uartlite(void);
+void __am_uartlite_putchar(char ch);
+void __am_init_perfcnt(void);
+void __am_show_perfcnt(void);
 
 _Area _heap = {
   .start = &_heap_start,
@@ -16,7 +16,7 @@ _Area _heap = {
 };
 
 void _putc(char ch) {
-  uartlite_putchar(ch);
+  __am_uartlite_putchar(ch);
 }
 
 void _halt(int code) {
@@ -29,11 +29,11 @@ void _halt(int code) {
 
 void _trm_init() {
   PerfCntSet t0, t1, res;
-  init_uartlite();
-  perfcnt_read(&t0);
+  __am_init_uartlite();
+  __am_perfcnt_read(&t0);
   int ret = main();
-  perfcnt_read(&t1);
-  perfcnt_sub(&res, &t1, &t0);
-  perfcnt_show(&res);
+  __am_perfcnt_read(&t1);
+  __am_perfcnt_sub(&res, &t1, &t0);
+  __am_perfcnt_show(&res);
   _halt(ret);
 }

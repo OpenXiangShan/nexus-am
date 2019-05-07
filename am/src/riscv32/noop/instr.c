@@ -71,7 +71,7 @@ static uint32_t div(uint32_t a, uint32_t b, int sign, int reminder) {
   return (reminder ? R.hi : R.lo);
 }
 
-int illegal_instr(_Context *c) {
+int __am_illegal_instr(_Context *c) {
   union {
     struct {
       uint32_t opcode :7;
