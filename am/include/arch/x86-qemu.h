@@ -2,7 +2,7 @@
 #define __ARCH_H__
 
 struct _Context {
-  struct _AddressSpace *prot;
+  struct _AddressSpace *uvm;
   uint32_t eax, ebx, ecx, edx,
            esi, edi, ebp, esp3,
            eip, eflags,
