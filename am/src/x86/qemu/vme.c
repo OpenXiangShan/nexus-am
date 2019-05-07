@@ -107,7 +107,7 @@ int _map(_AddressSpace *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack,
+_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack,
                                 void *entry, void *args) {
   _Context *ctx = (_Context*)kstack.start;
   *ctx = (_Context) {
@@ -116,7 +116,7 @@ _Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack,
     .ss  = USEL(SEG_UDATA), .esp3 = (uint32_t)ustack.end,
     .ss0 = KSEL(SEG_KDATA), .esp0 = (uint32_t)kstack.end,
     .eax = (uint32_t)args, // just use eax to pass @args
-    .prot = p,
+    .uvm = as,
   };
   return ctx;
 }

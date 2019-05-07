@@ -15,7 +15,7 @@ struct boot_info {
 };
 
 struct cpu_local {
-  _AddressSpace *prot;
+  _AddressSpace *uvm;
   SegDesc gdt[NR_SEG];
   TSS tss;
   uint8_t stack[4096];

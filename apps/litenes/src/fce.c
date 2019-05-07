@@ -5,7 +5,7 @@
 #include <klib.h>
 #include <amdev.h>
 
-//#define NOGUI
+// #define NOGUI
 
 int key_state[256];
 bool do_update = false;
@@ -85,27 +85,24 @@ void fce_init()
     cpu_reset();
 }
 
-static unsigned long gtime;
+static unsigned long frames;
 
 void wait_for_frame() {
+  frames++;
 #ifdef NOGUI
   return;
 #endif
-  if (!do_update) return;
-
-  unsigned long cur = uptime();
-  while (cur - gtime < 1000 / FPS) {
-    cur = uptime();
+  while (1) {
+    unsigned long expect = uptime() / (1000 / FPS);
+    if (expect >= frames) break;
   }
-  gtime = cur;
 }
 
 void fce_run()
 {
     key_state[0] = 1;
-    gtime = uptime();
     int nr_draw = 0;
-    uint32_t last = gtime;
+    uint32_t last = uptime();
     while(1)
     {
         wait_for_frame();

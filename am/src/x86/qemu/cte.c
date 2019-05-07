@@ -45,14 +45,19 @@ void _intr_write(int enable) {
 static void panic_on_return() { panic("kernel context returns"); }
 
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Context *ctx = (_Context *)stack.start;
+  _Area stk_safe = {
+    (void *)ROUNDUP(stack.start, 64),
+    (void *)ROUNDDOWN(stack.end, 64),
+  };
+
+  _Context *ctx = (_Context *)stk_safe.start;
   *ctx = (_Context) {
     .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
     .esi = 0, .edi = 0, .ebp = 0, .esp3 = 0,
-    .ss0 = 0, .esp0 = (uint32_t)stack.end,
+    .ss0 = 0, .esp0 = (uint32_t)stk_safe.end,
     .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
     .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
-    .prot = NULL,
+    .uvm = NULL,
   };
 
   void *values[] = { panic_on_return, arg }; // copy to stack
@@ -74,7 +79,7 @@ void __am_irq_handle(TrapFrame *tf) {
     .eip = tf->eip, .eflags = tf->eflags,
     .cs  = tf->cs,  .ds  = tf->ds,  .es   = tf->es,  .ss   = 0,
     .ss0 = KSEL(SEG_KDATA),         .esp0 = (uint32_t)(tf + 1),
-    .prot = CPU->prot,
+    .uvm = CPU->uvm,
   };
 
   if (tf->cs & DPL_USER) { // interrupt at user code
@@ -157,11 +162,11 @@ void __am_irq_handle(TrapFrame *tf) {
 #define push(r) "push %[" #r "];"      // -> push %[eax]
 #define def(r)  , [r] "m"(ret_ctx->r)  // -> [eax] "m"(ret_ctx->eax)
  
-  CPU->prot = ret_ctx->prot;
+  CPU->uvm = ret_ctx->uvm;
   if (ret_ctx->cs & DPL_USER) { // return to user
-    _AddressSpace *prot = ret_ctx->prot;
-    if (prot) {
-      set_cr3(prot->ptr);
+    _AddressSpace *uvm = ret_ctx->uvm;
+    if (uvm) {
+      set_cr3(uvm->ptr);
     }
     __am_thiscpu_setstk0(ret_ctx->ss0, ret_ctx->esp0);
     asm volatile goto (
