@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define HEAP_SIZE (8 * 1024 * 1024)
-static uint8_t heap[HEAP_SIZE];
+static uint8_t heap[HEAP_SIZE] = {};
 
 _Area _heap = {
   .start = heap,
@@ -21,4 +21,3 @@ void _halt(int code) {
   printf("Exit (%d)\n", code);
   exit(code);
 }
-
