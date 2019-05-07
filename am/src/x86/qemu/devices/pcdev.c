@@ -17,7 +17,7 @@ static inline void port_write(int port, size_t nmemb, uintptr_t data) {
   }
 }
 
-size_t pciconf_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_pciconf_read(uintptr_t reg, void *buf, size_t size) {
   outl(0xcf8, reg);
   switch (size) {
     case 1: *(uint8_t *) buf = inb(0xcfc + (reg & 3));
@@ -27,7 +27,7 @@ size_t pciconf_read(uintptr_t reg, void *buf, size_t size) {
   return size;
 }
 
-size_t pciconf_write(uintptr_t reg, void *buf, size_t size) {
+size_t __am_pciconf_write(uintptr_t reg, void *buf, size_t size) {
   outl(0xcf8, reg);
   switch (size) {
     case 1: outb(0xcfc + (reg & 3), *(uint8_t *) buf);

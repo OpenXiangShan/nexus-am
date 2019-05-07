@@ -16,17 +16,17 @@ static void *pgalloc();
 static void pgfree(void *ptr);
 
 static PDE *kpt;
-static void *(*pgalloc_usr)(size_t);
-static void (*pgfree_usr)(void *);
+static void *(*user_pgalloc)(size_t);
+static void (*user_pgfree)(void *);
 
-int vme_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
+int _vme_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
   if (_cpu() != 0) panic("init VME in non-bootstrap CPU");
 
-  pgalloc_usr = pgalloc_f;
-  pgfree_usr = pgfree_f;
+  user_pgalloc = pgalloc_f;
+  user_pgfree = pgfree_f;
 
   kpt = pgalloc();
-  for (int i = 0; i < NELEM(areas); i++) {
+  for (int i = 0; i < LENGTH(areas); i++) {
     const struct vm_area *seg = &areas[i];
     if (!seg->physical) continue;
     for (uint32_t pa =  (uint32_t)seg->area.start;
@@ -42,18 +42,18 @@ int vme_init(void *(*pgalloc_f)(size_t), void (*pgfree_f)(void *)) {
       ptab[PTX(pa)] = PTE_P | PTE_W | pa;
     }
   }
-  percpu_initpg(); // set CR3 and CR0 if kpt is not NULL
+  __am_percpu_initpg(); // set CR3 and CR0 if kpt is not NULL
   return 0;
 }
 
-void percpu_initpg() { // called by all cpus
+void __am_percpu_initpg() { // called by all cpus
   if (kpt) {
     set_cr3(kpt);
     set_cr0(get_cr0() | CR0_PG);
   }
 }
 
-int protect(_AddressSpace *p) {
+int _protect(_AddressSpace *p) {
   PDE *upt = pgalloc();
   for (int i = 0; i < PGSIZE / sizeof(PDE *); i++) {
     upt[i] = kpt[i];
@@ -66,7 +66,7 @@ int protect(_AddressSpace *p) {
   return 0;
 }
 
-void unprotect(_AddressSpace *p) {
+void _unprotect(_AddressSpace *p) {
   PDE *upt = p->ptr;
   for (uint32_t va =  (uint32_t)uvm_area.start;
                 va != (uint32_t)uvm_area.end;
@@ -79,7 +79,7 @@ void unprotect(_AddressSpace *p) {
   pgfree(upt);
 }
 
-int map(_AddressSpace *p, void *va, void *pa, int prot) {
+int _map(_AddressSpace *p, void *va, void *pa, int prot) {
   // panic because the below cases are likely bugs
   if ((prot & _PROT_NONE) && (prot != _PROT_NONE))
     panic("invalid protection flags");
@@ -87,7 +87,7 @@ int map(_AddressSpace *p, void *va, void *pa, int prot) {
       (uintptr_t)pa != ROUNDDOWN(pa, PGSIZE)) {
     panic("unaligned memory address");
   }
-  if (!in_range(va, uvm_area)) {
+  if (!IN_RANGE(va, uvm_area)) {
     return 1; // mapping an out-of-range address
   }
   PDE *upt = (PDE*)p->ptr;
@@ -107,7 +107,7 @@ int map(_AddressSpace *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *ucontext(_AddressSpace *as, _Area ustack, _Area kstack,
+_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack,
                                 void *entry, void *args) {
   _Context *ctx = (_Context*)kstack.start;
   *ctx = (_Context) {
@@ -121,14 +121,8 @@ _Context *ucontext(_AddressSpace *as, _Area ustack, _Area kstack,
   return ctx;
 }
 
-void *__cb_alloc(size_t size);
-void __cb_free(void *ptr);
-
-void *_cb_alloc(size_t size) { return pgalloc_usr(PGSIZE); }
-void _cb_free(void *ptr) { pgfree_usr(ptr); }
-
 static void *pgalloc() {
-  void *ret = __cb_alloc(PGSIZE);
+  void *ret = user_pgalloc(PGSIZE);
   if (!ret) panic("page allocation fail"); // for ease of debugging
   for (int i = 0; i < PGSIZE / sizeof(uint32_t); i++) {
     ((uint32_t *)ret)[i] = 0;
@@ -137,5 +131,5 @@ static void *pgalloc() {
 }
 
 static void pgfree(void *ptr) {
-  __cb_free(ptr);
+  user_pgfree(ptr);
 }

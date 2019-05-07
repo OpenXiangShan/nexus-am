@@ -10,11 +10,11 @@ trap:
   movw %ax, %es
 
   pushl %esp
-  call irq_handle // iret in the C code
+  call __am_irq_handle // iret in the C code
 
 #define NOERR     pushl $0
 #define ERR
 #define IRQ_DEF(id, dpl, err) \
-  .globl irq##id; irq##id: cli;      err; pushl $id; jmp trap;
+  .globl __am_irq##id; __am_irq##id: cli;      err; pushl $id; jmp trap;
 IRQS(IRQ_DEF)
-  .globl  irqall;  irqall: cli; pushl $0; pushl $-1; jmp trap;
+  .globl  __am_irqall;  __am_irqall: cli; pushl $0; pushl $-1; jmp trap;

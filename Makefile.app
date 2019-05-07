@@ -14,11 +14,13 @@ INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 
 include $(AM_HOME)/Makefile.compile
 
-LINK_LIBS  += $(LIBS)
-LINK_FILES += $(AM_HOME)/am/build/am-$(ARCH).a $(OBJS) \
+LINK_LIBS  = $(sort $(LIBS))
+LINK_FILES = \
+  $(OBJS) \
+  $(AM_HOME)/am/build/am-$(ARCH).a \
   $(addsuffix -$(ARCH).a, $(join \
-  $(addsuffix /build/, $(addprefix $(AM_HOME)/libs/, $(LINK_LIBS))), \
-  $(LINK_LIBS) \
+    $(addsuffix /build/, $(addprefix $(AM_HOME)/libs/, $(LINK_LIBS))), \
+    $(LINK_LIBS) \
 ))
 
 $(OBJS): $(PREBUILD)

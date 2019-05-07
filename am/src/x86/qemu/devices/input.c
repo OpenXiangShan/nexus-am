@@ -10,7 +10,7 @@ static int scan_code[] = {
      72, 80, 75, 77, 0, 0, 0, 0, 0, 0
 };
 
-size_t input_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
   _DEV_INPUT_KBD_t *kbd = (_DEV_INPUT_KBD_t *)buf;
 
   int status = inb(0x64);

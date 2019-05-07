@@ -1,16 +1,16 @@
 #include "../x86-qemu.h"
 
-_Area _heap; // the heap memory defined in AM spec
+_Area _heap = {}; // the heap memory defined in AM spec
 
 int main();
 static void heap_init();
 
 void _start() { // the bootloader jumps here
-  bootcpu_init();
+  __am_bootcpu_init();
   heap_init();
-  percpu_initgdt();
-  percpu_initlapic();
-  ioapic_init();
+  __am_percpu_initgdt();
+  __am_percpu_initlapic();
+  __am_ioapic_init();
   _halt(main());
 }
 
@@ -21,12 +21,12 @@ void _putc(char ch) { // only works for x86-qemu
 
 void _halt(int code) {
   cli();
-  othercpu_halt();
+  __am_othercpu_halt();
   char buf[] = "Exited (#).\n";
   for (char *p = buf; *p; p++) {
     _putc((*p == '#') ? ('0' + code) : *p);
   }
-  thiscpu_halt();
+  __am_thiscpu_halt();
 }
 
 static void heap_init() {

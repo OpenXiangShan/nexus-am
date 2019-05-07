@@ -1,4 +1,4 @@
 NAME = ctetest
 SRCS = main.c
-LIBS += klib
+LIBS = klib
 include $(AM_HOME)/Makefile.app

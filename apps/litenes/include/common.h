@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <am.h>
+#include <amdev.h>
 #include <klib.h>
 
 typedef uint8_t byte;
