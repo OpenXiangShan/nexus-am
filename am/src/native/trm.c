@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern void platform_dummy();
+extern void __am_platform_dummy();
 void _trm_init() {
-  platform_dummy();
+  __am_platform_dummy();
 }
 
 void _putc(char ch) {
@@ -16,4 +16,4 @@ void _halt(int code) {
   exit(code);
 }
 
-_Area _heap;
+_Area _heap = {};

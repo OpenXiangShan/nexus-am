@@ -15,8 +15,8 @@ typedef struct PageMap {
 #define list_foreach(p, head) \
   for (p = head; p != NULL; p = p->next)
 
-void shm_mmap(void *va, void *pa, int prot);
-void shm_munmap(void *va);
+void __am_shm_mmap(void *va, void *pa, int prot);
+void __am_shm_munmap(void *va);
 
 static int vme_enable = 0;
 
@@ -39,11 +39,11 @@ void _unprotect(_AddressSpace *p) {
 static _AddressSpace empty_as = { .ptr = NULL };
 static _AddressSpace *cur_as = &empty_as;
 
-void get_cur_as(_Context *c) {
+void __am_get_cur_as(_Context *c) {
   c->prot = cur_as;
 }
 
-void _switch(_Context *c) {
+void __am_switch(_Context *c) {
   if (!vme_enable) return;
 
   _AddressSpace *p = c->prot;
@@ -54,14 +54,14 @@ void _switch(_Context *c) {
   // munmap all mappings
   list_foreach(pp, cur_as->ptr) {
     if (pp->is_mapped) {
-      shm_munmap((void *)(pp->vpn << PGSHIFT));
+      __am_shm_munmap((void *)(pp->vpn << PGSHIFT));
       pp->is_mapped = false;
     }
   }
 
   // mmap all mappings
   list_foreach(pp, p->ptr) {
-    shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
+    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
     pp->is_mapped = true;
   }
 
@@ -90,7 +90,7 @@ int _map(_AddressSpace *p, void *va, void *pa, int prot) {
 
   if (p == cur_as) {
     // enforce the map immediately
-    shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
+    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
     pp->is_mapped = true;
   }
   else {
@@ -100,7 +100,7 @@ int _map(_AddressSpace *p, void *va, void *pa, int prot) {
   return 0;
 }
 
-void get_example_uc(_Context *r);
+void __am_get_example_uc(_Context *r);
 
 _Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, void *args) {
   ustack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr
@@ -108,7 +108,7 @@ _Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, v
   *(uintptr_t *)ret = 0;
 
   _Context *c = (_Context*)ustack.end - 1;
-  get_example_uc(c);
+  __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
   c->prot = p;
 

@@ -10,8 +10,8 @@
 #define PMEM_MAP_END   (uintptr_t)PMEM_SIZE
 #define PMEM_MAP_SIZE  (PMEM_MAP_END - PMEM_MAP_START)
 
-static int pmem_fd;
-static ucontext_t uc_example;
+static int pmem_fd = 0;
+static ucontext_t uc_example = {};
 
 static void init_platform() {
   pmem_fd = shm_open(PMEM_SHM_FILE, O_RDWR | O_CREAT, 0700);
@@ -45,29 +45,29 @@ class _Init {
   }
 };
 
-static _Init _init_platform;
+static _Init _init_platform = {};
 
 extern "C" {
 
-void shm_mmap(void *va, void *pa, int prot) {
+void __am_shm_mmap(void *va, void *pa, int prot) {
   void *ret = mmap(va, 4096, PROT_READ | PROT_WRITE | PROT_EXEC,
       MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)pa);
   assert(ret != (void *)-1);
 }
 
-void shm_munmap(void *va) {
+void __am_shm_munmap(void *va) {
   int ret = munmap(va, 4096);
   assert(ret == 0);
 }
 
-void get_example_uc(_Context *r) {
+void __am_get_example_uc(_Context *r) {
   memcpy(&r->uc, &uc_example, sizeof(uc_example));
 }
 
 // This dummy function will be called in trm.c.
 // The purpose of this dummy function is to let linker add this file to the object
 // file set. Without it, the constructor of @_init_platform will not be linked.
-void platform_dummy() {
+void __am_platform_dummy() {
 }
 
 }

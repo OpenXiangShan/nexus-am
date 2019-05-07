@@ -4,10 +4,9 @@
 #include <time.h>
 #include <unistd.h>
 
-static struct timeval boot_time;
+static struct timeval boot_time = {};
 
-
-size_t timer_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
       struct timeval now;
@@ -35,7 +34,6 @@ size_t timer_read(uintptr_t reg, void *buf, size_t size) {
   return 0;
 }
 
-void timer_init() {
+void __am_timer_init() {
   gettimeofday(&boot_time, NULL);
 }
-

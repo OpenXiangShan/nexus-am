@@ -6,18 +6,11 @@
 #define H 300
 #define FPS 30
 
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
-static inline uint8_t R(uint32_t p) { return p >> 16; }
-static inline uint8_t G(uint32_t p) { return p >> 8; }
-static inline uint8_t B(uint32_t p) { return p; }
+static SDL_Window *window = NULL;
+static SDL_Renderer *renderer = NULL;
 
-static SDL_Window *window;
-static SDL_Renderer *renderer;
-
-static SDL_Texture *texture;
-static uint32_t fb[W * H];
+static SDL_Texture *texture = NULL;
+static uint32_t fb[W * H] = {};
 
 static inline int min(int x, int y) {
   return (x < y) ? x : y;
@@ -31,7 +24,7 @@ static Uint32 texture_sync(Uint32 interval, void *param) {
   return interval;
 }
 
-void video_init() {
+void __am_video_init() {
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
   SDL_CreateWindowAndRenderer(W * 2, H * 2, 0, &window, &renderer);
   SDL_SetWindowTitle(window, "Native Application");
@@ -41,7 +34,7 @@ void video_init() {
   SDL_AddTimer(1000 / FPS, texture_sync, NULL);
 }
 
-size_t video_read(uintptr_t reg, void *buf, size_t size) {
+size_t __am_video_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_VIDEO_INFO: {
       _DEV_VIDEO_INFO_t *info = (_DEV_VIDEO_INFO_t *)buf;
@@ -53,7 +46,7 @@ size_t video_read(uintptr_t reg, void *buf, size_t size) {
   return 0;
 }
 
-size_t video_write(uintptr_t reg, void *buf, size_t size) {
+size_t __am_video_write(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_VIDEO_FBCTL: {
       _DEV_VIDEO_FBCTL_t *ctl = (_DEV_VIDEO_FBCTL_t *)buf;
