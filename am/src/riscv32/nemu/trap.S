@@ -18,8 +18,8 @@ f(30) f(31)
 #define OFFSET_STATUS (33 * 4)
 #define OFFSET_EPC    (34 * 4)
 
-.globl asm_trap
-asm_trap:
+.globl __am_asm_trap
+__am_asm_trap:
   addi sp, sp, -CONTEXT_SIZE
 
   MAP(REGS, PUSH)
@@ -37,7 +37,7 @@ asm_trap:
   sw t2, OFFSET_EPC(sp)
 
   mv a0, sp
-  jal irq_handle
+  jal __am_irq_handle
 
   mv sp, a0
 

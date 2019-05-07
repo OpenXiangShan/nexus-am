@@ -4,12 +4,12 @@
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-static PDE kpdirs[NR_PDE] PG_ALIGN;
-static PTE kptabs[PMEM_SIZE / PGSIZE * 2] PG_ALIGN;
-static void* (*pgalloc_usr)(size_t);
-static void (*pgfree_usr)(void*);
+static PDE kpdirs[NR_PDE] PG_ALIGN = {};
+static PTE kptabs[PMEM_SIZE / PGSIZE * 2] PG_ALIGN = {};
+static void* (*pgalloc_usr)(size_t) = NULL;
+static void (*pgfree_usr)(void*) = NULL;
 
-_Area segments[] = {      // Kernel memory mappings
+static _Area segments[] = {      // Kernel memory mappings
   {.start = (void*)0,           .end = (void*)(0x400000)},
   {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + PMEM_SIZE)}
 };
@@ -70,11 +70,11 @@ void _unprotect(_AddressSpace *p) {
 }
 
 static _AddressSpace *cur_as = NULL;
-void get_cur_as(_Context *c) {
+void __am_get_cur_as(_Context *c) {
   c->prot = cur_as;
 }
 
-void _switch(_Context *c) {
+void __am_switch(_Context *c) {
   set_satp(c->prot->ptr);
   cur_as = c->prot;
 }
