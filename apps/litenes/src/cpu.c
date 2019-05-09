@@ -192,11 +192,12 @@ inline void cpu_ram_write(uint32_t address, uint32_t byte_data) {
 }
 
 static inline uint32_t cpu_ram_readw(uint32_t address) {
-  return *(uint16_t *)(CPU_RAM + address);
+  return cpu_ram_read(address) | (cpu_ram_read(address + 1) << 8);
 }
 
 static inline void cpu_ram_writew(uint32_t address, uint32_t word_data) {
-  *(uint16_t *)(CPU_RAM + address) = word_data;
+  cpu_ram_write(address, word_data & 0xff);
+  cpu_ram_write(address + 1, word_data >> 8);
 }
 
 
