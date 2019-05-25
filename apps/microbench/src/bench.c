@@ -12,13 +12,13 @@ static char *hbrk;
 
 // The benchmark list
 
-#define ENTRY(_name, _sname, _s1, _s2, _desc) \
+#define ENTRY(_name, _sname, _s, _m, _l, _desc) \
   { .prepare = bench_##_name##_prepare, \
     .run = bench_##_name##_run, \
     .validate = bench_##_name##_validate, \
     .name = _sname, \
     .desc = _desc, \
-    .settings = {_s1, _s2}, },
+    .settings = {_s, _m, _l}, },
 
 Benchmark benchmarks[] = {
   BENCHMARK_LIST(ENTRY)
@@ -62,7 +62,7 @@ static unsigned long score(Benchmark *b, unsigned long tsc, unsigned long msec) 
 int main() {
   _ioe_init();
 
-  printk("======= Running MicroBench [INPUT *%s*] =======\n", SETTING ? "REF" : "TEST");
+  printk("======= Running MicroBench [INPUT *%s*] =======\n", SETTING_NAME);
 
   unsigned long bench_score = 0;
   int pass = 1;
@@ -108,7 +108,7 @@ int main() {
   
   printk("==================================================\n");
   printk("MicroBench %s", pass ? "PASS" : "FAIL");
-  if (SETTING != 0) {
+  if (SETTING == 2) {
     printk("        %d Marks\n", (unsigned int)bench_score);
     printk("                   vs. %d Marks (%s)\n", REF_SCORE, REF_CPU);
   } else {

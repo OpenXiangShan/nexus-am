@@ -1,9 +1,11 @@
 #include <benchmark.h>
 
 static int N;
-#ifdef SETTING_REF
+#if defined(SETTING_REF)
 # define MAXN 128
-#else
+#elif defined(SETTING_TRAIN)
+# define MAXN 80
+#elif defined(SETTING_TEST)
 # define MAXN 10
 #endif
 #define MAXM (MAXN * MAXN + MAXN * 2) * 2

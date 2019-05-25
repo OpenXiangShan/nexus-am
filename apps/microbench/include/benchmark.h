@@ -17,55 +17,68 @@ extern "C" {
 #define REF_CPU    "i7-7700K @ 4.20GHz"
 #define REF_SCORE  100000
 
-#ifdef SETTING_TEST
+#if defined(SETTING_TEST)
   #define SETTING 0
+  #define SETTING_NAME "TEST"
+#elif defined(SETTING_TRAIN)
+  #define SETTING 1
+  #define SETTING_NAME "TRAIN"
+#elif defined(SETTING_REF)
+  #define SETTING 2
+  #define SETTING_NAME "REF"
 #else
-  #ifdef SETTING_REF
-    #define SETTING 1
-  #else
-    #error "Must define SETTING_TEST or SETTING_REF"
-  #endif
+  #error "Must define SETTING_TEST, SETTING_TRAIN or SETTING_REF"
 #endif
 
 #define REPEAT  1
 
-//                 size |  heap | time |  checksum   
-#define QSORT_SM {     100,   1 KB,     0, 0x08467105}
-#define QSORT_LG {  100000, 640 KB,  5114, 0xed8cff89}
-#define QUEEN_SM {       8,   0 KB,     0, 0x0000005c}
-#define QUEEN_LG {      12,   0 KB,  4707, 0x00003778}
-#define    BF_SM {       4,  32 KB,     0, 0xa6f0079e}
-#define    BF_LG {     180,  32 KB, 23673, 0x9221e2b3}
-#define   FIB_SM {       2,   1 KB,     0, 0x7cfeddf0}
-#define   FIB_LG {      91, 256 KB, 28318, 0xebdc5f80}
-#define SIEVE_SM {     100,   1 KB,     0, 0x00000019}
-#define SIEVE_LG {10000000,   2 MB, 39361, 0x000a2403}
-#define  PZ15_SM {       0,   1 KB,     0, 0x00000006}
-#define  PZ15_LG {       1,   8 MB,  4486, 0x00068b8c}
-#define DINIC_SM {      10,   8 KB,     0, 0x0000019c}
-#define DINIC_LG {     128,   1 MB, 10882, 0x0000c248}
-#define  LZIP_SM {     128, 128 KB,     0, 0xb2581709}
-#define  LZIP_LG { 1048576,   4 MB, 24456, 0x43601310}
-#define SSORT_SM {     100,   4 KB,     0, 0x4c555e09}
-#define SSORT_LG {  100000,   4 MB,  4504, 0x4f0ab431}
-#define   MD5_SM {     100,   1 KB,     0, 0xf902f28f}
-#define   MD5_LG {10000000,  16 MB, 17239, 0x27286a42}
+//                  size |  heap | time |  checksum
+#define QSORT_S {     100,   1 KB,     0, 0x08467105}
+#define QSORT_M {   30000, 128 KB,     0, 0xa3e99fe4}
+#define QSORT_L {  100000, 640 KB,  5114, 0xed8cff89}
+#define QUEEN_S {       8,   0 KB,     0, 0x0000005c}
+#define QUEEN_M {      11,   0 KB,     0, 0x00000a78}
+#define QUEEN_L {      12,   0 KB,  4707, 0x00003778}
+#define    BF_S {       4,  32 KB,     0, 0xa6f0079e}
+#define    BF_M {      25,  32 KB,     0, 0xa88f8a65}
+#define    BF_L {     180,  32 KB, 23673, 0x9221e2b3}
+#define   FIB_S {       2,   1 KB,     0, 0x7cfeddf0}
+#define   FIB_M {      23,  16 KB,     0, 0x94ad8800}
+#define   FIB_L {      91, 256 KB, 28318, 0xebdc5f80}
+#define SIEVE_S {     100,   1 KB,     0, 0x00000019}
+#define SIEVE_M {  200000,  32 KB,     0, 0x00004640}
+#define SIEVE_L {10000000,   2 MB, 39361, 0x000a2403}
+#define  PZ15_S {       0,   1 KB,     0, 0x00000006}
+#define  PZ15_M {       1, 256 KB,     0, 0x0000b0df}
+#define  PZ15_L {       2,   2 MB,  4486, 0x00068b8c}
+#define DINIC_S {      10,   8 KB,     0, 0x0000019c}
+#define DINIC_M {      80, 512 KB,     0, 0x00004f99}
+#define DINIC_L {     128,   1 MB, 10882, 0x0000c248}
+#define  LZIP_S {     128, 128 KB,     0, 0xb2581709}
+#define  LZIP_M {   50000,   1 MB,     0, 0x275df291}
+#define  LZIP_L { 1048576,   4 MB, 24456, 0x43601310}
+#define SSORT_S {     100,   4 KB,     0, 0x4c555e09}
+#define SSORT_M {   10000, 512 KB,     0, 0x0db7909b}
+#define SSORT_L {  100000,   4 MB,  4504, 0x4f0ab431}
+#define   MD5_S {     100,   1 KB,     0, 0xf902f28f}
+#define   MD5_M {  200000, 256 KB,     0, 0xd4f9bc6d}
+#define   MD5_L {10000000,  16 MB, 17239, 0x27286a42}
 
 #define BENCHMARK_LIST(def) \
-  def(qsort, "qsort", QSORT_SM, QSORT_LG, "Quick sort") \
-  def(queen, "queen", QUEEN_SM, QUEEN_LG, "Queen placement") \
-  def(   bf,    "bf",    BF_SM,    BF_LG, "Brainf**k interpreter") \
-  def(  fib,   "fib",   FIB_SM,   FIB_LG, "Fibonacci number") \
-  def(sieve, "sieve", SIEVE_SM, SIEVE_LG, "Eratosthenes sieve") \
-  def( 15pz,  "15pz",  PZ15_SM,  PZ15_LG, "A* 15-puzzle search") \
-  def(dinic, "dinic", DINIC_SM, DINIC_LG, "Dinic's maxflow algorithm") \
-  def( lzip,  "lzip",  LZIP_SM,  LZIP_LG, "Lzip compression") \
-  def(ssort, "ssort", SSORT_SM, SSORT_LG, "Suffix sort") \
-  def(  md5,   "md5",   MD5_SM,   MD5_LG, "MD5 digest") \
+  def(qsort, "qsort", QSORT_S, QSORT_M, QSORT_L, "Quick sort") \
+  def(queen, "queen", QUEEN_S, QUEEN_M, QUEEN_L, "Queen placement") \
+  def(   bf,    "bf",    BF_S,    BF_M,    BF_L, "Brainf**k interpreter") \
+  def(  fib,   "fib",   FIB_S,   FIB_M,   FIB_L, "Fibonacci number") \
+  def(sieve, "sieve", SIEVE_S, SIEVE_M, SIEVE_L, "Eratosthenes sieve") \
+  def( 15pz,  "15pz",  PZ15_S,  PZ15_M,  PZ15_L, "A* 15-puzzle search") \
+  def(dinic, "dinic", DINIC_S, DINIC_M, DINIC_L, "Dinic's maxflow algorithm") \
+  def( lzip,  "lzip",  LZIP_S,  LZIP_M,  LZIP_L, "Lzip compression") \
+  def(ssort, "ssort", SSORT_S, SSORT_M, SSORT_L, "Suffix sort") \
+  def(  md5,   "md5",   MD5_S,   MD5_M,   MD5_L, "MD5 digest") \
 
 // Each benchmark will run REPEAT times
 
-#define DECL(_name, _sname, _s1, _s2, _desc) \
+#define DECL(_name, _sname, _s, _m, _l, _desc) \
   void bench_##_name##_prepare(); \
   void bench_##_name##_run(); \
   int bench_##_name##_validate();
@@ -83,7 +96,7 @@ typedef struct Benchmark {
   void (*run)();
   int (*validate)();
   const char *name, *desc;
-  Setting settings[2];
+  Setting settings[3];
 } Benchmark;
 
 extern Benchmark *current;

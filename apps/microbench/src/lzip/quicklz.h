@@ -46,10 +46,10 @@ static inline void* bench_memcpy(void* dst, const void* src, size_t n){
 	//#define QLZ_COMPRESSION_LEVEL 1
 	//#define QLZ_COMPRESSION_LEVEL 2
 	//#define QLZ_COMPRESSION_LEVEL 3
-#ifdef SETTING_REF
-	#define QLZ_COMPRESSION_LEVEL 3
-#else
+#ifdef SETTING_TEST
 	#define QLZ_COMPRESSION_LEVEL 1
+#else
+	#define QLZ_COMPRESSION_LEVEL 3
 #endif
 
 	// If > 0, zero out both states prior to first call to qlz_compress() or qlz_decompress() 
