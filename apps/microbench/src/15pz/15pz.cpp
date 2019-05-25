@@ -3,27 +3,36 @@
 #include "heap.h"
 
 const int N = 4;
-#ifdef SETTING_REF
-const int MAXN = 65536;
-#else
+#if defined(SETTING_REF)
+const int MAXN = 16384;
+#elif defined(SETTING_TRAIN)
+const int MAXN = 2048;
+#elif defined(SETTING_TEST)
 const int MAXN = 10;
 #endif
 
-static int PUZZLE_SM[N*N] = {
+static int PUZZLE_S[N*N] = {
   1, 2, 3, 4,
   5, 6, 7, 8,
   9, 10, 0, 11,
   13, 14, 15, 12,
 };
 
-static int PUZZLE_LG[N*N] = {
+static int PUZZLE_M[N*N] = {
+  1, 2, 3, 4,
+  5, 6, 7, 8,
+  12, 0, 14, 13,
+  11, 15, 10, 9,
+};
+
+static int PUZZLE_L[N*N] = {
   0, 2, 3, 4,
   9, 6, 7, 8,
   5, 11, 10, 12,
   1, 15, 13, 14,
 };
 
-int ans;
+static int ans;
 
 extern "C" {
 
@@ -33,10 +42,11 @@ void bench_15pz_prepare() {
 void bench_15pz_run() {
   N_puzzle<N> puzzle;
   
-  if (setting->size == 0) {
-    puzzle = N_puzzle<N>(PUZZLE_SM);
-  } else {
-    puzzle = N_puzzle<N>(PUZZLE_LG);
+  switch (setting->size) {
+    case 0: puzzle = N_puzzle<N>(PUZZLE_S); break;
+    case 1: puzzle = N_puzzle<N>(PUZZLE_M); break;
+    case 2: puzzle = N_puzzle<N>(PUZZLE_L); break;
+    default: assert(0);
   }
   assert(puzzle.solvable());
 
