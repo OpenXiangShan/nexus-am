@@ -9,9 +9,12 @@ CPU正确性和性能测试用基准程序。对AbstractMachine的要求：
 
 ## 使用方法
 
-同一组程序分成两组：test和ref。test数据规模很小，作为测试用。ref测试规模较大，作为衡量CPU性能用。
+同一组程序分成三组：test，train和ref。
+test数据规模很小，作为测试用，不计时不评分。
+train数据规模中等，可用于在仿真环境研究微结构行为，计时不评分。
+ref数据规模较大，作为衡量CPU性能用，计时并评分。
 
-默认编译ref数据规模，使用`make INPUT=TEST`编译test数据规模。
+默认编译ref数据规模，使用`make INPUT=TEST`编译test数据规模，使用`make INPUT=TRAIN`编译train数据规模。
 
 ## 评分根据
 
@@ -21,14 +24,14 @@ CPU正确性和性能测试用基准程序。对AbstractMachine的要求：
 
 ## 已有的基准程序
 
-| 名称    | 描述                                   | 堆区使用  |
+| 名称    | 描述                                   | ref堆区使用  |
 | ----- | ------------------------------------ | ----- |
 | qsort | 快速排序随机整数数组                           | 640KB |
 | queen | 位运算实现的n皇后问题                          | 0     |
 | bf    | Brainf**k解释器，快速排序输入的字符串              | 32KB  |
 | fib   | Fibonacci数列f(n)=f(n-1)+…+f(n-m)的矩阵求解 | 256KB |
 | sieve | Eratosthenes筛法求素数                    | 2MB   |
-| 15pz  | A*算法求解4x4数码问题                        | 8MB   |
+| 15pz  | A*算法求解4x4数码问题                        | 2MB   |
 | dinic | Dinic算法求解二分图最大流                      | 1MB   |
 | lzip  | Lzip数据压缩                             | 4MB   |
 | ssort | Skew算法后缀排序                           | 4MB   |
