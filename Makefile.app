@@ -9,7 +9,7 @@ $(info # Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
 
 default: image
 
-LIBS    += klib compiler-rt
+LIBS    += klib
 INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 
 include $(AM_HOME)/Makefile.compile

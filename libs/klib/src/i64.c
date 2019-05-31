@@ -1,24 +1,66 @@
-/* ===-- udivmoddi4.c - Implement __udivmoddi4 -----------------------------===
+/*===-- divmoddi4.c - Implement __divmoddi4 --------------------------------===
  *
- *                     The LLVM Compiler Infrastructure
+ *                    The LLVM Compiler Infrastructure
  *
  * This file is dual licensed under the MIT and the University of Illinois Open
  * Source Licenses. See LICENSE.TXT for details.
  *
  * ===----------------------------------------------------------------------===
  *
- * This file implements __udivmoddi4 for the compiler_rt library.
+ * This file implements __divmoddi4 for the compiler_rt library.
  *
  * ===----------------------------------------------------------------------===
  */
 
-#include "int_lib.h"
+#include "intlib.h"
 
-/* Effects: if rem != 0, *rem = a % b
- * Returns: a / b
- */
+/* Returns: a / b */
 
-/* Translated from Figure 3-40 of The PowerPC Compiler Writer's Guide */
+COMPILER_RT_ABI di_int
+__divdi3(di_int a, di_int b)
+{
+    const int bits_in_dword_m1 = (int)(sizeof(di_int) * CHAR_BIT) - 1;
+    di_int s_a = a >> bits_in_dword_m1;           /* s_a = a < 0 ? -1 : 0 */
+    di_int s_b = b >> bits_in_dword_m1;           /* s_b = b < 0 ? -1 : 0 */
+    a = (a ^ s_a) - s_a;                         /* negate if s_a == -1 */
+    b = (b ^ s_b) - s_b;                         /* negate if s_b == -1 */
+    s_a ^= s_b;                                  /*sign of quotient */
+    return (__udivmoddi4(a, b, (du_int*)0) ^ s_a) - s_a;  /* negate if s_a == -1 */
+}
+
+/* Returns: a / b, *rem = a % b  */
+
+COMPILER_RT_ABI di_int
+__divmoddi4(di_int a, di_int b, di_int* rem)
+{
+  di_int d = __divdi3(a,b);
+  *rem = a - (d*b);
+  return d;
+}
+
+/* Returns: a % b */
+
+COMPILER_RT_ABI di_int
+__moddi3(di_int a, di_int b)
+{
+    const int bits_in_dword_m1 = (int)(sizeof(di_int) * CHAR_BIT) - 1;
+    di_int s = b >> bits_in_dword_m1;  /* s = b < 0 ? -1 : 0 */
+    b = (b ^ s) - s;                   /* negate if s == -1 */
+    s = a >> bits_in_dword_m1;         /* s = a < 0 ? -1 : 0 */
+    a = (a ^ s) - s;                   /* negate if s == -1 */
+    du_int r;
+    __udivmoddi4(a, b, &r);
+    return ((di_int)r ^ s) - s;                /* negate if s == -1 */
+}
+
+/* Returns: a / b */
+
+COMPILER_RT_ABI du_int
+__udivdi3(du_int a, du_int b)
+{
+    return __udivmoddi4(a, b, 0);
+}
+
 
 COMPILER_RT_ABI du_int
 __udivmoddi4(du_int a, du_int b, du_int* rem)
@@ -228,4 +270,14 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
     if (rem)
         *rem = r.all;
     return q.all;
+}
+
+/* Returns: a % b */
+
+COMPILER_RT_ABI du_int
+__umoddi3(du_int a, du_int b)
+{
+    du_int r;
+    __udivmoddi4(a, b, &r);
+    return r;
 }

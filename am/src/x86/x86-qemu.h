@@ -3,7 +3,6 @@
 
 #include <am.h>
 #include <amdev.h>
-#include <amtrace.h>
 #include <x86.h>
 #include <klib.h> // for debugging
 
