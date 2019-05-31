@@ -4,5 +4,5 @@ SRCS = src/stdio.c \
        src/cpp.c \
        src/stdlib.c \
        src/io.c \
-       src/i64.c
+       src/int64.c
 include $(AM_HOME)/Makefile.lib
