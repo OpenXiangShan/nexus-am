@@ -14,7 +14,7 @@ test数据规模很小，作为测试用，不计时不评分。
 train数据规模中等，可用于在仿真环境研究微结构行为，计时不评分。
 ref数据规模较大，作为衡量CPU性能用，计时并评分。
 
-默认编译ref数据规模，使用`make INPUT=TEST`编译test数据规模，使用`make INPUT=TRAIN`编译train数据规模。
+默认运行ref数据规模，使用`make run mainargs=test`运行test数据规模，使用`make run mainargs=train`运行train数据规模。
 
 ## 评分根据
 
