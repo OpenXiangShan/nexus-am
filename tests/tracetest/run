@@ -1,9 +1,0 @@
-#!/bin/bash
-make ARCH=x86-qemu && \
-qemu-system-i386 \
-  -chardev stdio,mux=on,id=char0 \
-  -chardev file,path=trace.log,id=char1 \
-  -serial chardev:char0 \
-  -serial chardev:char1 \
-  build/tracetest-x86-qemu
-hd trace.log

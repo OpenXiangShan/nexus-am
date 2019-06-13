@@ -9,10 +9,17 @@
 #define VME(f1, f2) ({ _vme_init(f1, f2); })
 #define MPE ({ _mpe_init(entry); })
 
-extern const char *name;
+#define LENGTH(arr) (sizeof(arr) / sizeof(arr[0]))
+
 extern void (*entry)();
 
-#define CASE(id, name_, entry_, ...) \
-  case id: { name = name_; entry = entry_; __VA_ARGS__; entry(); break; }
+#define CASE(id, entry_, ...) \
+  case id: { \
+    void entry_(); \
+    entry = entry_; \
+    __VA_ARGS__; \
+    entry_(); \
+    break; \
+  }
 
 #endif
