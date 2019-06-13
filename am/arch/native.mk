@@ -14,7 +14,7 @@ ASFLAGS += -fpie -pie
 
 image:
 	@echo + LD "->" $(BINARY_REL)
-	@g++ -pie -o $(BINARY) -Wl,--whole-archive $(LINK_FILES) -Wl,-no-whole-archive -lSDL2 -lGL -lrt
+	@g++ -pie -o $(BINARY) -Wl,--whole-archive $(LINK_FILES) -Wl,-no-whole-archive -lSDL2 -lGL -lrt -lpthread
 
 run:
 	$(BINARY)
