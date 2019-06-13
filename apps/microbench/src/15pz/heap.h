@@ -6,12 +6,13 @@ T max(T a, T b) {
   return a > b ? a : b;
 }
 
-template <typename T, int M>
+template <typename T>
 class Updatable_heap {
   private:
+    int M;
     class Step;
-    Step *hash_table[M];
-    Step *heap[M + 1];
+    Step **hash_table;
+    Step **heap;
     int heap_size;
     int maximum_heap_size;
 
@@ -21,7 +22,7 @@ class Updatable_heap {
     Step *pointer( T const & ) const;
 
   public:
-    void init(); 
+    void init(int m); 
     ~Updatable_heap();
     T pop();
     void push( T const &, int );
@@ -30,8 +31,8 @@ class Updatable_heap {
     int length( T const & ) const;
 };
 
-template <typename T, int M>
-class Updatable_heap<T, M>::Step {
+template <typename T>
+class Updatable_heap<T>::Step {
   public:
     T element;
     Step *next;
@@ -46,8 +47,12 @@ class Updatable_heap<T, M>::Step {
     int weight() const;
 };
 
-template <typename T, int M>
-void Updatable_heap<T, M>::init() {
+template <typename T>
+void Updatable_heap<T>::init(int m) {
+  M = m;
+  heap = (Step **)bench_alloc(sizeof(void *) * M);
+  hash_table = (Step **)bench_alloc(sizeof(void *) * (M + 1));
+
   heap_size = 0;
   maximum_heap_size = 0;
   for ( int i = 0; i < M; ++i ) {
@@ -55,8 +60,8 @@ void Updatable_heap<T, M>::init() {
   }
 }
 
-template <typename T, int M>
-Updatable_heap<T, M>::~Updatable_heap() {
+template <typename T>
+Updatable_heap<T>::~Updatable_heap() {
   for ( int i = 0; i < M; ++i ) {
     Step *ptr = hash_table[i];
 
@@ -67,8 +72,8 @@ Updatable_heap<T, M>::~Updatable_heap() {
   }
 }
 
-template <typename T, int M>
-T Updatable_heap<T, M>::pop() {
+template <typename T>
+T Updatable_heap<T>::pop() {
   if ( size() == 0 ) {
     return T();
   }
@@ -90,8 +95,8 @@ T Updatable_heap<T, M>::pop() {
   return top;
 }
 
-template <typename T, int M>
-void inline Updatable_heap<T, M>::swap( int i, int j ) {
+template <typename T>
+void inline Updatable_heap<T>::swap( int i, int j ) {
   Step *tmp = heap[j];
   heap[j] = heap[i];
   heap[i] = tmp;
@@ -100,8 +105,8 @@ void inline Updatable_heap<T, M>::swap( int i, int j ) {
   heap[j]->heap_index = j;
 }
 
-template <typename T, int M>
-void Updatable_heap<T, M>::percolate_down() {
+template <typename T>
+void Updatable_heap<T>::percolate_down() {
   int n = 1;
 
   while ( 2*n + 1 <= size() ) {
@@ -125,8 +130,8 @@ void Updatable_heap<T, M>::percolate_down() {
   }
 }
 
-template <typename T, int M>
-void Updatable_heap<T, M>::percolate_up( int n ) {
+template <typename T>
+void Updatable_heap<T>::percolate_up( int n ) {
   while ( n != 1 ) {
     int parent = n/2;
 
@@ -139,8 +144,8 @@ void Updatable_heap<T, M>::percolate_up( int n ) {
   }
 }
 
-template <typename T, int M>
-void Updatable_heap<T, M>::push( T const &pz, int path_length ) {
+template <typename T>
+void Updatable_heap<T>::push( T const &pz, int path_length ) {
   Step *ptr = pointer( pz );
 
   if ( ptr == 0 ) {
@@ -165,25 +170,25 @@ void Updatable_heap<T, M>::push( T const &pz, int path_length ) {
   }
 }
 
-template <typename T, int M>
-int Updatable_heap<T, M>::size() const {
+template <typename T>
+int Updatable_heap<T>::size() const {
   return heap_size;
 }
 
-template <typename T, int M>
-int Updatable_heap<T, M>::maximum_size() const {
+template <typename T>
+int Updatable_heap<T>::maximum_size() const {
   return maximum_heap_size;
 }
 
-template <typename T, int M>
-int Updatable_heap<T, M>::length( T const &pz ) const {
+template <typename T>
+int Updatable_heap<T>::length( T const &pz ) const {
   Step *ptr = pointer( pz );
 
   return ( ptr == 0 ) ? 2147483647 : ptr->length();
 }
 
-template <typename T, int M>
-typename Updatable_heap<T, M>::Step *Updatable_heap<T, M>::pointer( T const &pz ) const {
+template <typename T>
+typename Updatable_heap<T>::Step *Updatable_heap<T>::pointer( T const &pz ) const {
   for ( Step *ptr = hash_table[pz.hash() & (M - 1)]; ptr != 0; ptr = ptr->next ) {
     if ( ptr->element == pz ) {
       return ptr;
@@ -199,8 +204,8 @@ typename Updatable_heap<T, M>::Step *Updatable_heap<T, M>::pointer( T const &pz 
  * ************************************************ *
  ****************************************************/
 
-template <typename T, int M>
-void Updatable_heap<T, M>::Step::init( T const &pz, Step *n, int hi, int dist ) {
+template <typename T>
+void Updatable_heap<T>::Step::init( T const &pz, Step *n, int hi, int dist ) {
   element = pz;
   next = n;
   heap_index = hi;
@@ -210,13 +215,13 @@ void Updatable_heap<T, M>::Step::init( T const &pz, Step *n, int hi, int dist ) 
   previous_step = 0;
 }
 
-template <typename T, int M>
-int Updatable_heap<T, M>::Step::length() const {
+template <typename T>
+int Updatable_heap<T>::Step::length() const {
   return path_length;
 }
 
-template <typename T, int M>
-int Updatable_heap<T, M>::Step::weight() const {
+template <typename T>
+int Updatable_heap<T>::Step::weight() const {
   return path_weight;
 }
 

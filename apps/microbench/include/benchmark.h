@@ -17,19 +17,6 @@ extern "C" {
 #define REF_CPU    "i7-7700K @ 4.20GHz"
 #define REF_SCORE  100000
 
-#if defined(SETTING_TEST)
-  #define SETTING 0
-  #define SETTING_NAME "TEST"
-#elif defined(SETTING_TRAIN)
-  #define SETTING 1
-  #define SETTING_NAME "TRAIN"
-#elif defined(SETTING_REF)
-  #define SETTING 2
-  #define SETTING_NAME "REF"
-#else
-  #error "Must define SETTING_TEST, SETTING_TRAIN or SETTING_REF"
-#endif
-
 #define REPEAT  1
 
 //                  size |  heap | time |  checksum
@@ -54,9 +41,9 @@ extern "C" {
 #define DINIC_S {      10,   8 KB,     0, 0x0000019c}
 #define DINIC_M {      80, 512 KB,     0, 0x00004f99}
 #define DINIC_L {     128,   1 MB, 10882, 0x0000c248}
-#define  LZIP_S {     128, 128 KB,     0, 0xb2581709}
-#define  LZIP_M {   50000,   1 MB,     0, 0x275df291}
-#define  LZIP_L { 1048576,   4 MB, 24456, 0x43601310}
+#define  LZIP_S {     128, 128 KB,     0, 0xe05fc832}
+#define  LZIP_M {   50000,   1 MB,     0, 0xdc93e90c}
+#define  LZIP_L { 1048576,   4 MB, 24456, 0x8d62c81f} // need update time
 #define SSORT_S {     100,   4 KB,     0, 0x4c555e09}
 #define SSORT_M {   10000, 512 KB,     0, 0x0db7909b}
 #define SSORT_L {  100000,   4 MB,  4504, 0x4f0ab431}

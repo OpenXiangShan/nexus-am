@@ -2,16 +2,16 @@
 
 _Area _heap = {}; // the heap memory defined in AM spec
 
-int main();
+int main(const char *args);
 static void heap_init();
 
-void _start() { // the bootloader jumps here
+void _start(const char *args) { // the bootloader jumps here
   __am_bootcpu_init();
   heap_init();
   __am_percpu_initgdt();
   __am_percpu_initlapic();
   __am_ioapic_init();
-  _halt(main());
+  _halt(main(args));
 }
 
 void _putc(char ch) { // only works for x86-qemu

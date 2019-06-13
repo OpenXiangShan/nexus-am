@@ -3,13 +3,6 @@
 #include "heap.h"
 
 const int N = 4;
-#if defined(SETTING_REF)
-const int MAXN = 16384;
-#elif defined(SETTING_TRAIN)
-const int MAXN = 2048;
-#elif defined(SETTING_TEST)
-const int MAXN = 10;
-#endif
 
 static int PUZZLE_S[N*N] = {
   1, 2, 3, 4,
@@ -41,17 +34,18 @@ void bench_15pz_prepare() {
 
 void bench_15pz_run() {
   N_puzzle<N> puzzle;
-  
+  int MAXN;
+
   switch (setting->size) {
-    case 0: puzzle = N_puzzle<N>(PUZZLE_S); break;
-    case 1: puzzle = N_puzzle<N>(PUZZLE_M); break;
-    case 2: puzzle = N_puzzle<N>(PUZZLE_L); break;
+    case 0: puzzle = N_puzzle<N>(PUZZLE_S); MAXN = 10; break;
+    case 1: puzzle = N_puzzle<N>(PUZZLE_M); MAXN = 2048; break;
+    case 2: puzzle = N_puzzle<N>(PUZZLE_L); MAXN = 16384; break;
     default: assert(0);
   }
   assert(puzzle.solvable());
 
-  auto *heap = (Updatable_heap<N_puzzle<N>,MAXN> *) bench_alloc(sizeof(Updatable_heap<N_puzzle<N>, MAXN>));
-  heap->init();
+  auto *heap = (Updatable_heap<N_puzzle<N>> *) bench_alloc(sizeof(Updatable_heap<N_puzzle<N>>));
+  heap->init(MAXN);
   heap->push( puzzle, 0 );
 
   int n = 0;

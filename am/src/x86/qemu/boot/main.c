@@ -1,48 +1,48 @@
 #include <stdint.h>
 
 struct ELFHeader {
-	uint32_t magic;
-	uint8_t  elf[12];
-	uint16_t type;
-	uint16_t machine;
-	uint32_t version;
-	uint32_t entry;
-	uint32_t phoff;
-	uint32_t shoff;
-	uint32_t flags;
-	uint16_t ehsize;
-	uint16_t phentsize;
-	uint16_t phnum;
-	uint16_t shentsize;
-	uint16_t shnum;
-	uint16_t shstrndx;
+  uint32_t magic;
+  uint8_t  elf[12];
+  uint16_t type;
+  uint16_t machine;
+  uint32_t version;
+  uint32_t entry;
+  uint32_t phoff;
+  uint32_t shoff;
+  uint32_t flags;
+  uint16_t ehsize;
+  uint16_t phentsize;
+  uint16_t phnum;
+  uint16_t shentsize;
+  uint16_t shnum;
+  uint16_t shstrndx;
 };
 
 struct ProgramHeader {
-	uint32_t type;
-	uint32_t off;
-	uint32_t vaddr;
-	uint32_t paddr;
-	uint32_t filesz;
-	uint32_t memsz;
-	uint32_t flags;
-	uint32_t align;
+  uint32_t type;
+  uint32_t off;
+  uint32_t vaddr;
+  uint32_t paddr;
+  uint32_t filesz;
+  uint32_t memsz;
+  uint32_t flags;
+  uint32_t align;
 };
 
 static inline char in_byte(short port) {
-	char data;
-	__asm__ volatile ("in %1,%0" : "=a" (data) : "d" (port));
-	return data;
+  char data;
+  __asm__ volatile ("in %1,%0" : "=a" (data) : "d" (port));
+  return data;
 }
 
 static inline int in_long(short port) {
   int data;
-	__asm__ volatile ("in %1, %0" : "=a" (data) : "d" (port));
-	return data;
+  __asm__ volatile ("in %1, %0" : "=a" (data) : "d" (port));
+  return data;
 }
 
 static inline void out_byte(short port, char data) {
-	__asm__ volatile ("out %0,%1" : : "a" (data), "d" (port));
+  __asm__ volatile ("out %0,%1" : : "a" (data), "d" (port));
 }
 
 static inline void hlt() {
@@ -51,7 +51,7 @@ static inline void hlt() {
 
 #define SECTSIZE 512
 
-void readseg(unsigned char *, int, int);
+void readseg(void *, int, int);
 
 struct boot_info {
   int is_ap;
@@ -71,27 +71,26 @@ bootmain(void) {
 
   elf = (struct ELFHeader*)0x8000;
 
-  readseg((unsigned char*)elf, 4096, 0);
+  readseg(elf, 4096, 0);
 
   ph = (struct ProgramHeader*)((char *)elf + elf->phoff);
   eph = ph + elf->phnum;
   for(; ph < eph; ph ++) {
-    pa = (unsigned char*)(ph->paddr);
+    pa = (void *)(ph->paddr);
     readseg(pa, ph->filesz, ph->off);
-    for (i = pa + ph->filesz; i < pa + ph->memsz; *i ++ = 0);
+    for (i = pa + ph->filesz; i < pa + ph->memsz; *i++ = 0);
   }
 
-  ((void(*)(void))elf->entry)();
+  char *mainargs = (void *)0x7e00;
+  readseg(mainargs, 512, -512);
+  ((void(*)(const char *))elf->entry)(mainargs);
 }
 
-void
-waitdisk(void) {
+void waitdisk(void) {
   while ((in_byte(0x1F7) & 0xC0) != 0x40);
 }
 
-void
-readsect(volatile void *dst, int offset) {
-  int i;
+void readsect(volatile void *dst, int offset) {
   waitdisk();
   out_byte(0x1F2, 1);
   out_byte(0x1F3, offset);
@@ -101,17 +100,16 @@ readsect(volatile void *dst, int offset) {
   out_byte(0x1F7, 0x20);
 
   waitdisk();
-  for (i = 0; i < SECTSIZE / 4; i ++) {
+  for (int i = 0; i < SECTSIZE / 4; i ++) {
     ((int *)dst)[i] = in_long(0x1F0);
   }
 }
 
-void
-readseg(unsigned char *pa, int count, int offset) {
-  unsigned char *epa;
-  epa = pa + count;
+void readseg(void *addr, int count, int offset) {
+  unsigned char *pa = addr;
+  unsigned char *epa = pa + count;
   pa -= offset % SECTSIZE;
-  offset = (offset / SECTSIZE) + 1;
+  offset = (offset / SECTSIZE) + 1 + 1 /* args */;
   for(; pa < epa; pa += SECTSIZE, offset ++)
     readsect(pa, offset);
 }

@@ -13,6 +13,9 @@
 static int pmem_fd = 0;
 static ucontext_t uc_example = {};
 
+int main(const char *args);
+
+static void init_platform() __attribute__((constructor));
 static void init_platform() {
   pmem_fd = shm_open(PMEM_SHM_FILE, O_RDWR | O_CREAT, 0700);
   assert(pmem_fd != -1);
@@ -26,8 +29,12 @@ static void init_platform() {
   _heap.end = (void *)PMEM_MAP_END;
 
   getcontext(&uc_example);
+
+  const char *args = getenv("mainargs");
+  exit(main(args ? args : "")); // call main here!
 }
 
+static void exit_platform() __attribute__((constructor));
 static void exit_platform() {
   int ret = munmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE);
   assert(ret == 0);
@@ -35,19 +42,6 @@ static void exit_platform() {
   ret = shm_unlink(PMEM_SHM_FILE);
   assert(ret == 0);
 }
-
-class _Init {
-  public : _Init() {
-    init_platform();
-  }
-  public : ~_Init() {
-    exit_platform();
-  }
-};
-
-static _Init _init_platform = {};
-
-extern "C" {
 
 void __am_shm_mmap(void *va, void *pa, int prot) {
   void *ret = mmap(va, 4096, PROT_READ | PROT_WRITE | PROT_EXEC,
@@ -68,6 +62,4 @@ void __am_get_example_uc(_Context *r) {
 // The purpose of this dummy function is to let linker add this file to the object
 // file set. Without it, the constructor of @_init_platform will not be linked.
 void __am_platform_dummy() {
-}
-
 }
