@@ -1,4 +1,0 @@
-#!/bin/bash
-
-python instgen.py > main.c && make ARCH=mips32-minimal
-tail -n 20 main.c

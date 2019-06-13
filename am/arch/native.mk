@@ -3,6 +3,7 @@ AM_SRCS := native/trm.c \
            native/cte.c \
            native/trap.S \
            native/vme.c \
+           native/mpe.c \
            native/platform.c \
            native/devices/input.c \
            native/devices/timer.c \
