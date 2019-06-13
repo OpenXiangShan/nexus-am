@@ -7,6 +7,7 @@ static const char *tests[256] = {
   ['H'] = "hello with interrupt enabled",
   ['d'] = "device scanning",
   ['m'] = "multiprocessor",
+  ['t'] = "real-time clock",
 };
 
 int main(const char *args) {
