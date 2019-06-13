@@ -22,4 +22,4 @@ image:
 
 run:
 	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
-	@qemu-system-i386 -serial stdio -machine accel=tcg -drive format=raw,file=$(BINARY)
+	@qemu-system-i386 -serial stdio -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)

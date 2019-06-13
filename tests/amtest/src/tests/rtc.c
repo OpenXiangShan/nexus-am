@@ -1,7 +1,7 @@
 #include <amtest.h>
 #include <amdev.h>
 
-void show_time() {
+void rtc_test() {
   _DEV_TIMER_DATE_t rtc;
   int sec = 1;
   while (1) {

@@ -1,12 +1,21 @@
-#include <am.h>
-#include <amdev.h>
-#include <amtrace.h>
-#include <klib.h>
+#include <amtest.h>
 
-_Context *uctx;
-int ntraps = 0;
+static _Context *uctx;
+static _AddressSpace prot;
+static uintptr_t st = 0;
 
-_Context* handler(_Event ev, _Context *ctx) {
+void *simple_pgalloc(size_t size) {
+  if (st == 0) { st = (uintptr_t)_heap.start; }
+  while (st % size != 0) st++;
+  void *ret = (void *)st;
+  st += size;
+  return ret;
+}
+
+void simple_pgfree(void *ptr) {
+}
+
+_Context* vm_handler(_Event ev, _Context *ctx) {
   switch (ev.event) {
     case _EVENT_YIELD:
       break;
@@ -35,21 +44,6 @@ _Context* handler(_Event ev, _Context *ctx) {
   return ctx;
 }
 
-static uintptr_t st;
-
-static void *alloc(size_t size) {
-  while (st % size != 0) st++;
-  void *ret = (void *)st;
-  st += size;
-  return ret;
-}
-
-static void free(void *ptr) {
-}
-
-_AddressSpace prot;
-
-
 uint8_t code[] = {
   0x31, 0xc0, // xor %eax, %eax
   0x8d, 0xb6, 0x00, 0x00, 0x00, 0x00, // lea 0(%esi), %esi
@@ -59,13 +53,11 @@ uint8_t code[] = {
   0xeb, 0xf9, // jmp 8
 };
 
-uint8_t kstk[4096];
-
-int main() {
-  st = (uintptr_t)_heap.start;
-  _cte_init(handler);
-  _vme_init(alloc, free);
-
+void vm_test() {
+  if (strcmp(__ISA__, "x86") != 0) {
+    printf("VM test: only runs on x86.\n");
+    return;
+  }
   _protect(&prot);
 
   uint8_t *ptr = (void*)((uintptr_t)(prot.area.start) +
@@ -73,12 +65,13 @@ int main() {
 
   int pgsz = 4096;
 
-  void *up1 = alloc(pgsz);
+  void *up1 = simple_pgalloc(pgsz);
   _map(&prot, ptr, up1, _PROT_WRITE);
 
   memcpy(up1, code, sizeof(code));
   printf("Code copied to %x execute\n", ptr);
 
+  static uint8_t kstk[4096];
   _Area k = { .start = kstk, .end = kstk + 4096 };
   _Area u = { .start = ptr + pgsz, .end = ptr + pgsz };
 
@@ -88,5 +81,4 @@ int main() {
   while (1) {
     _yield();
   }
-  return 0;
 }
