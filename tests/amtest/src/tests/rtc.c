@@ -1,10 +1,8 @@
-#include <am.h>
+#include <amtest.h>
 #include <amdev.h>
-#include <klib.h>
 
-int main(){
+void rtc_test() {
   _DEV_TIMER_DATE_t rtc;
-  _ioe_init();
   int sec = 1;
   while (1) {
     while(uptime() < 1000 * sec) ;
@@ -17,5 +15,4 @@ int main(){
     }
     sec ++;
   }
-  return 0;
 }

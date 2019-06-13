@@ -1,4 +1,0 @@
-file build/mptest-x86-qemu.o
-target remote :1234
-hb mp_entry
-c
