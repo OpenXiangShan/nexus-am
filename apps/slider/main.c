@@ -19,7 +19,7 @@ int main() {
 
   display_image(i);
 
-  while (true) {
+  while (1) {
     current = uptime();
     if (current - last > 5000) {
       // change image every 5s
