@@ -4,16 +4,20 @@ DST_DIR ?= $(APP_DIR)/build/$(ARCH)/
 BINARY  ?= $(APP_DIR)/build/$(NAME)-$(ARCH)
 BINARY_REL = $(shell realpath $(BINARY) --relative-to .)
 
+## Paste in "Makefile.check" here
 include $(AM_HOME)/Makefile.check
 $(info # Building $(NAME) [$(ARCH)] with AM_HOME {$(AM_HOME)})
 
+## Default: Build a runnable image
 default: image
 
 LIBS    += klib
 INC_DIR += $(addsuffix /include/, $(addprefix $(AM_HOME)/libs/, $(LIBS)))
 
+## Paste in "Makefile.compile" here
 include $(AM_HOME)/Makefile.compile
 
+## Produce a list of files to be linked: app objects, AM, and libraries
 LINK_LIBS  = $(sort $(LIBS))
 LINK_FILES = \
   $(OBJS) \
