@@ -10,10 +10,10 @@ struct _Context {
   uint32_t cause, status, epc;
 };
 
-#define GPR1 gpr[4]
-#define GPR2 gpr[5]
-#define GPR3 gpr[6]
-#define GPR4 gpr[7]
-#define GPRx gpr[2]
+#define GPR1 gpr[2] // v0
+#define GPR2 gpr[4] // a0
+#define GPR3 gpr[5] // a1
+#define GPR4 gpr[6] // a2
+#define GPRx gpr[2] // v0
 
 #endif
