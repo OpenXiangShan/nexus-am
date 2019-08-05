@@ -1,46 +1,28 @@
 #ifndef __NEMU_H__
 #define __NEMU_H__
 
+#include ISA_H // "x86.h", "mips32.h", ...
+
 #ifdef __ARCH_X86_NEMU
-#include <x86.h>
-#define SERIAL_PORT  0x3f8
-#define KBD_ADDR     0x60
-#define RTC_ADDR     0x48
-#define SCREEN_ADDR  0x100
-#define SYNC_ADDR    0x104
-#define FB_ADDR      0x40000
-#endif
-
-#ifdef __ARCH_MIPS32_NEMU
-#include <mips32.h>
-#define SERIAL_PORT  0x43f8
-#define KBD_ADDR     0x4060
-#define RTC_ADDR     0x4048
-#define SCREEN_ADDR  0x4100
-#define SYNC_ADDR    0x4104
-#define FB_ADDR      0xa0040000
-#endif
-
-#ifdef __ARCH_RISCV32_NEMU
-#include <riscv32.h>
-#define SERIAL_PORT  0x43f8
-#define KBD_ADDR     0x4060
-#define RTC_ADDR     0x4048
-#define SCREEN_ADDR  0x4100
-#define SYNC_ADDR    0x4104
-#define FB_ADDR      0x40000
-#endif
-
-#ifdef __ARCH_RISCV32_NOOP
-#include <riscv32.h>
-#define KBD_ADDR     0x40000060
-#define RTC_ADDR     0x40700000
-#define SCREEN_ADDR  0x40800000
-#define SYNC_ADDR    0x40800004
-#define FB_ADDR      0x50000000
+# define SERIAL_PORT  0x3f8
+# define KBD_ADDR     0x60
+# define RTC_ADDR     0x48
+# define SCREEN_ADDR  0x100
+# define SYNC_ADDR    0x104
+# define FB_ADDR      0xa0000000
+#else
+# define SERIAL_PORT  0xa10003f8
+# define KBD_ADDR     0xa1000060
+# define RTC_ADDR     0xa1000048
+# define SCREEN_ADDR  0xa1000100
+# define SYNC_ADDR    0xa1000104
+# define FB_ADDR      0xa0000000
 #endif
 
 #define PMEM_SIZE (128 * 1024 * 1024)
 #define PGSIZE    4096
+
+#define MMIO_BASE 0xa0000000
+#define MMIO_SIZE 0x10000000
 
 #endif

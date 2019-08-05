@@ -13,6 +13,7 @@ INCLUDES += -I$(AM_HOME)/am/include
 CFLAGS   += -O2 -MMD -Wall -Werror -ggdb $(INCLUDES) \
             -D__ISA__=\"$(ISA)\" -D__ISA_$(shell echo $(ISA) | tr a-z A-Z)__ \
             -D__ARCH__=$(ARCH) -D__ARCH_$(shell echo $(ARCH) | tr a-z A-Z | tr - _) \
+            -DISA_H=\"$(ISA).h\" \
             -DARCH_H=\"arch/$(ARCH).h\" \
             -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector \
 			-Wno-main

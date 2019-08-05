@@ -5,13 +5,13 @@
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
 static PDE kpdirs[NR_PDE] PG_ALIGN = {};
-static PTE kptabs[PMEM_SIZE / PGSIZE * 2] PG_ALIGN = {};
+static PTE kptabs[(PMEM_SIZE + MMIO_SIZE) / PGSIZE] PG_ALIGN = {};
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 
 static _Area segments[] = {      // Kernel memory mappings
-  {.start = (void*)0,           .end = (void*)(0x400000)},
-  {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + PMEM_SIZE)}
+  {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + PMEM_SIZE)},
+  {.start = (void*)MMIO_BASE,   .end = (void*)(MMIO_BASE + MMIO_SIZE)}
 };
 
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
