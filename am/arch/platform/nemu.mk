@@ -6,6 +6,7 @@ AM_SRCS := nemu-common/trm.c \
            $(ISA)/nemu/cte.c \
            $(ISA)/nemu/trap.S \
            $(ISA)/nemu/vme.c \
+           dummy/mpe.c \
            $(ISA)/nemu/boot/start.S
 
 LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld

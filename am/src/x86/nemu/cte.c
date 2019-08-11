@@ -76,6 +76,9 @@ void _yield() {
   asm volatile("int $0x81");
 }
 
-int _istatus(int enable) {
+int _intr_read() {
   return 0;
+}
+
+void _intr_write(int enable) {
 }
