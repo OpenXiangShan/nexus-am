@@ -3,7 +3,7 @@
 
 extern char _heap_start;
 extern char _heap_end;
-int main();
+int main(const char *args);
 
 _Area _heap = {
   .start = &_heap_start,
@@ -22,6 +22,6 @@ void _halt(int code) {
 }
 
 void _trm_init() {
-  int ret = main();
+  int ret = main((const char *)ARGSROM_ADDR);
   _halt(ret);
 }

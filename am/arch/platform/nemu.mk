@@ -10,6 +10,11 @@ AM_SRCS := nemu-common/trm.c \
 
 LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
+ifdef mainargs
+MAINARGS = -a $(mainargs)
+endif
+NEMU_ARGS = -b $(MAINARGS) -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin
+
 image:
 	@echo + LD "->" $(BINARY_REL).elf
 	@$(LD) $(LDFLAGS) --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).elf $(LINK_FILES)
@@ -18,7 +23,7 @@ image:
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
 
 run:
-	make -C $(NEMU_HOME) ISA=$(ISA) run ARGS="-b -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin"
+	make -C $(NEMU_HOME) ISA=$(ISA) run ARGS="$(NEMU_ARGS)"
 
 gdb: image
-	make -C $(NEMU_HOME) ISA=$(ISA) gdb ARGS="-b -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin"
+	make -C $(NEMU_HOME) ISA=$(ISA) gdb ARGS="$(NEMU_ARGS)"
