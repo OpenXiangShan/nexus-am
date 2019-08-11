@@ -69,5 +69,6 @@ void devscan() {
   timer_test();
   video_test();
   pciconf_test();
+  printf("Test End!\n");
   while (1);
 }
