@@ -10,6 +10,7 @@ const char *names[256] = {
 };
 
 void keyboard_test() {
+  printf("Try to press any key...\n");
   while (1) {
     int key = read_key();
     int down = 0;
