@@ -17,7 +17,7 @@ struct _Context {
     uint8_t pad[1024];
     struct {
       ucontext_t uc;
-      void *prot;
+      void *as;
     };
   };
   uintptr_t rdi;

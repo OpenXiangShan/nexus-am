@@ -3,7 +3,7 @@
 
 extern char _heap_start;
 extern char _heap_end;
-int main();
+int main(const char *args);
 
 _Area _heap = {
   .start = &_heap_start,
@@ -15,13 +15,13 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
-  __asm__ volatile("mv a0, %0; .word 0x0000006b" : :"r"(code));
+  nemu_trap(code);
 
   // should not reach here
   while (1);
 }
 
 void _trm_init() {
-  int ret = main();
+  int ret = main((const char *)ARGSROM_ADDR);
   _halt(ret);
 }

@@ -3,7 +3,7 @@
 
 struct _Context {
   union {
-    struct _AddressSpace *prot;
+    struct _AddressSpace *as;
     uint32_t gpr[32];
   };
   uint32_t cause;

@@ -2,7 +2,7 @@
 #define __ARCH_H__
 
 struct _Context {
-  struct _AddressSpace *prot;
+  struct _AddressSpace *as;
   uintptr_t edi, esi, ebp, esp;
   uintptr_t ebx, edx, ecx, eax;      // Register saved by pushal
   int       irq;                     // # of irq

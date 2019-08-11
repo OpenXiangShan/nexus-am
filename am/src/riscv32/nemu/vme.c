@@ -8,6 +8,7 @@ static PDE kpdirs[NR_PDE] PG_ALIGN = {};
 static PTE kptabs[(PMEM_SIZE + MMIO_SIZE) / PGSIZE] PG_ALIGN = {};
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
+static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
   {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + PMEM_SIZE)},
@@ -49,15 +50,14 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   }
 
   set_satp(kpdirs);
+  vme_enable = 1;
 
   return 0;
 }
 
-int _protect(_AddressSpace *p) {
+int _protect(_AddressSpace *as) {
   PDE *updir = (PDE*)(pgalloc_usr(1));
-  p->pgsize = 4096;
-
-  p->ptr = updir;
+  as->ptr = updir;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {
     updir[i] = kpdirs[i];
@@ -66,21 +66,23 @@ int _protect(_AddressSpace *p) {
   return 0;
 }
 
-void _unprotect(_AddressSpace *p) {
+void _unprotect(_AddressSpace *as) {
 }
 
 static _AddressSpace *cur_as = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->prot = cur_as;
+  c->as = cur_as;
 }
 
 void __am_switch(_Context *c) {
-  set_satp(c->prot->ptr);
-  cur_as = c->prot;
+  if (vme_enable) {
+    set_satp(c->as->ptr);
+    cur_as = c->as;
+  }
 }
 
-int _map(_AddressSpace *p, void *va, void *pa, int mode) {
-  PDE *pt = (PDE*)p->ptr;
+int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  PDE *pt = (PDE*)as->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_V)) {
     *pde = PTE_V | ((uint32_t)pgalloc_usr(1) >> PGSHFT << 10);
@@ -93,10 +95,10 @@ int _map(_AddressSpace *p, void *va, void *pa, int mode) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *p, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
   _Context *c = (_Context*)ustack.end - 1;
 
-  c->prot = p;
+  c->as = as;
   c->epc = (uintptr_t)entry;
   c->status = 0x000c0120;
   return c;
