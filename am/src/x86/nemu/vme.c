@@ -8,6 +8,7 @@ static PDE kpdirs[NR_PDE] PG_ALIGN = {};
 static PTE kptabs[(PMEM_SIZE + MMIO_SIZE) / PGSIZE] PG_ALIGN = {};
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
+static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
   {.start = (void*)0,          .end = (void*)PMEM_SIZE},
@@ -47,6 +48,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 
   set_cr3(kpdirs);
   set_cr0(get_cr0() | CR0_PG);
+  vme_enable = 1;
 
   return 0;
 }
@@ -71,8 +73,10 @@ void __am_get_cur_as(_Context *c) {
 }
 
 void __am_switch(_Context *c) {
-  set_cr3(c->as->ptr);
-  cur_as = c->as;
+  if (vme_enable) {
+    set_cr3(c->as->ptr);
+    cur_as = c->as;
+  }
 }
 
 int _map(_AddressSpace *as, void *va, void *pa, int prot) {
