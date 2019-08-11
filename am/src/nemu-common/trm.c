@@ -15,7 +15,7 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
-  __asm__ volatile("mv a0, %0; .word 0x0000006b" : :"r"(code));
+  nemu_trap(code);
 
   // should not reach here
   while (1);

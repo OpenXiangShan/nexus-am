@@ -1,11 +1,11 @@
-AM_SRCS := $(ISA)/nemu/trm.c \
+AM_SRCS := nemu-common/trm.c \
+           nemu-common/ioe.c \
+           nemu-common/nemu-input.c \
+           nemu-common/nemu-timer.c \
+           nemu-common/nemu-video.c \
            $(ISA)/nemu/cte.c \
            $(ISA)/nemu/trap.S \
            $(ISA)/nemu/vme.c \
-           nemu-devices/ioe.c \
-           nemu-devices/nemu-input.c \
-           nemu-devices/nemu-timer.c \
-           nemu-devices/nemu-video.c \
            $(ISA)/nemu/boot/start.S
 
 LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
