@@ -43,7 +43,7 @@ extern "C" {
 #define DINIC_L {     128,   1 MB, 10882, 0x0000c248}
 #define  LZIP_S {     128, 128 KB,     0, 0xe05fc832}
 #define  LZIP_M {   50000,   1 MB,     0, 0xdc93e90c}
-#define  LZIP_L { 1048576,   4 MB, 24456, 0x8d62c81f} // need update time
+#define  LZIP_L { 1048576,   4 MB,  7593, 0x8d62c81f}
 #define SSORT_S {     100,   4 KB,     0, 0x4c555e09}
 #define SSORT_M {   10000, 512 KB,     0, 0x0db7909b}
 #define SSORT_L {  100000,   4 MB,  4504, 0x4f0ab431}
