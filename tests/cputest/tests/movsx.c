@@ -1,8 +1,8 @@
 #include "trap.h"
 
-int A[10];
-int b;
-signed char C[10];
+volatile int A[10];
+volatile int b;
+volatile signed char C[10];
 int main() {
 	A[0] = 0;
 	A[1] = 1;

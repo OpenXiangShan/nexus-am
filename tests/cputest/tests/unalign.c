@@ -1,7 +1,7 @@
 #include "trap.h"
 
-unsigned x = 0xffffffff;
-unsigned char buf[16];
+volatile unsigned x = 0xffffffff;
+volatile unsigned char buf[16];
 
 int main() {
 

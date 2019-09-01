@@ -1,7 +1,4 @@
-
 #include "trap.h"
-//#include <stdio.h>
-//#include <assert.h>
 
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
