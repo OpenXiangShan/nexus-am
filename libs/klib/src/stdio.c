@@ -34,7 +34,9 @@ int vprintk(char *out, int limit, const char *fmt, va_list ap) {
       width = -1;
       abs = '+';
     reswitch:
-      switch (*(++pfmt)) {
+      // switch (*(++pfmt)) {  may cause link error
+      pfmt++;
+      switch (*(pfmt)) {
       case '-':
         flagc = '-';
         goto reswitch;
