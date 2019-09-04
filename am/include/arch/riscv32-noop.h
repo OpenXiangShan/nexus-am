@@ -22,11 +22,7 @@ struct _Context {
 #define MAP(c, f) c(f)
 
 #define COUNTERS(f) \
-  f(cycle) f(time) f(instr) f(imemStall) \
-  f(ALUInstr) f(BRUInstr) f(LSUInstr) f(MDUInstr) f(CSRInstr) \
-  f(loadInstr) f(loadStall) f(storeStall) f(mmioInstr) \
-  f(IcacheHit) f(DcacheHit) \
-  f(mulInstr)
+  f(cycle) f(time) f(instr)
 
 #define CNT_IDX(cnt) PERFCNT_##cnt
 #define CNT_ENUM_ITEM(cnt) CNT_IDX(cnt),
