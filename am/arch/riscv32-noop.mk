@@ -7,10 +7,11 @@ AM_SRCS := $(ISA)/noop/trm.c \
            $(ISA)/nemu/trap.S \
            $(ISA)/noop/instr.c \
            $(ISA)/nemu/vme.c \
-           nemu-devices/ioe.c \
-           nemu-devices/nemu-input.c \
-           nemu-devices/nemu-timer.c \
-           nemu-devices/nemu-video.c \
+           nemu-common/ioe.c \
+           nemu-common/nemu-input.c \
+           nemu-common/nemu-timer.c \
+           nemu-common/nemu-video.c \
+           dummy/mpe.c \
            $(ISA)/nemu/boot/start.S
 
 LD_SCRIPT     := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
@@ -28,4 +29,4 @@ image: $(GEN_READMEMH)
 	@$(GEN_READMEMH) $(BINARY)-readmemh
 
 run:
-	make -C $(NOOP_HOME) emu IMAGE="$(BINARY)-readmemh"
+	$(MAKE) -C $(NOOP_HOME) emu IMAGE="$(BINARY).bin"
