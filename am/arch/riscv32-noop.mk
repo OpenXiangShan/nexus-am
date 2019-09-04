@@ -7,25 +7,21 @@ AM_SRCS := $(ISA)/noop/trm.c \
            $(ISA)/nemu/trap.S \
            $(ISA)/noop/instr.c \
            $(ISA)/nemu/vme.c \
-           nemu-devices/ioe.c \
-           nemu-devices/nemu-input.c \
-           nemu-devices/nemu-timer.c \
-           nemu-devices/nemu-video.c \
+           nemu-common/ioe.c \
+           nemu-common/nemu-input.c \
+           nemu-common/nemu-timer.c \
+           nemu-common/nemu-video.c \
+           dummy/mpe.c \
            $(ISA)/nemu/boot/start.S
 
 LD_SCRIPT     := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
-GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/build/verilator-readmemh
-$(GEN_READMEMH):
-	$(MAKE) -C $(@D)
-
-image: $(GEN_READMEMH)
+image:
 	@echo + LD "->" $(BINARY_REL).elf
 	@$(LD) $(LDFLAGS) --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).elf --start-group $(LINK_FILES) --end-group
 	@$(OBJDUMP) -d $(BINARY).elf > $(BINARY).txt
-	@echo + OBJCOPY "->" $(BINARY_REL)-readmemh
-	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O verilog --adjust-vma -0x80000000 $(BINARY).elf $(BINARY)-readmemh
-	@$(GEN_READMEMH) $(BINARY)-readmemh
+	@echo + OBJCOPY "->" $(BINARY_REL).bin
+	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
 
 run:
-	make -C $(NOOP_HOME) emu IMAGE="$(BINARY)-readmemh"
+	$(MAKE) -C $(NOOP_HOME) emu IMAGE="$(BINARY).bin"
