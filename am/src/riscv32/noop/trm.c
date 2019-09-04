@@ -21,9 +21,11 @@ void _putc(char ch) {
 
 void _halt(int code) {
   __asm__ volatile("mv a0, %0; .word 0x0005006b" : :"r"(code));
+
+  // should not reach here during simulation
   printf("Exit with code = %d\n", code);
 
-  // should not reach here
+  // should not reach here on FPGA
   while (1);
 }
 
