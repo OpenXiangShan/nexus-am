@@ -16,17 +16,12 @@ AM_SRCS := $(ISA)/noop/trm.c \
 
 LD_SCRIPT     := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
-GEN_READMEMH := $(NOOP_HOME)/tools/readmemh/build/verilator-readmemh
-$(GEN_READMEMH):
-	$(MAKE) -C $(@D)
-
-image: $(GEN_READMEMH)
+image:
 	@echo + LD "->" $(BINARY_REL).elf
 	@$(LD) $(LDFLAGS) --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).elf --start-group $(LINK_FILES) --end-group
 	@$(OBJDUMP) -d $(BINARY).elf > $(BINARY).txt
-	@echo + OBJCOPY "->" $(BINARY_REL)-readmemh
-	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O verilog --adjust-vma -0x80000000 $(BINARY).elf $(BINARY)-readmemh
-	@$(GEN_READMEMH) $(BINARY)-readmemh
+	@echo + OBJCOPY "->" $(BINARY_REL).bin
+	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
 
 run:
 	$(MAKE) -C $(NOOP_HOME) emu IMAGE="$(BINARY).bin"
