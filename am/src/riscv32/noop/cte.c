@@ -61,6 +61,9 @@ void _yield() {
   asm volatile("li a0, -1; ecall");
 }
 
-int _istatus(int enable) {
+int _intr_read() {
   return 0;
+}
+
+void _intr_write(int enable) {
 }

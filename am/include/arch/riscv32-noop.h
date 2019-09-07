@@ -5,7 +5,7 @@
 
 struct _Context {
   union {
-    struct _AddressSpace *prot;
+    struct _AddressSpace *as;
     uint32_t gpr[32];
   };
   uint32_t cause;
@@ -13,20 +13,16 @@ struct _Context {
   uint32_t epc;
 };
 
-#define GPR1 gpr[10]
-#define GPR2 gpr[11]
-#define GPR3 gpr[12]
-#define GPR4 gpr[13]
-#define GPRx gpr[10]
+#define GPR1 gpr[17] // a7
+#define GPR2 gpr[10] // a0
+#define GPR3 gpr[11] // a1
+#define GPR4 gpr[12] // a2
+#define GPRx gpr[10] // a0
 
 #define MAP(c, f) c(f)
 
 #define COUNTERS(f) \
-  f(cycle) f(time) f(instr) f(imemStall) \
-  f(ALUInstr) f(BRUInstr) f(LSUInstr) f(MDUInstr) f(CSRInstr) \
-  f(loadInstr) f(loadStall) f(storeStall) f(mmioInstr) \
-  f(IcacheHit) f(DcacheHit) \
-  f(mulInstr)
+  f(cycle) f(time) f(instr)
 
 #define CNT_IDX(cnt) PERFCNT_##cnt
 #define CNT_ENUM_ITEM(cnt) CNT_IDX(cnt),
