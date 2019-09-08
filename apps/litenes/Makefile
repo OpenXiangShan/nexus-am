@@ -1,8 +1,9 @@
 NAME := litenes
 SRCS := $(shell find -L ./src/ -name "*.c")
 ROMS := $(shell find -L ./src/ -name "*.nes")
-PREBUILD := src/roms/gen/roms.h
+PREBUILD := rom
 include $(AM_HOME)/Makefile.app
 
-src/roms/gen/roms.h: $(ROMS)
+.PHONY: rom
+rom: $(ROMS)
 	@cd src/roms && python3 build-roms.py
