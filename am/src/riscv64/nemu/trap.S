@@ -10,14 +10,14 @@ f(10) f(11) f(12) f(13) f(14) f(15) f(16) f(17) f(18) f(19) \
 f(20) f(21) f(22) f(23) f(24) f(25) f(26) f(27) f(28) f(29) \
 f(30) f(31)
 
-#define PUSH(n) sw concat(x, n), (n * 4)(sp);
-#define POP(n)  lw concat(x, n), (n * 4)(sp);
+#define PUSH(n) sd concat(x, n), (n * 8)(sp);
+#define POP(n)  ld concat(x, n), (n * 8)(sp);
 
-#define CONTEXT_SIZE ((31 + 4) * 4)
-#define OFFSET_SP     ( 2 * 4)
-#define OFFSET_CAUSE  (32 * 4)
-#define OFFSET_STATUS (33 * 4)
-#define OFFSET_EPC    (34 * 4)
+#define CONTEXT_SIZE ((31 + 4) * 8)
+#define OFFSET_SP     ( 2 * 8)
+#define OFFSET_CAUSE  (32 * 8)
+#define OFFSET_STATUS (33 * 8)
+#define OFFSET_EPC    (34 * 8)
 
 .globl __am_asm_trap
 __am_asm_trap:
@@ -27,28 +27,28 @@ __am_asm_trap:
 
   mv t0, sp
   addi t0, t0, CONTEXT_SIZE
-  sw t0, OFFSET_SP(sp)
+  sd t0, OFFSET_SP(sp)
 
-  csrr t0, scause
-  csrr t1, sstatus
-  csrr t2, sepc
+  csrr t0, mcause
+  csrr t1, mstatus
+  csrr t2, mepc
 
-  sw t0, OFFSET_CAUSE(sp)
-  sw t1, OFFSET_STATUS(sp)
-  sw t2, OFFSET_EPC(sp)
+  sd t0, OFFSET_CAUSE(sp)
+  sd t1, OFFSET_STATUS(sp)
+  sd t2, OFFSET_EPC(sp)
 
   mv a0, sp
   jal __am_irq_handle
 
   mv sp, a0
 
-  lw t1, OFFSET_STATUS(sp)
-  lw t2, OFFSET_EPC(sp)
-  csrw sstatus, t1
-  csrw sepc, t2
+  ld t1, OFFSET_STATUS(sp)
+  ld t2, OFFSET_EPC(sp)
+  csrw mstatus, t1
+  csrw mepc, t2
 
   MAP(REGS, POP)
 
   addi sp, sp, CONTEXT_SIZE
 
-  sret
+  mret
