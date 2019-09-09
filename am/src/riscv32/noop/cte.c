@@ -54,6 +54,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)stack.end - 1;
 
   c->epc = (uintptr_t)entry;
+  c->status = 0x000c0100;
   return c;
 }
 
