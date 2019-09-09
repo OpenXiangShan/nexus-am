@@ -20,7 +20,7 @@ _Context* __am_irq_handle(_Context *c) {
       case 2:
         if (__am_illegal_instr(c)) c->epc += 4;
         break;
-      case 11:
+      case 9:
         ev.event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
         c->epc += 4;
         break;
@@ -42,7 +42,7 @@ extern void __am_asm_trap(void);
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   // initialize exception entry
-  asm volatile("csrw mtvec, %0" : : "r"(__am_asm_trap));
+  asm volatile("csrw stvec, %0" : : "r"(__am_asm_trap));
 
   // register event handler
   user_handler = handler;
