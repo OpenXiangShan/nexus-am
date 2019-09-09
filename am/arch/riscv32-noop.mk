@@ -8,7 +8,7 @@ AM_SRCS := $(ISA)/noop/trm.c \
            $(ISA)/noop/instr.c \
            $(ISA)/nemu/vme.c \
            nemu-common/ioe.c \
-           nemu-common/nemu-input.c \
+           $(ISA)/noop/input.c \
            nemu-common/nemu-timer.c \
            nemu-common/nemu-video.c \
            dummy/mpe.c \
