@@ -15,8 +15,6 @@
 # error unsupported ISA __ISA__
 #endif
 
-#define ARGSROM_ADDR  0xa2000000
-
 #ifdef __ARCH_X86_NEMU
 # define SERIAL_PORT  0x3f8
 # define KBD_ADDR     0x60
