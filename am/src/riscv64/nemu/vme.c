@@ -102,6 +102,6 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
 
   c->as = as;
   c->mepc = (uintptr_t)entry;
-  c->mstatus = 0x000c0120;
+  c->mstatus = 0x000c0180;
   return c;
 }
