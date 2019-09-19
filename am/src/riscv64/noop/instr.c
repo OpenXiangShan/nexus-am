@@ -83,7 +83,7 @@ int __am_illegal_instr(_Context *c) {
     };
     uint32_t val;
   } instr;
-  instr.val = *(uint32_t *)(c->epc);
+  instr.val = *(uint32_t *)(c->mepc);
 
   if (instr.opcode == 0x33 && instr.func2 == 1) {
     // M extension
