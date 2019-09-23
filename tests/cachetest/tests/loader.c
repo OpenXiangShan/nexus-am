@@ -2,7 +2,7 @@
 
 int a[10] = {};
 
-int f1(int n) {
+int f1(int n, int *a) {
   int sum = 0;
   for (int i = 0; i < n; i ++) {
     sum += a[i];
@@ -10,7 +10,7 @@ int f1(int n) {
   return sum;
 }
 
-int f2(int n) {
+int f2(int n, int *a) {
   int sum = 1;
   for (int i = 0; i < n; i ++) {
     sum *= a[i];
@@ -24,9 +24,13 @@ int test(void *f) {
   printf("copy code...\n");
   memcpy(code, f, sizeof(code));
 
-  int (*p)(int) = (void *)code;
+#ifdef __ISA_RISCV64__
+  asm volatile("fence.i");
+#endif
+
+  int (*p)(int, int*) = (void *)code;
   printf("jump to  code...\n");
-  int ret = p(10);
+  int ret = p(10, a);
   printf("ret = %d\n", ret);
   return ret;
 }
