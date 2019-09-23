@@ -9,6 +9,9 @@ int __am_uartlite_getchar();
 
 static int am_keycode[128] = {
   [' '] = _KEY_SPACE,
+  ['1'] = _KEY_1, ['2'] = _KEY_2, ['3'] = _KEY_3, ['4'] = _KEY_4,
+  ['5'] = _KEY_5, ['6'] = _KEY_6, ['7'] = _KEY_7, ['8'] = _KEY_8,
+  ['9'] = _KEY_9, ['0'] = _KEY_0,
   ['a'] = _KEY_A, ['b'] = _KEY_B, ['c'] = _KEY_C, ['d'] = _KEY_D,
   ['e'] = _KEY_E, ['f'] = _KEY_F, ['g'] = _KEY_G, ['h'] = _KEY_H,
   ['i'] = _KEY_I, ['j'] = _KEY_J, ['k'] = _KEY_K, ['l'] = _KEY_L,
