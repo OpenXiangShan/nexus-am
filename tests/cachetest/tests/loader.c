@@ -25,6 +25,10 @@ int test(void *f) {
   memcpy(code, f, sizeof(code));
 
   int (*p)(int) = (void *)code;
+#ifdef __ISA_RISCV64__
+  asm volatile("fence.i");
+#endif
+
   printf("jump to  code...\n");
   int ret = p(10);
   printf("ret = %d\n", ret);
