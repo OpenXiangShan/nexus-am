@@ -99,7 +99,7 @@ int __am_illegal_instr(_Context *c) {
     }
   }
 
-  printf("invalid instruction\n");
+  printf("invalid instruction at pc = %x\n", c->mepc);
   _halt(1);
   return false;
 }
