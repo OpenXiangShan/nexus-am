@@ -61,6 +61,7 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   user_handler = handler;
 
   inc_mtimecmp(0);
+  asm volatile("csrw mie, %0" : : "r"(1 << 7));
 
   return 0;
 }
@@ -78,8 +79,18 @@ void _yield() {
 }
 
 int _intr_read() {
-  return 0;
+  uintptr_t mstatus;
+  asm volatile("csrr %0, mstatus" : "=r"(mstatus));
+  return (mstatus & 0x8) != 0;
 }
 
 void _intr_write(int enable) {
+  uintptr_t mstatus;
+  asm volatile("csrr %0, mstatus" : "=r"(mstatus));
+  if (enable) {
+    mstatus |= 0x8;
+  } else {
+    mstatus &= ~0x8;
+  }
+  asm volatile("csrw mstatus, %0" : : "r"(mstatus));
 }
