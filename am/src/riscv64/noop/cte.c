@@ -70,7 +70,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)stack.end - 1;
 
   c->mepc = (uintptr_t)entry;
-  c->mstatus = 0x000c0100;
+  c->mstatus = 0x000c0180;
   return c;
 }
 
