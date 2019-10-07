@@ -33,6 +33,9 @@ _Context* __am_irq_handle(_Context *c) {
         inc_mtimecmp(ind(CLINT_MTIME));
         ev.event = _EVENT_IRQ_TIMER;
         break;
+      case (0xb | INTR_BIT):
+        ev.event = _EVENT_IRQ_IODEV;
+        break;
       case 11:
         ev.event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
         c->mepc += 4;
@@ -61,7 +64,7 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   user_handler = handler;
 
   inc_mtimecmp(0);
-  asm volatile("csrw mie, %0" : : "r"(1 << 7));
+  asm volatile("csrw mie, %0" : : "r"((1 << 7) | (1 << 11)));
 
   return 0;
 }
