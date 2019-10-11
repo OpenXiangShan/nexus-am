@@ -1,13 +1,10 @@
-// unmodified for cputest
-
 #include <riscv64.h>
 #include <nemu.h>
 #include <klib.h>
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
-static PDE kpdirs[NR_PDE] PG_ALIGN = {};
-static PTE kptabs[(PMEM_SIZE + MMIO_SIZE) / PGSIZE] PG_ALIGN = {};
+static _AddressSpace kas; // Kernel address space
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
@@ -20,50 +17,37 @@ static _Area segments[] = {      // Kernel memory mappings
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
 
 static inline void set_satp(void *pdir) {
-  asm volatile("csrw satp, %0" : : "r"(0x80000000 | ((uintptr_t)pdir >> 12)));
+  uintptr_t mode = 4ull << 60;
+  asm volatile("csrw satp, %0" : : "r"(mode | PN(pdir)));
 }
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
-  // make all PDEs invalid
+  kas.ptr = pgalloc_f(1);
+  // make all PTEs invalid
+  memset(kas.ptr, 0, PGSIZE);
+
   int i;
-  for (i = 0; i < NR_PDE; i ++) {
-    kpdirs[i] = 0;
-  }
-
-  PTE *ptab = kptabs;
   for (i = 0; i < NR_KSEG_MAP; i ++) {
-    uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
-    uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
-    for (; pdir_idx < pdir_idx_end; pdir_idx ++) {
-      // fill PDE
-      kpdirs[pdir_idx] = ((uintptr_t)ptab >> PGSHFT << 10) | PTE_V;
-
-      // fill PTE
-      PTE pte = (PGADDR(pdir_idx, 0, 0) >> PGSHFT << 10) | PTE_V | PTE_R | PTE_W | PTE_X;
-      PTE pte_end = (PGADDR(pdir_idx + 1, 0, 0) >> PGSHFT << 10) | PTE_V | PTE_R | PTE_W | PTE_X;
-      for (; pte < pte_end; pte += (1 << 10)) {
-        *ptab = pte;
-        ptab ++;
-      }
+    void *va = segments[i].start;
+    for (; va < segments[i].end; va += PGSIZE) {
+      _map(&kas, va, va, 0);
     }
   }
 
-  set_satp(kpdirs);
+  set_satp(kas.ptr);
   vme_enable = 1;
 
   return 0;
 }
 
 int _protect(_AddressSpace *as) {
-  PDE *updir = (PDE*)(pgalloc_usr(1));
+  PTE *updir = (PTE *)(pgalloc_usr(1));
   as->ptr = updir;
   // map kernel space
-  for (int i = 0; i < NR_PDE; i ++) {
-    updir[i] = kpdirs[i];
-  }
+  memcpy(updir, kas.ptr, PGSIZE);
 
   return 0;
 }
@@ -84,14 +68,17 @@ void __am_switch(_Context *c) {
 }
 
 int _map(_AddressSpace *as, void *va, void *pa, int prot) {
-  PDE *pt = (PDE*)as->ptr;
-  PDE *pde = &pt[PDX(va)];
-  if (!(*pde & PTE_V)) {
-    *pde = PTE_V | ((uint64_t)pgalloc_usr(1) >> PGSHFT << 10);
+  PTE *pte2 = &((PTE*)as->ptr)[VPN2(va)];
+  if (!(*pte2 & PTE_V)) {
+    *pte2 = PTE_V | (PN(pgalloc_usr(1)) << 10);
   }
-  PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
-  if (!(*pte & PTE_V)) {
-    *pte = PTE_V | PTE_R | PTE_W | PTE_X | ((uint64_t)pa >> PGSHFT << 10);
+  PTE *pte1 = &((PTE*)PTE_ADDR(*pte2))[VPN1(va)];
+  if (!(*pte1 & PTE_V)) {
+    *pte1 = PTE_V | (PN(pgalloc_usr(1)) << 10);
+  }
+  PTE *pte0 = &((PTE*)PTE_ADDR(*pte1))[VPN0(va)];
+  if (!(*pte0 & PTE_V)) {
+    *pte0 = PTE_V | PTE_R | PTE_W | PTE_X | (PN(pa) << 10);
   }
 
   return 0;

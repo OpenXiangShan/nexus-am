@@ -29,32 +29,22 @@ static inline void outd(uintptr_t addr, uint64_t data) { *(volatile uint64_t *)a
 #define PTE_X 0x08
 #define PTE_U 0x10
 
-
-// unmodified for cputest
-
 // Page directory and page table constants
-#define NR_PDE    1024    // # directory entries per page directory
-#define NR_PTE    1024    // # PTEs per page table
+#define NR_PTE    512     // # PTEs per page table
 #define PGSHFT    12      // log2(PGSIZE)
-#define PTXSHFT   12      // Offset of PTX in a linear address
-#define PDXSHFT   22      // Offset of PDX in a linear address
+#define VPN0SHFT  12      // Offset of VPN0 in a virtual address
+#define VPN1SHFT  21      // Offset of VPN1 in a virtual address
+#define VPN2SHFT  30      // Offset of VPN2 in a virtual address
 
-// +--------10------+-------10-------+---------12----------+
-// | Page Directory |   Page Table   | Offset within Page  |
-// |      Index     |      Index     |                     |
-// +----------------+----------------+---------------------+
-//  \--- PDX(va) --/ \--- PTX(va) --/\------ OFF(va) ------/
-typedef uint32_t PTE;
-typedef uint32_t PDE;
-#define PDX(va)     (((uint64_t)(va) >> PDXSHFT) & 0x3ff)
-#define PTX(va)     (((uint64_t)(va) >> PTXSHFT) & 0x3ff)
-#define OFF(va)     ((uint64_t)(va) & 0xfff)
+typedef uintptr_t PTE;
+#define PN(addr)    ((uint64_t)(addr) >> PGSHFT)
+#define VPN2(va)    (((uint64_t)(va) >> VPN2SHFT) & 0x1ff)
+#define VPN1(va)    (((uint64_t)(va) >> VPN1SHFT) & 0x1ff)
+#define VPN0(va)    (((uint64_t)(va) >> VPN0SHFT) & 0x1ff)
+#define OFF(va)     ((uint64_t)(va) & (PGSIZE - 1))
 
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   (((uint64_t)(pte) & ~0x3ff) << 2)
-
-// construct virtual address from indexes and offset
-#define PGADDR(d, t, o) ((uint64_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 
 #endif
 
