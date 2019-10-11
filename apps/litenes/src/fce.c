@@ -225,6 +225,9 @@ int main(const char *rom_name) {
   _ioe_init();
 
   struct rom *rom = &roms[0];
+  if (rom_name == NULL) {
+    rom_name = "mario";
+  }
   for (int i = 1; i < nroms; i++) {
     struct rom *cur = &roms[i];
     if (strcmp(cur->name, rom_name) == 0) {
