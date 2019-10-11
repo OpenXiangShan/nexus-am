@@ -4,7 +4,7 @@
 #include <riscv64.h>
 #include <klib.h>
 
-#define CLINT_MMIO 0x2000000
+#define CLINT_MMIO 0xa2000000
 #define CLINT_MTIMECMP (CLINT_MMIO + 0x4000)
 #define CLINT_MTIME    (CLINT_MMIO + 0xbff8)
 #define TIME_INC 0x800
