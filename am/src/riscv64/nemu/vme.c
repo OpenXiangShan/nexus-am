@@ -17,7 +17,7 @@ static _Area segments[] = {      // Kernel memory mappings
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
 
 static inline void set_satp(void *pdir) {
-  uintptr_t mode = 4ull << 60;
+  uintptr_t mode = 8ull << 60;
   asm volatile("csrw satp, %0" : : "r"(mode | PN(pdir)));
 }
 
