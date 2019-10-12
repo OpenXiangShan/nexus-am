@@ -68,17 +68,20 @@ void __am_switch(_Context *c) {
 }
 
 int _map(_AddressSpace *as, void *va, void *pa, int prot) {
-  PTE *pte2 = &((PTE*)as->ptr)[VPN2(va)];
-  if (!(*pte2 & PTE_V)) {
-    *pte2 = PTE_V | (PN(pgalloc_usr(1)) << 10);
+  PTE *pg_base = as->ptr;
+  PTE *pte;
+  int level;
+  for (level = PTW_LEVEL - 1; level >= 0; level --) {
+    pte = &pg_base[VPNi((uintptr_t)va, level)];
+    pg_base = (PTE *)PTE_ADDR(*pte);
+    if (level != 0 && !(*pte & PTE_V)) {
+      pg_base = pgalloc_usr(1);
+      *pte = PTE_V | (PN(pg_base) << 10);
+    }
   }
-  PTE *pte1 = &((PTE*)PTE_ADDR(*pte2))[VPN1(va)];
-  if (!(*pte1 & PTE_V)) {
-    *pte1 = PTE_V | (PN(pgalloc_usr(1)) << 10);
-  }
-  PTE *pte0 = &((PTE*)PTE_ADDR(*pte1))[VPN0(va)];
-  if (!(*pte0 & PTE_V)) {
-    *pte0 = PTE_V | PTE_R | PTE_W | PTE_X | (PN(pa) << 10);
+
+  if (!(*pte & PTE_V)) {
+    *pte = PTE_V | PTE_R | PTE_W | PTE_X | (PN(pa) << 10);
   }
 
   return 0;

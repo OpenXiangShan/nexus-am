@@ -29,21 +29,25 @@ static inline void outd(uintptr_t addr, uint64_t data) { *(volatile uint64_t *)a
 #define PTE_X 0x08
 #define PTE_U 0x10
 
-// Page directory and page table constants
+typedef uintptr_t PTE;
 #define NR_PTE    512     // # PTEs per page table
 #define PGSHFT    12      // log2(PGSIZE)
-#define VPN0SHFT  12      // Offset of VPN0 in a virtual address
-#define VPN1SHFT  21      // Offset of VPN1 in a virtual address
-#define VPN2SHFT  30      // Offset of VPN2 in a virtual address
-
-typedef uintptr_t PTE;
 #define PN(addr)    ((uint64_t)(addr) >> PGSHFT)
-#define VPN2(va)    (((uint64_t)(va) >> VPN2SHFT) & 0x1ff)
-#define VPN1(va)    (((uint64_t)(va) >> VPN1SHFT) & 0x1ff)
-#define VPN0(va)    (((uint64_t)(va) >> VPN0SHFT) & 0x1ff)
 #define OFF(va)     ((uint64_t)(va) & (PGSIZE - 1))
 
-// Address in page table or page directory entry
+// Sv39 page walk
+#define PTW_LEVEL 3
+#define PTE_SIZE 8
+#define VPNMASK 0x1ff
+// Offset of VPNi in a virtual address
+static inline uintptr_t VPNiSHFT(int i) {
+  return (PGSHFT) + 9 * i;
+}
+static inline uintptr_t VPNi(uintptr_t va, int i) {
+  return (va >> VPNiSHFT(i)) & VPNMASK;
+}
+
+// Address in page table entry
 #define PTE_ADDR(pte)   (((uint64_t)(pte) & ~0x3ff) << 2)
 
 #endif
