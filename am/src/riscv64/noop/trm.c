@@ -2,8 +2,6 @@
 #include <riscv64.h>
 #include <klib.h>
 
-#define MAINARGS_ADDR 0x80000000
-
 extern char _heap_start;
 extern char _heap_end;
 int main(const char *args);
@@ -31,6 +29,7 @@ void _halt(int code) {
 
 void _trm_init() {
   __am_init_uartlite();
-  int ret = main((const char *)MAINARGS_ADDR);
+  extern const char _mainargs;
+  int ret = main(&_mainargs);
   _halt(ret);
 }
