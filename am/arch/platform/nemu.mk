@@ -9,16 +9,17 @@ AM_SRCS := nemu-common/trm.c \
            dummy/mpe.c \
            $(ISA)/nemu/boot/start.S
 
-LD_SCRIPT := $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
+LDFLAGS += -L $(AM_HOME)/am/src/nemu-common
+LDFLAGS += -T $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
 ifdef mainargs
-MAINARGS = -a $(mainargs)
+MAINARGS = --mainargs=$(mainargs)
 endif
-NEMU_ARGS = -b $(MAINARGS) -l $(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin
+NEMU_ARGS = --batch $(MAINARGS) --log=$(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin
 
 image:
 	@echo + LD "->" $(BINARY_REL).elf
-	@$(LD) $(LDFLAGS) --gc-sections -T $(LD_SCRIPT) -e _start -o $(BINARY).elf $(LINK_FILES)
+	@$(LD) $(LDFLAGS) --gc-sections -o $(BINARY).elf $(LINK_FILES)
 	@$(OBJDUMP) -d $(BINARY).elf > $(BINARY).txt
 	@echo + OBJCOPY "->" $(BINARY_REL).bin
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
