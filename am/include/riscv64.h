@@ -23,6 +23,15 @@ static inline void outw(uintptr_t addr, uint16_t data) { *(volatile uint16_t *)a
 static inline void outl(uintptr_t addr, uint32_t data) { *(volatile uint32_t *)addr = data; }
 static inline void outd(uintptr_t addr, uint64_t data) { *(volatile uint64_t *)addr = data; }
 
+enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
+#define MSTATUS_IE(mode)  ((1 << (mode)) << 0)
+#define MSTATUS_PIE(mode) ((1 << (mode)) << 4)
+#define MSTATUS_MPP(mode) ((mode) << 11)
+#define MSTATUS_SPP(mode) ((mode) << 8)
+#define MSTATUS_MXR  (1 << 19)
+#define MSTATUS_SUM  (1 << 18)
+#define MSTATUS_MPRV (1 << 17)
+
 #define PTE_V 0x01
 #define PTE_R 0x02
 #define PTE_W 0x04

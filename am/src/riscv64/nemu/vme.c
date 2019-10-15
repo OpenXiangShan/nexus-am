@@ -11,7 +11,9 @@ static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
   {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + PMEM_SIZE)},
-  {.start = (void*)MMIO_BASE,   .end = (void*)(MMIO_BASE + MMIO_SIZE)}
+  {.start = (void*)0xa2000000u, .end = (void*)(0xa2000000u + 0x10000)},  // clint
+  {.start = (void*)0xa1000000u, .end = (void*)(0xa1000000u + 0x1000)},   // serial, rtc, screen, keyboard
+  {.start = (void*)0xa0000000u, .end = (void*)(0xa0000000u + 0x80000)}   // vmem
 };
 
 #define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
@@ -92,7 +94,8 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
   c->gpr[10] = c->gpr[11] = 0;
 
   c->as = as;
-  c->mepc = (uintptr_t)entry;
-  c->mstatus = 0x000c0180;
+  c->epc = (uintptr_t)entry;
+  uintptr_t mprotect = MSTATUS_MXR | MSTATUS_SUM;
+  c->status = mprotect | MSTATUS_SPP(MODE_S) | MSTATUS_PIE(MODE_S);
   return c;
 }
