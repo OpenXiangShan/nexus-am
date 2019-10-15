@@ -85,6 +85,11 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
 
   if (!(*pte & PTE_V)) {
     *pte = PTE_V | PTE_R | PTE_W | PTE_X | (PN(pa) << 10);
+  } else {
+#define ptr_to_u32(p) ((uint32_t)(uintptr_t)p)
+    printf("remap: ptr = 0x%08x, vpn = 0x%08x, old ppn = 0x%08x, new ppn = 0x%08x\nSomething may be wrong.",
+        ptr_to_u32(as->ptr), PN(va), PN(PTE_ADDR(*pte)), PN(pa));
+    assert(0);
   }
 
   return 0;
