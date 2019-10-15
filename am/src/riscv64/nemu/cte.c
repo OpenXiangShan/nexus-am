@@ -25,14 +25,14 @@ _Context* __am_irq_handle(_Context *c) {
   _Context *next = c;
   if (user_handler) {
     _Event ev = {0};
-    switch (c->mcause) {
+    switch (c->cause) {
       case (0x7 | INTR_BIT):
         inc_mtimecmp(ind(CLINT_MTIME));
         ev.event = _EVENT_IRQ_TIMER;
         break;
-      case 11:
+      case 9:
         ev.event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
-        c->mepc += 4;
+        c->epc += 4;
         break;
       default: ev.event = _EVENT_ERROR; break;
     }
@@ -52,13 +52,28 @@ extern void __am_asm_trap(void);
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   // initialize exception entry
-  asm volatile("csrw mtvec, %0" : : "r"(__am_asm_trap));
+  asm volatile("csrw stvec, %0" : : "r"(__am_asm_trap));
 
   // register event handler
   user_handler = handler;
 
+  // set machine timer interrupt
   inc_mtimecmp(0);
   asm volatile("csrs mie, %0" : : "r"(1 << 7));
+
+  // set delegation
+  asm volatile("csrw mideleg, %0" : : "r"(0xffff));
+  asm volatile("csrw medeleg, %0" : : "r"(0xffff));
+
+  // enter S-mode
+  uintptr_t status = MSTATUS_MXR | MSTATUS_SUM | MSTATUS_SPP(MODE_S);
+  extern char _here;
+  asm volatile(
+    "csrw sstatus, %0;"
+    "csrw sepc, %1;"
+    "sret;"
+    "_here:"
+    : : "r"(status), "r"(&_here));
 
   return 0;
 }
@@ -66,8 +81,9 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)stack.end - 1;
 
-  c->mepc = (uintptr_t)entry;
-  c->mstatus = 0x000c0180;
+  c->epc = (uintptr_t)entry;
+  uintptr_t mprotect = MSTATUS_MXR | MSTATUS_SUM;
+  c->status = mprotect | MSTATUS_SPP(MODE_S) | MSTATUS_PIE(MODE_S);
   return c;
 }
 
