@@ -49,7 +49,7 @@ _Context* __am_irq_handle(_Context *c) {
     }
   }
 
-//  __am__switch(next);
+  __am_switch(next);
 
   return next;
 }
@@ -73,7 +73,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)stack.end - 1;
 
   c->mepc = (uintptr_t)entry;
-  c->mstatus = 0x000c0180;
+  c->mstatus = 0x000c1880;
   return c;
 }
 
