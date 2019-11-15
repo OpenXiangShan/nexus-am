@@ -3,8 +3,8 @@
 #include <klib.h>
 
 #define CLINT_MMIO 0x40700000
-#define CLINT_MTIME    (CLINT_MMIO + 0)
-#define CLINT_MTIMECMP (CLINT_MMIO + 8)
+#define CLINT_MTIME    (CLINT_MMIO + 0xbff8)
+#define CLINT_MTIMECMP (CLINT_MMIO + 0x4000)
 #define TIME_INC 10
 static inline void inc_mtimecmp(uint64_t this) {
   outd(CLINT_MTIMECMP, this + TIME_INC);
