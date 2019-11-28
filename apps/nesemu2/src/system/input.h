@@ -43,16 +43,12 @@
 	u8		keyboard[370];			//keyboard state
 } inputdata_t;*/
 
-extern int joyx,joyy;			//x and y coords for paddle/mouse
-extern u8 joyzap;					//zapper trigger
 extern u8 joykeys[];				//keyboard state
-extern u8 joystate[];			//joypad state
 extern int joyconfig[4][8];	//joypad keys
 
 int input_init();
 void input_kill();
 void input_poll();
 int input_poll_mouse(int *x,int *y);
-void input_update_config();
 
 #endif

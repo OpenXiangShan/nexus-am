@@ -18,7 +18,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-//#include <SDL/SDL.h>
 #include <klib.h>
 #include "misc/log.h"
 #include "palette/palette.h"
@@ -31,8 +30,6 @@
 #include "system/common/filters.h"
 
 //system related variables
-//static SDL_Surface *surface = 0;
-//static int flags = 0; //SDL_DOUBLEBUF | SDL_HWSURFACE;
 static int screenw,screenh,screenbpp;
 static int screenscale;
 
@@ -91,96 +88,6 @@ static int find_drawfunc(int scale,int bpp)
 	return(1);
 }
 
-#if 0
-static void get_surface_info(SDL_Surface *s)
-{
-	SDL_PixelFormat *pf = s->format;
-
-	log_printf("get_surface_info:  sdl surface info:\n");
-	log_printf("  bits per pixel:  %d\n",pf->BitsPerPixel);
-	log_printf("    red:    mask:  %08X    shift:  %d    loss: %d\n",pf->Rmask,pf->Rshift,pf->Rloss);
-	log_printf("    green:  mask:  %08X    shift:  %d    loss: %d\n",pf->Gmask,pf->Gshift,pf->Gloss);
-	log_printf("    blue:   mask:  %08X    shift:  %d    loss: %d\n",pf->Bmask,pf->Bshift,pf->Bloss);
-
-	rshift = pf->Rshift;
-	gshift = pf->Gshift;
-	bshift = pf->Bshift;
-	rloss = pf->Rloss;
-	gloss = pf->Gloss;
-	bloss = pf->Bloss;
-}
-
-//return absolute value
-static int absolute_value(int v)
-{
-	return((v < 0) ? (0 - v) : v);
-}
-
-int find_video_mode(int wantw,int wanth,int flags2,int *w,int *h)
-{
-	SDL_Rect **modes,*mode;
-	int i,diffw[2],diffh[2];
-
-	//get list of modes from sdl
-	modes = SDL_ListModes(NULL, flags2);
-	*w = *h = 0;
-
-	//if nothing returned
-	if(modes == (SDL_Rect**)0) {
-		log_printf("find_video_mode:  fatal error:  no modes available\n");
-		return(1);
-	}
-
-	//see if any mode is available (windowed mode)
-	if(modes == (SDL_Rect**)-1) {
-		log_printf("find_video_mode:  all resolutions available\n");
-		*w = wantw;
-		*h = wanth;
-		return(0);
-	}
-
-	//output modes
-	log_printf("find_video_mode:  available modes:\n");
-	for(i=0;modes[i];i++) {
-		log_printf("find_video_mode:    %d x %d\n",modes[i]->w,modes[i]->h);
-	}
-
-	//search for closest video mode
-	for(mode=0,i=0;modes[i];i++) {
-		if(modes[i]->w >= wantw && modes[i]->h >= wanth) {
-			if(mode == 0) {
-				mode = modes[i];
-			}
-			else {
-				diffw[0] = absolute_value(mode->w - wantw);
-				diffh[0] = absolute_value(mode->h - wanth);
-				diffw[1] = absolute_value(modes[i]->w - wantw);
-				diffh[1] = absolute_value(modes[i]->h - wanth);
-				if((diffw[1] + diffh[1]) < (diffw[0] + diffh[0])) {
-					mode = modes[i];
-				}
-			}
-		}
-	}
-
-	//if a mode was found set the return variables
-	if(mode) {
-		*w = mode->w;
-		*h = mode->h;
-	}
-
-	return(0);
-}
-
-static int get_desktop_bpp()
-{
-	const SDL_VideoInfo *vi = SDL_GetVideoInfo();
-
-	log_printf("get_desktop_bpp:  current display mode is %d x %d, %d bpp\n",vi->current_w,vi->current_h,vi->vfmt->BitsPerPixel);
-	return(vi->vfmt->BitsPerPixel);
-}
-#endif
-
 int video_init()
 {
 	if(nesscreen == 0)
@@ -195,22 +102,7 @@ int video_init()
 	memset(palettecache32,0,256*sizeof(u32));
 
 	//set screen info
-	//flags &= ~SDL_FULLSCREEN;
-	//flags |= config_get_bool("video.fullscreen") ? SDL_FULLSCREEN : 0;
 	screenscale = config_get_int("video.scale");
-
-#if 0
-	//fullscreen mode
-	if(flags & SDL_FULLSCREEN) {
-		screenscale = (screenscale < 2) ? 2 : screenscale;
-		screenbpp = 32;
-	}
-
-	//windowed mode
-	else {
-		screenbpp = get_desktop_bpp();
-	}
-#endif
 
   screenbpp = 32;
 
@@ -233,30 +125,8 @@ int video_init()
   screenw = screen_width();
   screenh = screen_height();
 
-#if 0
-	//fullscreen mode
-	if(flags & SDL_FULLSCREEN) {
-		int w,h;
-
-		if(find_video_mode(screenw,screenh,flags | SDL_FULLSCREEN,&w,&h) == 0) {
-			screenw = w;
-			screenh = h;
-			log_printf("video_init:  best display mode:  %d x %d\n",w,h);
-		}
-	}
-
-	//initialize surface/window
-	surface = SDL_SetVideoMode(screenw,screenh,screenbpp,flags);
-	SDL_WM_SetCaption("nesemu2",NULL);
-	SDL_ShowCursor(0);
-	get_surface_info(surface);
-#endif
-
 	//allocate memory for temp screen buffer
 	screen = (u32*)mem_realloc(screen,256 * (240 + 16) * (screenbpp / 8) * 4);
-
-	//print information
-	//log_printf("video initialized:  %dx%dx%d %s\n",surface->w,surface->h,surface->format->BitsPerPixel,(flags & SDL_FULLSCREEN) ? "fullscreen" : "windowed");
 
 	return(0);
 }
@@ -264,7 +134,6 @@ int video_init()
 void video_kill()
 {
 	filter_kill();
-	//SDL_ShowCursor(1);
 	if(screen)
 		mem_free(screen);
 	if(nesscreen)
@@ -281,8 +150,6 @@ int video_reinit()
 
 void video_startframe()
 {
-	//lock sdl surface
-	//SDL_LockSurface(surface);
 }
 
 void video_endframe()
@@ -290,15 +157,8 @@ void video_endframe()
 	u64 t;
 
 	//draw everything
-	//drawfunc(surface->pixels,surface->pitch,screen,256*4,256,240);
   draw_rect(screen, 0, 0, 256, 240);
-	//console_draw((u32*)surface->pixels,surface->pitch,screenh);
 	console_draw(screen, 256*4,screenh);
-
-	//flip buffers and unlock surface
-	//SDL_Flip(surface);
-  //SDL_Flip()
-	//SDL_UnlockSurface(surface);
 
 	//simple frame limiter
 	if(config_get_bool("video.framelimit")) {
