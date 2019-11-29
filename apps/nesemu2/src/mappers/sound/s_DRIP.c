@@ -1,6 +1,6 @@
 #include <string.h>
 #include "mappers/sound/s_DRIP.h"
-#include "types.h"
+#include "common.h"
 
 typedef struct dripsound_s {
 	u8 FIFO[256], ReadPos, WritePos;

@@ -21,7 +21,7 @@
 #ifndef __memory_h__
 #define __memory_h__
 
-#include "types.h"
+#include "common.h"
 
 int mem_getprgsize();
 int mem_getchrsize();

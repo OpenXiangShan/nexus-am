@@ -21,7 +21,7 @@
 #ifndef __mmc1_h__
 #define __mmc1_h__
 
-#include "types.h"
+#include "common.h"
 
 #define C_MMC1			0x10
 

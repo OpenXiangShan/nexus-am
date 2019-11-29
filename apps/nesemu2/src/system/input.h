@@ -21,7 +21,7 @@
 #ifndef __system__input_h__
 #define __system__input_h__
 
-#include "types.h"
+#include "common.h"
 
 //system keys
 #define INPUT_HARDRESET			0x00100000

@@ -22,7 +22,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "misc/memutil.h"
-#include "misc/log.h"
 #include "nes/cart/cart.h"
 #include "mappers/mappers.h"
 

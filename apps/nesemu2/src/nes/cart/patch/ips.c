@@ -21,7 +21,6 @@
 #include <string.h>
 #include "nes/cart/patch/patch.h"
 #include "misc/memutil.h"
-#include "misc/log.h"
 
 int patch_apply_ips(patch_t *p,memfile_t *file)
 {

@@ -21,7 +21,7 @@
 #ifndef __emu_h__
 #define __emu_h__
 
-#include "types.h"
+#include "common.h"
 
 typedef int (*initfunc_t)();
 typedef void (*killfunc_t)();
@@ -32,7 +32,6 @@ extern int quit,running;
 int emu_init();
 void emu_kill();
 int emu_exit(int ret);
-int emu_addsubsystem(char *name,initfunc_t init,killfunc_t kill);
 int emu_mainloop();
 int emu_mainloop_test(char *script);
 

@@ -22,7 +22,6 @@
 #include "mappers/mapperinc.h"
 #include "mappers/sound/s_FDS.h"
 #include "mappers/fds/hle.h"
-#include "misc/log.h"
 #include "misc/config.h"
 
 #define SHORTIRQ	100

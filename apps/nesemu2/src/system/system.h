@@ -21,7 +21,7 @@
 #ifndef __system_h__
 #define __system_h__
 
-#include "types.h"
+#include "common.h"
 
 int system_init();
 void system_kill();
@@ -29,8 +29,5 @@ void system_checkevents();
 char *system_getcwd();
 u64 system_gettick();
 u64 system_getfrequency();
-
-//this needs to be dealt with
-int system_findconfig(char *dest);
 
 #endif

@@ -18,11 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef __types_h__
-#define __types_h__
+#ifndef __common_h__
+#define __common_h__
 
 #include <am.h>
-#define int64 long long
+#include <klib.h>
+
 #define INLINE inline
 
 typedef int8_t s8;
@@ -45,5 +46,8 @@ int stricmp(char *s1,char *s2);
 #define read my_read
 #define write my_write
 #define select my_select
+#define log_printf printf
+
+#define PATH_SEPERATOR '/'
 
 #endif

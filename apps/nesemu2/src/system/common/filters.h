@@ -21,7 +21,7 @@
 #ifndef __filters_h__
 #define __filters_h__
 
-#include "types.h"
+#include "common.h"
 
 #define FILTER_DECL(name)	extern filter_t filter_ ##name ;
 

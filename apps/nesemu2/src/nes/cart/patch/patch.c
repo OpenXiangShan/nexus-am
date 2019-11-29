@@ -29,7 +29,6 @@
 #include "nes/cart/patch/ips.h"
 #include "nes/cart/patch/ups.h"
 #include "misc/memutil.h"
-#include "misc/log.h"
 
 enum patchformat_e {
 	FORMAT_ERROR	= -1,

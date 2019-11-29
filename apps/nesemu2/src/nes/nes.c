@@ -21,10 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "misc/log.h"
 #include "misc/config.h"
 #include "misc/memutil.h"
-#include "cartdb/cartdb.h"
 #include "nes/nes.h"
 #include "nes/io.h"
 #include "nes/memory.h"
@@ -54,8 +52,6 @@ static int get_device_id(char *str)
 
 	if(stricmp(str,"joypad0") == 0)	ret = I_JOYPAD0;
 	if(stricmp(str,"joypad1") == 0)	ret = I_JOYPAD1;
-	if(stricmp(str,"zapper") == 0)	ret = I_ZAPPER;
-	if(stricmp(str,"powerpad") == 0)	ret = I_POWERPAD;
 	return(ret);
 }
 
@@ -96,14 +92,12 @@ int nes_init()
 	ret += cpu_init();
 	ret += ppu_init();
 	ret += apu_init();
-	ret += movie_init();
 	return(ret);
 }
 
 void nes_kill()
 {
 	if(nes) {
-		movie_kill();
 		nes_unload();
 		genie_unload();
 		state_kill();
@@ -162,10 +156,6 @@ int nes_load_patched(char *filename,char *patchfilename)
 	else
 		log_printf("nes_load:  loaded file '%s'\n",filename);
 
-	//check cartdb for rom (will update the cart_t struct)
-	if(config_get_bool("cartdb.enabled"))
-		cartdb_find(c);
-
 	//see if we should pre-init some wram for the cart
 	if((c->battery & 1) && c->wram.size == 0) {
 		c->wram.size = 8;
@@ -187,7 +177,6 @@ int nes_load_patched(char *filename,char *patchfilename)
 
 void nes_unload()
 {
-	movie_stop();
 	//need to save sram/diskdata/whatever here
 	if(nes->cart)
 		cart_unload(nes->cart);
@@ -273,8 +262,6 @@ void nes_frame()
 	nes->inputdev[0]->update();
 	nes->inputdev[1]->update();
 	nes->expdev->update();
-	if(nes->movie.mode)
-		movie_frame();
 	cpu_execute_frame();
 }
 

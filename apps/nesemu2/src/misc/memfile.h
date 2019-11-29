@@ -21,7 +21,7 @@
 #ifndef __memfile_h__
 #define __memfile_h__
 
-#include "types.h"
+#include "common.h"
 
 typedef struct memfile_s {
 

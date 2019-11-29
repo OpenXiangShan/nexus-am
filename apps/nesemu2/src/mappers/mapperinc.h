@@ -32,6 +32,5 @@
 #include "nes/nes.h"
 #include "nes/memory.h"
 #include "nes/state/state.h"
-#include "misc/log.h"
 
 #endif

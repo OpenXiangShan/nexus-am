@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "misc/memutil.h"
-#include "misc/log.h"
 #include "misc/crc32.h"
 #include "nes/cart/cart.h"
 #include "nes/cart/unif.h"

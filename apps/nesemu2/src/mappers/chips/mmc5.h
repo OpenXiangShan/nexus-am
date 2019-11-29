@@ -21,7 +21,7 @@
 #ifndef __mmc5_h__
 #define __mmc5_h__
 
-#include "types.h"
+#include "common.h"
 
 void mmc5_sync();
 u8 mmc5_read(u32 addr);

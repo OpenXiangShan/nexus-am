@@ -21,7 +21,7 @@
 #ifndef __namcot_163_h__
 #define __namcot_163_h__
 
-#include "types.h"
+#include "common.h"
 
 #define NAMCOT_HAS_SOUND		0x01			//has sound registers
 #define NAMCOT_HAS_IRQ			0x02			//has irq registers

@@ -27,8 +27,6 @@
 #include "misc/memutil.h"
 #include "misc/strutil.h"
 #include "misc/config.h"
-#include "misc/log.h"
-#include "misc/paths.h"
 
 //holds code information
 typedef struct codedata_s {
@@ -131,69 +129,6 @@ static void genie_write(u32 addr,u8 data)
 		log_printf("genie write:  $%04X = $%02X\n",addr,data);
 	}
 }
-
-#if 0
-int genie_loadrom(char *filename)
-{
-	FILE *fp;
-	size_t len;
-	u8 buf[16];
-
-	//try to open the file
-	if((fp = fopen(filename,"rb")) == 0) {
-		log_printf("genie_load:  error opening game genie rom '%s'\n",filename);
-		return(1);
-	}
-
-	//read 16 bytes to see if it has a ines header
-	fread(buf,1,16,fp);
-
-	//get the file size of the file
-	fseek(fp,0,SEEK_END);
-	len = ftell(fp);
-	fseek(fp,0,SEEK_SET);
-
-	//allocate memory for genierom/geniecache
-	genierom = (u8*)mem_alloc(0x1000 + 0x400);
-	geniecache = (cache_t*)mem_alloc(0x400);
-
-	//see if there is an ines header, we know we have 16kb prg, 8kb chr
-	if(memcmp(buf,inesident,4) == 0) {
-		fseek(fp,16,SEEK_SET);
-		fread(genierom,1,0x1000,fp);
-		fseek(fp,16 + 0x4000,SEEK_SET);
-		fread(genierom + 0x1000,1,0x400,fp);
-	}
-
-	//we have no header and 16kb prg, 8kb chr
-	else if(len == 0x6000) {
-		fread(genierom,1,0x1000,fp);
-		fseek(fp,0x4000,SEEK_SET);
-		fread(genierom + 0x1000,1,0x400,fp);
-	}
-
-	//if we have raw prg/chr rom dump 4kb prg, 1kb chr
-	else if(len == 0x1400) {
-		fread(genierom,1,0x1400,fp);
-	}
-
-	//now what?  error!
-	else {
-		fclose(fp);
-		genie_unload();
-		log_printf("genie_load:  unable to load genie rom '%s'\n",filename);
-		return(1);
-	}
-
-	//cache the genie chr
-	cache_tiles(genierom + 0x1000,geniecache,64,0);
-
-	//close the file, output message, return
-	fclose(fp);
-	log_printf("genie_load:  loaded game genie rom '%s' (%d bytes)\n",filename,len);
-	return(0);
-}
-#endif
 
 int genie_loadrom(char *filename) { return 1; }
 

@@ -21,7 +21,7 @@
 #ifndef __SCALE3X_H
 #define __SCALE3X_H
 
-#include "types.h"
+#include "common.h"
 
 typedef u8 scale3x_uint8;
 typedef u16 scale3x_uint16;

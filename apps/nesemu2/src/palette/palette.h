@@ -21,7 +21,7 @@
 #ifndef __palette_h__
 #define __palette_h__
 
-#include "types.h"
+#include "common.h"
 
 typedef union palentry_s {
   struct {

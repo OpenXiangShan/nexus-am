@@ -22,8 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "misc/memutil.h"
-#include "misc/log.h"
-#include "misc/paths.h"
 #include "misc/crc32.h"
 #include "misc/memfile.h"
 #include "nes/cart/cart.h"
@@ -229,20 +227,7 @@ cart_t *cart_load_patched(const char *filename,const char *patchfilename)
 	generate_mask_and_crc32(ret->pc10rom);
 
 	//store the filename
-	if(ret->patch) {
-		char *p;
-
-		paths_normalize(ret->patch->filename);
-		p = strrchr(ret->patch->filename,PATH_SEPERATOR);
-		if(p == 0)
-			p = ret->patch->filename;
-		else
-			p++;
-		ret->filename = (char*)mem_alloc(strlen(filename) + strlen(p) + 2);
-		sprintf(ret->filename,"%s+%s",filename,p);
-	}
-	else
-		ret->filename = mem_strdup((char*)filename);
+  ret->filename = mem_strdup((char*)filename);
 
 	log_printf("cart_load:  rom filename is '%s'\n",ret->filename);
 

@@ -21,7 +21,7 @@
 #ifndef __SCALE2X_H
 #define __SCALE2X_H
 
-#include "types.h"
+#include "common.h"
 
 typedef u8 scale2x_uint8;
 typedef u16 scale2x_uint16;

@@ -7,7 +7,7 @@
 
 //#include	"..\..\interface.h"
 #include <string.h>
-#include "types.h"
+#include "common.h"
 #include	"s_N106.h"
 
 // Namco 106

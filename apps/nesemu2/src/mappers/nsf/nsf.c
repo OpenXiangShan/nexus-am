@@ -25,7 +25,6 @@
 #include "mappers/sound/s_N106.h"
 #include "mappers/sound/s_VRC6.h"
 #include "mappers/sound/s_VRC7.h"
-#include "misc/log.h"
 
 static readfunc_t read4;
 static writefunc_t write4;

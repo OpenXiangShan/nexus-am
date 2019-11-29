@@ -8,7 +8,7 @@
 //#include	"..\..\interface.h"
 #include <string.h>
 #include	"s_FME7.h"
-#include	"types.h"
+#include	"common.h"
 
 // Sunsoft FME-7, based on the AY-8910
 

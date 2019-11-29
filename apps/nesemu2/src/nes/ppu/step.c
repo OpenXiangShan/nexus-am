@@ -20,7 +20,6 @@
 
 #include "nes/nes.h"
 #include "system/video.h"
-#include "misc/log.h"
 
 typedef struct {
 	u64 line;				//cache line data

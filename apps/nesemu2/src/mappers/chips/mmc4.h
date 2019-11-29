@@ -21,7 +21,7 @@
 #ifndef __mmc4_h__
 #define __mmc4_h__
 
-#include "types.h"
+#include "common.h"
 
 void mmc4_init(int hard);
 void mmc4_write(u32 addr,u8 value);

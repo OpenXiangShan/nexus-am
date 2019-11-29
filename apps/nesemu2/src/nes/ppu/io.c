@@ -18,7 +18,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "misc/log.h"
 #include "nes/nes.h"
 #include "system/video.h"
 #include "misc/config.h"

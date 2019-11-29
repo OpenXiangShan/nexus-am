@@ -21,7 +21,7 @@
 #ifndef __draw_h__
 #define __draw_h__
 
-#include "types.h"
+#include "common.h"
 
 void draw1x(void *dest,u32 destp,void *src,u32 srcp,u32 w,u32 h);
 void draw2x(void *dest,u32 destp,void *src,u32 srcp,u32 w,u32 h);

@@ -21,8 +21,7 @@
 #ifndef __nes_h__
 #define __nes_h__
 
-#include "types.h"
-#include "nes/movie.h"
+#include "common.h"
 #include "nes/region.h"
 #include "nes/cpu/cpu.h"
 #include "nes/ppu/ppu.h"
@@ -77,9 +76,6 @@ typedef struct nes_s {
 
 	//connected input devices
 	inputdev_t	*inputdev[2],*expdev;
-
-	//movie support
-	movie_t		movie;
 
 	//region information
 	region_t		*region;

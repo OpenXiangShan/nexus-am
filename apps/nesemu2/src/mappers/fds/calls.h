@@ -22,7 +22,6 @@
 #define __fds__calls_h__
 
 #include "nes/nes.h"
-#include "misc/log.h"
 
 #define HLECALL(name) void hle_ ## name ()
 

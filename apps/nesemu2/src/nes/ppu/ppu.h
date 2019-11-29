@@ -21,7 +21,7 @@
 #ifndef __nes__ppu_h__
 #define __nes__ppu_h__
 
-#include "types.h"
+#include "common.h"
 #include "tilecache.h"
 
 typedef struct ppu_s {

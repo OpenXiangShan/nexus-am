@@ -22,9 +22,7 @@
 #include <stdlib.h>
 #include "misc/memutil.h"
 #include "misc/strutil.h"
-#include "misc/log.h"
 #include "misc/config.h"
-#include "misc/paths.h"
 #include "nes/cart/cart.h"
 #include "mappers/mapperid.h"
 

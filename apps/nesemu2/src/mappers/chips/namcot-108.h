@@ -21,7 +21,7 @@
 #ifndef __namcot_108_h__
 #define __namcot_108_h__
 
-#include "types.h"
+#include "common.h"
 
 u8 namcot108_getindex();
 u8 *namcot108_getregs();

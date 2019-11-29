@@ -21,7 +21,7 @@
 #ifndef __nes__cart_h__
 #define __nes__cart_h__
 
-#include "types.h"
+#include "common.h"
 #include "misc/memfile.h"
 #include "nes/ppu/tilecache.h"
 #include "nes/cart/patch/patch.h"

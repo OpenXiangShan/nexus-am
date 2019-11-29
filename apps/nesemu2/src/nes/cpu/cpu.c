@@ -22,7 +22,6 @@
 #include <string.h>
 #include "nes/nes.h"
 #include "nes/state/state.h"
-#include "misc/log.h"
 #include "misc/config.h"
 
 //show disassembly as we execute

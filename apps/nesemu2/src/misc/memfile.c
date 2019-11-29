@@ -22,7 +22,6 @@
 #include <string.h>
 #include "misc/memfile.h"
 #include "misc/memutil.h"
-#include "misc/log.h"
 #include <assert.h>
 
 memfile_t *memfile_create()

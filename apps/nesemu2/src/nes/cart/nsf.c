@@ -21,68 +21,10 @@
 #include <string.h>
 #include "nes/cart/cart.h"
 #include "nes/cart/nsf.h"
-#include "misc/log.h"
-#include "misc/paths.h"
 #include "misc/config.h"
 #include "misc/memutil.h"
 #include "misc/strutil.h"
 #include "mappers/mapperid.h"
-
-#if 0
-static int loadbios(cart_t *ret,char *filename)
-{
-	FILE *fp;
-	size_t size;
-	u8 header[10];
-
-	//open bios file
-	if((fp = fopen(filename,"rb")) == 0) {
-		log_printf("loadbios:  error opening nsf bios '%s'\n",filename);
-		return(1);
-	}
-
-	//get size of the nsf bios
-	fseek(fp,0,SEEK_END);
-	size = ftell(fp);
-	fseek(fp,0,SEEK_SET);
-
-	//bios has a 10 byte header (actually part of the first bank)
-	// addr size description
-	// ---- ---- -----------
-	//  00   07   ident string (NSFBIOS)
-   //  07   01   version hi
-   //  08   01   version lo
-	//  09   01   <NULL>
-	fread(header,1,10,fp);
-
-	if(memcmp(header,"NSFBIOS",7) != 0) {
-		log_printf("loadbios:  nsf bios ident is bad\n");
-		fclose(fp);
-		return(1);
-	}
-
-	//seek back to the beginning
-	fseek(fp,0,SEEK_SET);
-
-	//load bios into upper wram
-	cart_setwramsize(ret,8 + (size / 1024));
-
-	//read bios
-	if(fread(ret->wram.data + 8192,1,size,fp) != size) {
-		log_printf("loadbios:  error reading nsf bios file '%s'\n",filename);
-		mem_free(ret->wram.data);
-		fclose(fp);
-		return(1);
-	}
-
-	//close bios file handle
-	fclose(fp);
-	log_printf("loadbios:  nsf bios loaded, %d bytes.  version %d.%d\n",size,header[7],header[8]);
-
-	//success
-	return(0);
-}
-#endif
 
 static int loadbios(cart_t *ret,char *filename) { return -1; }
 

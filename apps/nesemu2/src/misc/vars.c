@@ -30,7 +30,6 @@ vars_add_var is able to add another var with the same name
 #include "misc/memutil.h"
 #include "misc/strutil.h"
 #include "misc/vars.h"
-#include "misc/log.h"
 #include <klib.h>
 
 vars_t *vars_create()
@@ -47,75 +46,6 @@ void vars_destroy(vars_t *vs)
 	vars_clear(vs);
 	mem_free(vs);
 }
-
-#if 0
-vars_t *vars_load(char *filename)
-{
-	vars_t *ret = 0;
-	FILE *fp;
-	char line[1024],*p,*oldp;
-
-	if((fp = fopen(filename,"rt")) == 0) {
-		log_printf("vars_load:  error opening file '%s'\n",filename);
-		return(0);
-	}
-
-	ret = vars_create();
-	while(feof(fp) == 0) {
-
-		//read line from file
-		if(fgets(line,1024,fp) == NULL)
-			break;
-
-		//skip past any whitespace
-		p = str_eatwhitespace(line);
-
-		//comment or empty string, do nothing
-		if(*p == '#' || *p == 0)
-			continue;
-
-		//find where to split the string
-		if((oldp = strchr(p,'=')) == 0) {
-			log_printf("vars_load:  malformed line ('%s')\n",p);
-			continue;
-		}
-
-		//parse out the name/data pair
-		*oldp++ = 0;
-		p = str_eatwhitespace(p);
-		oldp = str_eatwhitespace(oldp);
-
-		//add the var to the list
-		vars_add_var(ret,F_CONFIG,p,oldp);
-	}
-
-	log_printf("vars_load:  loaded file '%s'\n",filename);
-	fclose(fp);
-	strcpy(ret->filename,filename);
-	return(ret);
-}
-
-int vars_save(vars_t *vs,char *filename)
-{
-	FILE *fp;
-	var_t *v = vs->vars;
-
-	if(filename == 0)
-		filename = vs->filename;
-	if((fp = fopen(filename,"wt")) == 0) {
-		log_printf("vars_save:  error opening '%s'\n",filename);
-		return(1);
-	}
-	while(v) {
-		if(v->flags == F_CONFIG)
-			fprintf(fp,"%s = %s\n",v->name,v->data);
-		v = v->next;
-	}
-	fclose(fp);
-	vs->changed = 0;
-	return(0);
-}
-#endif
 
 vars_t *vars_load(char *filename) { return NULL; }
 int vars_save(vars_t *vs,char *filename) { return 1; }
@@ -226,10 +156,6 @@ int vars_get_bool(vars_t *vs,char *name,int def)
 
 double vars_get_double(vars_t *vs,char *name,double def)
 {
-#if 0
-	sprintf(tmpstr,"%f",def);
-	return(atof(vars_get_string(vs,name,tmpstr)));
-#endif
   return 0;
 }
 

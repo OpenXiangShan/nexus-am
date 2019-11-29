@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "misc/memutil.h"
-#include "misc/log.h"
 #include "nes/state/block.h"
 
 block_t *block_create(u32 type,u32 size)

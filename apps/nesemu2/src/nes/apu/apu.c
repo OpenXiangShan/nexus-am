@@ -22,7 +22,6 @@
 
 #include "nes/nes.h"
 #include "nes/state/state.h"
-#include "misc/log.h"
 #include "misc/memutil.h"
 #include "system/sound.h"
 

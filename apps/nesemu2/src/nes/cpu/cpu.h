@@ -21,7 +21,7 @@
 #ifndef __nes__cpu_h__
 #define __nes__cpu_h__
 
-#include "types.h"
+#include "common.h"
 
 typedef struct cpu_s {
 

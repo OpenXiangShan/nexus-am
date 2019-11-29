@@ -18,11 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
+#include "common.h"
 #include "misc/memutil.h"
-#include "misc/log.h"
-#include <klib.h>
 
 #define MAX_CHUNKS	1024
 
@@ -166,28 +163,6 @@ void *memutil_realloc(void *ptr,size_t size,char *file,int line)
 	if(ptr == 0)
 		return(memutil_alloc(size,file,line));
   assert(0);
-#if 0
-	void *ret = realloc(ptr,size);
-	int i;
-	num_realloc++;
-	for(i=0;i<MAX_CHUNKS;i++) {
-		if(chunks[i].ptr == ptr) {
-			chunks[i].flags |= 1;
-			strcpy(chunks[i].file,file);
-			chunks[i].line = line;
-			chunks[i].ptr = ret;
-			if(size > chunks[i].size)
-				num_bytes += size - chunks[i].size;
-			chunks[i].size = size;
-			break;
-		}
-	}
-	if(i == MAX_CHUNKS) {
-		log_printf("memutil_realloc:  trying to realloc memory not found in list in file %s @ line %d\n",file,line);
-	}
-	memutil_count();
-	return(ret);
-#endif
 }
 
 void memutil_free(void *ptr,char *file,int line)

@@ -21,7 +21,7 @@
 #ifndef __mmc3_h__
 #define __mmc3_h__
 
-#include "types.h"
+#include "common.h"
 
 #define C_MMC3			0x30
 #define C_MMC6			0x60

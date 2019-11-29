@@ -22,9 +22,7 @@
 #include <stdlib.h>
 #include "misc/memutil.h"
 #include "misc/strutil.h"
-#include "misc/log.h"
 #include "misc/config.h"
-#include "misc/paths.h"
 #include "nes/cart/cart.h"
 #include "mappers/mapperid.h"
 
@@ -62,39 +60,6 @@ static int loadbios_new(char *filename, u8 **data, int *size)
 	//return
 	return(n);
 }
-
-#if 0
-static int loadbios(cart_t *ret, char *filename)
-{
-	memfile_t *file;
-	int n = 0;
-
-	//open bios file
-	if ((file = memfile_open(filename, "rb")) == 0) {
-		log_printf("loadbios:  error opening fds bios '%s'\n", filename);
-		return(1);
-	}
-
-	//setup prg for bios
-	ret->prg.size = 0x4000;
-	ret->prg.mask = 0x3FFF;
-	ret->prg.data = (u8*)mem_alloc(ret->prg.size);
-
-	//read bios
-	if (memfile_read(ret->prg.data, 1, 0x2000, file) != 0x2000) {
-		log_printf("loadbios:  error reading bios file '%s'\n", filename);
-		n = 1;
-	}
-	else
-		log_printf("loadbios:  loaded bios file '%s'\n", filename);
-
-	//close bios file handle
-	memfile_close(file);
-
-	//return
-	return(n);
-}
-#endif
 
 void copy_block(u8 *dst, u8 *src, int size) {
 	memcpy(dst, src, size);

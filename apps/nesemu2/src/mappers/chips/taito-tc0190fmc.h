@@ -21,7 +21,7 @@
 #ifndef __taito_tc0190fmc_h__
 #define __taito_tc0190fmc_h__
 
-#include "types.h"
+#include "common.h"
 
 void tc0190fmc_sync();
 void tc0190fmc_reset(int hard);

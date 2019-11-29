@@ -21,7 +21,7 @@
 #ifndef __filter__ntsc_h__
 #define __filter__ntsc_h__
 
-#include "types.h"
+#include "common.h"
 
 int ntsc_init();
 void ntsc_kill();

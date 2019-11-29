@@ -20,13 +20,10 @@
 
 #include <string.h>
 #include "emu/emu.h"
-#include "emu/events.h"
-#include "misc/log.h"
 #include "misc/memutil.h"
 #include "misc/strutil.h"
 #include "misc/config.h"
 #include "misc/crc32.h"
-#include "cartdb/cartdb.h"
 #include "system/system.h"
 #include "system/video.h"
 #include "system/input.h"
@@ -50,8 +47,6 @@ typedef struct subsystem_s {
 SUBSYSTEM_START
 	SUBSYSTEM(memutil)
 	SUBSYSTEM(config)
-	SUBSYSTEM_NOKILL(log)
-	SUBSYSTEM(cartdb)
 	SUBSYSTEM(system)
 	SUBSYSTEM(video)
 	SUBSYSTEM(input)
@@ -104,26 +99,7 @@ void emu_kill()
 
 int emu_exit(int ret)
 {
-	//kludge alert!  need list here or something atexit() style...
-	log_kill();
 	return(ret);
-}
-
-int emu_addsubsystem(char *name,initfunc_t init,killfunc_t kill)
-{
-	int i;
-
-	log_printf("emu_addsubsystem:  adding subsystem '%s'\n",name);
-	for(i=0;subsystems[i].id != -1;i++);
-	subsystems[i].id = 50;
-	strcpy(subsystems[i].name,name);
-	subsystems[i].init = init;
-	subsystems[i].kill = kill;
-	subsystems[i+1].id = -1;
-	strcpy(subsystems[i+1].name,"");
-	subsystems[i+1].init = 0;
-	subsystems[i+1].kill = 0;
-	return(0);
 }
 
 int emu_mainloop()
@@ -171,68 +147,3 @@ int emu_mainloop()
 	mem_free(line);
 	return(0);
 }
-
-#if 0
-int emu_mainloop_test(char *script)
-{
-	u64 t,total,frames;
-	char line[1024],*rom = "",*test,*p;
-	memfile_t *file;
-	int testrunning = 0;
-
-	log_printf("emu_mainloop_test:  starting automated tests from '%s'\n",script);
-
-	if((file = memfile_open(script,"rb")) == 0) {
-		log_printf("emu_mainloop_test:  error opening test script '%s'\n",script);
-		return(0);
-	}
-
-	//begin the main loop
-	total = 0;
-	frames = 0;
-	while(quit == 0) {
-		if(nes->movie.mode & (MOVIE_CRCFAIL | MOVIE_CRCPASS)) {
-			if(nes->movie.mode & MOVIE_CRCFAIL)
-				log_printf("emu_mainloop_test:  test over.  failed. (rom = '%s')\n",rom);
-			if(nes->movie.mode & MOVIE_CRCPASS)
-				log_printf("emu_mainloop_test:  test over.  passed. (rom = '%s')\n",rom);
-			testrunning = 0;
-		}
-		if(testrunning == 0) {
-			do {
-				if(memfile_gets(line,1024,file) == 0) {
-					quit++;
-					p = 0;
-					break;
-				}
-				p = str_eatwhitespace(line);
-				log_printf("line:  %s",p);
-			} while(*p == '#');
-			if(p == 0)
-				break;
-			rom = str_eatwhitespace(strtok(p,";\r\n"));
-			test = str_eatwhitespace(strtok(0,";\r\n"));
-			log_printf("rom, test = '%s', '%s'\n",rom,test);
-			if(emu_event(E_LOADROM,(void*)rom) == 0) {
-				if(emu_event(E_LOADMOVIE,(void*)test) == 0) {
-					emu_event(E_PLAYMOVIE,0);
-					testrunning = 1;
-				}
-			}
-		}
-		t = system_gettick();
-		system_checkevents();
-		input_poll();
-		video_startframe();
-		if(running && nes->cart) {
-			nes_frame();
-		}
-		video_endframe();
-		total += system_gettick() - t;
-		frames++;
-	}
-	log_printf("fps:  %f (%d frames)\n",(double)frames / (double)total * system_getfrequency(),frames);
-	memfile_close(file);
-	return(0);
-}
-#endif

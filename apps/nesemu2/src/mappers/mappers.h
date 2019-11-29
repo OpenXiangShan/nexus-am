@@ -21,7 +21,7 @@
 #ifndef __mappers_h__
 #define __mappers_h__
 
-#include "types.h"
+#include "common.h"
 
 typedef struct mapper_s {
 	int boardid;					//internal board id

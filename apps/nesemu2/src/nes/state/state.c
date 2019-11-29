@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "misc/log.h"
 #include "nes/nes.h"
 #include "nes/state/state.h"
 #include "nes/state/block.h"

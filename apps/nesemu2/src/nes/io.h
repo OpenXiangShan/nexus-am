@@ -21,7 +21,7 @@
 #ifndef __nes__io_h__
 #define __nes__io_h__
 
-#include "types.h"
+#include "common.h"
 
 //nes io handlers
 u8 nes_read_4000(u32 addr);

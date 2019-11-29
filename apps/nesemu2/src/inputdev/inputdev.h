@@ -60,8 +60,6 @@ enum inputdevid_e {
 	I_NULL,
 	I_JOYPAD0,
 	I_JOYPAD1,
-	I_ZAPPER,
-	I_POWERPAD,
 };
 
 inputdev_t *inputdev_get(int id);

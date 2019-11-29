@@ -21,7 +21,7 @@
 #ifndef __ppu__tilecache_h__
 #define __ppu__tilecache_h__
 
-#include "types.h"
+#include "common.h"
 
 #define CACHE_TILE_SIZE		2
 #define CACHE_MASK			0x0303030303030303LL

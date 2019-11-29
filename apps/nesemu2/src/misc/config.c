@@ -24,118 +24,18 @@
 #include "misc/config.h"
 #include "misc/vars.h"
 #include "misc/memutil.h"
-#include "misc/log.h"
-#include "misc/paths.h"
 #include "system/main.h"
 #include "system/system.h"
 #include "version.h"
 
 static vars_t *configvars = 0;
-
-#if 0
-//this path stuff needs to be moved
-static void mkdirr(char *path)
-{
-	char *tmp = mem_strdup(path);
-	char *p = tmp;
-	int num = 0;
-
-	//normalize the path string
-	paths_normalize(tmp);
-
-	log_printf("mkdirr:  creating directory '%s'\n",path);
-
-	//make all the directories between the root and the desired directory
-	for(num=0,p=tmp;(p = strchr(p,PATH_SEPERATOR));num++) {
-		if(num == 0) {
-			p++;
-			continue;
-		}
-		*p = 0;
-		mkdir(tmp);
-		chmod(tmp,0755);
-		*p = PATH_SEPERATOR;
-		p++;
-	}
-
-	//now create the directory we want
-	mkdir(path);
-	chmod(path,0755);
-
-	//free tmp string
-	mem_free(tmp);
-}
-
-static void makepath(char *str)
-{
-	//test if the path exists already, if not create it
-	if(access(str,0) != 0)
-		mkdirr(str);
-}
-
-//this function looks around for a configuration file.  it checks:
-//  1. current working directory
-//  2. $HOME directory
-//  3. same directory the executable is in
-//if it isnt found, it defaults the executable directory
-static int findconfig(char *dest)
-{
-	char *cwd = system_getcwd();
-	char *home = getenv("HOME");
-
-	//first see if the configfilename string isnt empty
-	if(strcmp(dest,"") != 0) {
-		return(0);
-	}
-
-	//now look in the current working directory
-	sprintf(dest,"%s%c%s",cwd,PATH_SEPERATOR,CONFIG_FILENAME);
-	log_printf("looking for configuration at '%s'\n",dest);
-	if(access(dest,06) == 0) {
-		return(0);
-	}
-
-	//check the users home directory
-	if(home) {
-		sprintf(dest,"%s%c.nesemu2%c%s",home,PATH_SEPERATOR,PATH_SEPERATOR,CONFIG_FILENAME);
-		log_printf("looking for configuration at '%s'\n",dest);
-		if(access(dest,06) == 0) {
-			return(0);
-		}
-	}
-
-#ifdef WIN32
-	//win32 it is ok to store in the same directory as executable
-	//now check the executable directory
-	sprintf(dest,"%s%c%s",exepath,PATH_SEPERATOR,CONFIG_FILENAME);
-	log_printf("looking for configuration at '%s'\n",dest);
-	if(access(dest,06) == 0) {
-		return(0);
-	}
-
-	//set default configuration filename
-	sprintf(dest,"%s%c%s",exepath,PATH_SEPERATOR,CONFIG_FILENAME);
-
-#else
-	//linux it is not ok to store in the same directory as executable (/usr/bin or something)
-	if(home) {
-		sprintf(dest,"%s%c.nesemu2%c%s",home,PATH_SEPERATOR,PATH_SEPERATOR,CONFIG_FILENAME);
-	}
-	else {
-		sprintf(dest,"%s%c%s",cwd,PATH_SEPERATOR,CONFIG_FILENAME);
-		log_printf("system_findconfig:  HOME environment var not set!  using current directory.\n");
-	}
-#endif
-
-	return(1);
-}
-#endif
+char configfilename[1024] = CONFIG_FILENAME;
+char exepath[1024] = "";
 
 //initialize the configuration defaults
 static vars_t *config_get_defaults()
 {
 	vars_t *ret = vars_create();
-	//char *str;
 
 	vars_set_int   (ret,F_CONFIG,"video.framelimit",			1);
 	vars_set_int   (ret,F_CONFIG,"video.fullscreen",			0);
@@ -164,65 +64,12 @@ static vars_t *config_get_defaults()
 	vars_set_int   (ret,F_CONFIG,"input.joypad1.left",		'7');
 	vars_set_int   (ret,F_CONFIG,"input.joypad1.right",		'8');
 
-	vars_set_string(ret,F_CONFIG,"input.zapper.trigger",		"mb0");
-
-	vars_set_int   (ret,F_CONFIG,"sound.enabled",				1);
-
-#ifdef WIN32
-	vars_set_string(ret,F_CONFIG,"path.data",						"%exepath%/data");
-	vars_set_string(ret,F_CONFIG,"path.user",						"%path.data%");
-#else
-	vars_set_string(ret,F_CONFIG,"path.data",						"/usr/share/nesemu2");
-	vars_set_string(ret,F_CONFIG,"path.user",						"%home%/.nesemu2");
-#endif
-
-	vars_set_string(ret,F_CONFIG,"path.bios",						"%path.data%/bios");
-	vars_set_string(ret,F_CONFIG,"path.patch",					"%path.data%/patch");
-	vars_set_string(ret,F_CONFIG,"path.palette",					"%path.data%/palette");
-	vars_set_string(ret,F_CONFIG,"path.xml",						"%path.data%/xml");
-
-	vars_set_string(ret,F_CONFIG,"path.save",						"%path.user%/save");
-	vars_set_string(ret,F_CONFIG,"path.state",					"%path.user%/state");
-	vars_set_string(ret,F_CONFIG,"path.cheat",					"%path.user%/cheat");
-
-	vars_set_string(ret,F_CONFIG,"palette.source",				"generator");
-	vars_set_int   (ret,F_CONFIG,"palette.hue",					-15);
-	vars_set_int   (ret,F_CONFIG,"palette.saturation",			45);
-	vars_set_string(ret,F_CONFIG,"palette.filename",			"roni.pal");
-
-	vars_set_string(ret,F_CONFIG,"nes.gamegenie.bios",			"genie.rom");
-	vars_set_int   (ret,F_CONFIG,"nes.gamegenie.enabled",		0);
-
-	vars_set_string(ret,F_CONFIG,"nes.fds.bios",					"hlefds.bin");
-	vars_set_int   (ret,F_CONFIG,"nes.fds.hle",					1);
-
-	vars_set_string(ret,F_CONFIG,"nes.nsf.bios",					"nsfbios.bin");
-
-	vars_set_string(ret,F_CONFIG,"nes.region",					"ntsc");
-	vars_set_int   (ret,F_CONFIG,"nes.log_unhandled_io",		0);
-	vars_set_int   (ret,F_CONFIG,"nes.pause_on_load",			0);
-
-	vars_set_int   (ret,F_CONFIG,"cartdb.enabled",				1);
-	vars_set_string(ret,F_CONFIG,"cartdb.filename",				"%path.xml%/NesCarts.xml;%path.xml%/NesCarts2.xml");
-
-	vars_set_string(ret,0,"version",VERSION);
-	vars_set_string(ret,0,"exepath",exepath);
-	//if((str = getenv("HOME")) != 0)
-	//	vars_set_string(ret,0,"home",str);
-
 	return(ret);
 }
 
 int config_init()
 {
 	vars_t *v;
-	//char tmp[1024];
-
-	//find configuration file
-	//if(findconfig(configfilename) == 0)
-	//	log_printf("main:  found configuration at '%s'\n",configfilename);
-	//else
-	//	log_printf("main:  creating new configuration at '%s'\n",configfilename);
 
 	configvars = config_get_defaults();
 	if((v = vars_load(configfilename)) == 0) {
@@ -235,12 +82,6 @@ int config_init()
 		//destroy the loaded vars
 		vars_destroy(v);
 	}
-
-	//make the directories
-	//makepath(config_get_eval_string(tmp,"path.user"));
-	//makepath(config_get_eval_string(tmp,"path.save"));
-	//makepath(config_get_eval_string(tmp,"path.state"));
-	//makepath(config_get_eval_string(tmp,"path.cheat"));
 
 	return(0);
 }
@@ -327,9 +168,6 @@ char *config_get_eval_string(char *dest,char *name)
 		dest[pos++] = *p;
 		dest[pos] = 0;
 	}
-
-	//normalize the path
-	paths_normalize(dest);
 
 	//free tmp string and return
 	mem_free(tmp);

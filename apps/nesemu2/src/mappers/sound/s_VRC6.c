@@ -5,11 +5,8 @@
  * $Id: s_VRC6.c 376 2008-06-29 20:58:13Z Quietust $
  */
 
-#include <string.h>
-
-//#include	"..\..\interface.h"
 #include	"s_VRC6.h"
-#include	"types.h"
+#include	"common.h"
 
 // Konami VRC6
 
