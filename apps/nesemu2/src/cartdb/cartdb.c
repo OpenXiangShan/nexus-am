@@ -18,9 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "cartdb/cartdb.h"
+
+#if 0
 #include <string.h>
 #include <ctype.h>
-#include "cartdb/cartdb.h"
 #include "cartdb/parser.h"
 #include "misc/memutil.h"
 #include "misc/strutil.h"
@@ -31,7 +33,6 @@
 #include "mappers/mapperid.h"
 
 static xml_t *cartxml = 0;
-
 int cartdb_init()
 {
 	char filename[1024];
@@ -500,3 +501,8 @@ int cartdb_find(cart_t *cart)
 	log_printf("cartdb_find:  cart not found in database.\n");
 	return(1);
 }
+#endif
+
+int cartdb_init() { return 0; }
+void cartdb_kill() { }
+int cartdb_find(cart_t *cart) { return 1; }

@@ -159,14 +159,14 @@ static void write_bios(u32 addr,u8 data)
 				//playspeed low
 				case 0x3410:
 					playspeed = (playspeed & 0xFF00) | data;
-					irqlatch = (u32)(1786840.0f * (double)playspeed / 1000000.0f);
+					irqlatch = (u32)((u64)178684 * playspeed / 100000);
 					log_printf("irqlatch = %d (playspeed = %d)\n",irqlatch,playspeed);
 					break;
 
 				//playspeed high
 				case 0x3411:
 					playspeed = (playspeed & 0x00FF) | (data << 8);
-					irqlatch = (u32)(1786840.0f * (double)playspeed / 1000000.0f);
+					irqlatch = (u32)((u64)178684 * playspeed / 100000);
 					log_printf("irqlatch = %d (playspeed = %d)\n",irqlatch,playspeed);
 					break;
 

@@ -25,12 +25,13 @@ vars_add_var is able to add another var with the same name
 */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+//#include <stdlib.h>
+//#include <string.h>
 #include "misc/memutil.h"
 #include "misc/strutil.h"
 #include "misc/vars.h"
 #include "misc/log.h"
+#include <klib.h>
 
 vars_t *vars_create()
 {
@@ -47,6 +48,7 @@ void vars_destroy(vars_t *vs)
 	mem_free(vs);
 }
 
+#if 0
 vars_t *vars_load(char *filename)
 {
 	vars_t *ret = 0;
@@ -113,6 +115,10 @@ int vars_save(vars_t *vs,char *filename)
 	vs->changed = 0;
 	return(0);
 }
+#endif
+
+vars_t *vars_load(char *filename) { return NULL; }
+int vars_save(vars_t *vs,char *filename) { return 1; }
 
 void vars_merge(vars_t *dest,vars_t *src)
 {
@@ -220,8 +226,11 @@ int vars_get_bool(vars_t *vs,char *name,int def)
 
 double vars_get_double(vars_t *vs,char *name,double def)
 {
+#if 0
 	sprintf(tmpstr,"%f",def);
 	return(atof(vars_get_string(vs,name,tmpstr)));
+#endif
+  return 0;
 }
 
 var_t *vars_set_string(vars_t *vs,int flags,char *name,char *data)

@@ -23,6 +23,7 @@
 #include "misc/memfile.h"
 #include "misc/memutil.h"
 #include "misc/log.h"
+#include <assert.h>
 
 memfile_t *memfile_create()
 {
@@ -36,6 +37,7 @@ memfile_t *memfile_create()
 	return(ret);
 }
 
+#ifndef NO_FILE_SYSTEM
 memfile_t *memfile_open(char *filename,char *mode)
 {
 	FILE *fp;
@@ -83,16 +85,6 @@ memfile_t *memfile_open(char *filename,char *mode)
 	return(ret);
 }
 
-memfile_t *memfile_open_memory(u8 *data,u32 size)
-{
-	memfile_t *ret;
-
-	ret = memfile_create();
-	ret->size = size;
-	ret->data = (u8*)mem_dup(data,size);
-	return(ret);
-}
-
 void memfile_close(memfile_t *mf)
 {
 	FILE *fp = (FILE*)mf->handle;
@@ -113,6 +105,41 @@ void memfile_close(memfile_t *mf)
 	if(mf->data)
 		mem_free(mf->data);
 	mem_free(mf);
+}
+#else
+#include "roms/gen/roms.h"
+
+memfile_t *memfile_open(char *filename,char *mode) {
+  struct rom *rom = &roms[0];
+  for (int i = 1; i < nroms; i++) {
+    struct rom *cur = &roms[i];
+    if (strcmp(cur->name, filename) == 0) {
+      rom = cur;
+    }
+  }
+
+  printf("Using ROM: %s\n", rom->name);
+
+  memfile_t *mf = memfile_open_memory(rom->body, *(rom->size));
+
+  return mf;
+}
+
+void memfile_close(memfile_t *mf) {
+	if(mf->data)
+		mem_free(mf->data);
+	mem_free(mf);
+}
+#endif
+
+memfile_t *memfile_open_memory(u8 *data,u32 size)
+{
+	memfile_t *ret;
+
+	ret = memfile_create();
+	ret->size = size;
+	ret->data = (u8*)mem_dup(data,size);
+	return(ret);
 }
 
 u32 memfile_size(memfile_t *mf)

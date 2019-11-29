@@ -18,9 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "ntsc.h"
+
+#if 0
 #include <string.h>
 #include <stdlib.h>
-#include "ntsc.h"
 #include "nes_ntsc/nes_ntsc.h"
 #include "misc/memutil.h"
 #include "system/video.h"
@@ -91,6 +93,7 @@ void ntsc2x(void *d,u32 dst_slice,void *s,u32 src_slice,u32 width,u32 height)
 	u32 *dst = (u32*)d;
 	u8 *pal = nes->ppu.palette;
 
+  assert(0);
 	for(h=0;h<240;h++) {
 		u32 *dststart = dst;
 
@@ -133,6 +136,12 @@ void ntsc2x(void *d,u32 dst_slice,void *s,u32 src_slice,u32 width,u32 height)
 		dst = (u32*)((u8*)d + dst_slice * (h * 2));
 	}
 }
+#endif
+
+int ntsc_init() { return 0; }
+void ntsc_kill() { }
+void ntsc_palette_changed() { }
+void ntsc2x(void *d,u32 dst_slice,void *s,u32 src_slice,u32 width,u32 height) { }
 
 void ntsc3x(void *dst,u32 dst_slice,void *src,u32 src_slice,u32 width,u32 height)
 {

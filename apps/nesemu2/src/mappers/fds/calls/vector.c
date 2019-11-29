@@ -20,9 +20,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include "mappers/fds/calls.h"
 #include "mappers/fds/hle.h"
+
+u32 uptime();
 
 //nmi vector
 HLECALL(nmi)
@@ -162,7 +163,8 @@ HLECALL(reset)
 {
 	//u8 m102,m103;
 
-	srand((u32)time(0));
+	//srand((u32)time(0));
+	srand(uptime());
 //	showdisasm = 1;
 
 	//flag setup

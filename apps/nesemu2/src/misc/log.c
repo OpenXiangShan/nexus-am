@@ -36,9 +36,10 @@
 
 #define LOGFILENAME "nesemu2.log"
 
+#if 0
+static void (*loghook)(char*) = 0;
 static FILE *logfd = 0;
 static char logfilename[MAX_PATH] = "";
-static void (*loghook)(char*) = 0;
 static history_t history = {0,0};
 
 int log_init()
@@ -94,10 +95,14 @@ void log_kill()
 		fclose(logfd);
 	logfd = 0;
 }
+#endif
+
+int log_init() { return 0; }
+void log_kill() { }
 
 void log_sethook(void (*hook)(char*))
 {
-	loghook = hook;
+	//loghook = hook;
 }
 
 void log_print(char *str)
@@ -105,6 +110,7 @@ void log_print(char *str)
 	//output message to stdout
 	printf("%s",str);
 
+#if 0
 	//output message to hook function
 	if(loghook) {
 		loghook(str);
@@ -121,6 +127,7 @@ void log_print(char *str)
 
 	//flush file
 	fflush(logfd);
+#endif
 }
 
 void log_printf(char *str,...)

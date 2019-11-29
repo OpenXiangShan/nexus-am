@@ -146,6 +146,7 @@ int emu_event(int id,void *data)
 		case E_DUMPDISK:
 			if(nes->cart == 0)
 				break;
+#if 0
 			if((nes->cart->mapperid & B_TYPEMASK) == B_FDS) {
 				FILE *fp;
 
@@ -155,6 +156,7 @@ int emu_event(int id,void *data)
 					fclose(fp);
 				}
 			}
+#endif
 			break;
 
 		case E_TOGGLERUNNING:

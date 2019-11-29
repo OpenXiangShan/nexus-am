@@ -21,29 +21,29 @@
 #ifndef __types_h__
 #define __types_h__
 
-#if defined(_MSC_VER)
-	#define int64 __int64
-	#define INLINE __inline
-#elif defined(__GNUC__)
-	#define int64 long long
-	#define INLINE inline
-#else
-	#error unknown compiler.  please #define int64.
-#endif
+#include <am.h>
+#define int64 long long
+#define INLINE inline
 
-typedef signed char		s8;
-typedef signed short		s16;
-typedef signed int		s32;
-typedef signed int64		s64;
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
 
-typedef unsigned char	u8;
-typedef unsigned short	u16;
-typedef unsigned int		u32;
-typedef unsigned int64	u64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
 typedef u8 (*readfunc_t)(u32);
 typedef void (*writefunc_t)(u32,u8);
 
 int stricmp(char *s1,char *s2);
+
+// these are symbols conflicted with glibc
+#define sync my_sync
+#define read my_read
+#define write my_write
+#define select my_select
 
 #endif

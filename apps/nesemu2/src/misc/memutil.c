@@ -22,6 +22,7 @@
 #include <string.h>
 #include "misc/memutil.h"
 #include "misc/log.h"
+#include <klib.h>
 
 #define MAX_CHUNKS	1024
 
@@ -46,13 +47,7 @@ static size_t num_bytes;
 static char *bytestr(size_t sz)
 {
 	static char str[64];
-
-	if(sz < 1024)
-		sprintf(str,"%ub",sz);
-	else if(sz < 1024 * 1024)
-		sprintf(str,"%.2fkb",(double)sz / 1024.0f);
-	else if(sz < 1024 * 1024 * 1024)
-		sprintf(str,"%.2fmb",(double)sz / 1024.0f / 1024.0f);
+  sprintf(str,"%ub",sz);
 	return(str);
 }
 
@@ -142,7 +137,7 @@ void *memutil_alloc(size_t size,char *file,int line)
 	checkinited();
 	if ((ret = malloc(size)) == 0) {
 		log_printf("memutil_alloc:  unable to alloc %d bytes\n", size);
-		exit(-1);
+		assert(0);
 	}
 	memset(ret,0,size);
 	num_alloc++;
@@ -167,13 +162,13 @@ void *memutil_alloc(size_t size,char *file,int line)
 
 void *memutil_realloc(void *ptr,size_t size,char *file,int line)
 {
-	void *ret;
-	int i;
-
 	checkinited();
 	if(ptr == 0)
 		return(memutil_alloc(size,file,line));
-	ret = realloc(ptr,size);
+  assert(0);
+#if 0
+	void *ret = realloc(ptr,size);
+	int i;
 	num_realloc++;
 	for(i=0;i<MAX_CHUNKS;i++) {
 		if(chunks[i].ptr == ptr) {
@@ -192,6 +187,7 @@ void *memutil_realloc(void *ptr,size_t size,char *file,int line)
 	}
 	memutil_count();
 	return(ret);
+#endif
 }
 
 void memutil_free(void *ptr,char *file,int line)

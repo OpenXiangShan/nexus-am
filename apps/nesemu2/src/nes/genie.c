@@ -37,7 +37,7 @@ typedef struct codedata_s {
 } codedata_t;
 
 //ines ident for determining if the genie rom has ines header
-static u8 inesident[4] = {'N','E','S',0x1A};
+//static u8 inesident[4] = {'N','E','S',0x1A};
 
 //genie rom image (prg + chr)
 static u8 *genierom = 0;
@@ -132,6 +132,7 @@ static void genie_write(u32 addr,u8 data)
 	}
 }
 
+#if 0
 int genie_loadrom(char *filename)
 {
 	FILE *fp;
@@ -192,6 +193,9 @@ int genie_loadrom(char *filename)
 	log_printf("genie_load:  loaded game genie rom '%s' (%d bytes)\n",filename,len);
 	return(0);
 }
+#endif
+
+int genie_loadrom(char *filename) { return 1; }
 
 int genie_load()
 {

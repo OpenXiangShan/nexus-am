@@ -24,6 +24,8 @@
 #define vsprintf my_vsprintf
 #define sprintf my_sprintf
 #define snprintf my_snprintf
+#define malloc my_malloc
+#define free my_free
 #endif
 
 #ifdef __cplusplus
@@ -53,7 +55,7 @@ int strcmp(const char* s1, const char* s2);
 int strncmp(const char* s1, const char* s2, size_t n);
 char* strtok(char* s,const char* delim);
 char *strstr(const char *, const char *);
-const char *strchr(const char *s, int c);
+char *strchr(const char *s, int c);
 
 // stdlib.h
 int atoi(const char* nptr);
@@ -61,6 +63,8 @@ int abs(int x);
 unsigned long time();
 void srand(unsigned int seed);
 int rand();
+void *malloc(size_t size);
+void free(void *ptr);
 
 // stdio.h
 int printf(const char* fmt, ...);

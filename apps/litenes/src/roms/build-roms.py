@@ -20,15 +20,17 @@ for (root, dirs, files) in os.walk('gen'):
 def h_file():
   for name in roms:
     yield 'extern unsigned char rom_%s_nes[];' % (name)
+    yield 'extern unsigned int rom_%s_nes_len;' % (name)
   yield '''
 struct rom {
   const char *name;
   void *body;
+  unsigned int *size;
 };
 
 struct rom roms[] = {'''
   for name in roms:
-    yield '  { .name = "%s", .body = rom_%s_nes, },' % (name, name)
+    yield '  { .name = "%s", .body = rom_%s_nes, .size = &rom_%s_nes_len, },' % (name, name, name)
   yield '};'
 
   yield 'int nroms = %d;' % (len(roms))

@@ -20,7 +20,7 @@
 
 #include <string.h>
 #include "mapperinc.h"
-#include "misc/slre/slre.h"
+//#include "misc/slre/slre.h"
 
 struct unif_board_s {
 	const char *name;
@@ -175,15 +175,16 @@ int mapper_get_mapperid_unif(char *str)
 {
 	int ret,i;
 	const char *err;
-	char tmpstr[4][256];
+	//char tmpstr[4][256];
 
 	ret = B_UNSUPPORTED;
 	for(i=0;boards[i].boardid != -1;i++) {
-		err = slre_match(SLRE_CASE_INSENSITIVE,boards[i].name,str,strlen(str),
-			SLRE_STRING,sizeof(tmpstr[0]),tmpstr[0],
-			SLRE_STRING,sizeof(tmpstr[1]),tmpstr[1],
-			SLRE_STRING,sizeof(tmpstr[2]),tmpstr[2],
-			SLRE_STRING,sizeof(tmpstr[3]),tmpstr[3]);
+		//err = slre_match(SLRE_CASE_INSENSITIVE,boards[i].name,str,strlen(str),
+		//	SLRE_STRING,sizeof(tmpstr[0]),tmpstr[0],
+		//	SLRE_STRING,sizeof(tmpstr[1]),tmpstr[1],
+		//	SLRE_STRING,sizeof(tmpstr[2]),tmpstr[2],
+		//	SLRE_STRING,sizeof(tmpstr[3]),tmpstr[3]);
+    err = NULL;
 		if(err == NULL) {
 			if(ret != B_UNSUPPORTED)
 				log_printf("mapper_get_mapperid_unif:  duplicate match for board '%s'\n",str);

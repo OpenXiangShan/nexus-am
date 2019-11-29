@@ -18,29 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <unistd.h>
-#include <string.h>
-#include <stdint.h>
-
-uint32_t uptime();
-
-#ifndef _MAX_PATH
-	#define _MAX_PATH 4096
-#endif
+#include <klib.h>
 
 int system_init() { return 0; }
 void system_kill() { }
-
 void system_checkevents() { }
-
-char *system_getcwd()
-{
-	static char buf[_MAX_PATH];
-
-	if(getcwd(buf,_MAX_PATH) == NULL)
-		memset(buf,0,_MAX_PATH);
-	return(buf);
-}
-
+char *system_getcwd() { return ""; }
 uint64_t system_gettick() { return uptime(); }
 uint64_t system_getfrequency() { return 1000; }

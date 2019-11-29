@@ -1,4 +1,6 @@
-#include <ctype.h>
+static inline char tolower(char c) {
+  return (c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c);
+}
 
 int stricmp(char *s1,char *s2)
 {

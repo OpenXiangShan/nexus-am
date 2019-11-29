@@ -41,10 +41,11 @@ extern "C" {
 #endif
 
 int scale_precondition(unsigned scale, unsigned pixel, unsigned width, unsigned height);
-void scale(unsigned scale, void* void_dst, unsigned dst_slice, const void* void_src, unsigned src_slice, unsigned width, unsigned height);
-void scale2x(void* void_dst, unsigned dst_slice, void* void_src, unsigned src_slice, unsigned width, unsigned height);
-void scale3x(void* void_dst, unsigned dst_slice, void* void_src, unsigned src_slice, unsigned width, unsigned height);
-void scale4x(void* void_dst, unsigned dst_slice, void* void_src, unsigned src_slice, unsigned width, unsigned height);
+void scale(unsigned scale, void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height);
+
+void scale2x(void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height);
+void scale3x(void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height);
+void scale4x(void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height);
 
 #ifdef __cplusplus
 }

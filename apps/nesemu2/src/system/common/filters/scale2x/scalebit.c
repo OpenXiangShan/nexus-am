@@ -33,6 +33,7 @@
  * - derivative works of the program are allowed.
  */
 
+#if 0
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -514,3 +515,12 @@ void scale(unsigned scale, void* void_dst, unsigned dst_slice, const void* void_
 	}
 }
 
+#endif
+
+#include "types.h"
+
+void scale(unsigned scale, void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height) { }
+
+void scale2x(void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height) { }
+void scale3x(void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height) { }
+void scale4x(void* void_dst, u32 dst_slice, void* void_src, u32 src_slice, u32 width, u32 height) { }

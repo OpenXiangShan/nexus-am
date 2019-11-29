@@ -23,12 +23,15 @@
 
 #include "types.h"
 
-typedef struct palentry_s {
-	u8 r,g,b;
+typedef union palentry_s {
+  struct {
+    u8 r,g,b;
+  };
+  u32 val;
 } palentry_t;
 
 typedef struct palette_s {
-	palentry_t pal[8][64];
+	u32 pal[8][64];
 } palette_t;
 
 palette_t *palette_create();

@@ -28,6 +28,7 @@
 #include "misc/strutil.h"
 #include "mappers/mapperid.h"
 
+#if 0
 static int loadbios(cart_t *ret,char *filename)
 {
 	FILE *fp;
@@ -81,6 +82,9 @@ static int loadbios(cart_t *ret,char *filename)
 	//success
 	return(0);
 }
+#endif
+
+static int loadbios(cart_t *ret,char *filename) { return -1; }
 
 //makes the size a multiple of 4096 for padding
 //static u32 padsize(u32 size)

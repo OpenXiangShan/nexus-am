@@ -20,7 +20,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include "mappers/fds/fds.h"
 #include "mappers/fds/calls.h"
 #include "nes/nes.h"

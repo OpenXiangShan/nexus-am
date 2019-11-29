@@ -33,7 +33,7 @@ static void sync()
 static void write(u32 addr,u8 data)
 {
 	reg = data & 3;
-	printf("205 write $%04X = $%02X\n",addr,data);
+	printf("205 write $%04lX = $%02X\n",addr,data);
 	sync();
 }
 

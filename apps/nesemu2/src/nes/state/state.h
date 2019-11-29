@@ -21,7 +21,7 @@
 #ifndef __state_h__
 #define __state_h__
 
-#include <stdio.h>
+#include <klib.h>
 #include "nes/state/block.h"
 
 #define STATE_LOAD		0	//load state

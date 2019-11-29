@@ -53,6 +53,7 @@
 		YM2143 data sheet
 
 **************************************************************************************/
+#if 0
 #include	"misc/log.h"
 #include	"s_VRC7.h"
 #include	<stdio.h>
@@ -1486,3 +1487,11 @@ int	VRC7sound_SaveLoad (int mode, int x, unsigned char *data)
 	else MessageBox(hWnd,_T("Invalid save/load type!"),_T(__FILE__),MB_OK);
 */	return x;
 }
+#endif
+
+void	VRC7sound_Load (void) { }
+void	VRC7sound_Reset (void) { }
+void	VRC7sound_Unload (void) { }
+void	VRC7sound_Write (int Addr, int Val) { }
+int	VRC7sound_Get (int numCycles) { return 0; }
+int	VRC7sound_SaveLoad (int mode, int x, unsigned char *data) { return x; }

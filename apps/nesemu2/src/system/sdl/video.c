@@ -47,7 +47,7 @@ static u32 palettecache32[256];
 static u8 palettecache[32];
 
 //for frame limiting
-static double interval = 0;
+static int interval = 0;
 static u64 lasttime = 0;
 
 //pointer to scree and copy of the nes screen
@@ -94,7 +94,7 @@ int video_init()
 		nesscreen = (u8*)mem_alloc(256 * (240 + 16));
 
 	//setup timer to limit frames
-	interval = (double)system_getfrequency() / 60.0f;
+	interval = system_getfrequency() / 60;
 	lasttime = system_gettick();
 
 	//clear palette caches
@@ -158,13 +158,14 @@ void video_endframe()
 
 	//draw everything
   draw_rect(screen, 0, 0, 256, 240);
+  draw_sync();
 	console_draw(screen, 256*4,screenh);
 
 	//simple frame limiter
 	if(config_get_bool("video.framelimit")) {
 		do {
 			t = system_gettick();
-		} while((double)(t - lasttime) < interval);
+		} while(t - lasttime < interval);
 		lasttime = t;
 	}
 }
@@ -220,20 +221,20 @@ void video_updatepalette(u8 addr,u8 data)
 void video_setpalette(palette_t *p)
 {
 	int i,j;
-	palentry_t *e;
+	palentry_t e;
 
-	for(j=0;j<8;j++) {
-		for(i=0;i<64;i++) {
-			palette[j][(i * 3) + 0] = p->pal[j][i].r;
-			palette[j][(i * 3) + 1] = p->pal[j][i].g;
-			palette[j][(i * 3) + 2] = p->pal[j][i].b;
-		}
-	}
+	//for(j=0;j<8;j++) {
+	//	for(i=0;i<64;i++) {
+	//		palette[j][(i * 3) + 0] = p->pal[j][i].r;
+	//		palette[j][(i * 3) + 1] = p->pal[j][i].g;
+	//		palette[j][(i * 3) + 2] = p->pal[j][i].b;
+	//	}
+	//}
 
 	for(j=0;j<8;j++) {
 		for(i=0;i<256;i++) {
-			e = &p->pal[j][i & 0x3F];
-			palette32[j][i] = (e->r << rshift) | (e->g << gshift) | (e->b << bshift);
+			e.val = p->pal[j][i & 0x3F];
+			palette32[j][i] = (e.r << rshift) | (e.g << gshift) | (e.b << bshift);
 		}
 	}
 
@@ -254,6 +255,7 @@ int video_zapperhit(int x,int y)
 
 	color = palettecache[nesscreen[x + y * 256]];
 	e = &palette[(color >> 5) & 7][(color & 0x3F) * 3];
+  assert(0);
 	ret += (int)(e[0] * 0.299f);
 	ret += (int)(e[1] * 0.587f);
 	ret += (int)(e[2] * 0.114f);

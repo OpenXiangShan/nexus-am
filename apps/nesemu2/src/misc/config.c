@@ -32,10 +32,10 @@
 
 static vars_t *configvars = 0;
 
+#if 0
 //this path stuff needs to be moved
 static void mkdirr(char *path)
 {
-#if 0
 	char *tmp = mem_strdup(path);
 	char *p = tmp;
 	int num = 0;
@@ -64,7 +64,6 @@ static void mkdirr(char *path)
 
 	//free tmp string
 	mem_free(tmp);
-#endif
 }
 
 static void makepath(char *str)
@@ -130,12 +129,13 @@ static int findconfig(char *dest)
 
 	return(1);
 }
+#endif
 
 //initialize the configuration defaults
 static vars_t *config_get_defaults()
 {
 	vars_t *ret = vars_create();
-	char *str;
+	//char *str;
 
 	vars_set_int   (ret,F_CONFIG,"video.framelimit",			1);
 	vars_set_int   (ret,F_CONFIG,"video.fullscreen",			0);
@@ -207,8 +207,8 @@ static vars_t *config_get_defaults()
 
 	vars_set_string(ret,0,"version",VERSION);
 	vars_set_string(ret,0,"exepath",exepath);
-	if((str = getenv("HOME")) != 0)
-		vars_set_string(ret,0,"home",str);
+	//if((str = getenv("HOME")) != 0)
+	//	vars_set_string(ret,0,"home",str);
 
 	return(ret);
 }
@@ -216,13 +216,13 @@ static vars_t *config_get_defaults()
 int config_init()
 {
 	vars_t *v;
-	char tmp[1024];
+	//char tmp[1024];
 
 	//find configuration file
-	if(findconfig(configfilename) == 0)
-		log_printf("main:  found configuration at '%s'\n",configfilename);
-	else
-		log_printf("main:  creating new configuration at '%s'\n",configfilename);
+	//if(findconfig(configfilename) == 0)
+	//	log_printf("main:  found configuration at '%s'\n",configfilename);
+	//else
+	//	log_printf("main:  creating new configuration at '%s'\n",configfilename);
 
 	configvars = config_get_defaults();
 	if((v = vars_load(configfilename)) == 0) {
@@ -237,10 +237,10 @@ int config_init()
 	}
 
 	//make the directories
-	makepath(config_get_eval_string(tmp,"path.user"));
-	makepath(config_get_eval_string(tmp,"path.save"));
-	makepath(config_get_eval_string(tmp,"path.state"));
-	makepath(config_get_eval_string(tmp,"path.cheat"));
+	//makepath(config_get_eval_string(tmp,"path.user"));
+	//makepath(config_get_eval_string(tmp,"path.save"));
+	//makepath(config_get_eval_string(tmp,"path.state"));
+	//makepath(config_get_eval_string(tmp,"path.cheat"));
 
 	return(0);
 }

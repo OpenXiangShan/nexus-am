@@ -39,6 +39,7 @@ char *paths_normalize(char *str)
 	return(str);
 }
 
+#if 0
 void paths_makestatefilename(char *romfilename,char *dest,int len)
 {
 	char *p,*tmp = mem_strdup(romfilename);
@@ -70,3 +71,6 @@ void paths_makestatefilename(char *romfilename,char *dest,int len)
 	//free the temporary string
 	mem_free(tmp);
 }
+#endif
+
+void paths_makestatefilename(char *romfilename,char *dest,int len) { }

@@ -21,6 +21,7 @@
 #include "inputdev.h"
 #include "system/video.h"
 #include "system/input.h"
+#include <klib.h>
 
 static u8 portdata;
 static u8 counter,buttons,strobe;
@@ -59,8 +60,9 @@ static u8 read()
 					break;
 				if((Y == (int)nes->ppu.scanline) && (X >= (int)nes->ppu.linecycles))
 					break;
-				if(video_zapperhit(X,Y))
-					hits++;
+        assert(0);
+				//if(video_zapperhit(X,Y))
+				//	hits++;
 			}
 		}
 	}

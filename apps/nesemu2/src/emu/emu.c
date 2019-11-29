@@ -160,12 +160,19 @@ int emu_mainloop()
 		video_endframe();
 		total += system_gettick() - t;
 		frames++;
+
+    if (total > 1000) {
+      int fps = frames * system_getfrequency() / total;
+      log_printf("fps:  %d\n", fps);
+      total = 0;
+      frames = 0;
+    }
 	}
-	log_printf("fps:  %f (%d frames)\n",(double)frames / (double)total * system_getfrequency(),frames);
 	mem_free(line);
 	return(0);
 }
 
+#if 0
 int emu_mainloop_test(char *script)
 {
 	u64 t,total,frames;
@@ -228,3 +235,4 @@ int emu_mainloop_test(char *script)
 	memfile_close(file);
 	return(0);
 }
+#endif

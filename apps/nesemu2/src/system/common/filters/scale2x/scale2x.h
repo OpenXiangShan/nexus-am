@@ -21,9 +21,11 @@
 #ifndef __SCALE2X_H
 #define __SCALE2X_H
 
-typedef unsigned char scale2x_uint8;
-typedef unsigned short scale2x_uint16;
-typedef unsigned scale2x_uint32;
+#include "types.h"
+
+typedef u8 scale2x_uint8;
+typedef u16 scale2x_uint16;
+typedef u32 scale2x_uint32;
 
 void scale2x_8_def(scale2x_uint8* dst0, scale2x_uint8* dst1, const scale2x_uint8* src0, const scale2x_uint8* src1, const scale2x_uint8* src2, unsigned count);
 void scale2x_16_def(scale2x_uint16* dst0, scale2x_uint16* dst1, const scale2x_uint16* src0, const scale2x_uint16* src1, const scale2x_uint16* src2, unsigned count);
