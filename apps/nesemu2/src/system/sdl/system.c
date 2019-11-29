@@ -18,11 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <klib.h>
+#include "common.h"
 
 int system_init() { return 0; }
 void system_kill() { }
 void system_checkevents() { }
 char *system_getcwd() { return ""; }
-uint64_t system_gettick() { return uptime(); }
-uint64_t system_getfrequency() { return 1000; }
+u32 system_gettick() { return uptime(); }
+u32 system_getfrequency() { return 1000; }

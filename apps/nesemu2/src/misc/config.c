@@ -124,7 +124,7 @@ char *config_get_eval_string(char *dest,char *name)
 
 			//see if it is missing the '%'
 			if((p2 = strchr(p + 1,'%')) == 0) {
-				log_printf("config_get_eval_string:  missing ending '%', just copying\n");
+				log_printf("config_get_eval_string:  missing ending '%%', just copying\n");
 			}
 
 			//not missing, replace with variable data

@@ -27,7 +27,7 @@ int system_init();
 void system_kill();
 void system_checkevents();
 char *system_getcwd();
-u64 system_gettick();
-u64 system_getfrequency();
+u32 system_gettick();
+u32 system_getfrequency();
 
 #endif

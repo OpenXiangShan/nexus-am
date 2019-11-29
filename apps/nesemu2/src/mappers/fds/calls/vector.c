@@ -23,8 +23,6 @@
 #include "mappers/fds/calls.h"
 #include "mappers/fds/hle.h"
 
-u32 uptime();
-
 //nmi vector
 HLECALL(nmi)
 {

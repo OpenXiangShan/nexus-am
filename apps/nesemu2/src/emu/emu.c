@@ -106,7 +106,7 @@ int emu_mainloop()
 {
 	u8 *line = (u8*)mem_alloc(512);
 	int i,p;
-	u64 t,total,frames;
+	u32 t,total,frames;
 
 	//initialize the palette in case the rom isnt loaded first
 	for(i=0;i<512;i++) {

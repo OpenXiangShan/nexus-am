@@ -44,7 +44,7 @@ static int interval = 0;
 static u64 lasttime = 0;
 
 //pointer to scree and copy of the nes screen
-static u32 screen[256 * (240 + 16) * (screenbpp / 8) * 4] = {0};
+static uint32_t screen[256 * (240 + 16) * (screenbpp / 8) * 4] = {0};
 
 //for correct colors
 //static int rshift,gshift,bshift;
@@ -108,7 +108,7 @@ void video_endframe()
 //this handles lines for gui/status messages
 void video_updateline(int line,u8 *s)
 {
-	u32 *dest = screen + (line * 256);
+	uint32_t *dest = screen + (line * 256);
 	int i;
 
 	if(line >= 8 && line < 232) {
