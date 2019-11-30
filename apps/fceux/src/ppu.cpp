@@ -35,11 +35,12 @@
 #include "video.h"
 #include "input.h"
 #include "driver.h"
-#include "debug.h"
 		 
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+
+#define debug_loggingCD false
 
 #define VBlankON    (PPU[0] & 0x80)	//Generate VBlank NMI
 #define Sprite16    (PPU[0] & 0x20)	//Sprites 8x16/8x8

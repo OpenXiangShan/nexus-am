@@ -21,7 +21,6 @@
 #include "types.h"
 #include "x6502.h"
 #include "fceu.h"
-#include "debug.h"
 #include "sound.h"
 #ifdef _S9XLUA_H
 #include "fceulua.h"
@@ -413,7 +412,7 @@ void X6502_Power(void)
  _S=0xFD;
  timestamp=soundtimestamp=0;
  X6502_Reset();
- StackAddrBackup = -1;
+ //StackAddrBackup = -1;
 }
 
 void X6502_Run(int32 cycles)
@@ -487,7 +486,7 @@ extern int test; test++;
 	//will probably cause a major speed decrease on low-end systems
    DEBUG( DebugCycle() );
 
-   IncrementInstructionsCounters();
+   //IncrementInstructionsCounters();
 
    _PI=_P;
    b1=RdMem(_PC);
@@ -499,7 +498,7 @@ extern int test; test++;
    if(MapIRQHook) MapIRQHook(temp);
    
    if (!overclocking)
-    FCEU_SoundCPUHook(temp);
+    //FCEU_SoundCPUHook(temp);
    #ifdef _S9XLUA_H
    CallRegisteredLuaMemHook(_PC, 1, 0, LUAMEMHOOK_EXEC);
    #endif

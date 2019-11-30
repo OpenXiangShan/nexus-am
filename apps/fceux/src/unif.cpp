@@ -587,7 +587,7 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 
 	ResetCartMapping();
 
-	ResetExState(0, 0);
+	//ResetExState(0, 0);
 	ResetUNIF();
 	if (!FCEU_read32le(&unhead.info, fp))
 		goto aborto;

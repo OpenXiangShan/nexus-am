@@ -29,7 +29,6 @@
 #include "state.h"
 #include "file.h"
 #include "cart.h"
-#include "netplay.h"
 #include "driver.h"
 #include "movie.h"
 
@@ -155,9 +154,6 @@ void FCEU_FDSInsert(void)
 	if (FCEUI_EmulationPaused())
 		EmulationPaused |= EMULATIONPAUSED_FA;
 
-	if (FCEUMOV_Mode(MOVIEMODE_RECORD))
-		FCEUMOV_AddCommand(FCEUNPCMD_FDSINSERT);
-
 	if (InDisk == 255)
 	{
 		FCEU_DispMessage("Disk %d Side %s Inserted", 0, SelectDisk >> 1, (SelectDisk & 1) ? "B" : "A");
@@ -189,9 +185,6 @@ void FCEU_FDSSelect(void)
 
 	if (FCEUI_EmulationPaused())
 		EmulationPaused |= EMULATIONPAUSED_FA;
-
-	if (FCEUMOV_Mode(MOVIEMODE_RECORD))
-		FCEUMOV_AddCommand(FCEUNPCMD_FDSSELECT);
 
 	SelectDisk = ((SelectDisk + 1) % TotalSides) & 3;
 	FCEU_DispMessage("Disk %d Side %c Selected", 0, SelectDisk >> 1, (SelectDisk & 1) ? 'B' : 'A');
@@ -471,15 +464,6 @@ static void RenderSound(void) {
 }
 
 static void RenderSoundHQ(void) {
-	uint32 x; //mbg merge 7/17/06 - made this unsigned
-
-	if (!(SPSG[0x9] & 0x80))
-		for (x = FBC; x < SOUNDTS; x++) {
-			uint32 t = FDSDoSound();
-			t += t >> 1;
-			WaveHi[x] += t; //(t<<2)-(t<<1);
-		}
-	FBC = SOUNDTS;
 }
 
 static void HQSync(int32 ts) {
@@ -617,24 +601,6 @@ static int SubLoad(FCEUFILE *fp) {
 	return(1);
 }
 
-static void PreSave(void) {
-	int x;
-	for (x = 0; x < TotalSides; x++) {
-		int b;
-		for (b = 0; b < 65500; b++)
-			diskdata[x][b] ^= diskdatao[x][b];
-	}
-}
-
-static void PostSave(void) {
-	int x;
-	for (x = 0; x < TotalSides; x++) {
-		int b;
-		for (b = 0; b < 65500; b++)
-			diskdata[x][b] ^= diskdatao[x][b];
-	}
-}
-
 int FDSLoad(const char *name, FCEUFILE *fp) {
 	FILE *zp;
 	int x;
@@ -731,7 +697,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	SelectDisk = 0;
 	InDisk = 255;
 
-	ResetExState(PreSave, PostSave);
+	//ResetExState(PreSave, PostSave);
 	FDSSoundStateAdd();
 
 	for (x = 0; x < TotalSides; x++) {

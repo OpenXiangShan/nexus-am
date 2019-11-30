@@ -213,6 +213,7 @@ static uint8 sstat[2541] =
 
 
 
+#if 0
 static uint8 play_slines[]=
 {
 	0, 0, 1,
@@ -328,27 +329,11 @@ static void drawstatus(uint8* XBuf, int n, int y, int xofs)
 			dest[x]=4;
 	}
 }
+#endif
 
 /// this draws the recording icon (play/pause/record)
 void FCEU_DrawRecordingStatus(uint8* XBuf)
 {
-	if(FCEUD_ShowStatusIcon())
-	{
-		bool hasPlayRecIcon = false;
-		if(FCEUMOV_Mode(MOVIEMODE_RECORD))
-		{
-			drawstatus(XBuf-ClipSidesOffset,2,28,0);
-			hasPlayRecIcon = true;
-		}
-		else if(FCEUMOV_Mode(MOVIEMODE_PLAY|MOVIEMODE_FINISHED))
-		{
-			drawstatus(XBuf-ClipSidesOffset,1,28,0);
-			hasPlayRecIcon = true;
-		}
-
-		if(FCEUI_EmulationPaused())
-			drawstatus(XBuf-ClipSidesOffset,3,28,hasPlayRecIcon?-16:0);
-	}
 }
 
 

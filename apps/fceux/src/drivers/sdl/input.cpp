@@ -120,21 +120,6 @@ static void UpdateTopRider (void);
 
 static uint32 JSreturn = 0;
 
-/**
- * Configure cheat devices (game genie, etc.).  Restarts the keyboard
- * and video subsystems.
- */
-static void
-DoCheatSeq ()
-{
-	SilenceSound (1);
-	KillVideo ();
-
-	DoConsoleCheatConfig ();
-	InitVideo (GameInfo);
-	SilenceSound (0);
-}
-
 #include "keyscan.h"
 static uint8 *g_keyState = 0;
 static int DIPS = 0;
@@ -398,7 +383,7 @@ void FCEUD_MovieRecordTo ()
 		return;			// no filename selected, quit the whole thing
 	std::wstring author = mbstowcs (GetUserText ("Author name"));	// the author can be empty, so no need to check here
 
-	FCEUI_SaveMovie (fname.c_str (), MOVIE_FLAG_FROM_POWERON, author);
+	//FCEUI_SaveMovie (fname.c_str (), MOVIE_FLAG_FROM_POWERON, author);
 }
 
 
@@ -411,7 +396,7 @@ void FCEUD_SaveStateAs ()
 	if (!fname.size ())
 		return;			// no filename selected, quit the whole thing
 
-	FCEUI_SaveState (fname.c_str ());
+	//FCEUI_SaveState (fname.c_str ());
 }
 
 /**
@@ -423,7 +408,7 @@ void FCEUD_LoadStateFrom ()
 	if (!fname.size ())
 		return;			// no filename selected, quit the whole thing
 
-	FCEUI_LoadState (fname.c_str ());
+	//FCEUI_LoadState (fname.c_str ());
 }
 
 /**
@@ -447,7 +432,6 @@ static void KeyboardCommands ()
 {
 	int is_shift, is_alt;
 
-	const char *movie_fname = "";
 	// get the keyboard input
 #if SDL_VERSION_ATLEAST(1, 3, 0)
 	g_keyState = (Uint8*)SDL_GetKeyboardState (NULL);
@@ -534,16 +518,6 @@ static void KeyboardCommands ()
 		ToggleFS ();
 	}
 
-
-
-	// Toggle Movie auto-backup
-	if (keyonly (M) && is_shift)
-	{
-		autoMovieBackup ^= 1;
-		FCEUI_DispMessage ("Automatic movie backup %sabled.", 0,
-			 autoMovieBackup ? "en" : "dis");
-	}
-
 	// Start recording an FM2 movie on Alt+R
 	if (keyonly (R) && is_alt)
 	{
@@ -580,64 +554,6 @@ static void KeyboardCommands ()
 		FCEUI_SaveSnapshot ();
 	}
 
-	// if not NES Sound Format
-	if (gametype != GIT_NSF)
-	{
-		if (_keyonly (Hotkeys[HK_CHEAT_MENU]))
-		{
-			DoCheatSeq ();
-		}
-
-		// f5 (default) save key, hold shift to save movie
-		if (_keyonly (Hotkeys[HK_SAVE_STATE]))
-		{
-			if (is_shift)
-			{
-				movie_fname =
-				const_cast <char *>(FCEU_MakeFName (FCEUMKF_MOVIE, 0, 0).c_str ());
-				FCEUI_printf ("Recording movie to %s\n", movie_fname);
-				FCEUI_SaveMovie (movie_fname, MOVIE_FLAG_NONE, L"");
-			}
-			else
-			{
-				FCEUI_SaveState (NULL);
-			}
-		}
-
-		// f7 to load state, Shift-f7 to load movie
-		if (_keyonly (Hotkeys[HK_LOAD_STATE]))
-		{
-			if (is_shift)
-			{
-				FCEUI_StopMovie ();
-				std::string fname;
-				fname =
-				GetFilename ("Open FM2 movie for playback...", false,
-								"FM2 movies|*.fm2");
-				if (fname != "")
-				{
-					if (fname.find (".fm2") != std::string::npos
-					|| fname.find (".fm3") != std::string::npos)
-					{
-						FCEUI_printf ("Playing back movie located at %s\n",
-										fname.c_str ());
-						FCEUI_LoadMovie (fname.c_str (), false, false);
-					}
-					else
-					{
-						FCEUI_printf
-							("Only .fm2 and .fm3 movies are supported.\n");
-					}
-				}
-			}
-			else
-			{
-				FCEUI_LoadState(NULL);
-			}
-		}
-	}
-
-
 	if (_keyonly (Hotkeys[HK_DECREASE_SPEED]))
 	{
 		DecreaseEmulationSpeed ();
@@ -647,31 +563,6 @@ static void KeyboardCommands ()
 	{
 		IncreaseEmulationSpeed ();
 	}
-
-	if (_keyonly (Hotkeys[HK_TOGGLE_FRAME_DISPLAY]))
-	{
-		FCEUI_MovieToggleFrameDisplay ();
-	}
-
-	if (_keyonly (Hotkeys[HK_TOGGLE_INPUT_DISPLAY]))
-	{
-		FCEUI_ToggleInputDisplay ();
-		extern int input_display;
-		g_config->setOption ("SDL.InputDisplay", input_display);
-	}
-
-	if (_keyonly (Hotkeys[HK_MOVIE_TOGGLE_RW]))
-	{
-		FCEUI_SetMovieToggleReadOnly (!FCEUI_GetMovieToggleReadOnly ());
-	}
-
-#ifdef CREATE_AVI
-	if (_keyonly (Hotkeys[HK_MUTE_CAPTURE]))
-	{
-		extern int mutecapture;
-		mutecapture ^= 1;
-	}
-#endif
 
 	if (_keyonly (Hotkeys[HK_PAUSE]))
 	{
@@ -727,35 +618,6 @@ static void KeyboardCommands ()
 			exit(0);
 		}
 	}
-	else
-#ifdef _S9XLUA_H
-	if (_keyonly (Hotkeys[HK_LOAD_LUA]))
-	{
-		std::string fname;
-		fname = GetFilename ("Open LUA script...", false, "Lua scripts|*.lua");
-		if (fname != "")
-		FCEU_LoadLuaCode (fname.c_str ());
-	}
-#endif
-
-	for (int i = 0; i < 10; i++)
-		if (_keyonly (Hotkeys[HK_SELECT_STATE_0 + i]))
-		{
-#ifdef _GTK
-			gtk_radio_action_set_current_value (stateSlot, i);
-#endif
-			FCEUI_SelectState (i, 1);
-		}
-
-	if (_keyonly (Hotkeys[HK_SELECT_STATE_NEXT]))
-	{
-		FCEUI_SelectStateNext (1);
-	}
-
-	if (_keyonly (Hotkeys[HK_SELECT_STATE_PREV]))
-	{
-		FCEUI_SelectStateNext (-1);
-	}
 
 	if (_keyonly (Hotkeys[HK_BIND_STATE]))
 	{
@@ -774,24 +636,6 @@ static void KeyboardCommands ()
 	if (_keyonly (Hotkeys[HK_LAG_COUNTER_DISPLAY]))
 	{
 		lagCounterDisplay ^= 1;
-	}
-
-	if (_keyonly (Hotkeys[HK_TOGGLE_SUBTITLE]))
-	{
-		extern int movieSubtitles;
-		movieSubtitles ^= 1;
-		FCEUI_DispMessage ("Movie subtitles o%s.", 0,
-		movieSubtitles ? "n" : "ff");
-	}
-
-	if (_keyonly (Hotkeys[HK_VOLUME_DOWN]))
-	{
-		FCEUD_SoundVolumeAdjust(-1);
-	}
-
-	if (_keyonly (Hotkeys[HK_VOLUME_UP]))
-	{
-		FCEUD_SoundVolumeAdjust(1);
 	}
 
 	// VS Unisystem games
@@ -1161,12 +1005,6 @@ ButtConfig GamePadConfig[4][10] = {
 static void
 UpdateGamepad(void)
 {
-	// don't update during movie playback
-	if (FCEUMOV_Mode (MOVIEMODE_PLAY))
-	{
-		return;
-	 }
-
 	static int rapid = 0;
 	uint32 JS = 0;
 	int x;
@@ -1261,12 +1099,6 @@ static uint32 powerpadbuf[2] = { 0, 0 };
 static uint32
 UpdatePPadData (int w)
 {
-	// don't update if a movie is playing
-	if (FCEUMOV_Mode (MOVIEMODE_PLAY))
-	{
-		return 0;
-	}
-
 	uint32 r = 0;
 	ButtConfig *ppadtsc = powerpadsc[w];
 	int x;
@@ -1364,18 +1196,14 @@ void FCEUD_UpdateInput ()
 		UpdateGamepad ();
 	}
 
-	// Don't get input when a movie is playing back
-	if (!FCEUMOV_Mode (MOVIEMODE_PLAY))
-	{
-		if (t & 2)
-		{
-			GetMouseData (MouseData);
-		}
-		if (t & 4)
-		{
-			GetMouseRelative (MouseRelative);
-		}
-	}
+  if (t & 2)
+  {
+    GetMouseData (MouseData);
+  }
+  if (t & 4)
+  {
+    GetMouseRelative (MouseRelative);
+  }
 }
 
 void FCEUD_SetInput (bool fourscore, bool microphone, ESI port0, ESI port1,

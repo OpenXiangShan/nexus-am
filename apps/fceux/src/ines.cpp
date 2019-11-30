@@ -801,7 +801,7 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	}
 
 	ResetCartMapping();
-	ResetExState(0, 0);
+	//ResetExState(0, 0);
 
 	SetupCartPRGMapping(0, ROM, ROM_size << 14, 0);
 

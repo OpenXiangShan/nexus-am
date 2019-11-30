@@ -23,7 +23,6 @@
 #include "fceu.h"
 #include "ppu.h"
 #include "sound.h"
-#include "netplay.h"
 #include "file.h"
 #include "utils/endian.h"
 #include "utils/memory.h"
@@ -166,44 +165,20 @@ static void FCEU_CloseGame(void)
 {
 	if (GameInfo)
 	{
-		if (AutoResumePlay)
-		{
-			// save "-resume" savestate
-			FCEUSS_Save(FCEU_MakeFName(FCEUMKF_RESUMESTATE, 0, 0).c_str(), false);
-		}
-
-#ifdef WIN32
-		extern char LoadedRomFName[2048];
-		if (storePreferences(mass_replace(LoadedRomFName, "|", ".").c_str()))
-			FCEUD_PrintError("Couldn't store debugging data");
-		CDLoggerROMClosed();
-#endif
-
-		if (FCEUnetplay) {
-			FCEUD_NetworkClose();
-		}
-
 		if (GameInfo->name) {
 			free(GameInfo->name);
 			GameInfo->name = NULL;
 		}
 
 		if (GameInfo->type != GIT_NSF) {
-#ifdef WIN32
-			if (disableAutoLSCheats == 2)
-				FCEU_FlushGameCheats(0, 1);
-			else if (disableAutoLSCheats == 1)
-				AskSaveCheat();
-			else if (disableAutoLSCheats == 0)
-#endif
-				FCEU_FlushGameCheats(0, 0);
+				//FCEU_FlushGameCheats(0, 0);
 		}
 
 		GameInterface(GI_CLOSE);
 
-		FCEUI_StopMovie();
+		//FCEUI_StopMovie();
 
-		ResetExState(0, 0);
+		//ResetExState(0, 0);
 
 		//clear screen when game is closed
 		extern uint8 *XBuf;
@@ -215,16 +190,16 @@ static void FCEU_CloseGame(void)
 		delete GameInfo;
 		GameInfo = NULL;
 
-		currFrameCounter = 0;
+		//currFrameCounter = 0;
 
-		//Reset flags for Undo/Redo/Auto Savestating //adelikat: TODO: maybe this stuff would be cleaner as a struct or class
-		lastSavestateMade[0] = 0;
-		undoSS = false;
-		redoSS = false;
-		lastLoadstateMade[0] = 0;
-		undoLS = false;
-		redoLS = false;
-		AutoSS = false;
+		////Reset flags for Undo/Redo/Auto Savestating //adelikat: TODO: maybe this stuff would be cleaner as a struct or class
+		//lastSavestateMade[0] = 0;
+		//undoSS = false;
+		//redoSS = false;
+		//lastLoadstateMade[0] = 0;
+		//undoLS = false;
+		//redoLS = false;
+		//AutoSS = false;
 	}
 }
 
@@ -528,16 +503,6 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 			FCEUI_printf("NTSC mode set");
 		}
 
-		if (GameInfo->type != GIT_NSF && !disableAutoLSCheats)
-			FCEU_LoadGameCheats(0);
-
-		if (AutoResumePlay)
-		{
-			// load "-resume" savestate
-			if (FCEUSS_Load(FCEU_MakeFName(FCEUMKF_RESUMESTATE, 0, 0).c_str(), false))
-				FCEU_DispMessage("Old play session resumed.", 0);
-		}
-
 		ResetScreenshotsCounter();
 
 #if defined (WIN32) || defined (WIN64)
@@ -647,11 +612,7 @@ void AutoFire(void) {
 		counter = (counter + 1) % (8 * 7 * 5 * 3);
 	//If recording a movie, use the frame # for the autofire so the offset
 	//doesn't get screwed up when loading.
-	if (FCEUMOV_Mode(MOVIEMODE_RECORD | MOVIEMODE_PLAY)) {
-		rapidAlternator = AutoFirePattern[(AutoFireOffset + FCEUMOV_GetFrame()) % AutoFirePatternLength]; //adelikat: TODO: Think through this, MOVIEMODE_FINISHED should not use movie data for auto-fire?
-	} else {
-		rapidAlternator = AutoFirePattern[(AutoFireOffset + counter) % AutoFirePatternLength];
-	}
+  rapidAlternator = AutoFirePattern[(AutoFireOffset + counter) % AutoFirePatternLength];
 }
 
 void UpdateAutosave(void);
@@ -661,7 +622,6 @@ void UpdateAutosave(void);
 ///Skip may be passed in, if FRAMESKIP is #defined, to cause this to emulate more than one frame
 void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
 	//skip initiates frame skip if 1, or frame skip and sound skip if 2
-	int ssize;
 
 	JustFrameAdvanced = false;
 
@@ -702,8 +662,6 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 			memcpy(XBuf, XBackBuf, 256*256);
 			FCEU_PutImage();
 			*pXBuf = XBuf;
-			*SoundBuf = WaveFinal;
-			*SoundBufSize = 0;
 			return;
 		}
 	}
@@ -722,10 +680,10 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 	CallRegisteredLuaFunctions(LUACALL_BEFOREEMULATION);
 #endif
 
-	if (geniestage != 1) FCEU_ApplyPeriodicCheats();
+	//if (geniestage != 1) FCEU_ApplyPeriodicCheats();
 	FCEUPPU_Loop(skip);
 
-	if (skip != 2) ssize = FlushEmulateSound();  //If skip = 2 we are skipping sound processing
+	//if (skip != 2) ssize = FlushEmulateSound();  //If skip = 2 we are skipping sound processing
 
 #ifdef _S9XLUA_H
 	CallRegisteredLuaFunctions(LUACALL_AFTEREMULATION);
@@ -733,38 +691,15 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 
 	FCEU_PutImage();
 
-#ifdef WIN32
-	//These Windows only dialogs need to be updated only once per frame so they are included here
-	// CaH4e3: can't see why, this is only cause problems with selection
-	// adelikat: selection is only a problem when not paused, it should be paused to select, we want to see the values update
-	// owomomo: use an OWNERDATA CListCtrl to partially solve the problem
-	UpdateCheatList();
-	UpdateTextHooker();
-	Update_RAM_Search(); // Update_RAM_Watch() is also called.
-	RamChange();
-	//FCEUI_AviVideoUpdate(XBuf);
-
-	extern int KillFCEUXonFrame;
-	if (KillFCEUXonFrame && (FCEUMOV_GetFrame() >= KillFCEUXonFrame))
-		DoFCEUExit();
-#else
-		extern int KillFCEUXonFrame;
-	if (KillFCEUXonFrame && (FCEUMOV_GetFrame() >= KillFCEUXonFrame))
-		exit(0);
-#endif
+  //extern int KillFCEUXonFrame;
+	//if (KillFCEUXonFrame && (FCEUMOV_GetFrame() >= KillFCEUXonFrame))
+	//	exit(0);
 
 	timestampbase += timestamp;
 	timestamp = 0;
 	soundtimestamp = 0;
 
 	*pXBuf = skip ? 0 : XBuf;
-	if (skip == 2) { //If skip = 2, then bypass sound
-		*SoundBuf = 0;
-		*SoundBufSize = 0;
-	} else {
-		*SoundBuf = WaveFinal;
-		*SoundBufSize = ssize;
-	}
 
 	if ((EmulationPaused & EMULATIONPAUSED_FA) && (!frameAdvanceLagSkip || !lagFlag))
 	//Lots of conditions here.  EmulationPaused & EMULATIONPAUSED_FA must be true.  In addition frameAdvanceLagSkip or lagFlag must be false
@@ -782,9 +717,6 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 		lagCounter++;
 		justLagged = true;
 	} else justLagged = false;
-
-	if (movieSubtitles)
-		ProcessSubtitles();
 }
 
 void FCEUI_CloseGame(void) {
@@ -795,10 +727,9 @@ void FCEUI_CloseGame(void) {
 }
 
 void ResetNES(void) {
-	FCEUMOV_AddCommand(FCEUNPCMD_RESET);
 	if (!GameInfo) return;
 	GameInterface(GI_RESETM2);
-	FCEUSND_Reset();
+	//FCEUSND_Reset();
 	FCEUPPU_Reset();
 	X6502_Reset();
 
@@ -892,12 +823,11 @@ void hand(X6502 *X, int type, uint32 A) {
 }
 
 void PowerNES(void) {
-	FCEUMOV_AddCommand(FCEUNPCMD_POWER);
 	if (!GameInfo) return;
 
 	//reseed random, unless we're in a movie
 	extern int disableBatteryLoading;
-	if(FCEUMOV_Mode(MOVIEMODE_INACTIVE) && !disableBatteryLoading)
+	if(!disableBatteryLoading)
 	{
 		RAMInitSeed = rand() ^ (u32)xoroshiro128plus_next();
 	}
@@ -905,8 +835,8 @@ void PowerNES(void) {
 	//always reseed the PRNG with the current seed, for deterministic results (for that seed)
 	xoroshiro128plus_seed(RAMInitSeed);
 
-	FCEU_CheatResetRAM();
-	FCEU_CheatAddRAM(2, 0, RAM);
+	//FCEU_CheatResetRAM();
+	//FCEU_CheatAddRAM(2, 0, RAM);
 
 	FCEU_GeniePower();
 
@@ -922,7 +852,7 @@ void PowerNES(void) {
 	SetWriteHandler(0x800, 0x1FFF, BRAMH);	//hack for a small speed boost.
 
 	InitializeInput();
-	FCEUSND_Power();
+	//FCEUSND_Power();
 	FCEUPPU_Power();
 
 	//Have the external game hardware "powered" after the internal NES stuff.  Needed for the NSF code and VS System code.
@@ -940,7 +870,7 @@ void PowerNES(void) {
 #ifdef WIN32
 	ResetDebugStatisticsCounters();
 #endif
-	FCEU_PowerCheats();
+	//FCEU_PowerCheats();
 	LagCounterReset();
 	// clear back buffer
 	extern uint8 *XBackBuf;
@@ -975,7 +905,6 @@ void FCEU_ResetVidSys(void) {
 	normalscanlines = (dendy ? 290 : 240)+newppu; // use flag as number!
 	totalscanlines = normalscanlines + (overclock_enabled ? postrenderscanlines : 0);
 	FCEUPPU_SetVideoSystem(w || dendy);
-	SetSoundVariables();
 }
 
 FCEUS FSettings;
@@ -1157,7 +1086,7 @@ void UpdateAutosave(void) {
 		AutosaveCounter = 0;
 		AutosaveIndex = (AutosaveIndex + 1) % AutosaveQty;
 		f = strdup(FCEU_MakeFName(FCEUMKF_AUTOSTATE, AutosaveIndex, 0).c_str());
-		FCEUSS_Save(f, false);
+		//FCEUSS_Save(f, false);
 		AutoSS = true;  //Flag that an auto-savestate was made
 		free(f);
         f = NULL;
@@ -1172,9 +1101,9 @@ void FCEUI_RewindToLastAutosave(void) {
 	if (AutosaveStatus[AutosaveIndex] == 1) {
 		char * f;
 		f = strdup(FCEU_MakeFName(FCEUMKF_AUTOSTATE, AutosaveIndex, 0).c_str());
-		FCEUSS_Load(f);
+		//FCEUSS_Load(f);
 		free(f);
-        f = NULL;
+    f = NULL;
 
 		//Set pointer to previous available slot
 		if (AutosaveStatus[(AutosaveIndex + AutosaveQty - 1) % AutosaveQty] == 1) {
@@ -1198,7 +1127,6 @@ bool FCEU_IsValidUI(EFCEUI ui) {
     default: break;
 	case FCEUI_OPENGAME:
 	case FCEUI_CLOSEGAME:
-		if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR)) return false;
 		break;
 	case FCEUI_RECORDMOVIE:
 	case FCEUI_PLAYMOVIE:
@@ -1210,18 +1138,7 @@ bool FCEU_IsValidUI(EFCEUI ui) {
 	case FCEUI_PREVIOUSSAVESTATE:
 	case FCEUI_VIEWSLOTS:
 		if (!GameInfo) return false;
-		if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR)) return false;
 		break;
-
-	case FCEUI_STOPMOVIE:
-	case FCEUI_TOGGLERECORDINGMOVIE:
-		return(FCEUMOV_Mode(MOVIEMODE_PLAY | MOVIEMODE_RECORD | MOVIEMODE_FINISHED));
-
-	case FCEUI_PLAYFROMBEGINNING:
-		return(FCEUMOV_Mode(MOVIEMODE_PLAY | MOVIEMODE_RECORD | MOVIEMODE_TASEDITOR | MOVIEMODE_FINISHED));
-
-	case FCEUI_TRUNCATEMOVIE:
-		return(FCEUMOV_Mode(MOVIEMODE_PLAY | MOVIEMODE_RECORD));
 
 	case FCEUI_STOPAVI:
 		return FCEUI_AviIsRecording();
@@ -1236,11 +1153,6 @@ bool FCEU_IsValidUI(EFCEUI ui) {
 	case FCEUI_SWITCH_DISK:
 	case FCEUI_INSERT_COIN:
 		if (!GameInfo) return false;
-		if (FCEUMOV_Mode(MOVIEMODE_RECORD)) return true;
-#ifdef WIN32
-		if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR) && isTaseditorRecording()) return true;
-#endif
-		if (!FCEUMOV_Mode(MOVIEMODE_INACTIVE)) return false;
 		break;
 	}
 	return true;

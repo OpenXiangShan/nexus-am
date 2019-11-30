@@ -24,7 +24,6 @@
 
 #include "fceu.h"
 #include "sound.h"
-#include "netplay.h"
 #include "movie.h"
 #include "state.h"
 #include "input/zapper.h"
@@ -388,21 +387,15 @@ void FCEU_DrawInput(uint8 *buf)
 void FCEU_UpdateInput(void)
 {
 	//tell all drivers to poll input and set up their logical states
-	if(!FCEUMOV_Mode(MOVIEMODE_PLAY))
-	{
-		for(int port=0;port<2;port++){
-			joyports[port].driver->Update(port,joyports[port].ptr,joyports[port].attrib);
-		}
-		portFC.driver->Update(portFC.ptr,portFC.attrib);
-	}
+  for(int port=0;port<2;port++){
+    joyports[port].driver->Update(port,joyports[port].ptr,joyports[port].attrib);
+  }
+  portFC.driver->Update(portFC.ptr,portFC.attrib);
 
 	if(GameInfo->type==GIT_VSUNI)
 		if(coinon) coinon--;
 
-	if(FCEUnetplay)
-		NetplayUpdate(joy);
-
-	FCEUMOV_AddInputState();
+	//FCEUMOV_AddInputState();
 
 	//TODO - should this apply to the movie data? should this be displayed in the input hud?
 	if(GameInfo->type==GIT_VSUNI){
@@ -603,41 +596,15 @@ SFORMAT FCEUCTRL_STATEINFO[]={
 	{ &ZD[1].bogo,	1, "ZBG1"},
 	{ &lagFlag,		1, "LAGF"},
 	{ &lagCounter,	4, "LAGC"},
-	{ &currFrameCounter, 4, "FRAM"},
 	{ 0 }
 };
 
 void FCEU_DoSimpleCommand(int cmd)
 {
-	switch(cmd)
-	{
-	case FCEUNPCMD_FDSINSERT: FCEU_FDSInsert();break;
-	case FCEUNPCMD_FDSSELECT: FCEU_FDSSelect();break;
-	case FCEUNPCMD_VSUNICOIN: FCEU_VSUniCoin(); break;
-	case FCEUNPCMD_VSUNIDIP0:
-	case FCEUNPCMD_VSUNIDIP0+1:
-	case FCEUNPCMD_VSUNIDIP0+2:
-	case FCEUNPCMD_VSUNIDIP0+3:
-	case FCEUNPCMD_VSUNIDIP0+4:
-	case FCEUNPCMD_VSUNIDIP0+5:
-	case FCEUNPCMD_VSUNIDIP0+6:
-	case FCEUNPCMD_VSUNIDIP0+7:	FCEU_VSUniToggleDIP(cmd - FCEUNPCMD_VSUNIDIP0);break;
-	case FCEUNPCMD_POWER: PowerNES();break;
-	case FCEUNPCMD_RESET: ResetNES();break;
-	}
 }
 
 void FCEU_QSimpleCommand(int cmd)
 {
-	if(FCEUnetplay)
-		FCEUNET_SendCommand(cmd, 0);
-	else
-	{
-		if(!FCEUMOV_Mode(MOVIEMODE_TASEDITOR))		// TAS Editor will do the command himself
-			FCEU_DoSimpleCommand(cmd);
-		if(FCEUMOV_Mode(MOVIEMODE_RECORD|MOVIEMODE_TASEDITOR))
-			FCEUMOV_AddCommand(cmd);
-	}
 }
 
 void FCEUI_FDSSelect(void)
@@ -646,7 +613,7 @@ void FCEUI_FDSSelect(void)
 		return;
 
 	FCEU_DispMessage("Command: Switch disk side", 0);
-	FCEU_QSimpleCommand(FCEUNPCMD_FDSSELECT);
+	//FCEU_QSimpleCommand(FCEUNPCMD_FDSSELECT);
 }
 
 void FCEUI_FDSInsert(void)
@@ -655,12 +622,12 @@ void FCEUI_FDSInsert(void)
 		return;
 
 	FCEU_DispMessage("Command: Insert/Eject disk", 0);
-	FCEU_QSimpleCommand(FCEUNPCMD_FDSINSERT);
+	//FCEU_QSimpleCommand(FCEUNPCMD_FDSINSERT);
 }
 
 void FCEUI_VSUniToggleDIP(int w)
 {
-	FCEU_QSimpleCommand(FCEUNPCMD_VSUNIDIP0 + w);
+	//FCEU_QSimpleCommand(FCEUNPCMD_VSUNIDIP0 + w);
 }
 
 void FCEUI_VSUniCoin(void)
@@ -668,15 +635,12 @@ void FCEUI_VSUniCoin(void)
 	if(!FCEU_IsValidUI(FCEUI_INSERT_COIN))
 		return;
 
-	FCEU_QSimpleCommand(FCEUNPCMD_VSUNICOIN);
+	//FCEU_QSimpleCommand(FCEUNPCMD_VSUNICOIN);
 }
 
 //Resets the frame counter if movie inactive and rom is reset or power-cycle
 void ResetFrameCounter()
 {
-extern EMOVIEMODE movieMode;
-	if(movieMode == MOVIEMODE_INACTIVE)
-		currFrameCounter = 0;
 }
 
 //Resets the NES
@@ -686,7 +650,7 @@ void FCEUI_ResetNES(void)
 		return;
 
 	FCEU_DispMessage("Command: Soft reset", 0);
-	FCEU_QSimpleCommand(FCEUNPCMD_RESET);
+	//FCEU_QSimpleCommand(FCEUNPCMD_RESET);
 	ResetFrameCounter();
 }
 
@@ -697,7 +661,7 @@ void FCEUI_PowerNES(void)
 		return;
 
 	FCEU_DispMessage("Command: Power switch", 0);
-	FCEU_QSimpleCommand(FCEUNPCMD_POWER);
+	//FCEU_QSimpleCommand(FCEUNPCMD_POWER);
 	ResetFrameCounter();
 }
 
@@ -814,27 +778,27 @@ struct EMUCMDTABLE FCEUI_CommandTable[]=
 
 	{ EMUCMD_MOVIE_RECORD_TO,				EMUCMDTYPE_MOVIE,	FCEUD_MovieRecordTo,			0, 0, "Record Movie To...", 0 },
 	{ EMUCMD_MOVIE_REPLAY_FROM,				EMUCMDTYPE_MOVIE,	FCEUD_MovieReplayFrom,			0, 0, "Play Movie From...", 0 },
-	{ EMUCMD_MOVIE_PLAY_FROM_BEGINNING,		EMUCMDTYPE_MOVIE,	FCEUI_MoviePlayFromBeginning,	0, 0, "Play Movie From Beginning", EMUCMDFLAG_TASEDITOR },
-	{ EMUCMD_MOVIE_TOGGLE_RECORDING,		EMUCMDTYPE_MOVIE,	FCEUI_MovieToggleRecording,		0, 0, "Toggle Movie Recording/Playing", 0 },
-	{ EMUCMD_MOVIE_INSERT_1_FRAME,			EMUCMDTYPE_MOVIE,	FCEUI_MovieInsertFrame,			0, 0, "Insert 1 Frame To Movie", 0 },
-	{ EMUCMD_MOVIE_DELETE_1_FRAME,			EMUCMDTYPE_MOVIE,	FCEUI_MovieDeleteFrame,			0, 0, "Delete 1 Frame From Movie", 0 },
-	{ EMUCMD_MOVIE_TRUNCATE,				EMUCMDTYPE_MOVIE,	FCEUI_MovieTruncate,			0, 0, "Truncate Movie At Current Frame", 0 },
-	{ EMUCMD_MOVIE_STOP,					EMUCMDTYPE_MOVIE,	FCEUI_StopMovie,				0, 0, "Stop Movie", 0 },
-	{ EMUCMD_MOVIE_READONLY_TOGGLE,			EMUCMDTYPE_MOVIE,	FCEUI_MovieToggleReadOnly,		0, 0, "Toggle Read-Only", EMUCMDFLAG_TASEDITOR },
-	{ EMUCMD_MOVIE_NEXT_RECORD_MODE,		EMUCMDTYPE_MOVIE,	FCEUI_MovieNextRecordMode,		0, 0, "Next Record Mode", 0 },
-	{ EMUCMD_MOVIE_PREV_RECORD_MODE,		EMUCMDTYPE_MOVIE,	FCEUI_MoviePrevRecordMode,		0, 0, "Prev Record Mode", 0 },
-	{ EMUCMD_MOVIE_RECORD_MODE_TRUNCATE,	EMUCMDTYPE_MOVIE,	FCEUI_MovieRecordModeTruncate,	0, 0, "Record Mode Truncate", 0 },
-	{ EMUCMD_MOVIE_RECORD_MODE_OVERWRITE,	EMUCMDTYPE_MOVIE,	FCEUI_MovieRecordModeOverwrite,	0, 0, "Record Mode Overwrite", 0 },
-	{ EMUCMD_MOVIE_RECORD_MODE_INSERT,		EMUCMDTYPE_MOVIE,	FCEUI_MovieRecordModeInsert,	0, 0, "Record Mode Insert", 0 },
-	{ EMUCMD_MOVIE_FRAME_DISPLAY_TOGGLE,	EMUCMDTYPE_MOVIE,	FCEUI_MovieToggleFrameDisplay,	0, 0, "Toggle Frame Display", EMUCMDFLAG_TASEDITOR },
-	{ EMUCMD_MOVIE_INPUT_DISPLAY_TOGGLE,	EMUCMDTYPE_MISC,	FCEUI_ToggleInputDisplay,		0, 0, "Toggle Input Display", EMUCMDFLAG_TASEDITOR },
+//	{ EMUCMD_MOVIE_PLAY_FROM_BEGINNING,		EMUCMDTYPE_MOVIE,	FCEUI_MoviePlayFromBeginning,	0, 0, "Play Movie From Beginning", EMUCMDFLAG_TASEDITOR },
+//	{ EMUCMD_MOVIE_TOGGLE_RECORDING,		EMUCMDTYPE_MOVIE,	FCEUI_MovieToggleRecording,		0, 0, "Toggle Movie Recording/Playing", 0 },
+//	{ EMUCMD_MOVIE_INSERT_1_FRAME,			EMUCMDTYPE_MOVIE,	FCEUI_MovieInsertFrame,			0, 0, "Insert 1 Frame To Movie", 0 },
+//	{ EMUCMD_MOVIE_DELETE_1_FRAME,			EMUCMDTYPE_MOVIE,	FCEUI_MovieDeleteFrame,			0, 0, "Delete 1 Frame From Movie", 0 },
+//	{ EMUCMD_MOVIE_TRUNCATE,				EMUCMDTYPE_MOVIE,	FCEUI_MovieTruncate,			0, 0, "Truncate Movie At Current Frame", 0 },
+//	{ EMUCMD_MOVIE_STOP,					EMUCMDTYPE_MOVIE,	FCEUI_StopMovie,				0, 0, "Stop Movie", 0 },
+//	{ EMUCMD_MOVIE_READONLY_TOGGLE,			EMUCMDTYPE_MOVIE,	FCEUI_MovieToggleReadOnly,		0, 0, "Toggle Read-Only", EMUCMDFLAG_TASEDITOR },
+//	{ EMUCMD_MOVIE_NEXT_RECORD_MODE,		EMUCMDTYPE_MOVIE,	FCEUI_MovieNextRecordMode,		0, 0, "Next Record Mode", 0 },
+//	{ EMUCMD_MOVIE_PREV_RECORD_MODE,		EMUCMDTYPE_MOVIE,	FCEUI_MoviePrevRecordMode,		0, 0, "Prev Record Mode", 0 },
+//	{ EMUCMD_MOVIE_RECORD_MODE_TRUNCATE,	EMUCMDTYPE_MOVIE,	FCEUI_MovieRecordModeTruncate,	0, 0, "Record Mode Truncate", 0 },
+//	{ EMUCMD_MOVIE_RECORD_MODE_OVERWRITE,	EMUCMDTYPE_MOVIE,	FCEUI_MovieRecordModeOverwrite,	0, 0, "Record Mode Overwrite", 0 },
+//	{ EMUCMD_MOVIE_RECORD_MODE_INSERT,		EMUCMDTYPE_MOVIE,	FCEUI_MovieRecordModeInsert,	0, 0, "Record Mode Insert", 0 },
+//	{ EMUCMD_MOVIE_FRAME_DISPLAY_TOGGLE,	EMUCMDTYPE_MOVIE,	FCEUI_MovieToggleFrameDisplay,	0, 0, "Toggle Frame Display", EMUCMDFLAG_TASEDITOR },
+//	{ EMUCMD_MOVIE_INPUT_DISPLAY_TOGGLE,	EMUCMDTYPE_MISC,	FCEUI_ToggleInputDisplay,		0, 0, "Toggle Input Display", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_MOVIE_ICON_DISPLAY_TOGGLE,		EMUCMDTYPE_MISC,	FCEUD_ToggleStatusIcon,			0, 0, "Toggle Status Icon", EMUCMDFLAG_TASEDITOR },
 
 	#ifdef _S9XLUA_H
 	{ EMUCMD_SCRIPT_RELOAD,					EMUCMDTYPE_MISC,	FCEU_ReloadLuaCode,				0, 0, "Reload current Lua script", EMUCMDFLAG_TASEDITOR },
 	#endif
 
-	{ EMUCMD_SOUND_TOGGLE,					EMUCMDTYPE_SOUND,	FCEUD_SoundToggle,				0, 0, "Sound Mute Toggle", EMUCMDFLAG_TASEDITOR },
+//	{ EMUCMD_SOUND_TOGGLE,					EMUCMDTYPE_SOUND,	FCEUD_SoundToggle,				0, 0, "Sound Mute Toggle", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_SOUND_VOLUME_UP,				EMUCMDTYPE_SOUND,	CommandSoundAdjust,				0, 0, "Sound Volume Up", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_SOUND_VOLUME_DOWN,				EMUCMDTYPE_SOUND,	CommandSoundAdjust,				0, 0, "Sound Volume Down", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_SOUND_VOLUME_NORMAL,			EMUCMDTYPE_SOUND,	CommandSoundAdjust,				0, 0, "Sound Volume Normal", EMUCMDFLAG_TASEDITOR },
@@ -890,7 +854,7 @@ struct EMUCMDTABLE FCEUI_CommandTable[]=
 	{ EMUCMD_TOOL_RAMSEARCHGTE,				EMUCMDTYPE_TOOL,	RamSearchOpGTE,					0, 0, "Ram Search - Greater Than or Equal", 0},
 	{ EMUCMD_TOOL_RAMSEARCHEQ,				EMUCMDTYPE_TOOL,	RamSearchOpEQ,					0, 0, "Ram Search - Equal",	  0},
 	{ EMUCMD_TOOL_RAMSEARCHNE,				EMUCMDTYPE_TOOL,	RamSearchOpNE,					0, 0, "Ram Search - Not Equal", 0},
-	{ EMUCMD_RERECORD_DISPLAY_TOGGLE,		EMUCMDTYPE_MISC,   FCEUI_MovieToggleRerecordDisplay,0, 0, "Toggle Rerecord Display", EMUCMDFLAG_TASEDITOR },
+//	{ EMUCMD_RERECORD_DISPLAY_TOGGLE,		EMUCMDTYPE_MISC,   FCEUI_MovieToggleRerecordDisplay,0, 0, "Toggle Rerecord Display", EMUCMDFLAG_TASEDITOR },
 
 	{ EMUCMD_TASEDITOR_REWIND,				EMUCMDTYPE_TASEDITOR,	TaseditorRewindOn,			TaseditorRewindOff, 0, "Frame Rewind", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_TASEDITOR_RESTORE_PLAYBACK,	EMUCMDTYPE_TASEDITOR,	TaseditorCommand,			0, 0, "Restore Playback", EMUCMDFLAG_TASEDITOR },
@@ -909,7 +873,7 @@ static int execcmd, i;
 
 void FCEUI_HandleEmuCommands(TestCommandState* testfn)
 {
-	bool taseditor = FCEUMOV_Mode(MOVIEMODE_TASEDITOR);
+	bool taseditor = false; //FCEUMOV_Mode(MOVIEMODE_TASEDITOR);
 	for(i=0; i<(int)NUM_EMU_CMDS; ++i)
 	{
 		int new_state;
@@ -952,79 +916,23 @@ void FCEUI_SelectStateNext(int);
 
 static void ViewSlots(void)
 {
-	FCEUI_SelectState(CurrentState, 1);
+	//FCEUI_SelectState(CurrentState, 1);
 }
 
 static void CommandSelectSaveSlot(void)
 {
-	if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR))
-	{
-#ifdef WIN32
-		handleEmuCmdByTaseditor(execcmd);
-#endif
-	} else
-	{
-		if(execcmd <= EMUCMD_SAVE_SLOT_9)
-			FCEUI_SelectState(execcmd - EMUCMD_SAVE_SLOT_0, 1);
-		else if(execcmd == EMUCMD_SAVE_SLOT_NEXT)
-			FCEUI_SelectStateNext(1);
-		else if(execcmd == EMUCMD_SAVE_SLOT_PREV)
-			FCEUI_SelectStateNext(-1);
-	}
 }
 
 static void CommandStateSave(void)
 {
-	if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR))
-	{
-#ifdef WIN32
-		handleEmuCmdByTaseditor(execcmd);
-#endif
-	} else
-	{
-		//	FCEU_PrintError("execcmd=%d, EMUCMD_SAVE_STATE_SLOT_0=%d, EMUCMD_SAVE_STATE_SLOT_9=%d", execcmd,EMUCMD_SAVE_STATE_SLOT_0,EMUCMD_SAVE_STATE_SLOT_9);
-		if(execcmd >= EMUCMD_SAVE_STATE_SLOT_0 && execcmd <= EMUCMD_SAVE_STATE_SLOT_9)
-		{
-			int oldslot=FCEUI_SelectState(execcmd-EMUCMD_SAVE_STATE_SLOT_0, 0);
-			FCEUI_SaveState(0);
-			FCEUI_SelectState(oldslot, 0);
-		}
-		else
-			FCEUI_SaveState(0);
-	}
 }
 
 static void CommandStateLoad(void)
 {
-	if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR))
-	{
-#ifdef WIN32
-		handleEmuCmdByTaseditor(execcmd);
-#endif
-	} else
-	{
-		if(execcmd >= EMUCMD_LOAD_STATE_SLOT_0 && execcmd <= EMUCMD_LOAD_STATE_SLOT_9)
-		{
-			int oldslot=FCEUI_SelectState(execcmd-EMUCMD_LOAD_STATE_SLOT_0, 0);
-			FCEUI_LoadState(0);
-			FCEUI_SelectState(oldslot, 0);
-		}
-		else
-			FCEUI_LoadState(0);
-	}
 }
 
 static void CommandSoundAdjust(void)
 {
-	int n=0;
-	switch(execcmd)
-	{
-	case EMUCMD_SOUND_VOLUME_UP:		n=1;  break;
-	case EMUCMD_SOUND_VOLUME_DOWN:		n=-1;  break;
-	case EMUCMD_SOUND_VOLUME_NORMAL:	n=0;  break;
-	}
-
-	FCEUD_SoundVolumeAdjust(n);
 }
 
 
@@ -1271,8 +1179,8 @@ static void UndoRedoSavestate(void)
 	// FIXME this will always evaluate to true, should this be
 	// if (*lastSavestateMade...) to check if it holds a string or just
 	// a '\0'?
-	if (lastSavestateMade && (undoSS || redoSS))
-		SwapSaveState();
+	//if (lastSavestateMade && (undoSS || redoSS))
+	//	SwapSaveState();
 }
 
 static void FCEUI_DoExit(void)

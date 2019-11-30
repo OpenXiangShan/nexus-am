@@ -22,7 +22,6 @@
 /// \brief Handles the graphical game display for the SDL implementation.
 
 #include "sdl.h"
-#include "sdl-opengl.h"
 #include "../common/vidblit.h"
 #include "../../fceu.h"
 #include "../../version.h"

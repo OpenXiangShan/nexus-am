@@ -22,7 +22,6 @@
 #include "x6502.h"
 #include "fceu.h"
 #include "input.h"
-#include "netplay.h"
 #include "vsuni.h"
 #include "state.h"
 #include "driver.h"

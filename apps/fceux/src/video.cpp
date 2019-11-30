@@ -178,31 +178,6 @@ static void ReallySnap(void)
 		FCEU_DispMessage("Screen snapshot %d saved.",0,x-1);
 }
 
-static uint32 GetButtonColor(uint32 held, uint32 c, uint32 ci, int bit)
-{
-	uint32 on = FCEUMOV_Mode(MOVIEMODE_PLAY) ? 0x90 : 0xA7;	//Standard, or Gray depending on movie mode
-	uint32 oni = 0xA0;		//Color for immediate keyboard buttons
-	uint32 blend = 0xB6;	//Blend of immiate and last held buttons
-	uint32 ahold = 0x87;	//Auto hold
-	uint32 off = 0xCF;
-
-	uint32 color;
-	uint8 mask = 1u << bit;
-	if (held & mask) { //If auto-hold
-		if (!(ci & mask))
-			color = ahold;
-		else
-			color = (c & mask) ? on : off; //If the button is pressed down (immediate) that negates auto hold, however it is only off if the previous frame the button wasn't pressed!
-	}
-	else {
-		if (c & mask)
-			color = (ci & mask) ? blend : on; //If immedaite buttons are pressed and they match the previous frame, blend the colors
-		else
-			color = (ci & mask) ? oni : off;
-	}
-	return color;
-}
-
 void FCEU_PutImage(void)
 {
 	if(dosnapsave==2)	//Save screenshot as, currently only flagged & run by the Win32 build. //TODO SDL: implement this?
@@ -257,9 +232,9 @@ void FCEU_PutImage(void)
 		if(GameInfo->type==GIT_VSUNI)
 			FCEU_VSUniDraw(XBuf);
 
-		FCEU_DrawSaveStates(XBuf);
-		FCEU_DrawMovies(XBuf);
-		FCEU_DrawLagCounter(XBuf);
+		//FCEU_DrawSaveStates(XBuf);
+		//FCEU_DrawMovies(XBuf);
+		//FCEU_DrawLagCounter(XBuf);
 		FCEU_DrawNTSCControlBars(XBuf);
 		FCEU_DrawRecordingStatus(XBuf);
 		ShowFPS();
@@ -267,115 +242,6 @@ void FCEU_PutImage(void)
 
 	if(FCEUD_ShouldDrawInputAids())
 		FCEU_DrawInput(XBuf);
-
-	//Fancy input display code
-	if(input_display)
-	{
-		//extern uint32 JSAutoHeld;
-		int i, j;
-		uint8 *t = XBuf+(FSettings.LastSLine-9)*256 + 20;		//mbg merge 7/17/06 changed t to uint8*
-		if(input_display > 4) input_display = 4;
-		for(int controller = 0; controller < input_display; controller++, t += 56)
-		{
-			for(i = 0; i < 34;i++)
-				for(j = 0; j <9 ; j++)
-					t[i+j*256] = (t[i+j*256] & 0x30) | 0xC1;
-			for(i = 3; i < 6; i++)
-				for(j = 3; j< 6; j++)
-					t[i+j*256] = 0xCF;
-
-			uint32 held = 0;
-			uint32 c = cur_input_display >> (controller * 8);
-			uint32 ci = 0;
-			uint32 color;
-
-#ifdef WIN32
-			// This doesn't work in anything except windows for now.
-			// It doesn't get set anywhere in other ports.
-			if (!oldInputDisplay)
-				ci = FCEUMOV_Mode(MOVIEMODE_PLAY) ? 0 : GetGamepadPressedImmediate() >> (controller * 8);
-
-			if (!oldInputDisplay && !FCEUMOV_Mode(MOVIEMODE_PLAY))
-				held = (JSAutoHeld >> (controller * 8));
-#else
-			// Put other port info here
-#endif
-
-			//adelikat: I apologize to anyone who ever sifts through this color assignment
-			//A
-			color = GetButtonColor(held, c, ci, 0);
-			for(i=0; i < 4; i++)
-			{
-				for(j = 0; j < 4; j++)
-				{
-					if(i%3==0 && j %3 == 0)
-						continue;
-					t[30+4*256+i+j*256] = color;
-				}
-			}
-			//B
-			color = GetButtonColor(held, c, ci, 1);
-			for(i=0; i < 4; i++)
-			{
-				for(j = 0; j < 4; j++)
-				{
-					if(i%3==0 && j %3 == 0)
-						continue;
-					t[24+4*256+i+j*256] = color;
-				}
-			}
-			//Select
-			color = GetButtonColor(held, c, ci, 2);
-			for(i = 0; i < 4; i++)
-			{
-				t[11+5*256+i] = color;
-				t[11+6*256+i] = color;
-			}
-			//Start
-			color = GetButtonColor(held, c, ci, 3);
-			for(i = 0; i < 4; i++)
-			{
-				t[17+5*256+i] = color;
-				t[17+6*256+i] = color;
-			}
-			//Up
-			color = GetButtonColor(held, c, ci, 4);
-			for(i = 0; i < 3; i++)
-			{
-				for(j = 0; j < 3; j++)
-				{
-					t[3+i+256*j] = color;
-				}
-			}
-			//Down
-			color = GetButtonColor(held, c, ci, 5);
-			for(i = 0; i < 3; i++)
-			{
-				for(j = 0; j < 3; j++)
-				{
-					t[3+i+256*j+6*256] = color;
-				}
-			}
-			//Left
-			color = GetButtonColor(held, c, ci, 6);
-			for(i = 0; i < 3; i++)
-			{
-				for(j = 0; j < 3; j++)
-				{
-					t[3*256+i+256*j] = color;
-				}
-			}
-			//Right
-			color = GetButtonColor(held, c, ci, 7);
-			for(i = 0; i < 3; i++)
-			{
-				for(j = 0; j < 3; j++)
-				{
-					t[6+3*256+i+256*j] = color;
-				}
-			}
-		}
-	}
 
 	if (FCEUI_AviEnableHUDrecording())
 	{

@@ -478,20 +478,19 @@ static int special=0;
 void DrawNSF(uint8 *XBuf)
 {
 	char snbuf[16];
-	int x;
+	//int x;
 
 	if(vismode==0) return;
 
 	memset(XBuf,0,256*240);
 	memset(XDBuf,0,256*240);
 
-
+#if 0
 	{
 		int32 *Bufpl;
 		int32 mul=0;
 
-		int l;
-		l=GetSoundBuffer(&Bufpl);
+		int l=0; //GetSoundBuffer(&Bufpl);
 
 		if(special==0)
 		{
@@ -499,8 +498,8 @@ void DrawNSF(uint8 *XBuf)
 				mul=8192*240/(16384*FSettings.SoundVolume/50);
 			for(x=0;x<256;x++)
 			{
-				uint32 y;
-				y=142+((Bufpl[(x*l)>>8]*mul)>>14);
+				uint32 y = 0;
+				//y=142+((Bufpl[(x*l)>>8]*mul)>>14);
 				if(y<240)
 					XBuf[x+y*256]=3;
 			}
@@ -568,6 +567,7 @@ void DrawNSF(uint8 *XBuf)
 			theta+=(double)M_PI/256;
 		}
 	}
+#endif
 
 	static const int kFgColor = 1;
 	DrawTextTrans(ClipSidesOffset+XBuf+10*256+4+(((31-strlen((char*)NSFHeader.SongName))<<2)), 256, NSFHeader.SongName, kFgColor);

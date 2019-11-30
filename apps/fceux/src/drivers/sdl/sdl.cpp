@@ -15,10 +15,8 @@
 
 #include "sdl.h"
 #include "sdl-video.h"
-#include "unix-netplay.h"
 
 #include "../common/configSys.h"
-#include "../../oldmovie.h"
 #include "../../types.h"
 
 #ifdef CREATE_AVI
@@ -200,13 +198,6 @@ int LoadGame(const char *path)
 		return 0;
 	}
 
-    int state_to_load;
-    g_config->getOption("SDL.AutoLoadState", &state_to_load);
-    if (state_to_load >= 0 && state_to_load < 10){
-        FCEUI_SelectState(state_to_load, 0);
-        FCEUI_LoadState(NULL, false);
-    }
-
 	ParseGIInput(GameInfo);
 	RefreshThrottleFPS();
 
@@ -222,16 +213,8 @@ int LoadGame(const char *path)
 	g_config->getOption("SDL.SwapDuty", &id);
 	swapDuty = id;
 	
-	std::string filename;
-	g_config->getOption("SDL.Sound.RecordFile", &filename);
-	if(filename.size()) {
-		if(!FCEUI_BeginWaveRecord(filename.c_str())) {
-			g_config->setOption("SDL.Sound.RecordFile", "");
-		}
-	}
 	isloaded = 1;
 
-	FCEUD_NetworkConnect();
 	return 1;
 }
 
@@ -247,12 +230,6 @@ CloseGame()
 		return(0);
 	}
 
-    int state_to_save;
-    g_config->getOption("SDL.AutoSaveState", &state_to_save);
-    if (state_to_save < 10 && state_to_save >= 0){
-        FCEUI_SelectState(state_to_save, 0);
-        FCEUI_SaveState(NULL, false);
-    }
 	FCEUI_CloseGame();
 
 	DriverKill();
@@ -260,9 +237,6 @@ CloseGame()
 	GameInfo = 0;
 
 	g_config->getOption("SDL.Sound.RecordFile", &filename);
-	if(filename.size()) {
-		FCEUI_EndWaveRecord();
-	}
 
 	InputUserActiveFix();
 	return(1);
@@ -278,10 +252,6 @@ static void DoFun(int frameskip, int periodic_saves)
 	static int fskipc = 0;
 	static int opause = 0;
 
-    //TODO peroidic saves, working on it right now
-    if (periodic_saves && FCEUD_GetTime() % PERIODIC_SAVE_INTERVAL < 30){
-        FCEUI_SaveState(NULL, false);
-    }
 #ifdef FRAMESKIP
 	fskipc = (fskipc + 1) % (frameskip + 1);
 #endif
@@ -294,7 +264,7 @@ static void DoFun(int frameskip, int periodic_saves)
 
 	if(opause!=FCEUI_EmulationPaused()) {
 		opause=FCEUI_EmulationPaused();
-		SilenceSound(opause);
+		//SilenceSound(opause);
 	}
 }
 
@@ -308,8 +278,8 @@ DriverInitialize(FCEUGI *gi)
 	if(InitVideo(gi) < 0) return 0;
 	inited|=4;
 
-	if(InitSound())
-		inited|=1;
+	//if(InitSound())
+	//	inited|=1;
 
 	if(InitJoysticks())
 		inited|=2;
@@ -337,8 +307,6 @@ DriverKill()
 		KillJoysticks();
 	if(inited&4)
 		KillVideo();
-	if(inited&1)
-		KillSound();
 	inited=0;
 }
 
@@ -351,98 +319,29 @@ FCEUD_Update(uint8 *XBuf,
 			 int32 *Buffer,
 			 int Count)
 {
-	extern int FCEUDnetplay;
-
-	#ifdef CREATE_AVI
-	if(LoggingEnabled == 2 || (eoptions&EO_NOTHROTTLE))
-	{
-	  if(LoggingEnabled == 2)
-	  {
-		int16* MonoBuf = new int16[Count];
-		int n;
-		for(n=0; n<Count; ++n)
-			MonoBuf[n] = Buffer[n] & 0xFFFF;
-		NESVideoLoggingAudio
-		 (
-		  MonoBuf, 
-		  FSettings.SndRate, 16, 1,
-		  Count
-		 );
-		delete [] MonoBuf;
-	  }
-	  Count /= 2;
-	  if(inited & 1)
-	  {
-		if(Count > GetWriteSound()) Count = GetWriteSound();
-		if (!mutecapture)
-		  if(Count > 0 && Buffer) WriteSound(Buffer,Count);   
-	  }
-	  if(inited & 2)
-		FCEUD_UpdateInput();
-	  if(XBuf && (inited & 4)) BlitScreen(XBuf);
-	  
-	  //SpeedThrottle();
-		return;
-	 }
-	#endif
-	
-	int ocount = Count;
+	//int ocount = Count;
 	// apply frame scaling to Count
 	Count = (int)(Count / g_fpsScale);
 	if(Count) {
-		int32 can=GetWriteSound();
-		static int uflow=0;
-		int32 tmpcan;
+		//int32 can=GetWriteSound();
+		//static int uflow=0;
+		//int32 tmpcan;
 
 		// don't underflow when scaling fps
-		if(can >= (int32)GetMaxSound() && g_fpsScale==1.0) uflow=1;	/* Go into massive underflow mode. */
+		//if(can >= (int32)GetMaxSound() && g_fpsScale==1.0) uflow=1;	/* Go into massive underflow mode. */
 
-		if(can > Count) can=Count;
-		else uflow=0;
+		//if(can > Count) can=Count;
+		//else uflow=0;
 
-		#ifdef CREATE_AVI
-		if (!mutecapture)
-		#endif
-		  WriteSound(Buffer,can);
+    //WriteSound(Buffer,can);
 
 		//if(uflow) puts("Underflow");
-		tmpcan = GetWriteSound();
+		//tmpcan = GetWriteSound();
 		// don't underflow when scaling fps
-		if(g_fpsScale>1.0 || ((tmpcan < Count*0.90) && !uflow)) {
+		if(g_fpsScale>1.0) {
 			if(XBuf && (inited&4) && !(NoWaiting & 2))
 				BlitScreen(XBuf);
-			Buffer+=can;
-			Count-=can;
-			if(Count) {
-				if(NoWaiting) {
-					can=GetWriteSound();
-					if(Count>can) Count=can;
-					#ifdef CREATE_AVI
-					if (!mutecapture)
-					#endif
-					  WriteSound(Buffer,Count);
-				} else {
-					while(Count>0) {
-						#ifdef CREATE_AVI
-						if (!mutecapture)
-						#endif
-						  WriteSound(Buffer,(Count<ocount) ? Count : ocount);
-						Count -= ocount;
-					}
-				}
-			}
 		} //else puts("Skipped");
-		else if(!NoWaiting && FCEUDnetplay && (uflow || tmpcan >= (Count * 1.8))) {
-			if(Count > tmpcan) Count=tmpcan;
-			while(tmpcan > 0) {
-				//	printf("Overwrite: %d\n", (Count <= tmpcan)?Count : tmpcan);
-				#ifdef CREATE_AVI
-				if (!mutecapture)
-				#endif
-				  WriteSound(Buffer, (Count <= tmpcan)?Count : tmpcan);
-				tmpcan -= Count;
-			}
-		}
 
 	} else {
 		if(!NoWaiting && (!(eoptions&EO_NOTHROTTLE) || FCEUI_EmulationPaused()))
@@ -634,42 +533,6 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-
-	// check for a .fcm file to convert to .fm2
-	g_config->getOption ("SDL.FCMConvert", &s);
-	g_config->setOption ("SDL.FCMConvert", "");
-	if (!s.empty())
-	{
-		int okcount = 0;
-		std::string infname = s.c_str();
-		// produce output filename
-		std::string outname;
-		size_t dot = infname.find_last_of (".");
-		if (dot == std::string::npos)
-			outname = infname + ".fm2";
-		else
-			outname = infname.substr(0,dot) + ".fm2";
-	  
-		MovieData md;
-		EFCM_CONVERTRESULT result = convert_fcm (md, infname);
-
-		if (result == FCM_CONVERTRESULT_SUCCESS) {
-			okcount++;
-        // *outf = new EMUFILE;
-		EMUFILE_FILE* outf = FCEUD_UTF8_fstream (outname, "wb");
-		md.dump (outf,false);
-		delete outf;
-		FCEUD_Message ("Your file has been converted to FM2.\n");
-	}
-	else {
-		FCEUD_Message ("Something went wrong while converting your file...\n");
-	}
-	  
-	DriverKill();
-	  SDL_Quit();
-	  return 0;
-	}
-
 	// If x/y res set to 0, store current display res in SDL.LastX/YRes
 	int yres, xres;
 	g_config->getOption("SDL.XResolution", &xres);
@@ -736,76 +599,6 @@ int main(int argc, char *argv[])
 	else
 		FCEUI_SetAviDisableMovieMessages(false);
 	
-	
-	// check for a .fm2 file to rip the subtitles
-	g_config->getOption("SDL.RipSubs", &s);
-	g_config->setOption("SDL.RipSubs", "");
-	if (!s.empty())
-	{
-		MovieData md;
-		std::string infname;
-		infname = s.c_str();
-		FCEUFILE *fp = FCEU_fopen(s.c_str(), 0, "rb", 0);
-		
-		// load the movie and and subtitles
-		extern bool LoadFM2(MovieData&, EMUFILE*, int, bool);
-		LoadFM2(md, fp->stream, INT_MAX, false);
-		LoadSubtitles(md); // fill subtitleFrames and subtitleMessages
-		delete fp;
-		
-		// produce .srt file's name and open it for writing
-		std::string outname;
-		size_t dot = infname.find_last_of (".");
-		if (dot == std::string::npos)
-			outname = infname + ".srt";
-		else
-			outname = infname.substr(0,dot) + ".srt";
-		FILE *srtfile;
-		srtfile = fopen(outname.c_str(), "w");
-		
-		if (srtfile != NULL)
-		{
-			extern std::vector<int> subtitleFrames;
-			extern std::vector<std::string> subtitleMessages;
-			float fps = (md.palFlag == 0 ? 60.0988 : 50.0069); // NTSC vs PAL
-			float subduration = 3; // seconds for the subtitles to be displayed
-			for (int i = 0; i < (int)subtitleFrames.size(); i++)
-			{
-				fprintf(srtfile, "%i\n", i+1); // starts with 1, not 0
-				double seconds, ms, endseconds, endms;
-				seconds = subtitleFrames[i]/fps;
-				if (i+1 < (int)subtitleFrames.size()) // there's another subtitle coming after this one
-				{
-					if (subtitleFrames[i+1]-subtitleFrames[i] < subduration*fps) // avoid two subtitles at the same time
-					{
-						endseconds = (subtitleFrames[i+1]-1)/fps; // frame x: subtitle1; frame x+1 subtitle2
-					} else {
-						endseconds = seconds+subduration;
-							}
-				} else {
-					endseconds = seconds+subduration;
-				}
-				ms = modf(seconds, &seconds);
-				endms = modf(endseconds, &endseconds);
-				// this is just beyond ugly, don't show it to your kids
-				fprintf(srtfile,
-				"%02.0f:%02d:%02d,%03d --> %02.0f:%02d:%02d,%03d\n", // hh:mm:ss,ms --> hh:mm:ss,ms
-				floor(seconds/3600),	(int)floor(seconds/60   ) % 60, (int)floor(seconds)	% 60, (int)(ms*1000),
-				floor(endseconds/3600), (int)floor(endseconds/60) % 60, (int)floor(endseconds) % 60, (int)(endms*1000));
-				fprintf(srtfile, "%s\n\n", subtitleMessages[i].c_str()); // new line for every subtitle
-			}
-		fclose(srtfile);
-		printf("%d subtitles have been ripped.\n", (int)subtitleFrames.size());
-		} else {
-		FCEUD_Message("Couldn't create output srt file...\n");
-		}
-	  
-		DriverKill();
-		SDL_Quit();
-		return 0;
-	}
-   
-
 	// if we're not compiling w/ the gui, exit if a rom isn't specified
 #ifndef _GTK
 	if(romIndex <= 0) {
@@ -838,8 +631,8 @@ int main(int argc, char *argv[])
 	{
 		int id;
 		g_config->getOption("SDL.InputDisplay", &id);
-		extern int input_display;
-		input_display = id;
+		//extern int input_display;
+		//input_display = id;
 		// not exactly an id as an true/false switch; still better than creating another int for that
 		g_config->getOption("SDL.SubtitleDisplay", &id); 
 		extern int movieSubtitles;
@@ -873,36 +666,7 @@ int main(int argc, char *argv[])
 
 	}
 	
-	// movie playback
-	g_config->getOption("SDL.Movie", &s);
-	g_config->setOption("SDL.Movie", "");
-	if (s != "")
-	{
-		if(s.find(".fm2") != std::string::npos || s.find(".fm3") != std::string::npos)
-		{
-			static int pauseframe;
-			g_config->getOption("SDL.PauseFrame", &pauseframe);
-			g_config->setOption("SDL.PauseFrame", 0);
-			FCEUI_printf("Playing back movie located at %s\n", s.c_str());
-			FCEUI_LoadMovie(s.c_str(), false, pauseframe ? pauseframe : false);
-		}
-		else
-		{
-		  FCEUI_printf("Sorry, I don't know how to play back %s\n", s.c_str());
-		}
-		g_config->getOption("SDL.MovieLength",&KillFCEUXonFrame);
-		printf("KillFCEUXonFrame %d\n",KillFCEUXonFrame);
-	}
-	
-    int periodic_saves;
-    int save_state;
-    g_config->getOption("SDL.PeriodicSaves", &periodic_saves);
-    g_config->getOption("SDL.AutoSaveState", &save_state);
-    if(periodic_saves && save_state < 10 && save_state >= 0){
-        FCEUI_SelectState(save_state, 0);
-    } else {
-        periodic_saves = 0;
-    }
+    int periodic_saves = 0;
 	
 #ifdef _S9XLUA_H
 	// load lua script if option passed
@@ -923,30 +687,10 @@ int main(int argc, char *argv[])
 
 	g_config->getOption("SDL.Frameskip", &frameskip);
 	// loop playing the game
-#ifdef _GTK
-	if(noGui == 0)
-	{
-		while(1)
-		{
-			if(GameInfo)
-				DoFun(frameskip, periodic_saves);
-			else
-				SDL_Delay(1);
-			while(gtk_events_pending())
-			gtk_main_iteration_do(FALSE);
-		}
-	}
-	else
-	{
-		while(GameInfo)
-			DoFun(frameskip, periodic_saves);
-	}
-#else
 	while(GameInfo)
 	{
 		DoFun(frameskip, periodic_saves);
 	}
-#endif
 	CloseGame();
 
 	// exit the infrastructure

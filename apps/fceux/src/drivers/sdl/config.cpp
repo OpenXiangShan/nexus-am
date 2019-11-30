@@ -9,11 +9,6 @@
 
 #include "sdl.h"
 #include "sdl-video.h"
-#include "unix-netplay.h"
-
-#ifdef WIN32
-#include <windows.h>
-#endif
 
 #include <unistd.h>
 
@@ -454,8 +449,8 @@ UpdateEMUCore(Config *config)
 	config->getOption("SDL.GameGenie", &flag);
 	FCEUI_SetGameGenie(flag ? 1 : 0);
 
-	config->getOption("SDL.Sound.LowPass", &flag);
-	FCEUI_SetLowPass(flag ? 1 : 0);
+	//config->getOption("SDL.Sound.LowPass", &flag);
+	//FCEUI_SetLowPass(flag ? 1 : 0);
 
 	config->getOption("SDL.DisableSpriteLimit", &flag);
 	FCEUI_DisableSpriteLimitation(flag ? 1 : 0);
