@@ -31,7 +31,6 @@
 #include "file.h"
 #include "utils/general.h"
 #include "utils/memory.h"
-#include "utils/crc32.h"
 #include "utils/md5.h"
 #include "utils/xstring.h"
 #include "cheat.h"

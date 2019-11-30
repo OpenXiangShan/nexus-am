@@ -26,8 +26,6 @@
 
 #include <cstdlib>
 #include <unistd.h>
-#include <fcntl.h>
-#include <cerrno>
 
 #define MAX_JOYSTICKS	32
 static SDL_Joystick *s_Joysticks[MAX_JOYSTICKS] = {NULL};

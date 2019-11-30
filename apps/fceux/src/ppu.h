@@ -26,11 +26,7 @@ int FCEUPPU_GetAttr(int ntnum, int xt, int yt);
 void ppu_getScroll(int &xpos, int &ypos);
 
 
-#ifdef _MSC_VER
-#define FASTCALL __fastcall
-#else
 #define FASTCALL
-#endif
 
 void PPU_ResetHooks();
 extern uint8 (FASTCALL *FFCEUX_PPURead)(uint32 A);

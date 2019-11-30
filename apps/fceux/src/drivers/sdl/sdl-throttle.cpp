@@ -44,6 +44,7 @@ RefreshThrottleFPS()
 int
 SpeedThrottle()
 {
+  //return 0;
 	if(g_fpsScale >= 32)
 	{
 		return 0; /* Done waiting */

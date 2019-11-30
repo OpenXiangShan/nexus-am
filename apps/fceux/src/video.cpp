@@ -23,7 +23,6 @@
 #include "fceu.h"
 #include "file.h"
 #include "utils/memory.h"
-#include "utils/crc32.h"
 #include "state.h"
 #include "movie.h"
 #include "palette.h"
@@ -33,29 +32,13 @@
 #include "drawing.h"
 #include "driver.h"
 #include "drivers/common/vidblit.h"
-#ifdef _S9XLUA_H
-#include "fceulua.h"
-#endif
 
-#ifdef WIN32
-#include "drivers/win/common.h" //For DirectX constants
-#include "drivers/win/input.h"
-#endif
-
-#ifdef CREATE_AVI
-#include "drivers/videolog/nesvideos-piece.h"
-#endif
-
-//no stdint in win32 (but we could add it if we needed to)
-#ifndef WIN32
 #include <stdint.h>
-#endif
 
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
-#include <zlib.h>
 
 //XBuf:
 //0-63 is reserved for 7 special colours used by FCEUX (overlay, etc.)
@@ -151,8 +134,8 @@ void FCEU_PutImageDummy(void)
 	if(GameInfo->type!=GIT_NSF)
 	{
 		FCEU_DrawNTSCControlBars(XBuf);
-		FCEU_DrawSaveStates(XBuf);
-		FCEU_DrawMovies(XBuf);
+		//FCEU_DrawSaveStates(XBuf);
+		//FCEU_DrawMovies(XBuf);
 	}
 	if(guiMessage.howlong) guiMessage.howlong--; /* DrawMessage() */
 }
@@ -195,10 +178,6 @@ void FCEU_PutImage(void)
 	{
 		DrawNSF(XBuf);
 
-#ifdef _S9XLUA_H
-		FCEU_LuaGui(XBuf);
-#endif
-
 		//Save snapshot after NSF screen is drawn.  Why would we want to do it before?
 		if(dosnapsave==1)
 		{
@@ -214,11 +193,6 @@ void FCEU_PutImage(void)
 
 		//Some messages need to be displayed before the avi is dumped
 		DrawMessage(true);
-
-#ifdef _S9XLUA_H
-		// Lua gui should draw before the avi is dumped.
-		FCEU_LuaGui(XBuf);
-#endif
 
 		//Save snapshot
 		if(dosnapsave==1)
@@ -301,16 +275,6 @@ void FCEU_DispMessage(const char *format, int disppos=0, ...)
 	guiMessage.linesFromBottom = disppos;
 
 	//adelikat: Pretty sure this code fails, Movie playback stopped is done with FCEU_DispMessageOnMovie()
-	#ifdef CREATE_AVI
-	if(LoggingEnabled == 2)
-	{
-		/* While in AVI recording mode, only display bare minimum
-		 * of messages
-		 */
-		if(strcmp(guiMessage.errmsg, "Movie playback stopped.") != 0)
-			guiMessage.howlong = 0;
-	}
-	#endif
 }
 
 void FCEU_ResetMessages()

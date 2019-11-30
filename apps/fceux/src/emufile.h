@@ -27,16 +27,11 @@ THE SOFTWARE.
 
 #include "emufile_types.h"
 
-#ifdef _MSC_VER
-#include <io.h>
-#endif
-
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <cstdarg>
 #include <vector>
-#include <algorithm>
 #include <string>
 
 class EMUFILE {

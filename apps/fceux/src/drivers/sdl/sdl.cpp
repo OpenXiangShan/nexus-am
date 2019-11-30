@@ -6,9 +6,6 @@
 #include "../../fceu.h"
 #include "../../movie.h"
 #include "../../version.h"
-#ifdef _S9XLUA_H
-#include "../../fceulua.h"
-#endif
 
 #include "input.h"
 #include "dface.h"
@@ -19,33 +16,16 @@
 #include "../common/configSys.h"
 #include "../../types.h"
 
-#ifdef CREATE_AVI
-#include "../videolog/nesvideos-piece.h"
-#endif
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
-#ifdef _GTK
-#include <gtk/gtk.h>
-#include "gui.h"
-#endif
-
 #include <unistd.h>
-#include <csignal>
 #include <cstring>
-#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
-#include <climits>
 #include <cmath>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
-
 
 extern double g_fpsScale;
 
@@ -65,9 +45,6 @@ static void DriverKill(void);
 static int DriverInitialize(FCEUGI *gi);
 uint64 FCEUD_GetTime();
 int gametype = 0;
-#ifdef CREATE_AVI
-int mutecapture;
-#endif
 static int noconfig;
 
 int pal_emulation;
@@ -160,13 +137,6 @@ static void ShowUsage(char *prog)
 {
 	printf("\nUsage is as follows:\n%s <options> filename\n\n",prog);
 	puts(DriverUsage);
-#ifdef _S9XLUA_H
-	puts ("--loadlua      f       Loads lua script from filename f.");
-#endif
-#ifdef CREATE_AVI
-	puts ("--videolog     c       Calls mencoder to grab the video and audio streams to\n                         encode them. Check the documentation for more on this.");
-	puts ("--mute        {0|1}    Mutes FCEUX while still passing the audio stream to\n                         mencoder during avi creation.");
-#endif
 	puts("");
 	printf("Compiled with SDL version %d.%d.%d\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL );
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -176,11 +146,6 @@ static void ShowUsage(char *prog)
 	const SDL_version* v = SDL_Linked_Version();
 #endif
 	printf("Linked with SDL version %d.%d.%d\n", v->major, v->minor, v->patch);
-#ifdef GTK
-	printf("Compiled with GTK version %d.%d.%d\n", GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION );
-	//printf("Linked with GTK version %d.%d.%d\n", GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION );
-#endif
-	
 }
 
 /**
@@ -483,13 +448,6 @@ int main(int argc, char *argv[])
 			SDL_Quit();
 			return 0;
 		}
-#ifdef _GTK
-		else if(strcmp(argv[i], "--nogui") == 0)
-		{
-			noGui = 1;
-			argv[i] = "";
-		}
-#endif
 	}
 	int romIndex = g_config->parse(argc, argv);
 
@@ -573,23 +531,8 @@ int main(int argc, char *argv[])
 	}
 #endif
 	
-	int autoResume;
-	g_config->getOption("SDL.AutoResume", &autoResume);
-	if(autoResume)
-	{
-		AutoResumePlay = true;
-	}
-	else
-	{
-		AutoResumePlay = false;
-	}
-	// check to see if recording HUD to AVI is enabled
-	int rh;
-	g_config->getOption("SDL.RecordHUD", &rh);
-	if( rh == 0)
-		FCEUI_SetAviEnableHUDrecording(true);
-	else
-		FCEUI_SetAviEnableHUDrecording(false);
+  AutoResumePlay = false;
+  FCEUI_SetAviEnableHUDrecording(false);
 
 	// check to see if movie messages are disabled
 	int mm;
@@ -600,7 +543,6 @@ int main(int argc, char *argv[])
 		FCEUI_SetAviDisableMovieMessages(false);
 	
 	// if we're not compiling w/ the gui, exit if a rom isn't specified
-#ifndef _GTK
 	if(romIndex <= 0) {
 		
 		ShowUsage(argv[0]);
@@ -608,25 +550,10 @@ int main(int argc, char *argv[])
 		SDL_Quit();
 		return -1;
 	}
-#endif
 	
 
 	// update the emu core
 	UpdateEMUCore(g_config);
-
-	
-	#ifdef CREATE_AVI
-	g_config->getOption("SDL.VideoLog", &s);
-	g_config->setOption("SDL.VideoLog", "");
-	if(!s.empty())
-	{
-		NESVideoSetVideoCmd(s.c_str());
-		LoggingEnabled = 1;
-		g_config->getOption("SDL.MuteCapture", &mutecapture);
-	} else {
-		mutecapture = 0;
-	}
-	#endif
 
 	{
 		int id;
@@ -641,16 +568,6 @@ int main(int argc, char *argv[])
 	
 	// load the hotkeys from the config life
 	setHotKeys();
-
-#ifdef _GTK
-	if(noGui == 0)
-	{
-		gtk_init(&argc, &argv);
-		InitGTKSubsystem(argc, argv);
-		while(gtk_events_pending())
-			gtk_main_iteration_do(FALSE);
-	}
-#endif
 
   if(romIndex >= 0)
 	{
@@ -668,16 +585,6 @@ int main(int argc, char *argv[])
 	
     int periodic_saves = 0;
 	
-#ifdef _S9XLUA_H
-	// load lua script if option passed
-	g_config->getOption("SDL.LuaScript", &s);
-	g_config->setOption("SDL.LuaScript", "");
-	if (s != "")
-	{
-		FCEU_LoadLuaCode(s.c_str());
-	}
-#endif
-	
 	{
 		int id;
 		g_config->getOption("SDL.NewPPU", &id);
@@ -686,6 +593,7 @@ int main(int argc, char *argv[])
 	}
 
 	g_config->getOption("SDL.Frameskip", &frameskip);
+  //frameskip = 10;
 	// loop playing the game
 	while(GameInfo)
 	{
@@ -743,17 +651,6 @@ void FCEUD_Message(const char *text)
 **/
 void FCEUD_PrintError(const char *errormsg)
 {
-#ifdef GTK
-	if(gtkIsStarted == true && noGui == 0)
-	{
-		GtkWidget* d;
-		d = gtk_message_dialog_new(GTK_WINDOW(MainWindow), GTK_DIALOG_MODAL, 
-                GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "%s", errormsg);
-		gtk_dialog_run(GTK_DIALOG(d));
-		gtk_widget_destroy(d);
-	}
-#endif
-
 	fprintf(stderr, "%s\n", errormsg);
 }
 

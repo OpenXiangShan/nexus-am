@@ -27,33 +27,10 @@
 #include "movie.h"
 #include "state.h"
 #include "input/zapper.h"
-#ifdef _S9XLUA_H
-#include "fceulua.h"
-#endif
 #include "input.h"
 #include "vsuni.h"
 #include "fds.h"
 #include "driver.h"
-
-#ifdef WIN32
-#include "drivers/win/main.h"
-#include "drivers/win/memwatch.h"
-#include "drivers/win/cheat.h"
-#include "drivers/win/debugger.h"
-#include "drivers/win/ppuview.h"
-#include "drivers/win/cdlogger.h"
-#include "drivers/win/tracer.h"
-#include "drivers/win/memview.h"
-#include "drivers/win/window.h"
-#include "drivers/win/ntview.h"
-#include "drivers/win/taseditor.h"
-
-#include <string>
-#include <ostream>
-#include <cstring>
-
-extern bool mustRewindNow;
-#endif // WIN32
 
 //it is easier to declare these input drivers extern here than include a bunch of files
 //-------------
@@ -232,27 +209,13 @@ static void UpdateGP(int w, void *data, int arg)
 {
 	if(w==0)	//adelikat, 3/14/09: Changing the joypads to inclusive OR the user's joypad + the Lua joypad, this way lua only takes over the buttons it explicity says to
 	{			//FatRatKnight: Assume lua is always good. If it's doing nothing in particular using my logic, it'll pass-through the values anyway.
-		#ifdef _S9XLUA_H
-		joy[0]= *(uint32 *)joyports[0].ptr;
-		joy[0]= FCEU_LuaReadJoypad(0,joy[0]);
-		joy[2]= *(uint32 *)joyports[0].ptr >> 16;
-		joy[2]= FCEU_LuaReadJoypad(2,joy[2]);
-		#else // without this, there seems to be no input at all without Lua
 		joy[0] = *(uint32 *)joyports[0].ptr;;
 		joy[2] = *(uint32 *)joyports[0].ptr >> 16;
-		#endif
 	}
 	else
 	{
-		#ifdef _S9XLUA_H
-		joy[1]= *(uint32 *)joyports[1].ptr >> 8;
-		joy[1]= FCEU_LuaReadJoypad(1,joy[1]);
-		joy[3]= *(uint32 *)joyports[1].ptr >> 24;
-		joy[3]= FCEU_LuaReadJoypad(3,joy[3]);
-		#else // same goes for the other two pads
 		joy[1] = *(uint32 *)joyports[1].ptr >> 8;
 		joy[3] = *(uint32 *)joyports[1].ptr >> 24;
-		#endif
 	}
 
 }
@@ -794,10 +757,6 @@ struct EMUCMDTABLE FCEUI_CommandTable[]=
 //	{ EMUCMD_MOVIE_INPUT_DISPLAY_TOGGLE,	EMUCMDTYPE_MISC,	FCEUI_ToggleInputDisplay,		0, 0, "Toggle Input Display", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_MOVIE_ICON_DISPLAY_TOGGLE,		EMUCMDTYPE_MISC,	FCEUD_ToggleStatusIcon,			0, 0, "Toggle Status Icon", EMUCMDFLAG_TASEDITOR },
 
-	#ifdef _S9XLUA_H
-	{ EMUCMD_SCRIPT_RELOAD,					EMUCMDTYPE_MISC,	FCEU_ReloadLuaCode,				0, 0, "Reload current Lua script", EMUCMDFLAG_TASEDITOR },
-	#endif
-
 //	{ EMUCMD_SOUND_TOGGLE,					EMUCMDTYPE_SOUND,	FCEUD_SoundToggle,				0, 0, "Sound Mute Toggle", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_SOUND_VOLUME_UP,				EMUCMDTYPE_SOUND,	CommandSoundAdjust,				0, 0, "Sound Volume Up", EMUCMDFLAG_TASEDITOR },
 	{ EMUCMD_SOUND_VOLUME_DOWN,				EMUCMDTYPE_SOUND,	CommandSoundAdjust,				0, 0, "Sound Volume Down", EMUCMDFLAG_TASEDITOR },
@@ -969,166 +928,68 @@ void LagCounterToggle(void)
 
 static void LaunchTasEditor(void)
 {
-#ifdef WIN32
-	extern bool enterTASEditor();
-	enterTASEditor();
-#endif
 }
 
 static void LaunchMemoryWatch(void)
 {
-#ifdef WIN32
-	CreateMemWatch();
-#endif
 }
 
 static void LaunchDebugger(void)
 {
-#ifdef WIN32
-	DoDebug(0);
-#endif
 }
 
 static void LaunchNTView(void)
 {
-#ifdef WIN32
-	DoNTView();
-#endif
 }
 
 static void LaunchPPU(void)
 {
-#ifdef WIN32
-	DoPPUView();
-#endif
 }
 
 static void LaunchHex(void)
 {
-#ifdef WIN32
-	DoMemView();
-#endif
 }
 
 static void LaunchTraceLogger(void)
 {
-#ifdef WIN32
-	DoTracer();
-#endif
 }
 
 static void LaunchCodeDataLogger(void)
 {
-#ifdef WIN32
-	DoCDLogger();
-#endif
 }
 
 static void LaunchCheats(void)
 {
-#ifdef WIN32
-	extern HWND hCheat;
-	ConfigCheats(hCheat);
-#endif
 }
 
 static void LaunchRamWatch(void)
 {
-#ifdef WIN32
-	extern void OpenRamWatch();	//adelikat: Blah blah hacky, I know
-	OpenRamWatch();
-#endif
 }
 
 static void LaunchRamSearch(void)
 {
-#ifdef WIN32
-	extern void OpenRamSearch();
-	OpenRamSearch();
-#endif
 }
 
 static void RamSearchOpLT(void) {
-#ifdef WIN32
-	if (GameInfo)
-	{
-		extern void SetSearchType(int SearchType);
-		extern void DoRamSearchOperation();
-		SetSearchType(0);
-		DoRamSearchOperation();
-	}
-#endif
 }
 
 static void RamSearchOpGT(void) {
-#ifdef WIN32
-	if (GameInfo)
-	{
-		extern void SetSearchType(int SearchType);
-		extern void DoRamSearchOperation();
-		SetSearchType(1);
-		DoRamSearchOperation();
-	}
-#endif
 }
 
 static void RamSearchOpLTE(void) {
-#ifdef WIN32
-	if (GameInfo)
-	{
-		extern void SetSearchType(int SearchType);
-		extern void DoRamSearchOperation();
-		SetSearchType(2);
-		DoRamSearchOperation();
-	}
-#endif
 }
 
 static void RamSearchOpGTE(void) {
-#ifdef WIN32
-	if (GameInfo)
-	{
-		extern void SetSearchType(int SearchType);
-		extern void DoRamSearchOperation();
-		SetSearchType(3);
-		DoRamSearchOperation();
-	}
-#endif
 }
 
 static void RamSearchOpEQ(void) {
-#ifdef WIN32
-	if (GameInfo)
-	{
-		extern void SetSearchType(int SearchType);
-		extern void DoRamSearchOperation();
-		SetSearchType(4);
-		DoRamSearchOperation();
-	}
-#endif
 }
 
 static void RamSearchOpNE(void) {
-#ifdef WIN32
-	if (GameInfo)
-	{
-		extern void SetSearchType(int SearchType);
-		extern void DoRamSearchOperation();
-		SetSearchType(5);
-		DoRamSearchOperation();
-	}
-#endif
 }
 
 static void DebuggerStepInto()
 {
-#ifdef WIN32
-	if (GameInfo)
-	{
-		extern void DoDebuggerStepInto();
-		DoDebuggerStepInto();
-	}
-#endif
 }
 
 static void FA_SkipLag(void)
@@ -1138,33 +999,14 @@ static void FA_SkipLag(void)
 
 static void OpenRom(void)
 {
-#ifdef WIN32
-	extern HWND hAppWnd;
-	LoadNewGamey(hAppWnd, 0);
-#endif
 }
 
 static void CloseRom(void)
 {
-#ifdef WIN32
-	CloseGame();
-#endif
 }
 
 void ReloadRom(void)
 {
-#ifdef WIN32
-	if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR))
-	{
-		// load most recent project
-		handleEmuCmdByTaseditor(execcmd);
-	} else
-	{
-		// load most recent ROM
-		extern void LoadRecentRom(int slot);
-		LoadRecentRom(0);
-	}
-#endif
 }
 
 static void MovieSubtitleToggle(void)
@@ -1185,44 +1027,19 @@ static void UndoRedoSavestate(void)
 
 static void FCEUI_DoExit(void)
 {
-#ifdef WIN32
-	DoFCEUExit();
-#endif
 }
 
 void ToggleFullscreen()
 {
-#ifdef WIN32
-	extern int SetVideoMode(int fs);		//adelikat: Yeah, I know, hacky
-	extern void UpdateCheckedMenuItems();
-
-	UpdateCheckedMenuItems();
-	changerecursive=1;
-
-	int oldmode = fullscreen;
-	if(!SetVideoMode(oldmode ^ 1))
-		SetVideoMode(oldmode);
-	changerecursive=0;
-#endif
 }
 
 static void TaseditorRewindOn(void)
 {
-#ifdef WIN32
-	mustRewindNow = true;
-#endif
 }
 static void TaseditorRewindOff(void)
 {
-#ifdef WIN32
-	mustRewindNow = false;
-#endif
 }
 
 static void TaseditorCommand(void)
 {
-#ifdef WIN32
-	if (FCEUMOV_Mode(MOVIEMODE_TASEDITOR))
-		handleEmuCmdByTaseditor(execcmd);
-#endif
 }

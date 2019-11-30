@@ -36,7 +36,6 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
-#include <climits>
 
 uint8 *Page[32], *VPage[8];
 uint8 **VPageR = VPage;

@@ -12,9 +12,7 @@
 
 #include <unistd.h>
 
-#include <csignal>
 #include <cstring>
-#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <sys/time.h>
@@ -92,20 +90,11 @@ CreateDirs(const std::string &dir)
 	std::string subdir;
 	int x;
 
-#if defined(WIN32) || defined(NEED_MINGW_HACKS)
-	mkdir(dir.c_str());
-	chmod(dir.c_str(), 755);
-	for(x = 0; x < 6; x++) {
-		subdir = dir + PSS + subs[x];
-		mkdir(subdir.c_str());
-	}
-#else
 	mkdir(dir.c_str(), S_IRWXU);
 	for(x = 0; x < 6; x++) {
 		subdir = dir + PSS + subs[x];
 		mkdir(subdir.c_str(), S_IRWXU);
 	}
-#endif
 }
 
 /**
@@ -120,20 +109,7 @@ GetBaseDirectory(std::string &dir)
 	if(home) {
 		dir = std::string(home) + "/.fceux";
 	} else {
-#ifdef WIN32
-		home = new char[MAX_PATH + 1];
-		GetModuleFileName(NULL, home, MAX_PATH + 1);
-
-		char *lastBS = strrchr(home,'\\');
-		if(lastBS) {
-			*lastBS = 0;
-		}
-
-		dir = std::string(home);
-		delete[] home;
-#else
 		dir = "";
-#endif
 	}
 }
 

@@ -35,9 +35,6 @@
 #include "input.h"
 #include "state.h"
 #include "driver.h"
-#ifdef _S9XLUA_H
-#include "fceulua.h"
-#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -461,9 +458,6 @@ static DECLFR(NSF_read)
 				for(x=0;x<8;x++)
 					BANKSET(0x8000+x*4096,NSFHeader.BankSwitch[x]);
 			}
-			#ifdef _S9XLUA_H
-			//CallRegisteredLuaMemHook(A, 1, V, LUAMEMHOOK_WRITE); FIXME
-			#endif
 			return (CurrentSong-1);
 		}
 	case 0x3FF3:return PAL;
@@ -484,90 +478,6 @@ void DrawNSF(uint8 *XBuf)
 
 	memset(XBuf,0,256*240);
 	memset(XDBuf,0,256*240);
-
-#if 0
-	{
-		int32 *Bufpl;
-		int32 mul=0;
-
-		int l=0; //GetSoundBuffer(&Bufpl);
-
-		if(special==0)
-		{
-			if(FSettings.SoundVolume)
-				mul=8192*240/(16384*FSettings.SoundVolume/50);
-			for(x=0;x<256;x++)
-			{
-				uint32 y = 0;
-				//y=142+((Bufpl[(x*l)>>8]*mul)>>14);
-				if(y<240)
-					XBuf[x+y*256]=3;
-			}
-		}
-		else if(special==1)
-		{
-			if(FSettings.SoundVolume)
-				mul=8192*240/(8192*FSettings.SoundVolume/50);
-			for(x=0;x<256;x++)
-			{
-				double r;
-				uint32 xp,yp;
-
-				r=(Bufpl[(x*l)>>8]*mul)>>14;
-				xp=128+r*cos(x*M_PI*2/256);
-				yp=120+r*sin(x*M_PI*2/256);
-				xp&=255;
-				yp%=240;
-				XBuf[xp+yp*256]=3;
-			}
-		}
-		else if(special==2)
-		{
-			static double theta=0;
-			if(FSettings.SoundVolume)
-				mul=8192*240/(16384*FSettings.SoundVolume/50);
-			for(x=0;x<128;x++)
-			{
-				double xc,yc;
-				double r,t;
-				uint32 m,n;
-
-				xc=(double)128-x;
-				yc=0-((double)( ((Bufpl[(x*l)>>8]) *mul)>>14));
-				t=M_PI+atan(yc/xc);
-				r=sqrt(xc*xc+yc*yc);
-
-				t+=theta;
-				m=128+r*cos(t);
-				n=120+r*sin(t);
-
-				if(m<256 && n<240)
-					XBuf[m+n*256]=3;
-
-			}
-			for(x=128;x<256;x++)
-			{
-				double xc,yc;
-				double r,t;
-				uint32 m,n;
-
-				xc=(double)x-128;
-				yc=(double)((Bufpl[(x*l)>>8]*mul)>>14);
-				t=atan(yc/xc);
-				r=sqrt(xc*xc+yc*yc);
-
-				t+=theta;
-				m=128+r*cos(t);
-				n=120+r*sin(t);
-
-				if(m<256 && n<240)
-					XBuf[m+n*256]=3;
-
-			}
-			theta+=(double)M_PI/256;
-		}
-	}
-#endif
 
 	static const int kFgColor = 1;
 	DrawTextTrans(ClipSidesOffset+XBuf+10*256+4+(((31-strlen((char*)NSFHeader.SongName))<<2)), 256, NSFHeader.SongName, kFgColor);

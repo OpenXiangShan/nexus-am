@@ -25,14 +25,10 @@
 #define __FCEU_VERSION
 
 //todo - everyone will want to support this eventually, i suppose
-#ifdef _MSC_VER
-#include "scmrev.h"
-#else
 #ifdef SVN_REV
 #define SCM_REV_STR SCM_REV
 #else
 #define SCM_REV_STR ""
-#endif
 #endif
 
 #define FCEU_NAME "FCEUX"
@@ -47,18 +43,9 @@
 #define FCEU_SUBVERSION_STRING "-interim git" SCM_REV_STR
 #endif
 
-#if defined(_MSC_VER)
-#define FCEU_COMPILER ""
-#define FCEU_COMPILER_DETAIL " msvc " _Py_STRINGIZE(_MSC_VER)
-#define _Py_STRINGIZE(X) _Py_STRINGIZE1((X))
-#define _Py_STRINGIZE1(X) _Py_STRINGIZE2 ## X
-#define _Py_STRINGIZE2(X) #X
-//re: http://72.14.203.104/search?q=cache:HG-okth5NGkJ:mail.python.org/pipermail/python-checkins/2002-November/030704.html+_msc_ver+compiler+version+string&hl=en&gl=us&ct=clnk&cd=5
-#else
 // TODO: make for others compilers
 #define FCEU_COMPILER ""
 #define FCEU_COMPILER_DETAIL ""
-#endif
 
 #define FCEU_VERSION_NUMERIC 22020
 #define FCEU_VERSION_STRING "2.2.3" FCEU_SUBVERSION_STRING FCEU_FEATURE_STRING FCEU_COMPILER

@@ -573,9 +573,6 @@ static DECLFR(A2002) {
 	ret = PPU_status;
 	ret |= PPUGenLatch & 0x1F;
 
-#ifdef FCEUDEF_DEBUGGER
-	if (!fceuindbg)
-#endif
 	{
 		vtoggle = 0;
 		PPU_status &= 0x7F;
@@ -773,9 +770,6 @@ static DECLFR(A2007) {
 					ret = READUPAL(((tmp & 0xC) >> 2) - 1);
 			} else
 				ret = READPAL(tmp & 0x1F);
-			#ifdef FCEUDEF_DEBUGGER
-			if (!fceuindbg)
-			#endif
 			{
 				if ((tmp - 0x1000) < 0x2000)
 					VRAMBuffer = VPage[(tmp - 0x1000) >> 10][tmp - 0x1000];
@@ -785,9 +779,6 @@ static DECLFR(A2007) {
 			}
 		} else {
 			ret = VRAMBuffer;
-			#ifdef FCEUDEF_DEBUGGER
-			if (!fceuindbg)
-			#endif
 			{
 				if (PPU_hook) PPU_hook(tmp);
 				PPUGenLatch = VRAMBuffer;
@@ -805,9 +796,6 @@ static DECLFR(A2007) {
 			}
 		}
 
-	#ifdef FCEUDEF_DEBUGGER
-		if (!fceuindbg)
-	#endif
 		{
 			if ((ScreenON || SpriteON) && (scanline < 240)) {
 				uint32 rad = RefreshAddr;
@@ -1026,9 +1014,6 @@ void FCEUPPU_LineUpdate(void) {
 	if (newppu)
 		return;
 
-#ifdef FCEUDEF_DEBUGGER
-	if (!fceuindbg)
-#endif
 	if (Pline) {
 		int l = GETLASTPIXEL;
 		RefreshLine(l);

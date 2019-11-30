@@ -65,13 +65,7 @@ void EMUFILE_FILE::open(const char* fname, const char* mode)
 	fp = fopen(fname,mode);
 	if(!fp)
 	{
-#ifdef _MSC_VER
-		std::wstring wfname = mbstowcs((std::string)fname);
-		std::wstring wfmode = mbstowcs((std::string)mode);
-		fp = _wfopen(wfname.c_str(),wfmode.c_str());
-#endif
-		if(!fp)
-			failbit = true;
+    failbit = true;
 	}
 	this->fname = fname;
 	strcpy(this->mode,mode);
@@ -81,11 +75,7 @@ void EMUFILE_FILE::open(const char* fname, const char* mode)
 void EMUFILE_FILE::truncate(s32 length)
 {
 	::fflush(fp);
-	#ifdef _MSC_VER
-		_chsize(_fileno(fp),length);
-	#else
-		ftruncate(fileno(fp),length);
-	#endif
+  ftruncate(fileno(fp),length);
 	// this is probably wrong if mode is "wb"
 	fclose(fp);
 	fp = NULL;
@@ -252,28 +242,4 @@ u8 EMUFILE::read8le()
 	u8 temp = 0;
 	fread(&temp,1);
 	return temp;
-}
-
-void EMUFILE::writedouble(double* val)
-{
-	write64le(double_to_u64(*val));
-}
-void EMUFILE::writedouble(double val)
-{
-	write64le(double_to_u64(val));
-}
-
-double EMUFILE::readdouble()
-{
-	double temp;
-	readdouble(&temp);
-	return temp;
-}
-
-size_t EMUFILE::readdouble(double* val)
-{
-	u64 temp = 0;
-	size_t ret = read64le(&temp);
-	*val = u64_to_double(temp);
-	return ret;
 }

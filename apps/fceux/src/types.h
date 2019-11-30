@@ -47,9 +47,6 @@ typedef signed int int32;
 #define mkdir _mkdir
 #define alloca _alloca
 #define FCEUX_fstat _fstat
-#if _MSC_VER < 1500
-#define vsnprintf _vsnprintf
-#endif
 #define W_OK 2
 #define R_OK 2
 #define X_OK 1
@@ -95,14 +92,6 @@ typedef uint32_t uint32;
 					   other than Windows/DOS targets?
 					*/
 
- #if _MSC_VER >= 1300
-  #pragma warning(disable:4244) //warning C4244: '=' : conversion from 'uint32' to 'uint8', possible loss of data
-  #pragma warning(disable:4996) //'strdup' was declared deprecated
-#endif
-
- #if _MSC_VER < 1400
-  #define vsnprintf _vsnprintf
- #endif
 #endif
 
 #if PSS_STYLE==2

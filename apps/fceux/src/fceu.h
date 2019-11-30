@@ -146,11 +146,6 @@ void FCEU_PutImage(void);
 void FCEU_PutImageDummy(void);
 #endif
 
-#ifdef WIN32
-extern void UpdateCheckedMenuItems();
-extern void PushCurrentVideoSettings();
-#endif
-
 extern uint8 Exit;
 extern int default_palette_selection;
 extern uint8 vsdip;

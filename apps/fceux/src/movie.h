@@ -2,7 +2,6 @@
 #define __MOVIE_H_
 
 #include "input/zapper.h"
-#include "utils/guid.h"
 #include "utils/md5.h"
 
 #include <vector>
@@ -197,7 +196,6 @@ public:
 	int RAMInitOption, RAMInitSeed;
 	//this is the RERECORD COUNT. please rename variable.
 	int rerecordCount;
-	FCEU_Guid guid;
 
 	//was the frame data stored in binary?
 	bool binaryFlag;
