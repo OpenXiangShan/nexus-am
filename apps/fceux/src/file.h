@@ -6,8 +6,6 @@
 #include "types.h"
 #include "emufile.h"
 
-#include <string>
-
 extern bool bindSavestate;
 
 struct FCEUFILE {

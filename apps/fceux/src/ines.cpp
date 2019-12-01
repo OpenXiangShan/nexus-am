@@ -32,13 +32,7 @@
 #include "utils/general.h"
 #include "utils/memory.h"
 #include "utils/md5.h"
-#include "utils/xstring.h"
-#include "vsuni.h"
 #include "driver.h"
-
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 extern SFORMAT FCEUVSUNI_STATEINFO[];
 
@@ -89,7 +83,6 @@ static void iNES_ExecPower() {
 void iNESGI(GI h) { //bbit edited: removed static keyword
 	switch (h) {
 	case GI_RESETSAVE:
-		FCEU_ClearGameSave(&iNESCart);
 		break;
 
 	case GI_RESETM2:
@@ -101,7 +94,6 @@ void iNESGI(GI h) { //bbit edited: removed static keyword
 		break;
 	case GI_CLOSE:
 	{
-		FCEU_SaveGameSave(&iNESCart);
 		if (iNESCart.Close)
 			iNESCart.Close();
 		if (ROM) {
@@ -270,7 +262,6 @@ static const TMasterRomInfo sMasterRomInfo[] = {
 	{ 0x164eea6097a1e313ULL, "busc=1" }, //Cybernoid - The Fighting Machine (U)[!].nes -- needs bus conflict emulation
 };
 const TMasterRomInfo* MasterRomInfo;
-TMasterRomInfoParams MasterRomInfoParams;
 
 static void CheckHInfo(void) {
 	/* ROM images that have the battery-backed bit set in the header that really
@@ -337,11 +328,11 @@ static void CheckHInfo(void) {
 		MasterRomInfo = &info;
 		if (!info.params) break;
 
-		std::vector<std::string> toks = tokenize_str(info.params, ",");
-		for (int j = 0; j < (int)toks.size(); j++) {
-			std::vector<std::string> parts = tokenize_str(toks[j], "=");
-			MasterRomInfoParams[parts[0]] = parts[1];
-		}
+		//std::vector<std::string> toks = tokenize_str(info.params, ",");
+		//for (int j = 0; j < (int)toks.size(); j++) {
+		//	std::vector<std::string> parts = tokenize_str(toks[j], "=");
+		//	MasterRomInfoParams[parts[0]] = parts[1];
+		//}
 		break;
 	}
 
@@ -425,11 +416,6 @@ static void CheckHInfo(void) {
 		FCEU_printf("%s", gigastr);
 	}
 }
-
-typedef struct {
-	int32 mapper;
-	void (*init)(CartInfo *);
-} NewMI;
 
 //this is for games that is not the a power of 2
 //mapper based for now...
@@ -869,8 +855,6 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 		for (x = 0; x < 8; x++) {
 			partialmd5 |= (uint64)iNESCart.MD5[7 - x] << (x * 8);
 		}
-
-		FCEU_VSUniCheck(partialmd5, &MapperNo, &Mirroring);
 	}
 	/* Must remain here because above functions might change value of
 	VROM_size and free(VROM).
@@ -893,7 +877,6 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 		FCEU_PrintError("iNES mapper #%d is not supported at all.", MapperNo);
 
 	GameInfo->mappernum = MapperNo;
-	FCEU_LoadGameSave(&iNESCart);
 
 	strcpy(LoadedRomFName, name); //bbit edited: line added
 
@@ -926,71 +909,10 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	return 1;
 }
 
-// bbit edited: the whole function below was added
-int iNesSave() {
-	char name[2048];
-
-	strcpy(name, LoadedRomFName);
-	if (strcmp(name + strlen(name) - 4, ".nes") != 0) { //para edit
-		strcat(name, ".nes");
-	}
-
-	return iNesSaveAs(name);
-}
-
-int iNesSaveAs(char* name)
-{
-	//adelikat: TODO: iNesSave() and this have pretty much the same code, outsource the common code to a single function
-	//caitsith2: done. iNesSave() now gets filename and calls iNesSaveAs with that filename.
-	FILE *fp;
-
-	if (GameInfo->type != GIT_CART) return 0;
-	if (GameInterface != iNESGI) return 0;
-
-	fp = fopen(name, "wb");
-	if (!fp)
-		return 0;
-
-	if (fwrite(&head, 1, 16, fp) != 16)
-	{
-		fclose(fp);
-		return 0;
-	}
-
-	if (head.ROM_type & 4)
-	{
-		/* Trainer */
-		fwrite(trainerpoo, 512, 1, fp);
-	}
-
-	fwrite(ROM, 0x4000, ROM_size, fp);
-
-	if (head.VROM_size)
-		fwrite(VROM, 0x2000, head.VROM_size, fp);
-
-	fclose(fp);
-	return 1;
-}
-
-//para edit: added function below
-char *iNesShortFName() {
-	char *ret;
-
-	if (!(ret = strrchr(LoadedRomFName, '\\')))
-	{
-		if (!(ret = strrchr(LoadedRomFName, '/')))
-			return 0;
-	}
-	return ret + 1;
-}
-
 static int iNES_Init(int num) {
 	BMAPPINGLocal *tmp = bmap;
 
 	CHRRAMSize = -1;
-
-	if (GameInfo->type == GIT_VSUNI)
-		AddExState(FCEUVSUNI_STATEINFO, ~0, 0, 0);
 
 	while (tmp->init) {
 		if (num == tmp->number) {

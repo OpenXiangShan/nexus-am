@@ -1,10 +1,8 @@
-#include "../common/args.h"
 #include "../common/config.h"
 
 #include "input.h"
 
 extern CFGSTRUCT DriverConfig[];
-extern ARGPSTRUCT DriverArgs[];
 
 void DoDriverArgs(void);
 

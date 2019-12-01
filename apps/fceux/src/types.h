@@ -59,9 +59,6 @@ typedef signed int int32;
 #define alloca __builtin_alloca
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <inttypes.h>
 typedef int8_t int8;
 typedef int16_t int16;

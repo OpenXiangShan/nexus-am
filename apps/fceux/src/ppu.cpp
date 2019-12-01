@@ -34,10 +34,6 @@
 #include "input.h"
 #include "driver.h"
 		 
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
 #define debug_loggingCD false
 
 #define VBlankON    (PPU[0] & 0x80)	//Generate VBlank NMI

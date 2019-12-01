@@ -14,15 +14,6 @@
 #include "../common/configSys.h"
 #include "../../types.h"
 
-#include <unistd.h>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-
 extern double g_fpsScale;
 
 extern bool MaxSpeed;
@@ -41,7 +32,6 @@ static void DriverKill(void);
 static int DriverInitialize(FCEUGI *gi);
 uint64 FCEUD_GetTime();
 int gametype = 0;
-static int noconfig;
 
 int pal_emulation;
 int dendy;
@@ -239,12 +229,6 @@ DriverInitialize(FCEUGI *gi)
 	if(InitVideo(gi) < 0) return 0;
 	inited|=4;
 
-	//if(InitSound())
-	//	inited|=1;
-
-	if(InitJoysticks())
-		inited|=2;
-
 	int fourscore=0;
 	g_config->getOption("SDL.FourScore", &fourscore);
 	eoptions &= ~EO_FOURSCORE;
@@ -261,11 +245,6 @@ DriverInitialize(FCEUGI *gi)
 static void
 DriverKill()
 {
-	if (!noconfig)
-		g_config->save();
-
-	if(inited&2)
-		KillJoysticks();
 	if(inited&4)
 		KillVideo();
 	inited=0;
@@ -280,29 +259,14 @@ FCEUD_Update(uint8 *XBuf,
 			 int32 *Buffer,
 			 int Count)
 {
-	//int ocount = Count;
 	// apply frame scaling to Count
 	Count = (int)(Count / g_fpsScale);
 	if(Count) {
-		//int32 can=GetWriteSound();
-		//static int uflow=0;
-		//int32 tmpcan;
-
-		// don't underflow when scaling fps
-		//if(can >= (int32)GetMaxSound() && g_fpsScale==1.0) uflow=1;	/* Go into massive underflow mode. */
-
-		//if(can > Count) can=Count;
-		//else uflow=0;
-
-    //WriteSound(Buffer,can);
-
-		//if(uflow) puts("Underflow");
-		//tmpcan = GetWriteSound();
 		// don't underflow when scaling fps
 		if(g_fpsScale>1.0) {
 			if(XBuf && (inited&4) && !(NoWaiting & 2))
 				BlitScreen(XBuf);
-		} //else puts("Skipped");
+		}
 
 	} else {
 		if(!NoWaiting && (!(eoptions&EO_NOTHROTTLE) || FCEUI_EmulationPaused()))
@@ -315,15 +279,6 @@ FCEUD_Update(uint8 *XBuf,
 		}
 	}
 	FCEUD_UpdateInput();
-	//if(!Count && !NoWaiting && !(eoptions&EO_NOTHROTTLE))
-	// SpeedThrottle();
-	//if(XBuf && (inited&4))
-	//{
-	// BlitScreen(XBuf);
-	//}
-	//if(Count)
-	// WriteSound(Buffer,Count,NoWaiting);
-	//FCEUD_UpdateInput();
 }
 
 /**
@@ -384,19 +339,6 @@ int main(int argc, char *argv[])
   };
   argv = const_cast<char **>(my_argv);
 
-  // this is a hackish check for the --help arguemnts
-  // these are normally processed by the config parser, but SDL_Init
-  // must be run before the config parser: so if even SDL_Init fails,
-  // these six lines will still print the help output
-	if(argc > 1)
-	{
-		if(!strcmp(argv[1], "--help") || !strcmp(argv[1],"-h"))
-		{
-            ShowUsage(argv[0]);
-			return 0;
-		}
-	}
-
 	int error, frameskip;
 
 	FCEUD_Message("Starting " FCEU_NAME_AND_VERSION "...\n");
@@ -423,17 +365,8 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	// check for --help or -h and display usage; also check for --nogui
-	for(int i=0; i<argc;i++)
-	{
-		if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
-		{
-			ShowUsage(argv[0]);
-			SDL_Quit();
-			return 0;
-		}
-	}
 	int romIndex = g_config->parse(argc, argv);
+  printf("romIndex = %d\n", romIndex);
 
 	// This is here so that a default fceux.cfg will be created on first
 	// run, even without a valid ROM to play.
@@ -453,27 +386,9 @@ int main(int argc, char *argv[])
 	InitVideo(GameInfo);
 	InputCfg(s);
 	}
-	// set the FAMICOM PAD 2 Mic thing 
-	{
-	int t;
-	g_config->getOption("SDL.Input.FamicomPad2.EnableMic", &t);
-		if(t)
-			replaceP2StartWithMicrophone = t;
-	}
 
     // update the input devices
 	UpdateInput(g_config);
-
-	// check if opengl is enabled with a scaler and display an error and bail	
-	int opengl;
-	int scaler;
-	g_config->getOption("SDL.OpenGL", &opengl);
-	g_config->getOption("SDL.SpecialFilter", &scaler);
-	if(opengl && scaler)
-	{
-		printf("Scalers are not supported in OpenGL mode.  Terminating.\n");
-		exit(2);
-	}
 
 	// If x/y res set to 0, store current display res in SDL.LastX/YRes
 	int yres, xres;
@@ -514,44 +429,9 @@ int main(int argc, char *argv[])
 		g_config->setOption("SDL.LastYRes", yres);
 	}
 #endif
-	
-  AutoResumePlay = false;
-  FCEUI_SetAviEnableHUDrecording(false);
-
-	// check to see if movie messages are disabled
-	int mm;
-	g_config->getOption("SDL.MovieMsg", &mm);
-	if( mm == 0)
-		FCEUI_SetAviDisableMovieMessages(true);
-	else
-		FCEUI_SetAviDisableMovieMessages(false);
-	
-	// if we're not compiling w/ the gui, exit if a rom isn't specified
-	if(romIndex <= 0) {
-		
-		ShowUsage(argv[0]);
-		FCEUD_Message("\nError parsing command line arguments\n");
-		SDL_Quit();
-		return -1;
-	}
-	
 
 	// update the emu core
 	UpdateEMUCore(g_config);
-
-	{
-		int id;
-		g_config->getOption("SDL.InputDisplay", &id);
-		//extern int input_display;
-		//input_display = id;
-		// not exactly an id as an true/false switch; still better than creating another int for that
-		g_config->getOption("SDL.SubtitleDisplay", &id); 
-		extern int movieSubtitles;
-		movieSubtitles = id;
-	}
-	
-	// load the hotkeys from the config life
-	setHotKeys();
 
   if(romIndex >= 0)
 	{
@@ -563,19 +443,10 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 		g_config->setOption("SDL.LastOpenFile", argv[romIndex]);
-		g_config->save();
-
 	}
 	
     int periodic_saves = 0;
 	
-	{
-		int id;
-		g_config->getOption("SDL.NewPPU", &id);
-		if (id)
-			newppu = 1;
-	}
-
 	g_config->getOption("SDL.Frameskip", &frameskip);
   //frameskip = 10;
 	// loop playing the game

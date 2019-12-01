@@ -2,52 +2,11 @@
 #include "throttle.h"
 #include "config.h"
 
-
 #include "input.h"
 #include "dface.h"
 
 #include "sdl.h"
 #include "sdl-video.h"
-
-#include <unistd.h>
-
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-const char* HotkeyStrings[HK_MAX] = {
-		"CheatMenu",
-		"BindState",
-		"LoadLua",
-		"ToggleBG",
-		"SaveState",
-		"FDSSelect",
-		"LoadState",
-		"FDSEject",
-		"VSInsertCoin",
-		"VSToggleDip",
-		"MovieToggleFrameDisplay",
-		"SubtitleDisplay",
-		"Reset",
-		"Screenshot",
-		"Pause",
-		"DecreaseSpeed",
-		"IncreaseSpeed",
-		"FrameAdvance",
-		"Turbo",
-		"ToggleInputDisplay",
-		"ToggleMovieRW",
-		"MuteCapture",
-		"Quit",
-		"FrameAdvanceLagSkip",
-		"LagCounterDisplay",
-		"SelectState0", "SelectState1", "SelectState2", "SelectState3",
-		"SelectState4", "SelectState5", "SelectState6", "SelectState7", 
-		"SelectState8", "SelectState9", "SelectStateNext", "SelectStatePrev",
-		"VolumeDown", "VolumeUp" };
 
 /**
  * Read a custom pallete from a file and load it into the core.
@@ -79,24 +38,6 @@ LoadCPalette(const std::string &file)
 }
 
 /**
- * Creates the subdirectories used for saving snapshots, movies, game
- * saves, etc.  Hopefully obsolete with new configuration system.
- */
-static void
-CreateDirs(const std::string &dir)
-{
-	const char *subs[8]={"fcs","snaps","gameinfo","sav","cheats","movies","cfg.d"};
-	std::string subdir;
-	int x;
-
-	mkdir(dir.c_str(), S_IRWXU);
-	for(x = 0; x < 6; x++) {
-		subdir = dir + PSS + subs[x];
-		mkdir(subdir.c_str(), S_IRWXU);
-	}
-}
-
-/**
  * Attempts to locate FCEU's application directory.  This will
  * hopefully become obsolete once the new configuration system is in
  * place.
@@ -121,9 +62,6 @@ InitConfig()
 	Config *config;
 
 	GetBaseDirectory(dir);
-
-	FCEUI_SetBaseDirectory(dir.c_str());
-	CreateDirs(dir);
 
 	config = new Config(dir);
 
@@ -236,18 +174,6 @@ InitConfig()
     //TODO implement this
     config->addOption("periodicsaves", "SDL.PeriodicSaves", 0);
 
-	// fcm -> fm2 conversion
-	config->addOption("fcmconvert", "SDL.FCMConvert", "");
-    
-	// fm2 -> srt conversion
-	config->addOption("ripsubs", "SDL.RipSubs", "");
-	
-	// enable new PPU core
-	config->addOption("newppu", "SDL.NewPPU", 0);
-
-    // quit when a+b+select+start is pressed
-    config->addOption("4buttonexit", "SDL.ABStartSelectExit", 0);
-
 	// GamePad 0 - 3
 	for(unsigned int i = 0; i < GAMEPAD_NUM_DEVICES; i++) {
 		char buf[64];
@@ -261,123 +187,6 @@ InitConfig()
 		}
 	}
     
-	// PowerPad 0 - 1
-	for(unsigned int i = 0; i < POWERPAD_NUM_DEVICES; i++) {
-		char buf[64];
-		snprintf(buf, 20, "SDL.Input.PowerPad.%d.", i);
-		prefix = buf;
-
-		config->addOption(prefix + "DeviceType", DefaultPowerPadDevice[i]);
-		config->addOption(prefix + "DeviceNum",  0);
-		for(unsigned int j = 0; j < POWERPAD_NUM_BUTTONS; j++) {
-			config->addOption(prefix +PowerPadNames[j], DefaultPowerPad[i][j]);
-		}
-	}
-
-	// QuizKing
-	prefix = "SDL.Input.QuizKing.";
-	config->addOption(prefix + "DeviceType", DefaultQuizKingDevice);
-	config->addOption(prefix + "DeviceNum", 0);
-	for(unsigned int j = 0; j < QUIZKING_NUM_BUTTONS; j++) {
-		config->addOption(prefix + QuizKingNames[j], DefaultQuizKing[j]);
-	}
-
-	// HyperShot
-	prefix = "SDL.Input.HyperShot.";
-	config->addOption(prefix + "DeviceType", DefaultHyperShotDevice);
-	config->addOption(prefix + "DeviceNum", 0);
-	for(unsigned int j = 0; j < HYPERSHOT_NUM_BUTTONS; j++) {
-		config->addOption(prefix + HyperShotNames[j], DefaultHyperShot[j]);
-	}
-
-	// Mahjong
-	prefix = "SDL.Input.Mahjong.";
-	config->addOption(prefix + "DeviceType", DefaultMahjongDevice);
-	config->addOption(prefix + "DeviceNum", 0);
-	for(unsigned int j = 0; j < MAHJONG_NUM_BUTTONS; j++) {
-		config->addOption(prefix + MahjongNames[j], DefaultMahjong[j]);
-	}
-
-	// TopRider
-	prefix = "SDL.Input.TopRider.";
-	config->addOption(prefix + "DeviceType", DefaultTopRiderDevice);
-	config->addOption(prefix + "DeviceNum", 0);
-	for(unsigned int j = 0; j < TOPRIDER_NUM_BUTTONS; j++) {
-		config->addOption(prefix + TopRiderNames[j], DefaultTopRider[j]);
-	}
-
-	// FTrainer
-	prefix = "SDL.Input.FTrainer.";
-	config->addOption(prefix + "DeviceType", DefaultFTrainerDevice);
-	config->addOption(prefix + "DeviceNum", 0);
-	for(unsigned int j = 0; j < FTRAINER_NUM_BUTTONS; j++) {
-		config->addOption(prefix + FTrainerNames[j], DefaultFTrainer[j]);
-	}
-
-	// FamilyKeyBoard
-	prefix = "SDL.Input.FamilyKeyBoard.";
-	config->addOption(prefix + "DeviceType", DefaultFamilyKeyBoardDevice);
-	config->addOption(prefix + "DeviceNum", 0);
-	for(unsigned int j = 0; j < FAMILYKEYBOARD_NUM_BUTTONS; j++) {
-		config->addOption(prefix + FamilyKeyBoardNames[j],
-						DefaultFamilyKeyBoard[j]);
-	}
-
-	// for FAMICOM microphone in pad 2 pad 1 didn't have it
-	// Takeshi no Chousenjou uses it for example.
-	prefix = "SDL.Input.FamicomPad2.";
-	config->addOption("rp2mic", prefix + "EnableMic", 0);
-
-	// TODO: use a better data structure to store the hotkeys or something
-	//			improve this code overall in the future to make it
-	//			easier to maintain
-	const int Hotkeys[HK_MAX] = {
-		SDLK_F1, // cheat menu
-		SDLK_F2, // bind state
-		SDLK_F3, // load lua
-		SDLK_F4, // toggleBG
-		SDLK_F5, // save state
-		SDLK_F6, // fds select
-		SDLK_F7, // load state
-		SDLK_F8, // fds eject
-		SDLK_F6, // VS insert coin
-		SDLK_F8, // VS toggle dipswitch
-		SDLK_PERIOD, // toggle frame display
-		SDLK_F10, // toggle subtitle
-		SDLK_F11, // reset
-		SDLK_F12, // screenshot
-		SDLK_PAUSE, // pause
-		SDLK_MINUS, // speed++
-		SDLK_EQUALS, // speed--
-		SDLK_BACKSLASH, //frame advnace
-		SDLK_TAB, // turbo
-		SDLK_COMMA, // toggle input display
-		SDLK_q, // toggle movie RW
-		SDLK_QUOTE, // toggle mute capture
-		0, // quit // edit 10/11/11 - don't map to escape, it causes ugly things to happen to sdl.  can be manually appended to config
-		SDLK_DELETE, // frame advance lag skip
-		SDLK_SLASH, // lag counter display
-		SDLK_0, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5,
-		SDLK_6, SDLK_7, SDLK_8, SDLK_9,
-		SDLK_PAGEUP, // select state next
-		SDLK_PAGEDOWN}; // select state prev
-
-	prefix = "SDL.Hotkeys.";
-	for(int i=0; i < HK_MAX; i++)
-		config->addOption(prefix + HotkeyStrings[i], Hotkeys[i]);
-	// All mouse devices
-	config->addOption("SDL.OekaKids.0.DeviceType", "Mouse");
-	config->addOption("SDL.OekaKids.0.DeviceNum", 0);
-
-	config->addOption("SDL.Arkanoid.0.DeviceType", "Mouse");
-	config->addOption("SDL.Arkanoid.0.DeviceNum", 0);
-
-	config->addOption("SDL.Shadow.0.DeviceType", "Mouse");
-	config->addOption("SDL.Shadow.0.DeviceNum", 0);
-
-	config->addOption("SDL.Zapper.0.DeviceType", "Mouse");
-	config->addOption("SDL.Zapper.0.DeviceNum", 0);
-
 	return config;
 }
 
@@ -400,12 +209,6 @@ UpdateEMUCore(Config *config)
 	config->getOption("SDL.PAL", &region);
 	FCEUI_SetRegion(region);
 
-	config->getOption("SDL.GameGenie", &flag);
-	FCEUI_SetGameGenie(flag ? 1 : 0);
-
-	//config->getOption("SDL.Sound.LowPass", &flag);
-	//FCEUI_SetLowPass(flag ? 1 : 0);
-
 	config->getOption("SDL.DisableSpriteLimit", &flag);
 	FCEUI_DisableSpriteLimitation(flag ? 1 : 0);
 
@@ -421,4 +224,3 @@ UpdateEMUCore(Config *config)
 
 	FCEUI_SetRenderedLines(start + 8, end - 8, start, end);
 }
-

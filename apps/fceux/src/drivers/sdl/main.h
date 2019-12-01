@@ -22,7 +22,6 @@
 
 #include "../../driver.h"
 #include "../common/config.h"
-#include "../common/args.h"
 
 extern int eoptions;
 #define EO_NO8LIM      1

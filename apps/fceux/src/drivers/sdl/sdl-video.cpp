@@ -35,10 +35,6 @@
 #include "../common/configSys.h"
 #include "sdl-video.h"
 
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-
 // GLOBALS
 extern Config *g_config;
 
@@ -382,35 +378,6 @@ InitVideo(FCEUGI *gi)
 }
 #endif
 
-/**
- * Toggles the full-screen display.
- */
-void ToggleFS()
-{
-    // pause while we we are making the switch
-	bool paused = FCEUI_EmulationPaused();
-	if(!paused)
-		FCEUI_ToggleEmulationPause();
-
-	int error, fullscreen = s_fullscreen;
-
-	// shut down the current video system
-	KillVideo();
-
-	// flip the fullscreen flag
-	g_config->setOption("SDL.Fullscreen", !fullscreen);
-	// try to initialize the video
-	error = InitVideo(GameInfo);
-	if(error) {
-		// if we fail, just continue with what worked before
-		g_config->setOption("SDL.Fullscreen", fullscreen);
-		InitVideo(GameInfo);
-	}
-	// if we paused to make the switch; unpause
-	if(!paused)
-		FCEUI_ToggleEmulationPause();
-}
-
 static SDL_Color s_psdl[256];
 
 /**
@@ -600,30 +567,4 @@ PtoV(uint16 x,
 	}
 	y += s_srendline;
 	return (x | (y << 16));
-}
-
-bool enableHUDrecording = false;
-bool FCEUI_AviEnableHUDrecording()
-{
-	if (enableHUDrecording)
-		return true;
-
-	return false;
-}
-void FCEUI_SetAviEnableHUDrecording(bool enable)
-{
-	enableHUDrecording = enable;
-}
-
-bool disableMovieMessages = false;
-bool FCEUI_AviDisableMovieMessages()
-{
-	if (disableMovieMessages)
-		return true;
-
-	return false;
-}
-void FCEUI_SetAviDisableMovieMessages(bool disable)
-{
-	disableMovieMessages = disable;
 }

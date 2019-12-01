@@ -21,6 +21,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 #include "../ines.h"
+#include <assert.h>
 
 static bool is_BMCFK23CA;
 static uint8 unromchr;
@@ -251,8 +252,10 @@ void BMCFK23C_Init(CartInfo *info)
 	AddExState(&dipswitch, 1, 0, "DPSW");
 
 	prg_bonus = 1;
-	if(MasterRomInfoParams.find("bonus") != MasterRomInfoParams.end())
-		prg_bonus = atoi(MasterRomInfoParams["bonus"].c_str());
+
+  assert(0);
+	//if(MasterRomInfoParams.find("bonus") != MasterRomInfoParams.end())
+	//	prg_bonus = atoi(MasterRomInfoParams["bonus"].c_str());
 
 	prg_mask = 0x7F>>(prg_bonus);
 }
@@ -278,7 +281,8 @@ void BMCFK23CA_Init(CartInfo *info)
 	AddExState(&dipswitch, 1, 0, "DPSW");
 
 	prg_bonus = 1;
-	if(MasterRomInfoParams.find("bonus") != MasterRomInfoParams.end())
-		prg_bonus = atoi(MasterRomInfoParams["bonus"].c_str());
+  assert(0);
+	//if(MasterRomInfoParams.find("bonus") != MasterRomInfoParams.end())
+	//	prg_bonus = atoi(MasterRomInfoParams["bonus"].c_str());
 	prg_mask = 0x7F>>(prg_bonus);
 }

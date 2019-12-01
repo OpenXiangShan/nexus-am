@@ -25,10 +25,9 @@ THE SOFTWARE.
 #ifndef EMUFILE_H
 #define EMUFILE_H
 
-#include <cassert>
-#include <cstdio>
-#include <cstring>
-#include <cstdarg>
+#include <assert.h>
+#include <string.h>
+#include <stdarg.h>
 #include <string>
 
 #include "types.h"

@@ -32,10 +32,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
-#include <cstring>
+#include <math.h>
 
 bool force_grayscale = false;
 
@@ -201,22 +198,6 @@ void FCEUI_SetUserPalette(uint8 *pal, int nEntries)
 void FCEU_LoadGamePalette(void)
 {
 	palette_game_available = false;
-	std::string path = FCEU_MakeFName(FCEUMKF_PALETTE,0,0);
-	FILE* fp = FCEUD_UTF8fopen(path,"rb");
-	if(fp)
-	{
-		int readed = fread(palette_game,1,64*8*3,fp);
-		int nEntries = readed/3;
-		fclose(fp);
-
-		//if palette is incomplete, generate deemph entries
-		if(nEntries != 512)
-			ApplyDeemphasisComplete(palette_game);
-
-		palette_game_available = true;
-	}
-
-	//not sure whether this is needed
 	FCEU_ResetPalette();
 }
 

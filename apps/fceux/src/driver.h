@@ -5,9 +5,6 @@
 #include "git.h"
 #include "file.h"
 
-#include <cstdio>
-#include <cstring>
-
 FILE *FCEUD_UTF8fopen(const char *fn, const char *mode);
 inline FILE *FCEUD_UTF8fopen(const std::string &n, const char *mode) { return FCEUD_UTF8fopen(n.c_str(),mode); }
 EMUFILE_FILE* FCEUD_UTF8_fstream(const char *n, const char *m);

@@ -26,17 +26,9 @@
 #include "state.h"
 #include "palette.h"
 #include "input.h"
-#include "vsuni.h"
 #include "drawing.h"
 #include "driver.h"
 #include "drivers/common/vidblit.h"
-
-#include <stdint.h>
-
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <cstdarg>
 
 //XBuf:
 //0-63 is reserved for 7 special colours used by FCEUX (overlay, etc.)
@@ -53,38 +45,8 @@ static u8 *xbsave=NULL;
 GUIMESSAGE guiMessage;
 GUIMESSAGE subtitleMessage;
 
-//for input display
-extern int input_display;
-extern uint32 cur_input_display;
-
-bool oldInputDisplay = false;
-
-unsigned int lastu = 0;
-
-std::string AsSnapshotName ="";			//adelikat:this will set the snapshot name when for s savesnapshot as function
-
-void FCEUI_SetSnapshotAsName(std::string name) { AsSnapshotName = name; }
-std::string FCEUI_GetSnapshotAsName() { return AsSnapshotName; }
-
 void FCEU_KillVirtualVideo(void)
 {
-	//mbg merge TODO 7/17/06 temporarily removed
-	//if(xbsave)
-	//{
-	// free(xbsave);
-	// xbsave=0;
-	//}
-	//if(XBuf)
-	//{
-	//UnmapViewOfFile(XBuf);
-	//CloseHandle(mapXBuf);
-	//mapXBuf=NULL;
-	//}
-	//if(XBackBuf)
-	//{
-	// free(XBackBuf);
-	// XBackBuf=0;
-	//}
 }
 
 /**
@@ -139,120 +101,6 @@ void FCEU_PutImageDummy(void)
 }
 #endif
 
-static int dosnapsave=0;
-void FCEUI_SaveSnapshot(void)
-{
-	dosnapsave=1;
-}
-
-void FCEUI_SaveSnapshotAs(void)
-{
-	dosnapsave=2;
-}
-
-static void ReallySnap(void)
-{
-	int x=SaveSnapshot();
-	if(!x)
-		FCEU_DispMessage("Error saving screen snapshot.",0);
-	else
-		FCEU_DispMessage("Screen snapshot %d saved.",0,x-1);
-}
-
-void FCEU_PutImage(void)
-{
-	if(dosnapsave==2)	//Save screenshot as, currently only flagged & run by the Win32 build. //TODO SDL: implement this?
-	{
-		char nameo[512];
-		strcpy(nameo,FCEUI_GetSnapshotAsName().c_str());
-		if (nameo[0])
-		{
-			SaveSnapshot(nameo);
-			FCEU_DispMessage("Snapshot Saved.",0);
-		}
-		dosnapsave=0;
-	}
-	if(GameInfo->type==GIT_NSF)
-	{
-		//DrawNSF(XBuf);
-    assert(0);
-
-		//Save snapshot after NSF screen is drawn.  Why would we want to do it before?
-		if(dosnapsave==1)
-		{
-			ReallySnap();
-			dosnapsave=0;
-		}
-	}
-	else
-	{
-		//Save backbuffer before overlay stuff is written.
-		if(!FCEUI_EmulationPaused())
-			memcpy(XBackBuf, XBuf, 256*256);
-
-		//Some messages need to be displayed before the avi is dumped
-		DrawMessage(true);
-
-		//Save snapshot
-		if(dosnapsave==1)
-		{
-			ReallySnap();
-			dosnapsave=0;
-		}
-
-		if (!FCEUI_AviEnableHUDrecording()) snapAVI();
-
-		if(GameInfo->type==GIT_VSUNI)
-			FCEU_VSUniDraw(XBuf);
-
-		//FCEU_DrawSaveStates(XBuf);
-		//FCEU_DrawMovies(XBuf);
-		//FCEU_DrawLagCounter(XBuf);
-		FCEU_DrawNTSCControlBars(XBuf);
-		FCEU_DrawRecordingStatus(XBuf);
-		ShowFPS();
-	}
-
-	if(FCEUD_ShouldDrawInputAids())
-		FCEU_DrawInput(XBuf);
-
-	if (FCEUI_AviEnableHUDrecording())
-	{
-		if (FCEUI_AviDisableMovieMessages())
-		{
-			snapAVI();
-			DrawMessage(false);
-		} else
-		{
-			DrawMessage(false);
-			snapAVI();
-		}
-	} else DrawMessage(false);
-
-}
-void snapAVI()
-{
-	//Update AVI
-	if(!FCEUI_EmulationPaused())
-		FCEUI_AviVideoUpdate(XBuf);
-}
-
-void FCEU_DispMessageOnMovie(const char *format, ...)
-{
-	va_list ap;
-
-	va_start(ap,format);
-	vsnprintf(guiMessage.errmsg,sizeof(guiMessage.errmsg),format,ap);
-	va_end(ap);
-
-	guiMessage.howlong = 180;
-	guiMessage.isMovieMessage = true;
-	guiMessage.linesFromBottom = 0;
-
-	if (FCEUI_AviIsRecording() && FCEUI_AviDisableMovieMessages())
-		guiMessage.howlong = 0;
-}
-
 void FCEU_DispMessage(const char *format, int disppos=0, ...)
 {
 	va_list ap;
@@ -283,66 +131,13 @@ void FCEU_ResetMessages()
 	guiMessage.linesFromBottom = 0;
 }
 
-
-uint32 GetScreenPixel(int x, int y, bool usebackup) {
-
-	uint8 r,g,b;
-
-	if (((x < 0) || (x > 255)) || ((y < 0) || (y > 255)))
-		return -1;
-
-	if (usebackup)
-		FCEUD_GetPalette(XBackBuf[(y*256)+x],&r,&g,&b);
-	else
-		FCEUD_GetPalette(XBuf[(y*256)+x],&r,&g,&b);
-
-
-	return ((int) (r) << 16) | ((int) (g) << 8) | (int) (b);
-}
-
-int GetScreenPixelPalette(int x, int y, bool usebackup) {
-
-	if (((x < 0) || (x > 255)) || ((y < 0) || (y > 255)))
-		return -1;
-
-	if (usebackup)
-		return XBackBuf[(y*256)+x] & 0x3f;
-	else
-		return XBuf[(y*256)+x] & 0x3f;
-
-}
-
-int SaveSnapshot(void)
-{
-	return(0);
-}
-
-//overloaded SaveSnapshot for "Savesnapshot As" function
-int SaveSnapshot(char fileName[512])
-{
-	return 0;
-}
-// called when another ROM is opened
-void ResetScreenshotsCounter()
-{
-	lastu = 0;
-}
-
 uint64 FCEUD_GetTime(void);
 uint64 FCEUD_GetTimeFreq(void);
 bool Show_FPS = false;
-// Control whether the frames per second of the emulation is rendered.
-bool FCEUI_ShowFPS()
-{
-	return Show_FPS;
-}
+
 void FCEUI_SetShowFPS(bool showFPS)
 {
 	Show_FPS = showFPS;
-}
-void FCEUI_ToggleShowFPS()
-{
-	Show_FPS ^= 1;
 }
 
 static uint64 boop[60];
