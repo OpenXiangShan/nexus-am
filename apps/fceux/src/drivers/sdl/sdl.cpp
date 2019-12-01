@@ -381,11 +381,7 @@ void FCEUD_TraceInstruction() {
 }
 
 
-#ifdef _GTK
-	int noGui = 0;
-#else
-	int noGui = 1;
-#endif
+int noGui = 1;
 
 int KillFCEUXonFrame = 0;
 
@@ -395,7 +391,13 @@ int KillFCEUXonFrame = 0;
 int main(int argc, char *argv[])
 {
   argc = 2;
-  const char *my_argv[] = {"fecux", "100in1.nes" };
+  const char *my_argv[] = {"fecux",
+#ifdef __NO_FILE_SYSTEM__
+    "100in1"
+#else
+    "100in1.nes"
+#endif
+  };
   argv = const_cast<char **>(my_argv);
 
   // this is a hackish check for the --help arguemnts
@@ -634,9 +636,6 @@ FCEUD_GetTimeFreq(void)
 void FCEUD_Message(const char *text)
 {
 	fputs(text, stdout);
-#ifdef _GTK
-	pushOutputToGTK(text);
-#endif
 }
 
 /**

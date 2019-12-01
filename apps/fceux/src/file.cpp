@@ -50,90 +50,9 @@ static char FileBaseDirectory[2048];
 
 void ApplyIPS(FILE *ips, FCEUFILE* fp)
 {
-	uint8 header[5];
-	uint32 count=0;
-
 	if(!ips) return;
 
-	char* buf = (char*)FCEU_dmalloc(fp->size);
-	memcpy(buf,fp->EnsureMemorystream()->buf(),fp->size);
-
-
-	FCEU_printf(" Applying IPS...\n");
-	if(fread(header,1,5,ips)!=5)
-	{
-		goto end;
-	}
-	if(memcmp(header,"PATCH",5))
-	{
-		goto end;
-	}
-
-	while(fread(header,1,3,ips)==3)
-	{
-		uint32 offset=(header[0]<<16)|(header[1]<<8)|header[2];
-		uint16 size;
-
-		if(!memcmp(header,"EOF",3))
-		{
-			FCEU_printf(" IPS EOF:  Did %d patches\n\n",count);
-			goto end;
-		}
-
-		size=fgetc(ips)<<8;
-		size|=fgetc(ips);
-		if(!size)	/* RLE */
-		{
-			char *start;
-			char b;
-			size=fgetc(ips)<<8;
-			size|=fgetc(ips);
-
-			//FCEU_printf("  Offset: %8d  Size: %5d RLE\n",offset,size);
-
-			if((offset+size)>(uint32)fp->size)
-			{
-				// Probably a little slow.
-				buf=(char *)realloc(buf,offset+size);
-				if(!buf)
-				{
-					FCEU_printf("  Oops.  IPS patch %d(type RLE) goes beyond end of file.  Could not allocate memory.\n",count);
-					goto end;
-				}
-				memset(buf+fp->size,0,offset+size-fp->size);
-				fp->size=offset+size;
-			}
-			b=fgetc(ips);
-			start=buf+offset;
-			do
-			{
-				*start=b;
-				start++;
-			} while(--size);
-		}
-		else		/* Normal patch */
-		{
-			//FCEU_printf("  Offset: %8d  Size: %5d\n",offset,size);
-			if((offset+size)>(uint32)fp->size)
-			{
-				// Probably a little slow.
-				buf=(char *)realloc(buf,offset+size);
-				if(!buf)
-				{
-					FCEU_printf("  Oops.  IPS patch %d(type normal) goes beyond end of file.  Could not allocate memory.\n",count);
-					goto end;
-				}
-				memset(buf+fp->size,0,offset+size-fp->size);
-			}
-			fread(buf+offset,1,size,ips);
-		}
-		count++;
-	}
-	FCEU_printf(" Hard IPS end!\n");
-end:
-	fclose(ips);
-	EMUFILE_MEMORY* ms = new EMUFILE_MEMORY(buf,fp->size);
-	fp->SetStream(ms);
+  assert(0);
 }
 
 std::string FCEU_MakeIpsFilename(FileBaseInfo fbi) {
@@ -203,10 +122,10 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 		if(!asr.isArchive())
 		{
 			//if the archive contained no files, try to open it the old fashioned way
-			EMUFILE_FILE* fp = FCEUD_UTF8_fstream(fileToOpen,mode);
+			EMUFILE* fp = FCEUD_UTF8_fstream(fileToOpen.c_str(),mode);
 			if(!fp)
 				return 0;
-			if (fp->get_fp() == NULL)
+			if (!fp->is_open())
 			{
 				//fp is new'ed so it has to be deleted
 				delete fp;
@@ -228,19 +147,7 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 		else
 		{
 			//open an archive file
-			if(archive == "")
-				if(index != -1)
-					fceufp = FCEUD_OpenArchiveIndex(asr, fileToOpen, index, userCancel);
-				else
-					fceufp = FCEUD_OpenArchive(asr, fileToOpen, 0, userCancel);
-			else
-				fceufp = FCEUD_OpenArchive(asr, archive, &fname, userCancel);
-
-			if(!fceufp) return 0;
-
-			FileBaseInfo fbi = DetermineFileBase(fileToOpen);
-			fceufp->logicalPath = fbi.filebasedirectory + fceufp->filename;
-			goto applyips;
+      assert(0);
 		}
 
 	applyips:
@@ -281,15 +188,6 @@ int FCEU_fseek(FCEUFILE *fp, long offset, int whence)
 uint64 FCEU_ftell(FCEUFILE *fp)
 {
 	return fp->stream->ftell();
-}
-
-int FCEU_read32le(uint32 *Bufo, FCEUFILE *fp)
-{
-  uint32 buf;
-  if(fp->stream->_fread(&buf,4)<4)
-    return 0;
-  *(u32*)Bufo=buf;
-  return 1;
 }
 
 int FCEU_fgetc(FCEUFILE *fp)
@@ -633,6 +531,7 @@ void GetFileBase(const char *f)
 	strcpy(FileBaseDirectory,fbi.filebasedirectory.c_str());
 }
 
+#if 0
 bool FCEU_isFileInArchive(const char *path)
 {
 	bool isarchive = false;
@@ -643,8 +542,7 @@ bool FCEU_isFileInArchive(const char *path)
 	}
 	return isarchive;
 }
-
-
+#endif
 
 void FCEUARCHIVEFILEINFO::FilterByExtension(const char** ext)
 {

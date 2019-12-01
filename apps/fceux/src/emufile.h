@@ -44,12 +44,7 @@ public:
 	{}
 
 
-	//returns a new EMUFILE which is guranteed to be in memory. the EMUFILE you call this on may be deleted. use the returned EMUFILE in its place
-	virtual EMUFILE* memwrap() = 0;
-
 	virtual ~EMUFILE() {}
-
-	static bool readAllBytes(std::vector<u8>* buf, const std::string& fname);
 
 	bool fail(bool unset=false) { bool ret = failbit; if(unset) unfail(); return ret; }
 	void unfail() { failbit=false; }
@@ -62,10 +57,9 @@ public:
 
 	void unget() { fseek(-1,SEEK_CUR); }
 
-	//virtuals
 public:
 
-	virtual FILE *get_fp() = 0;
+	virtual bool is_open() = 0;
 
 	virtual int fprintf(const char *format, ...) = 0;
 
@@ -79,182 +73,83 @@ public:
 
 	virtual void fwrite(const void *ptr, size_t bytes) = 0;
 
-	void write64le(u64* val);
-	void write64le(u64 val);
-	size_t read64le(u64* val);
-	u64 read64le();
-	void write32le(u32* val);
-	void write32le(s32* val) { write32le((u32*)val); }
-	void write32le(u32 val);
-	size_t read32le(u32* val);
-	size_t read32le(s32* val);
-	u32 read32le();
-	void write16le(u16* val);
-	void write16le(s16* val) { write16le((u16*)val); }
-	void write16le(u16 val);
-	size_t read16le(s16* Bufo);
-	size_t read16le(u16* val);
-	u16 read16le();
-	void write8le(u8* val);
-	void write8le(u8 val);
-	size_t read8le(u8* val);
-	u8 read8le();
-	void writedouble(double* val);
-	void writedouble(double val);
-	double readdouble();
-	size_t readdouble(double* val);
-
 	virtual int fseek(int offset, int origin) = 0;
 
 	virtual int ftell() = 0;
 	virtual int size() = 0;
 	virtual void fflush() = 0;
-
-	virtual void truncate(s32 length) = 0;
 };
 
-//todo - handle read-only specially?
-class EMUFILE_MEMORY : public EMUFILE {
-protected:
-	std::vector<u8> *vec;
-	bool ownvec;
-	s32 pos, len;
+#ifdef __NO_FILE_SYSTEM__
 
-	void reserve(u32 amt) {
-		if(vec->size() < amt)
-			vec->resize(amt);
-	}
+class EMUFILE_FILE : public EMUFILE {
+protected:
+	u8* data;
+	std::string fname;
+	char mode[16];
+
+private:
+  int curpos;
+  int filesize;
+
+	void open(const char* fname, const char* mode);
 
 public:
 
-	EMUFILE_MEMORY(std::vector<u8> *underlying) : vec(underlying), ownvec(false), pos(0), len((s32)underlying->size()) { }
-	EMUFILE_MEMORY(u32 preallocate) : vec(new std::vector<u8>()), ownvec(true), pos(0), len(0) {
-		vec->resize(preallocate);
-		len = preallocate;
-	}
-	EMUFILE_MEMORY() : vec(new std::vector<u8>()), ownvec(true), pos(0), len(0) { vec->reserve(1024); }
-	EMUFILE_MEMORY(void* buf, s32 size) : vec(new std::vector<u8>()), ownvec(true), pos(0), len(size) {
-		vec->resize(size);
-		if(size != 0)
-			memcpy(&vec->front(),buf,size);
-	}
+	EMUFILE_FILE(const char* fname, const char* mode) { open(fname,mode); }
 
-	~EMUFILE_MEMORY() {
-		if(ownvec) delete vec;
-	}
+	virtual ~EMUFILE_FILE() { }
 
-	virtual EMUFILE* memwrap();
-
-	virtual void truncate(s32 length)
-	{
-		vec->resize(length);
-		len = length;
-		if(pos>length) pos=length;
-	}
-
-	u8* buf() {
-		if(size()==0) reserve(1);
-		return &(*vec)[0];
-	}
-
-	std::vector<u8>* get_vec() { return vec; };
-
-	virtual FILE *get_fp() { return NULL; }
-
-	virtual int fprintf(const char *format, ...) {
-		va_list argptr;
-		va_start(argptr, format);
-
-		//we dont generate straight into the buffer because it will null terminate (one more byte than we want)
-		int amt = vsnprintf(0,0,format,argptr);
-		char* tempbuf = new char[amt+1];
-
-		va_end(argptr);
-		va_start(argptr, format);
-		vsprintf(tempbuf,format,argptr);
-
-        fwrite(tempbuf,amt);
-		delete[] tempbuf;
-
-        va_end(argptr);
-		return amt;
-	};
+	bool is_open() { return true; }
+	virtual int fprintf(const char *format, ...) { return 0; };
 
 	virtual int fgetc() {
-		u8 temp;
-
-		//need an optimized codepath
-		//if(_fread(&temp,1) != 1)
-		//	return EOF;
-		//else return temp;
-		u32 remain = len-pos;
-		if(remain<1) {
-			failbit = true;
-			return -1;
-		}
-		temp = buf()[pos];
-		pos++;
-		return temp;
+    if (eof()) {
+      printf("%s: Can not read pass EOF\n", __func__);
+      return -1;
+    }
+    int ret = (int)data[curpos];
+    curpos ++;
+		return ret;
 	}
+
 	virtual int fputc(int c) {
-		u8 temp = (u8)c;
-		//TODO
-		//if(fwrite(&temp,1)!=1) return EOF;
-		fwrite(&temp,1);
-
-		return 0;
+    assert(0);
+    return 0;
 	}
 
-	virtual size_t _fread(const void *ptr, size_t bytes);
-
-	//removing these return values for now so we can find any code that might be using them and make sure
-	//they handle the return values correctly
+	virtual size_t _fread(const void *ptr, size_t bytes){
+    size_t remain = filesize - curpos;
+    size_t ret = (bytes <= remain ? bytes : remain);
+    memcpy(const_cast<void *>(ptr), data + curpos, ret);
+    curpos += ret;
+		if(ret < bytes)
+			failbit = true;
+		return ret;
+	}
 
 	virtual void fwrite(const void *ptr, size_t bytes){
-		reserve(pos+(s32)bytes);
-		memcpy(buf()+pos,ptr,bytes);
-		pos += (s32)bytes;
-		len = std::max(pos,len);
+    failbit = true;
+    assert(0);
 	}
 
-	virtual int fseek(int offset, int origin){
-		//work differently for read-only...?
-		switch(origin) {
-			case SEEK_SET:
-				pos = offset;
-				break;
-			case SEEK_CUR:
-				pos += offset;
-				break;
-			case SEEK_END:
-				pos = size()+offset;
-				break;
-			default:
-				assert(false);
-		}
-		reserve(pos);
-		return 0;
+	virtual int fseek(int offset, int origin) {
+    switch (origin) {
+      case SEEK_END: curpos = filesize; break;
+      case SEEK_SET: curpos = offset; break;
+      case SEEK_CUR: curpos += offset; break;
+    }
+    if (curpos < 0) curpos = 0;
+    else if (curpos > filesize) curpos = filesize;
+    return 0;
 	}
 
-	virtual int ftell() {
-		return pos;
-	}
-
-	virtual void fflush() {}
-
-	void set_len(s32 length)
-	{
-		len = length;
-		if(pos > length)
-			pos = length;
-	}
-	void trim()
-	{
-		vec->resize(len);
-	}
-
-	virtual int size() { return (int)len; }
+	virtual int ftell() { return curpos; }
+	virtual int size() { return filesize; }
+	virtual void fflush() { }
 };
+
+#else
 
 class EMUFILE_FILE : public EMUFILE {
 protected:
@@ -275,15 +170,7 @@ public:
 			fclose(fp);
 	}
 
-	virtual FILE *get_fp() {
-		return fp;
-	}
-
-	virtual EMUFILE* memwrap();
-
 	bool is_open() { return fp != NULL; }
-
-	virtual void truncate(s32 length);
 
 	virtual int fprintf(const char *format, ...) {
 		va_list argptr;
@@ -335,7 +222,8 @@ public:
 	virtual void fflush() {
 		::fflush(fp);
 	}
-
 };
+
+#endif
 
 #endif
