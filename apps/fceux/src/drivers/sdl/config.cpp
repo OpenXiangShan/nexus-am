@@ -229,16 +229,6 @@ InitConfig()
 
 	config->addOption("nofscursor", "SDL.NoFullscreenCursor", 1);
     
-    #ifdef _S9XLUA_H
-	// load lua script
-	config->addOption("loadlua", "SDL.LuaScript", "");
-    #endif
-    
-    #ifdef CREATE_AVI
-	config->addOption("videolog",  "SDL.VideoLog",  "");
-	config->addOption("mute", "SDL.MuteCapture", 0);
-    #endif
-    
     // auto load/save on gameload/close
 	config->addOption("loadstate", "SDL.AutoLoadState", INVALID_STATE);
 	config->addOption("savestate", "SDL.AutoSaveState", INVALID_STATE);
@@ -246,17 +236,6 @@ InitConfig()
     //TODO implement this
     config->addOption("periodicsaves", "SDL.PeriodicSaves", 0);
 
-    
-    #ifdef _GTK
-	char* home_dir = getenv("HOME");
-	// prefixed with _ because they are internal (not cli options)
-	config->addOption("_lastopenfile", "SDL.LastOpenFile", home_dir);
-	config->addOption("_laststatefrom", "SDL.LastLoadStateFrom", home_dir);
-	config->addOption("_lastopennsf", "SDL.LastOpenNSF", home_dir);
-	config->addOption("_lastsavestateas", "SDL.LastSaveStateAs", home_dir);
-	config->addOption("_lastloadlua", "SDL.LastLoadLua", "");
-    #endif
-    
 	// fcm -> fm2 conversion
 	config->addOption("fcmconvert", "SDL.FCMConvert", "");
     

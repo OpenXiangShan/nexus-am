@@ -617,6 +617,7 @@ Config::_load()
 int
 Config::_loadFile(const char* fname)
 {
+  return 1;
 	signed int pos, eqPos;
 	std::fstream config;
 	std::map<std::string, int>::iterator int_i;
