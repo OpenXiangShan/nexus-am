@@ -2,7 +2,6 @@
 #include "fceu.h"
 #include "drawing.h"
 #include "video.h"
-#include "movie.h"
 #include "driver.h"
 
 static uint8 Font6x7[792] =

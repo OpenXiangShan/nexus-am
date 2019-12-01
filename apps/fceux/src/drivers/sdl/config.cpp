@@ -2,7 +2,6 @@
 #include "throttle.h"
 #include "config.h"
 
-#include "../common/cheat.h"
 
 #include "input.h"
 #include "dface.h"

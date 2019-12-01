@@ -36,7 +36,6 @@
 #include "types.h"
 #include "fceu.h"
 #include "state.h"
-#include "movie.h"
 #include "driver.h"
 #include "utils/xstring.h"
 

@@ -27,8 +27,6 @@
 #include "sdl-video.h"
 #include "sdl.h"
 
-#include "../common/cheat.h"
-#include "../../movie.h"
 #include "../../fceu.h"
 #include "../../driver.h"
 #include "../../utils/xstring.h"

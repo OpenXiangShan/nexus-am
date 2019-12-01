@@ -23,7 +23,6 @@
 #include "x6502.h"
 #include "fceu.h"
 #include "ppu.h"
-#include "nsf.h"
 #include "sound.h"
 #include "file.h"
 #include "utils/endian.h"
@@ -1752,9 +1751,9 @@ int FCEUPPU_Loop(int skip) {
 
 		//I need to figure out the true nature and length of this delay.
 		X6502_Run(12);
-		if (GameInfo->type == GIT_NSF)
-			DoNSFFrame();
-		else {
+		if (GameInfo->type == GIT_NSF) {
+      assert(0);
+    } else {
 			if (VBlankON)
 				TriggerNMI();
 		}

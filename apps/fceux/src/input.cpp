@@ -24,12 +24,9 @@
 
 #include "fceu.h"
 #include "sound.h"
-#include "movie.h"
 #include "state.h"
-#include "input/zapper.h"
 #include "input.h"
 #include "vsuni.h"
-#include "fds.h"
 #include "driver.h"
 
 //it is easier to declare these input drivers extern here than include a bunch of files
@@ -220,35 +217,6 @@ static void UpdateGP(int w, void *data, int arg)
 
 }
 
-static void LogGP(int w, MovieRecord* mr)
-{
-	if(w==0)
-	{
-		mr->joysticks[0] = joy[0];
-		mr->joysticks[2] = joy[2];
-	}
-	else
-	{
-		mr->joysticks[1] = joy[1];
-		mr->joysticks[3] = joy[3];
-	}
-}
-
-static void LoadGP(int w, MovieRecord* mr)
-{
-	if(w==0)
-	{
-		joy[0] = mr->joysticks[0];
-		if(FSAttached) joy[2] = mr->joysticks[2];
-	}
-	else
-	{
-		joy[1] = mr->joysticks[1];
-		if(FSAttached) joy[3] = mr->joysticks[3];
-	}
-}
-
-
 //basic joystick port driver
 static uint8 ReadGP(int w)
 {
@@ -297,17 +265,6 @@ static void UpdateSNES(int w, void *data, int arg)
 
 }
 
-static void LogSNES(int w, MovieRecord* mr)
-{
-	//not supported for SNES pad right noe
-}
-
-static void LoadSNES(int w, MovieRecord* mr)
-{
-	//not supported for SNES pad right now
-}
-
-
 static uint8 ReadSNES(int w)
 {
 	//no fourscore support on snes (not clear how it would work)
@@ -334,9 +291,9 @@ static void StrobeSNES(int w)
 
 
 
-static INPUTC GPC={ReadGP,0,StrobeGP,UpdateGP,0,0,LogGP,LoadGP};
-static INPUTC GPCVS={ReadGPVS,0,StrobeGP,UpdateGP,0,0,LogGP,LoadGP};
-static INPUTC GPSNES={ReadSNES,0,StrobeSNES,UpdateSNES,0,0,LogSNES,LoadSNES};
+static INPUTC GPC={ReadGP,0,StrobeGP,UpdateGP,0,0};
+static INPUTC GPCVS={ReadGPVS,0,StrobeGP,UpdateGP,0,0};
+static INPUTC GPSNES={ReadSNES,0,StrobeSNES,UpdateSNES,0,0};
 
 void FCEU_DrawInput(uint8 *buf)
 {
@@ -417,24 +374,6 @@ static void SetInputStuff(int port)
 	case SI_SNES:
 		joyports[port].driver= &GPSNES;
 		break;
-	case SI_ARKANOID:
-		joyports[port].driver=FCEU_InitArkanoid(port);
-		break;
-	case SI_ZAPPER:
-		joyports[port].driver=FCEU_InitZapper(port);
-		break;
-	case SI_POWERPADA:
-		joyports[port].driver=FCEU_InitPowerpadA(port);
-		break;
-	case SI_POWERPADB:
-		joyports[port].driver=FCEU_InitPowerpadB(port);
-		break;
-	case SI_MOUSE:
-		joyports[port].driver=FCEU_InitMouse(port);
-		break;
-	case SI_SNES_MOUSE:
-		joyports[port].driver=FCEU_InitSNESMouse(port);
-		break;
 	case SI_NONE:
 		joyports[port].driver=&DummyJPort;
 		break;
@@ -448,9 +387,6 @@ static void SetInputStuffFC()
     default: break;
 	case SIFC_NONE:
 		portFC.driver=&DummyPortFC;
-		break;
-	case SIFC_ARKANOID:
-		portFC.driver=FCEU_InitArkanoidFC();
 		break;
 	case SIFC_SHADOW:
 		portFC.driver=FCEU_InitSpaceShadow();
@@ -550,13 +486,13 @@ void FCEUI_SetInputFourscore(bool attachFourscore)
 }
 
 //mbg 6/18/08 HACK
-extern ZAPPER ZD[2];
+//extern ZAPPER ZD[2];
 SFORMAT FCEUCTRL_STATEINFO[]={
 	{ joy_readbit,	2, "JYRB"},
 	{ joy,			4, "JOYS"},
 	{ &LastStrobe,	1, "LSTS"},
-	{ &ZD[0].bogo,	1, "ZBG0"},
-	{ &ZD[1].bogo,	1, "ZBG1"},
+//	{ &ZD[0].bogo,	1, "ZBG0"},
+//	{ &ZD[1].bogo,	1, "ZBG1"},
 	{ &lagFlag,		1, "LAGF"},
 	{ &lagCounter,	4, "LAGC"},
 	{ 0 }

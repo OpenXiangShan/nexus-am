@@ -28,14 +28,9 @@
 #include "utils/memory.h"
 
 #include "cart.h"
-#include "nsf.h"
-#include "fds.h"
 #include "ines.h"
-#include "unif.h"
-#include "cheat.h"
 #include "palette.h"
 #include "state.h"
-#include "movie.h"
 #include "video.h"
 #include "input.h"
 #include "file.h"
@@ -415,10 +410,7 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 	//try to load each different format
 	bool FCEUXLoad(const char *name, FCEUFILE * fp);
 
-	if (iNESLoad(fullname, fp, OverwriteVidMode) ||
-		NSFLoad(fullname, fp) ||
-		UNIFLoad(fullname, fp) ||
-		FDSLoad(fullname, fp))
+	if (iNESLoad(fullname, fp, OverwriteVidMode))
 	{
 		if (OverwriteVidMode)
 			FCEU_ResetVidSys();

@@ -24,9 +24,7 @@
 #include "file.h"
 #include "utils/memory.h"
 #include "state.h"
-#include "movie.h"
 #include "palette.h"
-#include "nsf.h"
 #include "input.h"
 #include "vsuni.h"
 #include "drawing.h"
@@ -176,7 +174,8 @@ void FCEU_PutImage(void)
 	}
 	if(GameInfo->type==GIT_NSF)
 	{
-		DrawNSF(XBuf);
+		//DrawNSF(XBuf);
+    assert(0);
 
 		//Save snapshot after NSF screen is drawn.  Why would we want to do it before?
 		if(dosnapsave==1)

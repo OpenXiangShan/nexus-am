@@ -2,9 +2,7 @@
 #include "throttle.h"
 #include "config.h"
 
-#include "../common/cheat.h"
 #include "../../fceu.h"
-#include "../../movie.h"
 #include "../../version.h"
 
 #include "input.h"
@@ -397,7 +395,7 @@ int KillFCEUXonFrame = 0;
 int main(int argc, char *argv[])
 {
   argc = 2;
-  const char *my_argv[] = {"fecux", "mario.nes" };
+  const char *my_argv[] = {"fecux", "100in1.nes" };
   argv = const_cast<char **>(my_argv);
 
   // this is a hackish check for the --help arguemnts
