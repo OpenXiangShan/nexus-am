@@ -32,8 +32,6 @@ extern GUIMESSAGE subtitleMessage;
 
 void FCEU_DrawNumberRow(uint8 *XBuf, int *nstatus, int cur);
 
-std::string FCEUI_GetSnapshotAsName();
-void FCEUI_SetSnapshotAsName(std::string name);
 bool FCEUI_ShowFPS();
 void FCEUI_SetShowFPS(bool showFPS);
 void FCEUI_ToggleShowFPS();

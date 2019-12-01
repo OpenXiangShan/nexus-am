@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <vector>
-#include <iostream>
 
 #include "../types.h"
 #include "../emufile.h"

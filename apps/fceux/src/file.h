@@ -7,7 +7,6 @@
 #include "emufile.h"
 
 #include <string>
-#include <iostream>
 
 extern bool bindSavestate;
 
@@ -63,16 +62,6 @@ struct FCEUFILE {
 	}
 };
 
-struct FCEUARCHIVEFILEINFO_ITEM {
-	std::string name;
-	uint32 size, index;
-};
-
-class FCEUARCHIVEFILEINFO : public std::vector<FCEUARCHIVEFILEINFO_ITEM> {
-public:
-	void FilterByExtension(const char** ext);
-};
-
 struct FileBaseInfo {
 	std::string filebase, filebasedirectory, ext;
 	FileBaseInfo() {}
@@ -101,8 +90,6 @@ struct ArchiveScanRecord
 	//be careful: this is the number of files in the archive.
 	//the size of the files variable might be different.
 	int numFilesInArchive;
-
-	FCEUARCHIVEFILEINFO files;
 
 	bool isArchive() { return type != -1; }
 };

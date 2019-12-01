@@ -128,6 +128,14 @@ typedef uint8 (*readfunc)(uint32 A);
 #define CTASSERT(x)  struct __assert ## y { char a[(x) ? 1 : -1];};
 #endif
 
-#include "utils/endian.h"
+typedef uint8 u8;
+typedef uint16 u16;
+typedef uint32 u32;
+typedef uint64 u64;
+typedef int8 s8;
+typedef int16 s16;
+typedef int32 s32;
+typedef int64 s64;
+
 
 #endif

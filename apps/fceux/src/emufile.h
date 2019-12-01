@@ -25,14 +25,13 @@ THE SOFTWARE.
 #ifndef EMUFILE_H
 #define EMUFILE_H
 
-#include "emufile_types.h"
-
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <cstdarg>
-#include <vector>
 #include <string>
+
+#include "types.h"
 
 class EMUFILE {
 protected:

@@ -24,7 +24,6 @@
 #include "ppu.h"
 #include "sound.h"
 #include "file.h"
-#include "utils/endian.h"
 #include "utils/memory.h"
 
 #include "cart.h"
@@ -41,8 +40,6 @@ extern void RefreshThrottleFPS();
 
 #include "drivers/sdl/sdl.h"
 
-#include <fstream>
-#include <sstream>
 #include <string>
 
 #include <cstring>
@@ -91,21 +88,6 @@ FCEUGI::~FCEUGI() {
         delete archiveFilename;
         archiveFilename = NULL;
     }
-}
-
-bool CheckFileExists(const char* filename) {
-	//This function simply checks to see if the given filename exists
-	if (!filename) return false;
-	fstream test;
-	test.open(filename, fstream::in);
-
-	if (test.fail()) {
-		test.close();
-		return false;
-	} else {
-		test.close();
-		return true;
-	}
 }
 
 void FCEU_TogglePPU(void) {

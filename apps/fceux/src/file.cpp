@@ -25,11 +25,9 @@
 #include <cstdarg>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fstream>
 
 #include "types.h"
 #include "file.h"
-#include "utils/endian.h"
 #include "utils/memory.h"
 #include "utils/md5.h"
 #include "driver.h"
@@ -117,10 +115,6 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 		ipsfile=FCEUD_UTF8fopen(ipsfn,"rb");
 	if(read)
 	{
-		ArchiveScanRecord asr = FCEUD_ScanArchive(fileToOpen);
-		asr.files.FilterByExtension(extensions);
-		if(!asr.isArchive())
-		{
 			//if the archive contained no files, try to open it the old fashioned way
 			EMUFILE* fp = FCEUD_UTF8_fstream(fileToOpen.c_str(),mode);
 			if(!fp)
@@ -142,15 +136,7 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 			FCEU_fseek(fceufp,0,SEEK_END);
 			fceufp->size = FCEU_ftell(fceufp);
 			FCEU_fseek(fceufp,0,SEEK_SET);
-			goto applyips;
-		}
-		else
-		{
-			//open an archive file
-      assert(0);
-		}
 
-	applyips:
 		//try to open the ips file
 		if(!ipsfile && !ipsfn)
 			ipsfile=FCEUD_UTF8fopen(FCEU_MakeIpsFilename(DetermineFileBase(fceufp->logicalPath.c_str())),"rb");
@@ -529,34 +515,4 @@ void GetFileBase(const char *f)
 	FileBaseInfo fbi = DetermineFileBase(f);
 	strcpy(FileBase,fbi.filebase.c_str());
 	strcpy(FileBaseDirectory,fbi.filebasedirectory.c_str());
-}
-
-#if 0
-bool FCEU_isFileInArchive(const char *path)
-{
-	bool isarchive = false;
-	FCEUFILE* fp = FCEU_fopen(path,0,"rb",0,0);
-	if(fp) {
-		isarchive = fp->isArchive();
-		delete fp;
-	}
-	return isarchive;
-}
-#endif
-
-void FCEUARCHIVEFILEINFO::FilterByExtension(const char** ext)
-{
-	if(!ext) return;
-	int count = size();
-	for(int i=count-1;i>=0;i--) {
-		std::string fext = getExtension((*this)[i].name.c_str());
-		const char** currext = ext;
-		while(*currext) {
-			if(fext == *currext)
-				goto ok;
-			currext++;
-		}
-		this->erase(begin()+i);
-	ok: ;
-	}
 }

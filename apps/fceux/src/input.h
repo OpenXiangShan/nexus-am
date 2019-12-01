@@ -1,10 +1,8 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-
 #include "git.h"
-
-#include <ostream>
+#include <stdio.h>
 
 void LagCounterToggle(void);
 

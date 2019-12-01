@@ -357,7 +357,6 @@ void InputScanlineHook(uint8 *bg, uint8 *spr, uint32 linets, int final)
 	portFC.driver->SLHook(bg,spr,linets,final);
 }
 
-#include <iostream>
 //binds JPorts[pad] to the driver specified in JPType[pad]
 static void SetInputStuff(int port)
 {

@@ -25,7 +25,6 @@
 #include "ppu.h"
 #include "sound.h"
 #include "file.h"
-#include "utils/endian.h"
 #include "utils/memory.h"
 		 
 #include "cart.h"
