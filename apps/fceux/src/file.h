@@ -13,18 +13,6 @@ struct FCEUFILE {
 	//std::iostream *stream;
 	EMUFILE *stream;
 
-	//the name of the file, or the logical name of the file within the archive
-	std::string filename;
-
-	//a weirdly derived value.. maybe a path to a file, or maybe a path to a file which doesnt exist but which is in an archive in the same directory
-	std::string logicalPath;
-
-	//the filename of the archive (maybe "" if it is not in an archive)
-	std::string archiveFilename;
-
-	//a the path to the filename, possibly using | to get into the archive
-	std::string fullFilename;
-
 	//the number of files that were in the archive
 	int archiveCount;
 
@@ -58,18 +46,6 @@ struct FCEUFILE {
 		stream->fseek(0,SEEK_SET);
 		size = stream->size();
 	}
-};
-
-struct FileBaseInfo {
-	std::string filebase, filebasedirectory, ext;
-	FileBaseInfo() {}
-	FileBaseInfo(std::string fbd, std::string fb, std::string ex)
-	{
-		filebasedirectory = fbd;
-		filebase = fb;
-		ext = ex;
-	}
-
 };
 
 struct ArchiveScanRecord
@@ -107,13 +83,7 @@ uint64 FCEU_fgetsize(FCEUFILE*);
 int FCEU_fisarchive(FCEUFILE*);
 
 
-
 void GetFileBase(const char *f);
-std::string FCEU_GetPath(int type);
-std::string FCEU_MakePath(int type, const char* filebase);
-std::string FCEU_MakeFName(int type, int id1, const char *cd1);
-std::string GetMfn();
-void FCEU_SplitArchiveFilename(std::string src, std::string& archive, std::string& file, std::string& fileToOpen);
 
 #define FCEUMKF_STATE        1
 #define FCEUMKF_SNAP         2

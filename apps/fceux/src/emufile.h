@@ -28,7 +28,8 @@ THE SOFTWARE.
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
-#include <string>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "types.h"
 
@@ -52,8 +53,6 @@ public:
 	size_t fread(const void *ptr, size_t bytes){
 		return _fread(ptr,bytes);
 	}
-
-	void unget() { fseek(-1,SEEK_CUR); }
 
 public:
 
@@ -83,7 +82,7 @@ public:
 class EMUFILE_FILE : public EMUFILE {
 protected:
 	u8* data;
-	std::string fname;
+	const char* fname;
 	char mode[16];
 
 private:
@@ -152,7 +151,7 @@ public:
 class EMUFILE_FILE : public EMUFILE {
 protected:
 	FILE* fp;
-	std::string fname;
+	const char* fname;
 	char mode[16];
 
 private:
@@ -160,7 +159,7 @@ private:
 
 public:
 
-	EMUFILE_FILE(const std::string& fname, const char* mode) { open(fname.c_str(),mode); }
+	//EMUFILE_FILE(const std::string& fname, const char* mode) { open(fname.c_str(),mode); }
 	EMUFILE_FILE(const char* fname, const char* mode) { open(fname,mode); }
 
 	virtual ~EMUFILE_FILE() {

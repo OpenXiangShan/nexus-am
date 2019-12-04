@@ -464,15 +464,6 @@ void InitInputInterface ()
 }
 
 /**
- * Update the button configuration for a device, specified by a text string.
- */
-void InputCfg (const std::string & text)
-{
-  assert(0);
-}
-
-
-/**
  * Hack to map the new configuration onto the existing button
  * configuration management.  Will probably want to change this in the
  * future - soules.

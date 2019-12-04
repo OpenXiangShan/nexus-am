@@ -46,9 +46,7 @@ int DTestButtonJoy(ButtConfig *bc);
 void FCEUD_UpdateInput(void);
 
 void UpdateInput();
-void InputCfg(const std::string &);
 
-std::string GetUserText(const char* title);
 const char* ButtonName(const ButtConfig* bc, int which);
 #endif
 

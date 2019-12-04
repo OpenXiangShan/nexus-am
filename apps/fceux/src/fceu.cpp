@@ -317,12 +317,7 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 
 		return 0;
 	}
-	else if (fp->archiveFilename != "")
-	{
-		strcpy(fullname, fp->archiveFilename.c_str());
-		strcat(fullname, "|");
-		strcat(fullname, fp->filename.c_str());
-	} else
+	else
 		strcpy(fullname, name);
 
 	// reset loaded game BEFORE it's loading.
@@ -334,9 +329,6 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 	GameInfo = new FCEUGI();
 	memset(GameInfo, 0, sizeof(FCEUGI));
 
-	GameInfo->filename = strdup(fp->filename.c_str());
-	if (fp->archiveFilename != "")
-		GameInfo->archiveFilename = strdup(fp->archiveFilename.c_str());
 	GameInfo->archiveCount = fp->archiveCount;
 
 	GameInfo->soundchan = 0;
@@ -398,7 +390,7 @@ FCEUGI *FCEUI_LoadGame(const char *name, int OverwriteVidMode, bool silent)
 
 //Return: Flag that indicates whether the function was succesful or not.
 bool FCEUI_Initialize() {
-	srand(time(0));
+	srand(0);
 
 	if (!FCEU_InitVirtualVideo()) {
 		return false;

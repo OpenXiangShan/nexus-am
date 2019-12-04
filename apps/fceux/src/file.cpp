@@ -30,23 +30,6 @@
 
 using namespace std;
 
-void FCEU_SplitArchiveFilename(std::string src, std::string& archive, std::string& file, std::string& fileToOpen)
-{
-	size_t pipe = src.find_first_of('|');
-	if(pipe == std::string::npos)
-	{
-		archive = "";
-		file = src;
-		fileToOpen = src;
-	}
-	else
-	{
-		archive = src.substr(0,pipe);
-		file = src.substr(pipe+1);
-		fileToOpen = archive;
-	}
-}
-
 FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, char *ext, int index, const char** extensions, int* userCancel)
 {
 	FCEUFILE *fceufp=0;
@@ -61,13 +44,11 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 		return 0;
 	}
 
-	std::string archive,fname,fileToOpen;
-	FCEU_SplitArchiveFilename(path,archive,fname,fileToOpen);
-
 	if(read)
 	{
 			//if the archive contained no files, try to open it the old fashioned way
-			EMUFILE* fp = FCEUD_UTF8_fstream(fileToOpen.c_str(),mode);
+			//EMUFILE* fp = FCEUD_UTF8_fstream(fileToOpen.c_str(),mode);
+			EMUFILE* fp = FCEUD_UTF8_fstream(path,mode);
 			if(!fp)
 				return 0;
 			if (!fp->is_open())
@@ -79,9 +60,6 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 
 			//open a plain old file
 			fceufp = new FCEUFILE();
-			fceufp->filename = fileToOpen;
-			fceufp->logicalPath = fileToOpen;
-			fceufp->fullFilename = fileToOpen;
 			fceufp->archiveIndex = -1;
 			fceufp->stream = fp;
 			FCEU_fseek(fceufp,0,SEEK_END);

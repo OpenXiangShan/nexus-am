@@ -6,13 +6,7 @@
 #include "file.h"
 
 FILE *FCEUD_UTF8fopen(const char *fn, const char *mode);
-inline FILE *FCEUD_UTF8fopen(const std::string &n, const char *mode) { return FCEUD_UTF8fopen(n.c_str(),mode); }
 EMUFILE_FILE* FCEUD_UTF8_fstream(const char *n, const char *m);
-FCEUFILE* FCEUD_OpenArchiveIndex(ArchiveScanRecord& asr, std::string& fname, int innerIndex);
-FCEUFILE* FCEUD_OpenArchiveIndex(ArchiveScanRecord& asr, std::string& fname, int innerIndex, int* userCancel);
-FCEUFILE* FCEUD_OpenArchive(ArchiveScanRecord& asr, std::string& fname, std::string* innerFilename);
-FCEUFILE* FCEUD_OpenArchive(ArchiveScanRecord& asr, std::string& fname, std::string* innerFilename, int* userCancel);
-ArchiveScanRecord FCEUD_ScanArchive(std::string fname);
 
 //mbg 7/23/06
 const char *FCEUD_GetCompilerString();
@@ -134,9 +128,6 @@ void FCEUI_FrameSkip(int x);
 
 //First and last scanlines to render, for ntsc and pal emulation.
 void FCEUI_SetRenderedLines(int ntscf, int ntscl, int palf, int pall);
-
-//Sets the base directory(save states, snapshots, etc. are saved in directories below this directory.
-void FCEUI_SetBaseDirectory(std::string const & dir);
 
 void FCEUI_SetUserPalette(uint8 *pal, int nEntries);
 
