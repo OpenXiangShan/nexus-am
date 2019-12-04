@@ -1,8 +1,6 @@
 #ifndef _aosdfjk02fmasf
 #define _aosdfjk02fmasf
 
-#include "../common/configSys.h"
-
 #define MAXBUTTCONFIG   4
 typedef struct {
 	uint8  ButtType[MAXBUTTCONFIG];
@@ -14,7 +12,6 @@ typedef struct {
 
 
 extern int NoWaiting;
-extern CFGSTRUCT InputConfig[];
 void ParseGIInput(FCEUGI *GI);
 int ButtonConfigBegin();
 void ButtonConfigEnd();
@@ -48,7 +45,7 @@ int DTestButtonJoy(ButtConfig *bc);
 
 void FCEUD_UpdateInput(void);
 
-void UpdateInput(Config *config);
+void UpdateInput();
 void InputCfg(const std::string &);
 
 std::string GetUserText(const char* title);

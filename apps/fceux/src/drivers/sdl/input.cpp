@@ -21,7 +21,6 @@
 #include "main.h"
 #include "dface.h"
 #include "input.h"
-#include "config.h"
 
 
 #include "sdl-video.h"
@@ -32,7 +31,6 @@
 
 /** GLOBALS **/
 int NoWaiting = 1;
-extern Config *g_config;
 extern bool bindSavestate, frameAdvanceLagSkip, lagCounterDisplay;
 
 
@@ -357,48 +355,17 @@ UpdateGamepad(void)
 
 	rapid ^= 1;
 
-	int opposite_dirs;
-	g_config->getOption("SDL.Input.EnableOppositeDirectionals", &opposite_dirs);
-
 	// go through each of the four game pads
 	for (wg = 0; wg < 4; wg++)
 	{
-		bool left = false;
-		bool up = false;
 		// a, b, select, start, up, down, left, right
 		for (x = 0; x < 8; x++)
 		{
 			if (DTestButton (&GamePadConfig[wg][x]))
 			{
-				if(opposite_dirs == 0)
-				{
-					// test for left+right and up+down
-					if(x == 4){
-						up = true;
-                    }
-					if((x == 5) && (up == true)){
-						continue;
-                    }
-					if(x == 6){
-						left = true;
-                    }
-					if((x == 7) && (left == true)){
-						continue;
-                    }
-				}
 				JS |= (1 << x) << (wg << 3);
 			}
 		}
-
-        int four_button_exit;
-        g_config->getOption("SDL.ABStartSelectExit", &four_button_exit);
-        // if a+b+start+select is pressed, exit
-        if (four_button_exit && JS == 15) {
-            FCEUI_printf("all buttons pressed, exiting\n");
-            CloseGame();
-            FCEUI_Kill();
-            exit(0);
-        }
 
 		// rapid-fire a, rapid-fire b
 		if (rapid)
@@ -510,65 +477,20 @@ void InputCfg (const std::string & text)
  * configuration management.  Will probably want to change this in the
  * future - soules.
  */
-	void
-UpdateInput (Config * config)
+	void UpdateInput ()
 {
-	char buf[64];
-	std::string device, prefix;
-
-	for (unsigned int i = 0; i < 3; i++)
-	{
-		snprintf (buf, 64, "SDL.Input.%d", i);
-		config->getOption (buf, &device);
-
-		if (device == "None")
-		{
-			UsrInputType[i] = SI_NONE;
-		}
-		else if (device.find ("GamePad") != std::string::npos)
-		{
-			UsrInputType[i] = (i < 2) ? (int) SI_GAMEPAD : (int) SIFC_NONE;
-		}
-		else
-		{
-			// Unknown device
-			UsrInputType[i] = SI_NONE;
-		}
+	for (unsigned int i = 0; i < 3; i++) {
+    UsrInputType[i] = (i < 2) ? (int) SI_GAMEPAD : (int) SIFC_NONE;
 	}
 
-	// update each of the devices' configuration structure
-	// XXX soules - this is temporary until this file is cleaned up to
-	//              simplify the interface between configuration and
-	//              structure data.  This will likely include the
-	//              removal of multiple input buttons for a single
-	//              input device key.
-	int type, devnum, button;
-
 	// gamepad 0 - 3
-	for (unsigned int i = 0; i < GAMEPAD_NUM_DEVICES; i++)
-	{
-		char buf[64];
-		snprintf (buf, 20, "SDL.Input.GamePad.%d.", i);
-		prefix = buf;
+	for (unsigned int i = 0; i < GAMEPAD_NUM_DEVICES; i++) {
+    int type = (i == 0 ? BUTTC_KEYBOARD : 0);
 
-		config->getOption (prefix + "DeviceType", &device);
-		if (device.find ("Keyboard") != std::string::npos)
-		{
-			type = BUTTC_KEYBOARD;
-		}
-		else
-		{
-			type = 0;
-		}
-
-		config->getOption (prefix + "DeviceNum", &devnum);
-		for (unsigned int j = 0; j < GAMEPAD_NUM_BUTTONS; j++)
-		{
-			config->getOption (prefix + GamePadNames[j], &button);
-
+		for (unsigned int j = 0; j < GAMEPAD_NUM_BUTTONS; j++) {
 			GamePadConfig[i][j].ButtType[0] = type;
-			GamePadConfig[i][j].DeviceNum[0] = devnum;
-			GamePadConfig[i][j].ButtonNum[0] = button;
+			GamePadConfig[i][j].DeviceNum[0] = 0;
+			GamePadConfig[i][j].ButtonNum[0] = DefaultGamePad[i][j];
 			GamePadConfig[i][j].NumC = 1;
 		}
 	}

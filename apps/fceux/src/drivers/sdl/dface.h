@@ -1,8 +1,4 @@
-#include "../common/config.h"
-
 #include "input.h"
-
-extern CFGSTRUCT DriverConfig[];
 
 void DoDriverArgs(void);
 

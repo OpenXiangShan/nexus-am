@@ -32,11 +32,7 @@
 #include "sdl-icon.h"
 #include "dface.h"
 
-#include "../common/configSys.h"
 #include "sdl-video.h"
-
-// GLOBALS
-extern Config *g_config;
 
 // STATIC GLOBALS
 static SDL_Surface *s_screen;
@@ -49,11 +45,7 @@ static int s_srendline, s_erendline;
 static int s_tlines;
 static int s_inited;
 
-static double s_exs, s_eys;
-static int s_eefx;
-static int s_clipSides;
-static int s_fullscreen;
-static int noframe;
+#define s_clipSides 0
 static int s_nativeWidth = -1;
 static int s_nativeHeight = -1;
 
@@ -72,7 +64,7 @@ extern bool MaxSpeed;
 //draw input aids if we are fullscreen
 bool FCEUD_ShouldDrawInputAids()
 {
-	return s_fullscreen!=0;
+	return false;
 }
  
 int
@@ -101,9 +93,6 @@ KillVideo()
 }
 
 
-// this variable contains information about the special scaling filters
-static int s_sponge;
-
 /**
  * These functions determine an appropriate scale factor for fullscreen/
  */
@@ -117,12 +106,7 @@ inline double GetYScale(int yres)
 }
 void FCEUD_VideoChanged()
 {
-	int buf;
-	g_config->getOption("SDL.PAL", &buf);
-	if(buf == 1)
-		PAL = 1;
-	else
-		PAL = 0; // NTSC and Dendy
+  PAL = 0; // NTSC and Dendy
 }
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -143,21 +127,8 @@ InitVideo(FCEUGI *gi)
 	// XXX soules - const?  is this necessary?
 	const SDL_VideoInfo *vinf;
 	int error, flags = 0;
-	int doublebuf, xstretch, ystretch, xres, yres, show_fps;
 
 	FCEUI_printf("Initializing video...");
-
-	// load the relevant configuration variables
-	g_config->getOption("SDL.Fullscreen", &s_fullscreen);
-	g_config->getOption("SDL.DoubleBuffering", &doublebuf);
-	g_config->getOption("SDL.SpecialFilter", &s_sponge);
-	g_config->getOption("SDL.XStretch", &xstretch);
-	g_config->getOption("SDL.YStretch", &ystretch);
-	g_config->getOption("SDL.LastXRes", &xres);
-	g_config->getOption("SDL.LastYRes", &yres);
-	g_config->getOption("SDL.ClipSides", &s_clipSides);
-	g_config->getOption("SDL.NoFrame", &noframe);
-	g_config->getOption("SDL.ShowFPS", &show_fps);
 
 	// check the starting, ending, and total scan lines
 	FCEUI_GetCurrentVidSystem(&s_srendline, &s_erendline);
@@ -192,139 +163,19 @@ InitVideo(FCEUGI *gi)
 		s_nativeHeight = vinf->current_h;
 	}
 
-	// check to see if we are showing FPS
-  show_fps = true;
-	FCEUI_SetShowFPS(show_fps);
+	FCEUI_SetShowFPS(true);
     
-	// check if we are rendering fullscreen
-	if(s_fullscreen) {
-		int no_cursor;
-		g_config->getOption("SDL.NoFullscreenCursor", &no_cursor);
-		flags |= SDL_FULLSCREEN;
-		SDL_ShowCursor(!no_cursor);
-	}
-	else {
-		SDL_ShowCursor(1);
-	}
+  SDL_ShowCursor(1);
     
-	if(noframe) {
-		flags |= SDL_NOFRAME;
-	}
-
 	// gives the SDL exclusive palette control... ensures the requested colors
 	flags |= SDL_HWPALETTE;
 
-	// enable double buffering if requested and we have hardware support
-		if(doublebuf && (flags & SDL_HWSURFACE)) {
-			flags |= SDL_DOUBLEBUF;
-		}
-
-	if(s_fullscreen) {
-		int desbpp, autoscale;
-		g_config->getOption("SDL.BitsPerPixel", &desbpp);
-		g_config->getOption("SDL.AutoScale", &autoscale);
-		if (autoscale)
-		{
-			double auto_xscale = GetXScale(xres);
-			double auto_yscale = GetYScale(yres);
-			double native_ratio = ((double)NWIDTH) / s_tlines;
-			double screen_ratio = ((double)xres) / yres;
-			int keep_ratio;
-            
-			g_config->getOption("SDL.KeepRatio", &keep_ratio);
-            
-			// Try to choose resolution
-			if (screen_ratio < native_ratio)
-			{
-				// The screen is narrower than the original. Maximizing width will not clip
-				auto_xscale = auto_yscale = GetXScale(xres);
-				if (keep_ratio) 
-					auto_yscale = GetYScale(yres);
-			}
-			else
-			{
-				auto_yscale = auto_xscale = GetYScale(yres);
-				if (keep_ratio) 
-					auto_xscale = GetXScale(xres);
-			}
-			s_exs = auto_xscale;
-			s_eys = auto_yscale;
-		}
-		else
-		{
-			g_config->getOption("SDL.XScale", &s_exs);
-			g_config->getOption("SDL.YScale", &s_eys);
-		}
-		g_config->getOption("SDL.SpecialFX", &s_eefx);
-
-			if(xres < (NWIDTH * s_exs) || s_exs <= 0.01) {
-				FCEUD_PrintError("xscale out of bounds.");
-				KillVideo();
-				return -1;
-			}
-
-			if(yres < int(s_tlines * s_eys) || s_eys <= 0.01) {
-				FCEUD_PrintError("yscale out of bounds.");
-				KillVideo();
-				return -1;
-			}
-
-		s_screen = SDL_SetVideoMode(xres, yres, desbpp, flags);
-
-		if(!s_screen) {
-			FCEUD_PrintError(SDL_GetError());
-			return -1;
-		}
-	} else {
-		int desbpp;
-		g_config->getOption("SDL.BitsPerPixel", &desbpp);
-
-		g_config->getOption("SDL.XScale", &s_exs);
-		g_config->getOption("SDL.YScale", &s_eys);
-		g_config->getOption("SDL.SpecialFX", &s_eefx);
-
-		// -Video Modes Tag-
-		if(s_sponge) {
-			if(s_sponge <= 3 && s_sponge >= 1)
-			{
-				s_exs = s_eys = 2;
-			} else if (s_sponge >=4 && s_sponge <= 5)
-			{
-				s_exs = s_eys = 3;
-			} else if (s_sponge >= 6 && s_sponge <= 8)
-			{
-				s_exs = s_eys = s_sponge - 4;
-			}
-			else if(s_sponge == 9)
-			{
-				s_exs = s_eys = 3;
-			}
-			else
-			{
-				s_exs = s_eys = 1;
-			}
-			if(s_sponge == 3) {
-				xres = 301 * s_exs;
-			}
-			s_eefx = 0;
-			if(s_sponge == 1 || s_sponge == 4) {
-				desbpp = 32;
-			}
-		}
-
-		int scrw = NWIDTH * s_exs;
-		if(s_sponge == 3) {
-			scrw = 301 * s_exs;
-		}
-
-		s_screen = SDL_SetVideoMode(scrw, (int)(s_tlines * s_eys),
-								desbpp, flags);
+  s_screen = SDL_SetVideoMode(NWIDTH, s_tlines, 32, flags);
 		if(!s_screen) {
 			FCEUD_PrintError(SDL_GetError());
 			return -1;
 		}
 
-		 }
 	s_curbpp = s_screen->format->BitsPerPixel;
 	if(!s_screen) {
 		FCEUD_PrintError(SDL_GetError());
@@ -334,7 +185,7 @@ InitVideo(FCEUGI *gi)
 
 	FCEU_printf(" Video Mode: %d x %d x %d bpp %s\n",
 				s_screen->w, s_screen->h, s_screen->format->BitsPerPixel,
-				s_fullscreen ? "full screen" : "");
+				"");
 
 	if(s_curbpp != 8 && s_curbpp != 16 && s_curbpp != 24 && s_curbpp != 32) {
 		FCEU_printf("  Sorry, %dbpp modes are not supported by FCE Ultra.  Supported bit depths are 8bpp, 16bpp, and 32bpp.\n", s_curbpp);
@@ -372,7 +223,7 @@ InitVideo(FCEUGI *gi)
 						s_screen->format->Rmask,
 						s_screen->format->Gmask,
 						s_screen->format->Bmask,
-						s_eefx, s_sponge, 0);
+						0, 0, 0);
 	}
 	return 0;
 }
@@ -474,34 +325,12 @@ BlitScreen(uint8 *XBuf)
 
 	dest = (uint8*)TmpScreen->pixels;
 
-	if(s_fullscreen) {
-		xo = (int)(((TmpScreen->w - NWIDTH * s_exs)) / 2);
-		dest += xo * (s_curbpp >> 3);
-		if(TmpScreen->h > (s_tlines * s_eys)) {
-			yo = (int)((TmpScreen->h - s_tlines * s_eys) / 2);
-			dest += yo * TmpScreen->pitch;
-		}
-	}
-
 	// XXX soules - again, I'm surprised SDL can't handle this
 	// perform the blit, converting bpp if necessary
 	if(s_curbpp > 8) {
-		if(s_BlitBuf) {
-			Blit8ToHigh(XBuf + NOFFSET, dest, NWIDTH, s_tlines,
-						TmpScreen->pitch, 1, 1);
-		} else {
-			Blit8ToHigh(XBuf + NOFFSET, dest, NWIDTH, s_tlines,
-						TmpScreen->pitch, (int)s_exs, (int)s_eys);
-		}
+    Blit8ToHigh(XBuf + NOFFSET, dest, NWIDTH, s_tlines, TmpScreen->pitch, 1, 1);
 	} else {
-		if(s_BlitBuf) {
-			Blit8To8(XBuf + NOFFSET, dest, NWIDTH, s_tlines,
-					TmpScreen->pitch, 1, 1, 0, s_sponge);
-		} else {
-			Blit8To8(XBuf + NOFFSET, dest, NWIDTH, s_tlines,
-					TmpScreen->pitch, (int)s_exs, (int)s_eys,
-					s_eefx, s_sponge);
-		}
+    Blit8To8(XBuf + NOFFSET, dest, NWIDTH, s_tlines, TmpScreen->pitch, 1, 1, 0, 0);
 	}
 
 	// unlock the display, if necessary
@@ -509,12 +338,7 @@ BlitScreen(uint8 *XBuf)
 		SDL_UnlockSurface(TmpScreen);
 	}
 
-	int scrw;
-	if(s_sponge == 3) {  // NTSC 2x
-		scrw = 301;
-	} else {
-		scrw = NWIDTH;
-	}
+	int scrw = NWIDTH;
 
 	 // if we have a hardware video buffer, do a fast video->video copy
 	if(s_BlitBuf) {
@@ -528,8 +352,8 @@ BlitScreen(uint8 *XBuf)
 
 		drect.x = 0;
 		drect.y = 0;
-		drect.w = (Uint16)(s_exs * scrw);
-		drect.h = (Uint16)(s_eys * s_tlines);
+		drect.w = (Uint16)(scrw);
+		drect.h = (Uint16)(s_tlines);
 
 		SDL_BlitSurface(s_BlitBuf, &srect, s_screen, &drect);
 	}
@@ -538,8 +362,7 @@ BlitScreen(uint8 *XBuf)
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	//TODO - SDL2
 #else
-	SDL_UpdateRect(s_screen, xo, yo,
-				(Uint32)(scrw * s_exs), (Uint32)(s_tlines * s_eys));
+	SDL_UpdateRect(s_screen, xo, yo, scrw, s_tlines);
 #endif
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -560,8 +383,6 @@ uint32
 PtoV(uint16 x,
 	uint16 y)
 {
-	y = (uint16)((double)y / s_eys);
-	x = (uint16)((double)x / s_exs);
 	if(s_clipSides) {
 		x += 8;
 	}
