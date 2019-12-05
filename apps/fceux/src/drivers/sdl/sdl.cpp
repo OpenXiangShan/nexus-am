@@ -12,15 +12,9 @@
 
 #include "../../types.h"
 
-extern double g_fpsScale;
-
-extern bool MaxSpeed;
-
 int isloaded;
 
 bool turbo = false;
-
-int closeFinishedMovie = 0;
 
 int eoptions=0;
 
@@ -150,16 +144,7 @@ FCEUD_Update(uint8 *XBuf,
 			 int Count)
 {
 	// apply frame scaling to Count
-	Count = (int)(Count / g_fpsScale);
 	if(Count) {
-		// don't underflow when scaling fps
-		if(g_fpsScale>1.0) {
-			if(XBuf && (inited&4) && !(NoWaiting & 2)) {
-        printf("%s,%d\n", __func__, __LINE__);
-				BlitScreen(XBuf);
-      }
-		}
-
 	} else {
 		if(!NoWaiting && (!(eoptions&EO_NOTHROTTLE) || FCEUI_EmulationPaused())) {
       while (SpeedThrottle()) { FCEUD_UpdateInput(); }
@@ -187,20 +172,6 @@ FILE *FCEUD_UTF8fopen(const char *fn, const char *mode)
 	return(fopen(fn,mode));
 }
 
-static const char *s_linuxCompilerString = "g++ " __VERSION__;
-/**
- * Returns the compiler string.
- */
-const char *FCEUD_GetCompilerString() {
-	return (const char *)s_linuxCompilerString;
-}
-
-/**
- * Unimplemented.
- */
-void FCEUD_DebugBreakpoint() {
-	return;
-}
 
 static void UpdateEMUCore()
 {

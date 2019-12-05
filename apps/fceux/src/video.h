@@ -12,23 +12,6 @@ extern uint8 *XBackBuf;
 extern uint8 *XDBuf;
 extern uint8 *XDBackBuf;
 extern int ClipSidesOffset;
-extern struct GUIMESSAGE
-{
-	//countdown for gui messages
-	int howlong;
-
-	//the current gui message
-	char errmsg[110];
-
-	//indicates that the movie should be drawn even on top of movies
-	bool isMovieMessage;
-
-	//in case of multiple lines, allow one to move the message
-	int linesFromBottom;
-
-} guiMessage;
-
-extern GUIMESSAGE subtitleMessage;
 
 void FCEU_DrawNumberRow(uint8 *XBuf, int *nstatus, int cur);
 

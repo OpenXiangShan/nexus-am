@@ -55,17 +55,6 @@ static int s_nativeHeight = -1;
 static int s_paletterefresh;
 
 extern bool MaxSpeed;
-
-/**
- * Attempts to destroy the graphical video display.  Returns 0 on
- * success, -1 on failure.
- */
-
-//draw input aids if we are fullscreen
-bool FCEUD_ShouldDrawInputAids()
-{
-	return false;
-}
  
 int
 KillVideo()
@@ -93,17 +82,6 @@ KillVideo()
 }
 
 
-/**
- * These functions determine an appropriate scale factor for fullscreen/
- */
-inline double GetXScale(int xres)
-{
-	return ((double)xres) / NWIDTH;
-}
-inline double GetYScale(int yres)
-{
-	return ((double)yres) / s_tlines;
-}
 void FCEUD_VideoChanged()
 {
   PAL = 0; // NTSC and Dendy
@@ -248,46 +226,6 @@ FCEUD_SetPalette(uint8 index,
 }
 
 /**
- * Gets the color for a particular index in the palette.
- */
-void
-FCEUD_GetPalette(uint8 index,
-				uint8 *r,
-				uint8 *g,
-				uint8 *b)
-{
-	*r = s_psdl[index].r;
-	*g = s_psdl[index].g;
-	*b = s_psdl[index].b;
-}
-
-/** 
- * Pushes the palette structure into the underlying video subsystem.
- */
-static void RedoPalette()
-{
-	{
-		if(s_curbpp > 8) {
-			SetPaletteBlitToHigh((uint8*)s_psdl);
-		} else
-		{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-			//TODO - SDL2
-#else
-			SDL_SetPalette(s_screen, SDL_PHYSPAL, s_psdl, 0, 256);
-#endif
-		}
-	}
-}
-// XXX soules - console lock/unlock unimplemented?
-
-///Currently unimplemented.
-void LockConsole(){}
-
-///Currently unimplemented.
-void UnlockConsole(){}
-
-/**
  * Pushes the given buffer of bits to the screen.
  */
 void
@@ -303,7 +241,7 @@ BlitScreen(uint8 *XBuf)
 
 	// refresh the palette if required
 	if(s_paletterefresh) {
-		RedoPalette();
+    SetPaletteBlitToHigh((uint8*)s_psdl);
 		s_paletterefresh = 0;
 	}
 
@@ -327,11 +265,7 @@ BlitScreen(uint8 *XBuf)
 
 	// XXX soules - again, I'm surprised SDL can't handle this
 	// perform the blit, converting bpp if necessary
-	if(s_curbpp > 8) {
-    Blit8ToHigh(XBuf + NOFFSET, dest, NWIDTH, s_tlines, TmpScreen->pitch, 1, 1);
-	} else {
-    Blit8To8(XBuf + NOFFSET, dest, NWIDTH, s_tlines, TmpScreen->pitch, 1, 1, 0, 0);
-	}
+  Blit8ToHigh(XBuf + NOFFSET, dest, NWIDTH, s_tlines, TmpScreen->pitch, 1, 1);
 
 	// unlock the display, if necessary
 	if(SDL_MUSTLOCK(TmpScreen)) {
@@ -373,19 +307,4 @@ BlitScreen(uint8 *XBuf)
 		SDL_Flip(s_screen);
 	}
 #endif
-}
-
-/**
- *  Converts an x-y coordinate in the window manager into an x-y
- *  coordinate on FCEU's screen.
- */
-uint32
-PtoV(uint16 x,
-	uint16 y)
-{
-	if(s_clipSides) {
-		x += 8;
-	}
-	y += s_srendline;
-	return (x | (y << 16));
 }

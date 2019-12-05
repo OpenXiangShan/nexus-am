@@ -34,8 +34,6 @@
 #include "utils/md5.h"
 #include "driver.h"
 
-extern SFORMAT FCEUVSUNI_STATEINFO[];
-
 //mbg merge 6/29/06 - these need to be global
 uint8 *trainerpoo = NULL;
 uint8 *ROM = NULL;
@@ -118,11 +116,6 @@ void iNESGI(GI h) { //bbit edited: removed static keyword
 }
 
 uint32 iNESGameCRC32 = 0;
-
-struct CRCMATCH {
-	uint32 crc;
-	char *name;
-};
 
 struct INPSEL {
 	uint32 crc32;

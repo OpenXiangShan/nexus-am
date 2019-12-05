@@ -22,7 +22,6 @@
 #include "dface.h"
 #include "input.h"
 
-
 #include "sdl-video.h"
 #include "sdl.h"
 
@@ -31,8 +30,6 @@
 
 /** GLOBALS **/
 int NoWaiting = 1;
-extern bool bindSavestate, frameAdvanceLagSkip, lagCounterDisplay;
-
 
 /* UsrInputType[] is user-specified.  CurInputType[] is current
         (game loading can override user settings)
@@ -154,11 +151,6 @@ static void KeyboardCommands ()
 		static int bbuft;
 		static int barcoder = 0;
 
-		if (keyonly (H))
-			FCEUI_NTSCSELHUE ();
-		if (keyonly (T))
-			FCEUI_NTSCSELTINT ();
-
 		if ((CurInputType[2] == SIFC_BWORLD) || (cspec == SIS_DATACH))
 		{
 			if (keyonly (F8))
@@ -233,60 +225,6 @@ UpdatePhysicalInput ()
 		}
 	}
 	//SDL_PumpEvents();
-}
-
-
-static int bcpv, bcpj;
-
-/**
- *  Begin configuring the buttons by placing the video and joystick
- *  subsystems into a well-known state.  Button configuration really
- *  needs to be cleaned up after the new config system is in place.
- */
-int ButtonConfigBegin ()
-{
-//dont shut down video subsystem if we are using gtk to prevent the sdl window from becoming detached to GTK window
-// prg318 - 10-2-2011
-	// XXX soules - why are we doing this right before KillVideo()?
-	SDL_QuitSubSystem (SDL_INIT_VIDEO);
-
-  assert(0);
-	// shut down the video and joystick subsystems
-	bcpv = KillVideo ();
-	//SDL_Surface *screen;
-
-	bcpj = KillJoysticks ();
-
-	// reactivate the video subsystem
-	if (!SDL_WasInit (SDL_INIT_VIDEO))
-	{
-		if (!bcpv)
-		{
-			InitVideo (GameInfo);
-		}
-		else
-		{
-			if (SDL_InitSubSystem (SDL_INIT_VIDEO) == -1)
-			{
-				FCEUD_Message (SDL_GetError ());
-				return 0;
-			}
-
-			// set the screen and notify the user of button configuration
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-			// TODO - SDL2
-#else
-			SDL_SetVideoMode (420, 200, 8, 0);
-			SDL_WM_SetCaption ("Button Config", 0);
-#endif
-		}
-	}
-
-	// XXX soules - why did we shut this down?
-	// initialize the joystick subsystem
-	InitJoysticks ();
-
-	return 1;
 }
 
 /**
@@ -408,28 +346,6 @@ void FCEUD_UpdateInput ()
 	{
 		UpdateGamepad ();
 	}
-}
-
-void FCEUD_SetInput (bool fourscore, bool microphone, ESI port0, ESI port1,
-		ESIFC fcexp)
-{
-	eoptions &= ~EO_FOURSCORE;
-	if (fourscore)
-	{				// Four Score emulation, only support gamepads, nothing else
-		eoptions |= EO_FOURSCORE;
-		CurInputType[0] = SI_GAMEPAD;	// Controllers 1 and 3
-		CurInputType[1] = SI_GAMEPAD;	// Controllers 2 and 4
-		CurInputType[2] = SIFC_NONE;	// No extension
-	}
-	else
-	{	
-		// no Four Core emulation, check the config/movie file for controller types
-		CurInputType[0] = port0;
-		CurInputType[1] = port1;
-		CurInputType[2] = fcexp;
-	}
-
-	InitInputInterface ();
 }
 
 /**

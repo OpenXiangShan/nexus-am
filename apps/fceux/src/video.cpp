@@ -42,9 +42,6 @@ u8 *XDBackBuf=NULL; //corresponding to XBackBuf but with deemph bits
 int ClipSidesOffset=0;	//Used to move displayed messages when Clips left and right sides is checked
 static u8 *xbsave=NULL;
 
-GUIMESSAGE guiMessage;
-GUIMESSAGE subtitleMessage;
-
 void FCEU_KillVirtualVideo(void)
 {
 }
@@ -91,44 +88,23 @@ int FCEU_InitVirtualVideo(void)
 void FCEU_PutImageDummy(void)
 {
 	ShowFPS();
-	if(GameInfo->type!=GIT_NSF)
-	{
-		FCEU_DrawNTSCControlBars(XBuf);
-		//FCEU_DrawSaveStates(XBuf);
-		//FCEU_DrawMovies(XBuf);
-	}
-	if(guiMessage.howlong) guiMessage.howlong--; /* DrawMessage() */
 }
 #endif
+
+static char temp[2048];
 
 void FCEU_DispMessage(const char *format, int disppos=0, ...)
 {
 	va_list ap;
 
 	va_start(ap,disppos);
-	vsnprintf(guiMessage.errmsg,sizeof(guiMessage.errmsg),format,ap);
 	va_end(ap);
 	// also log messages
-	char temp[2048];
 	va_start(ap,disppos);
 	vsnprintf(temp,sizeof(temp),format,ap);
 	va_end(ap);
 	strcat(temp, "\n");
 	FCEU_printf(temp);
-
-	guiMessage.howlong = 180;
-	guiMessage.isMovieMessage = false;
-
-	guiMessage.linesFromBottom = disppos;
-
-	//adelikat: Pretty sure this code fails, Movie playback stopped is done with FCEU_DispMessageOnMovie()
-}
-
-void FCEU_ResetMessages()
-{
-	guiMessage.howlong = 0;
-	guiMessage.isMovieMessage = false;
-	guiMessage.linesFromBottom = 0;
 }
 
 uint64 FCEUD_GetTime(void);

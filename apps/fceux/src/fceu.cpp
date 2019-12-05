@@ -354,7 +354,6 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 			FCEU_LoadGamePalette();
 
 		FCEU_ResetPalette();
-		FCEU_ResetMessages();   // Save state, status messages, etc.
 
 		if (!lastpal && PAL) {
 			FCEU_DispMessage("PAL mode set", 0);
