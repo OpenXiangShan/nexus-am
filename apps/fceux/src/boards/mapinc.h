@@ -7,7 +7,5 @@
 #include "../state.h"
 #include "../cart.h"
 #include "../unif.h"
-#include <stdio.h>
-#include <string.h>
 
 void FCEU_CheatAddRAM(int s, uint32 A, uint8 *p);

@@ -8,7 +8,6 @@
 //Added simple MD5 to ASCII string conversion function.
 // -Xodnizel   
 
-#include <string.h>
 #include "../types.h"
 #include "md5.h"
 

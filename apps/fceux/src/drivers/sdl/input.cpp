@@ -86,49 +86,14 @@ static void UpdateGamepad (void);
 static uint32 JSreturn = 0;
 
 #include "keyscan.h"
-static uint8 *g_keyState = 0;
-
-static uint8 keyonce[MKK_COUNT];
-#define KEY(__a) g_keyState[MKK(__a)]
-
-static int
-_keyonly (int a)
-{
-	// check for valid key
-	if (a > SDLK_LAST + 1 || a < 0)
-		return 0;
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	if (g_keyState[SDL_GetScancodeFromKey (a)])
-#else
-	if (g_keyState[a])
-#endif
-	{
-		if (!keyonce[a])
-		{
-			keyonce[a] = 1;
-			return 1;
-		}
-	} 
-	else {
-		keyonce[a] = 0;
-	}
-	return 0;
-}
-
-#define keyonly(__a) _keyonly(MKK(__a))
+static uint8 g_keyState[256] = {};
 
 /**
 * Hook for transformer board
 */
 unsigned int *GetKeyboard(void)                                                     
 {
-	int size = 256;
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	Uint8* keystate = (Uint8*)SDL_GetKeyboardState(&size);
-#else
-	Uint8* keystate = SDL_GetKeyState(&size);
-#endif
-	return (unsigned int*)(keystate);
+	return (unsigned int*)(g_keyState);
 }
 
 /**
@@ -137,60 +102,18 @@ unsigned int *GetKeyboard(void)
 static void KeyboardCommands ()
 {
 	// get the keyboard input
-#if SDL_VERSION_ATLEAST(1, 3, 0)
-	g_keyState = (Uint8*)SDL_GetKeyboardState (NULL);
-#else
-	g_keyState = SDL_GetKeyState (NULL);
-#endif
+  int keycode;
+  do {
+#define KEYDOWN_MASK 0x8000
+    int key = read_key();
+    keycode = key & ~KEYDOWN_MASK;
+    int keydown = (key & KEYDOWN_MASK) != 0;
+    assert(keycode < 256);
+    g_keyState[keycode] = keydown;
+  } while (keycode != _KEY_NONE);
 
 	// Toggle throttling
 	NoWaiting &= ~1;
-
-	{
-		static uint8 bbuf[32];
-		static int bbuft;
-		static int barcoder = 0;
-
-		if ((CurInputType[2] == SIFC_BWORLD) || (cspec == SIS_DATACH))
-		{
-			if (keyonly (F8))
-			{
-				barcoder ^= 1;
-				if (!barcoder)
-				{
-          FCEUI_DatachSet (bbuf);
-					FCEUI_DispMessage ("Barcode Entered", 0);
-				}
-				else
-				{
-					bbuft = 0;
-					FCEUI_DispMessage ("Enter Barcode", 0);
-				}
-			}
-		}
-		else
-		{
-			barcoder = 0;
-		}
-
-#define SSM(x)                                    \
-do {                                              \
-	if(barcoder) {                                \
-		if(bbuft < 13) {                          \
-			bbuf[bbuft++] = '0' + x;              \
-			bbuf[bbuft] = 0;                      \
-		}                                         \
-		FCEUI_DispMessage("Barcode: %s",0, bbuf); \
-	}                                             \
-} while(0)
-
-		for(int i=0; i<10;i++)
-		{
-			if (keyonly (i))
-				SSM (i);
-		}
-#undef SSM
-	}
 }
 
 /**
@@ -201,30 +124,6 @@ void				// removed static for a call in lua-engine.cpp
 GetMouseData (uint32 (&d)[3])
 {
   return;
-}
-
-/**
- * Handles outstanding SDL events.
- */
-static void
-UpdatePhysicalInput ()
-{
-	SDL_Event event;
-
-	// loop, handling all pending events
-	while (SDL_PollEvent (&event))
-	{
-		switch (event.type)
-		{
-			case SDL_QUIT:
-			  CloseGame ();
-			  puts ("Quit");
-			  break;
-			default:
-				break;
-		}
-	}
-	//SDL_PumpEvents();
 }
 
 /**
@@ -239,13 +138,8 @@ DTestButton (ButtConfig * bc)
 	{
 		if (bc->ButtType[x] == BUTTC_KEYBOARD)
 		{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-			if (g_keyState[SDL_GetScancodeFromKey (bc->ButtonNum[x])])
-			{
-#else
 			if (g_keyState[bc->ButtonNum[x]])
 			{
-#endif
 				return 1;
 			}
 		}
@@ -260,15 +154,9 @@ DTestButton (ButtConfig * bc)
 #define GPZ()       {MKZ(), MKZ(), MKZ(), MKZ()}
 
 ButtConfig GamePadConfig[4][10] = {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-/* Gamepad 1 */
-	{MK (KP_3), MK (KP_2), MK (SLASH), MK (ENTER),
-	MK (W), MK (Z), MK (A), MK (S), MKZ (), MKZ ()},
-#else
 	/* Gamepad 1 */
-	{MK (KP3), MK (KP2), MK (SLASH), MK (ENTER),
-	MK (W), MK (Z), MK (A), MK (S), MKZ (), MKZ ()},
-#endif
+	{MK (J), MK (K), MK (U), MK (I),
+	MK (W), MK (S), MK (A), MK (D), MKZ (), MKZ ()},
 
 	/* Gamepad 2 */
 	GPZ (),
@@ -329,7 +217,6 @@ void FCEUD_UpdateInput ()
 	int x;
 	int t = 0;
 
-	UpdatePhysicalInput ();
 	KeyboardCommands ();
 
 	for (x = 0; x < 2; x++)
@@ -411,8 +298,8 @@ const char *GamePadNames[GAMEPAD_NUM_BUTTONS] = { "A", "B", "Select", "Start",
 const char *DefaultGamePadDevice[GAMEPAD_NUM_DEVICES] =
 { "Keyboard", "None", "None", "None" };
 const int DefaultGamePad[GAMEPAD_NUM_DEVICES][GAMEPAD_NUM_BUTTONS] =
-{ {SDLK_J, SDLK_K, SDLK_U, SDLK_I,
-	SDLK_W, SDLK_S, SDLK_A, SDLK_D, 0, 0},
+{ {_KEY_J, _KEY_K, _KEY_U, _KEY_I,
+	_KEY_W, _KEY_S, _KEY_A, _KEY_D, 0, 0},
 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}

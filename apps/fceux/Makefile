@@ -3,7 +3,6 @@ SRCS := $(shell find -L ./src/ -name "*.c" -o -name "*.cpp")
 ROMS := $(shell find -L ./src/ -name "*.nes")
 
 CFLAGS += -DPSS_STYLE=1 -DFRAMESKIP -D__NO_FILE_SYSTEM__
-LDFLAGS += -lSDL
 #PREBUILD := rom
 include $(AM_HOME)/Makefile.app
 

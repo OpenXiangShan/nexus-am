@@ -25,7 +25,6 @@
 
 #include "x6502abbrev.h"
 
-#include <string.h>
 X6502 X;
 uint32 timestamp;
 uint32 soundtimestamp;

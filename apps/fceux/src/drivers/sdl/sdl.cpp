@@ -164,15 +164,6 @@ EMUFILE_FILE* FCEUD_UTF8_fstream(const char *fn, const char *m)
     return new EMUFILE_FILE(fn, m);
 }
 
-/**
- * Opens a file, C++ style, to be read a byte at a time.
- */
-FILE *FCEUD_UTF8fopen(const char *fn, const char *mode)
-{
-	return(fopen(fn,mode));
-}
-
-
 static void UpdateEMUCore()
 {
 	int ntsccol = 0, ntsctint = 56, ntschue = 72, start = 0, end = 239;
@@ -209,6 +200,8 @@ int KillFCEUXonFrame = 0;
  */
 int main(int argc, char *argv[])
 {
+  _ioe_init();
+
   argc = 2;
   const char *my_argv[] = {"fecux",
 #ifdef __NO_FILE_SYSTEM__
@@ -223,24 +216,9 @@ int main(int argc, char *argv[])
 
 	FCEUD_Message("Starting " FCEU_NAME_AND_VERSION "...\n");
 
-	/* SDL_INIT_VIDEO Needed for (joystick config) event processing? */
-	if(SDL_Init(SDL_INIT_VIDEO)) {
-		printf("Could not initialize SDL: %s.\n", SDL_GetError());
-		return(-1);
-	}
-
-	// Initialize the configuration system
-	//g_config = InitConfig();
-		
-	//if(!g_config) {
-	//	SDL_Quit();
-	//	return -1;
-	//}
-
 	// initialize the infrastructure
 	error = FCEUI_Initialize();
 	if(error != 1) {
-		SDL_Quit();
 		return -1;
 	}
 	
@@ -254,7 +232,6 @@ int main(int argc, char *argv[])
   error = LoadGame(argv[1]);
   if(error != 1) {
     DriverKill();
-    SDL_Quit();
     return -1;
   }
 	
@@ -270,7 +247,6 @@ int main(int argc, char *argv[])
 
 	// exit the infrastructure
 	FCEUI_Kill();
-	SDL_Quit();
 	return 0;
 }
 
@@ -280,7 +256,7 @@ int main(int argc, char *argv[])
 uint64
 FCEUD_GetTime()
 {
-	return SDL_GetTicks();
+	return uptime();
 }
 
 /**
@@ -289,7 +265,7 @@ FCEUD_GetTime()
 uint64
 FCEUD_GetTimeFreq(void)
 {
-	// SDL_GetTicks() is in milliseconds
+	// uptime() is in milliseconds
 	return 1000;
 }
 
@@ -302,7 +278,7 @@ FCEUD_GetTimeFreq(void)
 **/
 void FCEUD_Message(const char *text)
 {
-	fputs(text, stdout);
+  printf("%s", text);
 }
 
 /**
@@ -315,7 +291,7 @@ void FCEUD_Message(const char *text)
 **/
 void FCEUD_PrintError(const char *errormsg)
 {
-	fprintf(stderr, "%s\n", errormsg);
+	printf("%s\n", errormsg);
 }
 
 

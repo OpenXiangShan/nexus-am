@@ -21,9 +21,6 @@
 /// \file
 /// \brief memory management services provided by FCEU core
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "../types.h"
 #include "../fceu.h"
 #include "memory.h"
@@ -37,7 +34,7 @@ void *FCEU_gmalloc(uint32 size)
  if(!ret)  
  {
   FCEU_PrintError("Error allocating memory!  Doing a hard exit.");
-  exit(1);
+  assert(0);
  }
  FCEU_MemoryRand((uint8*)ret,size,true); // initialize according to RAMInitOption, default zero
  return ret;

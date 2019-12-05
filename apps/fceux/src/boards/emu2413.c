@@ -46,9 +46,7 @@
     YM2143 data sheet
 
 **************************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <klib.h>
 #include <math.h>
 #include "emu2413.h"
 
@@ -562,9 +560,10 @@ OPLL *OPLL_new(uint32 clk, uint32 rate) {
 
 	maketables(clk, rate);
 
-	opll = (OPLL*)calloc(sizeof(OPLL), 1);
+	opll = (OPLL*)malloc(sizeof(OPLL));
 	if (opll == NULL)
 		return NULL;
+  memset(opll, 0, sizeof(OPLL));
 
 	opll->mask = 0;
 

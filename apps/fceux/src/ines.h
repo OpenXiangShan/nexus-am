@@ -22,7 +22,7 @@
 #ifndef _INES_H_
 #define _INES_H_
 
-#include <string.h>
+#include "types.h"
 
 struct TMasterRomInfo
 {

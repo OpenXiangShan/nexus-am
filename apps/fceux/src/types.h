@@ -134,5 +134,6 @@ typedef int16 s16;
 typedef int32 s32;
 typedef int64 s64;
 
+#include <klib.h>
 
 #endif

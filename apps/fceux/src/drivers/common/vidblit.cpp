@@ -19,8 +19,6 @@
  */
 
 #include <math.h>
-#include <string.h>
-#include <assert.h>
 
 #include "../../fceu.h"
 #include "../../types.h"

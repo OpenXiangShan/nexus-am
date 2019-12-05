@@ -1,12 +1,6 @@
 #ifndef __FCEU_SDL_H
 #define __FCEU_SDL_H
 
-#if _SDL2
-#include <SDL2/SDL.h>
-#else
-#include <SDL/SDL.h>
-#endif
-
 #include "main.h"
 #include "dface.h"
 #include "input.h"

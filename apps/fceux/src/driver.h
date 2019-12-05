@@ -5,7 +5,6 @@
 #include "git.h"
 #include "file.h"
 
-FILE *FCEUD_UTF8fopen(const char *fn, const char *mode);
 EMUFILE_FILE* FCEUD_UTF8_fstream(const char *n, const char *m);
 
 //mbg 7/23/06
@@ -332,10 +331,5 @@ enum EFCEUI
 
 //checks whether an EFCEUI is valid right now
 bool FCEU_IsValidUI(EFCEUI ui);
-
-#ifdef __cplusplus
-extern "C"
-#endif
-FILE *FCEUI_UTF8fopen_C(const char *n, const char *m);
 
 #endif //__DRIVER_H_

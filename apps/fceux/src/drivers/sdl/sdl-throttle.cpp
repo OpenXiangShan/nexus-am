@@ -32,7 +32,7 @@ SpeedThrottle()
 	uint64 cur_time;
     
 	if(!Lasttime)
-		Lasttime = SDL_GetTicks();
+		Lasttime = uptime();
     
 	if(!InFrame)
 	{
@@ -40,7 +40,7 @@ SpeedThrottle()
 		Nexttime = Lasttime + desired_frametime * 1000;
 	}
     
-	cur_time  = SDL_GetTicks();
+	cur_time  = uptime();
 	if(cur_time >= Nexttime)
 		time_left = 0;
 	else
@@ -55,13 +55,13 @@ SpeedThrottle()
 	else
 		InFrame = 0;
     
-	/*fprintf(stderr, "attempting to sleep %Ld ms, frame complete=%s\n",
-		time_left, InFrame?"no":"yes");*/
-	SDL_Delay(time_left);
+  //delay
+  while (uptime() - cur_time < time_left)
+    ;
     
 	if(!InFrame)
 	{
-		Lasttime = SDL_GetTicks();
+		Lasttime = uptime();
 		return 0; /* Done waiting */
 	}
 	return 1; /* Must still wait some more */
