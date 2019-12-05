@@ -874,11 +874,11 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	strcpy(LoadedRomFName, name); //bbit edited: line added
 
 	// Extract Filename only. Should account for Windows/Unix this way.
-	if (strrchr(name, '/')) {
-		name = strrchr(name, '/') + 1;
-	} else if (strrchr(name, '\\')) {
-		name = strrchr(name, '\\') + 1;
-	}
+	//if (strrchr(name, '/')) {
+	//	name = strrchr(name, '/') + 1;
+	//} else if (strrchr(name, '\\')) {
+	//	name = strrchr(name, '\\') + 1;
+	//}
 
 	GameInterface = iNESGI;
 	currCartInfo = &iNESCart;
@@ -890,13 +890,14 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	if (iNES2) {
 		FCEUI_SetVidSystem(((head.TV_system & 3) == 1) ? 1 : 0);
 	} else if (OverwriteVidMode) {
-		if (strstr(name, "(E)") || strstr(name, "(e)")
-			|| strstr(name, "(Europe)") || strstr(name, "(PAL)")
-			|| strstr(name, "(F)") || strstr(name, "(f)")
-			|| strstr(name, "(G)") || strstr(name, "(g)")
-			|| strstr(name, "(I)") || strstr(name, "(i)"))
-			FCEUI_SetVidSystem(1);
-		else
+		//if (strstr(name, "(E)") || strstr(name, "(e)")
+		//	|| strstr(name, "(Europe)") || strstr(name, "(PAL)")
+		//	|| strstr(name, "(F)") || strstr(name, "(f)")
+		//	|| strstr(name, "(G)") || strstr(name, "(g)")
+		//	|| strstr(name, "(I)") || strstr(name, "(i)")) {
+		//	FCEUI_SetVidSystem(1);
+    //}
+		//else
 			FCEUI_SetVidSystem(0);
 	}
 	return 1;

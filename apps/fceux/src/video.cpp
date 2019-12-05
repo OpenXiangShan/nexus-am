@@ -91,22 +91,6 @@ void FCEU_PutImageDummy(void)
 }
 #endif
 
-static char temp[2048];
-
-void FCEU_DispMessage(const char *format, int disppos=0, ...)
-{
-	va_list ap;
-
-	va_start(ap,disppos);
-	va_end(ap);
-	// also log messages
-	va_start(ap,disppos);
-	vsnprintf(temp,sizeof(temp),format,ap);
-	va_end(ap);
-	strcat(temp, "\n");
-	FCEU_printf(temp);
-}
-
 uint64 FCEUD_GetTime(void);
 uint64 FCEUD_GetTimeFreq(void);
 bool Show_FPS = false;

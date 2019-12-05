@@ -41,6 +41,7 @@ void EMUFILE_FILE::open(const char* fname, const char* mode) {
   this->curpos = 0;
 	this->fname = cur->name;
 	strcpy(this->mode,mode);
+  this->failbit = false;
 }
 
 #else

@@ -59,31 +59,18 @@ int vblankscanlines = 0;
 #define frameAdvanceLagSkip false
 
 
-FCEUGI::FCEUGI()
-	: filename(0),
-	  archiveFilename(0) {
-	//printf("%08x",opsize); // WTF?!
-}
+FCEUGI::FCEUGI() { }
 
-FCEUGI::~FCEUGI() {
-	if (filename) {
-        free(filename);
-        filename = NULL;
-    }
-	if (archiveFilename) {
-        delete archiveFilename;
-        archiveFilename = NULL;
-    }
-}
+FCEUGI::~FCEUGI() { }
 
 void FCEU_TogglePPU(void) {
 	newppu ^= 1;
 	if (newppu) {
-		FCEU_DispMessage("New PPU loaded", 0);
+		FCEU_DispMessage("New PPU loaded");
 		FCEUI_printf("New PPU loaded");
 		overclock_enabled = 0;
 	} else {
-		FCEU_DispMessage("Old PPU loaded", 0);
+		FCEU_DispMessage("Old PPU loaded");
 		FCEUI_printf("Old PPU loaded");
 	}
 	normalscanlines = (dendy ? 290 : 240)+newppu; // use flag as number!
@@ -115,7 +102,7 @@ static void FCEU_CloseGame(void)
 
 		FCEU_CloseGenie();
 
-		delete GameInfo;
+		free(GameInfo);
 		GameInfo = NULL;
 	}
 }
@@ -321,7 +308,7 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 	FCEU_printf("Loading %s...\n\n", fullname);
 
 	FCEU_CloseGame();
-	GameInfo = new FCEUGI();
+	GameInfo = (FCEUGI *)malloc(sizeof(FCEUGI));
 	memset(GameInfo, 0, sizeof(FCEUGI));
 
 	GameInfo->archiveCount = fp->archiveCount;
@@ -351,16 +338,16 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 		FCEU_ResetPalette();
 
 		if (!lastpal && PAL) {
-			FCEU_DispMessage("PAL mode set", 0);
+			FCEU_DispMessage("PAL mode set");
 			FCEUI_printf("PAL mode set");
 		}
 		else if (!lastdendy && dendy) {
 			// this won't happen, since we don't autodetect dendy, but maybe someday we will?
-			FCEU_DispMessage("Dendy mode set", 0);
+			FCEU_DispMessage("Dendy mode set");
 			FCEUI_printf("Dendy mode set");
 		}
 		else if ((lastpal || lastdendy) && !(PAL || dendy)) {
-			FCEU_DispMessage("NTSC mode set", 0);
+			FCEU_DispMessage("NTSC mode set");
 			FCEUI_printf("NTSC mode set");
 		}
 	}
@@ -368,7 +355,7 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 		if (!silent)
 			FCEU_PrintError("An error occurred while loading the file.");
 
-		delete GameInfo;
+		free(GameInfo);
 		GameInfo = 0;
 	}
 
@@ -485,7 +472,7 @@ void ResetNES(void) {
 	extern uint8 *XBackBuf;
 	memset(XBackBuf, 0, 256 * 256);
 
-	FCEU_DispMessage("Reset", 0);
+	FCEU_DispMessage("Reset");
 }
 
 u64 xoroshiro128plus_next() {
@@ -527,7 +514,7 @@ void PowerNES(void) {
 	extern uint8 *XBackBuf;
 	memset(XBackBuf, 0, 256 * 256);
 
-	FCEU_DispMessage("Power on", 0);
+	FCEU_DispMessage("Power on");
 }
 
 void FCEU_ResetVidSys(void) {
@@ -555,30 +542,6 @@ void FCEU_ResetVidSys(void) {
 }
 
 FCEUS FSettings;
-
-void FCEU_printf(const char *format, ...) {
-	char temp[2048];
-
-	va_list ap;
-
-	va_start(ap, format);
-	vsnprintf(temp, sizeof(temp), format, ap);
-	FCEUD_Message(temp);
-
-	va_end(ap);
-}
-
-void FCEU_PrintError(const char *format, ...) {
-	char temp[2048];
-
-	va_list ap;
-
-	va_start(ap, format);
-	vsnprintf(temp, sizeof(temp), format, ap);
-	FCEUD_PrintError(temp);
-
-	va_end(ap);
-}
 
 void FCEUI_SetRenderedLines(int ntscf, int ntscl, int palf, int pall) {
 	FSettings.UsrFirstSLine[0] = ntscf;

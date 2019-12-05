@@ -21,7 +21,6 @@
 #include "mapinc.h"
 #include "mmc3.h"
 #include "../ines.h"
-#include <assert.h>
 
 static bool is_BMCFK23CA;
 static uint8 unromchr;

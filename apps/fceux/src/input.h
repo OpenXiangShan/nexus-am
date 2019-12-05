@@ -2,12 +2,8 @@
 #define _INPUT_H_
 
 #include "git.h"
-#include <stdio.h>
 
 void LagCounterToggle(void);
-
-extern FILE* PlayInputFile;
-extern FILE* DumpInputFile;
 
 //MBG TODO - COMBINE THESE INPUTC AND INPUTCFC
 

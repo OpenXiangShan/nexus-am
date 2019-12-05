@@ -48,19 +48,20 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 	{
 			//if the archive contained no files, try to open it the old fashioned way
 			//EMUFILE* fp = FCEUD_UTF8_fstream(fileToOpen.c_str(),mode);
-			EMUFILE* fp = FCEUD_UTF8_fstream(path,mode);
+			EMUFILE_FILE* fp = FCEUD_UTF8_fstream(path,mode);
 			if(!fp)
 				return 0;
 			if (!fp->is_open())
 			{
 				//fp is new'ed so it has to be deleted
-				delete fp;
+				free(fp);
 				return 0;
 			}
 
 			//open a plain old file
-			fceufp = new FCEUFILE();
+			fceufp = (FCEUFILE *)malloc(sizeof(FCEUFILE));
 			fceufp->archiveIndex = -1;
+			fceufp->archiveCount = -1;
 			fceufp->stream = fp;
 			FCEU_fseek(fceufp,0,SEEK_END);
 			fceufp->size = FCEU_ftell(fceufp);
@@ -73,13 +74,14 @@ FCEUFILE * FCEU_fopen(const char *path, const char *ipsfn, const char *mode, cha
 
 int FCEU_fclose(FCEUFILE *fp)
 {
-	delete fp;
+  fp->~FCEUFILE();
+  free(fp);
 	return 1;
 }
 
 uint64 FCEU_fread(void *ptr, size_t size, size_t nmemb, FCEUFILE *fp)
 {
-	return fp->stream->fread((char*)ptr,size*nmemb);
+	return fp->stream->_fread((char*)ptr,size*nmemb);
 }
 
 int FCEU_fseek(FCEUFILE *fp, long offset, int whence)

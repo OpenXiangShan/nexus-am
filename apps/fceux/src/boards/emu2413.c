@@ -211,11 +211,12 @@ INLINE static int32 Min(int32 i, int32 j) {
 
 /* Table for AR to LogCurve. */
 static void makeAdjustTable(void) {
-	int32 i;
+  assert(0);
+	//int32 i;
 
-	AR_ADJUST_TABLE[0] = (1 << EG_BITS);
-	for (i = 1; i < 128; i++)
-		AR_ADJUST_TABLE[i] = (uint16)((double)(1 << EG_BITS) - 1 - (1 << EG_BITS) * log(i) / log(128));
+	//AR_ADJUST_TABLE[0] = (1 << EG_BITS);
+	//for (i = 1; i < 128; i++)
+	//	AR_ADJUST_TABLE[i] = (uint16)((double)(1 << EG_BITS) - 1 - (1 << EG_BITS) * log(i) / log(128));
 }
 
 
@@ -232,10 +233,11 @@ static void makeDB2LinTable(void) {
 
 /* Liner(+0.0 - +1.0) to dB((1<<DB_BITS) - 1 -- 0) */
 static int32 lin2db(double d) {
-	if (d == 0)
-		return(DB_MUTE - 1);
-	else
-		return Min(-(int32)(20.0 * log10(d) / DB_STEP), DB_MUTE - 1);  /* 0 -- 127 */
+  assert(0);
+	//if (d == 0)
+	//	return(DB_MUTE - 1);
+	//else
+	//	return Min(-(int32)(20.0 * log10(d) / DB_STEP), DB_MUTE - 1);  /* 0 -- 127 */
 }
 
 
@@ -263,18 +265,20 @@ static void makeSinTable(void) {
 
 /* Table for Pitch Modulator */
 static void makePmTable(void) {
-	int32 i;
+  assert(0);
+	//int32 i;
 
-	for (i = 0; i < PM_PG_WIDTH; i++)
-		pmtable[i] = (int32)((double)PM_AMP * pow(2, (double)PM_DEPTH * sin(2.0 * PI * i / PM_PG_WIDTH) / 1200));
+	//for (i = 0; i < PM_PG_WIDTH; i++)
+	//	pmtable[i] = (int32)((double)PM_AMP * pow(2, (double)PM_DEPTH * sin(2.0 * PI * i / PM_PG_WIDTH) / 1200));
 }
 
 /* Table for Amp Modulator */
 static void makeAmTable(void) {
-	int32 i;
+  assert(0);
+	//int32 i;
 
-	for (i = 0; i < AM_PG_WIDTH; i++)
-		amtable[i] = (int32)((double)AM_DEPTH / 2 / DB_STEP * (1.0 + sin(2.0 * PI * i / PM_PG_WIDTH)));
+	//for (i = 0; i < AM_PG_WIDTH; i++)
+	//	amtable[i] = (int32)((double)AM_DEPTH / 2 / DB_STEP * (1.0 + sin(2.0 * PI * i / PM_PG_WIDTH)));
 }
 
 /* Phase increment counter table */

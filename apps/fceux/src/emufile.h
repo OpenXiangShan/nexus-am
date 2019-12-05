@@ -28,6 +28,10 @@ THE SOFTWARE.
 #include <stdarg.h>
 #include "types.h"
 
+#ifndef SEEK_SET
+enum {SEEK_SET, SEEK_CUR, SEEK_END};
+#endif
+
 class EMUFILE {
 protected:
 	bool failbit;
@@ -44,10 +48,6 @@ public:
 	void unfail() { failbit=false; }
 
 	bool eof() { return size()==ftell(); }
-
-	size_t fread(const void *ptr, size_t bytes){
-		return _fread(ptr,bytes);
-	}
 
 public:
 
@@ -74,29 +74,30 @@ public:
 
 #ifdef __NO_FILE_SYSTEM__
 
-class EMUFILE_FILE : public EMUFILE {
+class EMUFILE_FILE {
 protected:
 	u8* data;
 	const char* fname;
 	char mode[16];
+	bool failbit;
 
 private:
   int curpos;
   int filesize;
 
-	void open(const char* fname, const char* mode);
-
 public:
+
+	void open(const char* fname, const char* mode);
 
 	EMUFILE_FILE(const char* fname, const char* mode) { open(fname,mode); }
 
-	virtual ~EMUFILE_FILE() { }
+	~EMUFILE_FILE() { }
 
-	bool is_open() { return true; }
-	virtual int fprintf(const char *format, ...) { return 0; };
+bool is_open() { return true; }
+	int fprintf(const char *format, ...) { return 0; };
 
-	virtual int fgetc() {
-    if (eof()) {
+	int fgetc() {
+  if (size()==ftell()) {
       printf("%s: Can not read pass EOF\n", __func__);
       return -1;
     }
@@ -105,12 +106,12 @@ public:
 		return ret;
 	}
 
-	virtual int fputc(int c) {
+	int fputc(int c) {
     assert(0);
     return 0;
 	}
 
-	virtual size_t _fread(const void *ptr, size_t bytes){
+	size_t _fread(const void *ptr, size_t bytes){
     size_t remain = filesize - curpos;
     size_t ret = (bytes <= remain ? bytes : remain);
     memcpy(const_cast<void *>(ptr), data + curpos, ret);
@@ -120,12 +121,12 @@ public:
 		return ret;
 	}
 
-	virtual void fwrite(const void *ptr, size_t bytes){
+	void fwrite(const void *ptr, size_t bytes){
     failbit = true;
     assert(0);
 	}
 
-	virtual int fseek(int offset, int origin) {
+	int fseek(int offset, int origin) {
     switch (origin) {
       case SEEK_END: curpos = filesize; break;
       case SEEK_SET: curpos = offset; break;
@@ -136,9 +137,10 @@ public:
     return 0;
 	}
 
-	virtual int ftell() { return curpos; }
-	virtual int size() { return filesize; }
-	virtual void fflush() { }
+	int ftell() { return curpos; }
+	int size() { return filesize; }
+	void fflush() { }
+
 };
 
 #else

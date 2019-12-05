@@ -10,8 +10,6 @@ EMUFILE_FILE* FCEUD_UTF8_fstream(const char *n, const char *m);
 //mbg 7/23/06
 const char *FCEUD_GetCompilerString();
 
-//This makes me feel dirty for some reason.
-void FCEU_printf(const char *format, ...);
 #define FCEUI_printf FCEU_printf
 
 //Video interface
@@ -168,7 +166,6 @@ void FCEUD_LuaRunFrom(void);
 int32 FCEUI_GetDesiredFPS(void);
 void FCEUI_SaveSnapshot(void);
 void FCEUI_SaveSnapshotAs(void);
-void FCEU_DispMessage(const char *format, int disppos, ...);
 #define FCEUI_DispMessage FCEU_DispMessage
 
 int FCEUI_DecodePAR(const char *code, int *a, int *v, int *c, int *type);

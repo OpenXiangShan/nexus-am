@@ -11,7 +11,7 @@ extern bool bindSavestate;
 struct FCEUFILE {
 	//the stream you can use to access the data
 	//std::iostream *stream;
-	EMUFILE *stream;
+	EMUFILE_FILE *stream;
 
 	//the number of files that were in the archive
 	int archiveCount;
@@ -25,27 +25,19 @@ struct FCEUFILE {
 	//whether the file is contained in an archive
 	bool isArchive() { return archiveCount > 0; }
 
-	FCEUFILE()
-		: stream(0)
-		, archiveCount(-1)
-	{}
+	FCEUFILE() {}
 
 	~FCEUFILE()
 	{
-		if(stream) delete stream;
+		if(stream) {
+      stream->~EMUFILE_FILE();
+      free(stream);
+    }
 	}
 
 	enum {
 		READ, WRITE, READWRITE
 	} mode;
-
-	void SetStream(EMUFILE *newstream) {
-		if(stream) delete stream;
-		stream = newstream;
-		//get the size of the stream
-		stream->fseek(0,SEEK_SET);
-		size = stream->size();
-	}
 };
 
 struct ArchiveScanRecord

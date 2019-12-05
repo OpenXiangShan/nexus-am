@@ -50,9 +50,6 @@ static bool FSAttached = false;
 JOYPORT joyports[2] = { JOYPORT(0), JOYPORT(1) };
 FCPORT portFC;
 
-FILE* DumpInputFile;
-FILE* PlayInputFile;
-
 static DECLFR(JPRead)
 {
 	uint8 ret=0;
@@ -61,12 +58,6 @@ static DECLFR(JPRead)
 
 	if(portFC.driver)
 		ret = portFC.driver->Read(A&1,ret);
-
-	if(PlayInputFile)
-		ret = fgetc(PlayInputFile);
-
-	if(DumpInputFile)
-		fputc(ret,DumpInputFile);
 
 	ret|=X.DB&0xC0;
 

@@ -161,7 +161,9 @@ FCEUD_Update(uint8 *XBuf,
  */
 EMUFILE_FILE* FCEUD_UTF8_fstream(const char *fn, const char *m)
 {
-    return new EMUFILE_FILE(fn, m);
+  EMUFILE_FILE *p = (EMUFILE_FILE*)malloc(sizeof(EMUFILE_FILE));
+  p->open(fn, m);
+  return p;
 }
 
 static void UpdateEMUCore()
@@ -300,7 +302,7 @@ void FCEUD_PrintError(const char *errormsg)
 #define DUMMY(__f) \
     void __f(void) {\
         printf("%s\n", #__f);\
-        FCEU_DispMessage("Not implemented.",0);\
+        FCEU_DispMessage("Not implemented.");\
     }
 DUMMY(FCEUD_HideMenuToggle)
 DUMMY(FCEUD_MovieReplayFrom)

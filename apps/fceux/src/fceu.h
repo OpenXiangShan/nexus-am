@@ -133,10 +133,6 @@ extern FCEUS FSettings;
 
 bool CheckFileExists(const char* filename);	//Receives a filename (fullpath) and checks to see if that file exists
 
-void FCEU_PrintError(const char *format, ...);
-void FCEU_printf(const char *format, ...);
-void FCEU_DispMessage(const char *format, int disppos, ...);
-void FCEU_DispMessageOnMovie(const char *format, ...);
 void FCEU_TogglePPU();
 
 void SetNESDeemph_OldHacky(uint8 d, int force);

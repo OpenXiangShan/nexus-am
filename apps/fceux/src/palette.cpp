@@ -32,7 +32,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include <math.h>
+//#include <math.h>
 
 //the default basic palette
 int default_palette_selection = 0;
@@ -65,12 +65,13 @@ pal *palo;
 	(type) (y + to_rgb [4] * i + to_rgb [5] * q)\
 )
 
-float bisqwit_gammafix(float f, float gamma) { return f < 0.f ? 0.f : std::pow(f, 2.2f / gamma); }
+//float bisqwit_gammafix(float f, float gamma) { return f < 0.f ? 0.f : std::pow(f, 2.2f / gamma); }
 int bisqwit_clamp(int v) { return v<0 ? 0 : v>255 ? 255 : v; }
 
 // Calculate the luma and chroma by emulating the relevant circuits:
 int bisqwit_wave(int p, int color) { return (color+p+8)%12 < 6; }
 
+#if 0
 static void ApplyDeemphasisBisqwit(int entry, u8& r, u8& g, u8& b)
 {
 	if(entry<64) return;
@@ -161,6 +162,7 @@ static void ApplyDeemphasisComplete(pal* pal512)
 		}
 	}
 }
+#endif
 
 void FCEU_LoadGamePalette(void)
 {
@@ -276,7 +278,7 @@ static void ChoosePalette(void)
 {
   palo = default_palette[default_palette_selection];
   //need to calcualte a deemph on the fly.. sorry. maybe support otherwise later
-  ApplyDeemphasisComplete(palo);
+  //ApplyDeemphasisComplete(palo);
 }
 
 void WritePalette(void)
