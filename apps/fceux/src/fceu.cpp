@@ -601,9 +601,9 @@ void FCEUI_SetRegion(int region, int notify) {
 
 int32 FCEUI_GetDesiredFPS(void) {
 	if (PAL || dendy)
-		return(838977920);  // ~50.007
+		return 50;
 	else
-		return(1008307711);  // ~60.1
+		return 60;
 }
 
 int FCEUI_EmulationPaused(void)

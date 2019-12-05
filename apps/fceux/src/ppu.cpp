@@ -1855,9 +1855,9 @@ int FCEUPPU_Loop(int skip) {
 		}
 	}	//else... to if(ppudead)
 
+  ShowFPS();
 	#ifdef FRAMESKIP
 	if (skip) {
-		FCEU_PutImageDummy();
 		return(0);
 	} else
 	#endif

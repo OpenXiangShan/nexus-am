@@ -12,6 +12,12 @@
 
 #include "../../types.h"
 
+#ifdef __ISA_NATIVE__
+#define NR_FRAMESKIP 0
+#else
+#define NR_FRAMESKIP 2
+#endif
+
 int isloaded;
 
 bool turbo = false;
@@ -200,19 +206,9 @@ int KillFCEUXonFrame = 0;
 /**
  * The main loop for the SDL.
  */
-int main(int argc, char *argv[])
+int main(const char *romname)
 {
   _ioe_init();
-
-  argc = 2;
-  const char *my_argv[] = {"fecux",
-#ifdef __NO_FILE_SYSTEM__
-    "100in1"
-#else
-    "100in1.nes"
-#endif
-  };
-  argv = const_cast<char **>(my_argv);
 
 	int error;
 
@@ -231,7 +227,7 @@ int main(int argc, char *argv[])
 	UpdateEMUCore();
 
   // load the specified game
-  error = LoadGame(argv[1]);
+  error = LoadGame(romname);
   if(error != 1) {
     DriverKill();
     return -1;
@@ -239,11 +235,10 @@ int main(int argc, char *argv[])
 	
     int periodic_saves = 0;
 	
-    int frameskip = 0;
 	// loop playing the game
 	while(GameInfo)
 	{
-		DoFun(frameskip, periodic_saves);
+		DoFun(NR_FRAMESKIP, periodic_saves);
 	}
 	CloseGame();
 
@@ -264,7 +259,7 @@ FCEUD_GetTime()
 /**
  * Get the tick frequency in Hz.
  */
-uint64
+uint32
 FCEUD_GetTimeFreq(void)
 {
 	// uptime() is in milliseconds

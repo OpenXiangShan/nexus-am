@@ -92,7 +92,7 @@ void FCEU_PutImageDummy(void)
 #endif
 
 uint64 FCEUD_GetTime(void);
-uint64 FCEUD_GetTimeFreq(void);
+uint32 FCEUD_GetTimeFreq(void);
 bool Show_FPS = false;
 
 void FCEUI_SetShowFPS(bool showFPS)
@@ -107,12 +107,12 @@ void ShowFPS(void)
 {
 	if(Show_FPS == false)
 		return;
-	uint64 da = FCEUD_GetTime() - boop[boopcount];
+	uint32 da = FCEUD_GetTime() - boop[boopcount];
 	char fpsmsg[16];
 	int booplimit = PAL?50:60;
 	boop[boopcount] = FCEUD_GetTime();
 
-	sprintf(fpsmsg, "%.1f", (double)booplimit / ((double)da / FCEUD_GetTimeFreq()));
+	sprintf(fpsmsg, "%d", booplimit * FCEUD_GetTimeFreq() / da);
 	DrawTextTrans(XBuf + ((256 - ClipSidesOffset) - 40) + (FSettings.FirstSLine + 4) * 256, 256, (uint8*)fpsmsg, 0xA0);
 	// It's not averaging FPS over exactly 1 second, but it's close enough.
 	boopcount = (boopcount + 1) % booplimit;

@@ -5,7 +5,7 @@
 #include "throttle.h"
 
 static uint64 Lasttime, Nexttime;
-static long double desired_frametime;
+static int32 desired_fps;
 static int InFrame;
 
 /**
@@ -14,8 +14,7 @@ static int InFrame;
 void
 RefreshThrottleFPS()
 {
-	uint64 fps = FCEUI_GetDesiredFPS(); // Do >> 24 to get in Hz
-	desired_frametime = 16777216.0l / fps;
+	desired_fps = FCEUI_GetDesiredFPS();
 
 	Lasttime=0;   
 	Nexttime=0;
@@ -37,7 +36,7 @@ SpeedThrottle()
 	if(!InFrame)
 	{
 		InFrame = 1;
-		Nexttime = Lasttime + desired_frametime * 1000;
+		Nexttime = Lasttime + 1000 / desired_fps;
 	}
     
 	cur_time  = uptime();

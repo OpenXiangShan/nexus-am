@@ -1,6 +1,8 @@
 #ifndef _EMU2413_H_
 #define _EMU2413_H_
 
+#include "../types.h"
+
 #ifndef INLINE
 #if defined(__GNUC__)
 #define INLINE __inline__
@@ -14,15 +16,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned char uint8 ;
-typedef signed char int8 ;
-
-typedef unsigned short uint16 ;
-typedef signed short int16 ;
-
-typedef unsigned int uint32 ;
-typedef signed int int32 ;
 
 #define PI 3.14159265358979323846
 
