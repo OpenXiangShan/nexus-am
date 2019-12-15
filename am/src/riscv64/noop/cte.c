@@ -1,8 +1,9 @@
 #include <am.h>
 #include <riscv64.h>
 #include <klib.h>
+#include <nemu.h>
 
-#define CLINT_MMIO 0x40700000
+#define CLINT_MMIO (RTC_ADDR - 0xbff8)
 #define CLINT_MTIME    (CLINT_MMIO + 0xbff8)
 #define CLINT_MTIMECMP (CLINT_MMIO + 0x4000)
 #define TIME_INC 10
