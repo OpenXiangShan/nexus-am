@@ -33,10 +33,7 @@ void _halt(int code) {
 #define L2_SET (L2_SIZE / L2_CACHELINE_SIZE / L2_WAY)
 #define L2_WAY_STEP (L2_SET * L2_CACHELINE_SIZE)
 
-void _trm_init() {
-  __am_init_uartlite();
-
-  printf("Hello world! Build time: %s %s\n", __DATE__, __TIME__);
+void sdram_test1() {
   volatile uint64_t *p = (void *)(uintptr_t)0x80100000;
 
 #define macro(i) p[i] = (uint64_t)&p[i]
@@ -58,8 +55,12 @@ void _trm_init() {
   check(L2_WAY_STEP * 5 + 8 * 5);
   check(L2_WAY_STEP * 6 + 8 * 6);
   check(L2_WAY_STEP * 7 + 8 * 7);
+}
 
-  _halt(0);
+void _trm_init() {
+  __am_init_uartlite();
+
+  printf("Hello world! Build time: %s %s\n", __DATE__, __TIME__);
 
   extern const char _mainargs;
   //char *args = &_mainargs;
