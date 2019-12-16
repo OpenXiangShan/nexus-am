@@ -1,5 +1,5 @@
 NAME = flash-loader
 SRCS = main.c image.S
-ASFLAGS += -DIMG_PATH=\"$(IMG_PATH)\"
+ASFLAGS += -DELF_PATH=\"$(ELF_PATH)\"
 
 include $(AM_HOME)/Makefile.app

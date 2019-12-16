@@ -45,34 +45,38 @@ void* memset(void* v,int c,size_t n){
   c &= 0xff;
   uint32_t c2 = (c << 8) | c;
   uint32_t c4 = (c2 << 16) | c2;
-  uint64_t c8 = (((uint64_t)c4 << 16) << 16) | c4;
+  //uint64_t c8 = (((uint64_t)c4 << 16) << 16) | c4;
 
   char *dst = (char *)v;
   const size_t threshold = 32;
 
   if (n >= threshold) {
-    // first let dst aligned by 8 bytes
-    int pad = (uintptr_t)dst % 8;
+    // first let dst aligned by 4 bytes
+    int pad = (uintptr_t)dst % 4;
     n -= pad;
     while (pad --) { *dst ++ = c; }
 
     // loop unrolling
-    uint64_t *dst8 = (void *)dst;
+    uint32_t *dst4 = (void *)dst;
     while (n >= threshold) {
-      *dst8 ++ = c8;
-      *dst8 ++ = c8;
-      *dst8 ++ = c8;
-      *dst8 ++ = c8;
+      *dst4 ++ = c4;
+      *dst4 ++ = c4;
+      *dst4 ++ = c4;
+      *dst4 ++ = c4;
+      *dst4 ++ = c4;
+      *dst4 ++ = c4;
+      *dst4 ++ = c4;
+      *dst4 ++ = c4;
       n -= threshold;
     }
 
-    while (n >= 8) {
-      *dst8 ++ = c8;
-      n -= 8;
+    while (n >= 4) {
+      *dst4 ++ = c4;
+      n -= 4;
     }
 
     // copy the remaining bytes
-    dst = (void *)dst8;
+    dst = (void *)dst4;
   }
 
   while (n--) { *dst++ = c; }
@@ -97,35 +101,6 @@ void* memcpy(void* out, const void* in, size_t n) {
   char *dst = (char *)out;
   char *src = (char *)in;
   const size_t threshold = 32;
-  int is_align8 = ((uintptr_t)(dst - src) % 8 == 0);
-
-  if (n >= threshold && is_align8) {
-    // first let dst aligned by 8 bytes
-    int pad = (uintptr_t)dst % 8;
-    n -= pad;
-    while (pad --) { *dst ++ = *src ++; }
-
-    // loop unrolling
-    uint64_t *dst8 = (void *)dst;
-    uint64_t *src8 = (void *)src;
-    while (n >= threshold) {
-      *dst8 ++ = *src8 ++;
-      *dst8 ++ = *src8 ++;
-      *dst8 ++ = *src8 ++;
-      *dst8 ++ = *src8 ++;
-      n -= threshold;
-    }
-
-    while (n >= 8) {
-      *dst8 ++ = *src8 ++;
-      n -= 8;
-    }
-
-    // copy the remaining bytes
-    dst = (void *)dst8;
-    src = (void *)src8;
-  }
-
   int is_align4 = ((uintptr_t)(dst - src) % 4 == 0);
 
   if (n >= threshold && is_align4) {
@@ -158,6 +133,41 @@ void* memcpy(void* out, const void* in, size_t n) {
     dst = (void *)dst4;
     src = (void *)src4;
   }
+
+#if 0
+  int is_align4 = ((uintptr_t)(dst - src) % 4 == 0);
+
+  if (n >= threshold && is_align4) {
+    // first let dst aligned by 4 bytes
+    int pad = (uintptr_t)dst % 4;
+    n -= pad;
+    while (pad --) { *dst ++ = *src ++; }
+
+    // loop unrolling
+    uint32_t *dst4 = (void *)dst;
+    uint32_t *src4 = (void *)src;
+    while (n >= threshold) {
+      *dst4 ++ = *src4 ++;
+      *dst4 ++ = *src4 ++;
+      *dst4 ++ = *src4 ++;
+      *dst4 ++ = *src4 ++;
+      *dst4 ++ = *src4 ++;
+      *dst4 ++ = *src4 ++;
+      *dst4 ++ = *src4 ++;
+      *dst4 ++ = *src4 ++;
+      n -= threshold;
+    }
+
+    while (n >= 4) {
+      *dst4 ++ = *src4 ++;
+      n -= 4;
+    }
+
+    // copy the remaining bytes
+    dst = (void *)dst4;
+    src = (void *)src4;
+  }
+#endif
 
   while (n--) { *dst++ = *src++; }
   return out;
