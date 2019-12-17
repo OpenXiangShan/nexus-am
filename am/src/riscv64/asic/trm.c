@@ -57,10 +57,21 @@ void sdram_test1() {
   check(L2_WAY_STEP * 7 + 8 * 7);
 }
 
+void fix_ras(int deep) {
+  if (deep == 0) printf("Filling RAS with legal address...\n");
+  else {
+    fix_ras(deep - 1);
+    volatile int i;
+    i ++;
+  }
+}
+
 void _trm_init() {
   __am_init_uartlite();
 
   printf("Hello world! Build time: %s %s\n", __DATE__, __TIME__);
+
+  fix_ras(20);
 
   extern const char _mainargs;
   //char *args = &_mainargs;
