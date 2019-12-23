@@ -42,7 +42,7 @@ SECTIONS {
   _end = .;
 
   . = ORIGIN(ram);
-  _stack_pointer = . + 0x2000000;
-  _heap_start = _stack_pointer;
-  _heap_end = ORIGIN(ram) + LENGTH(ram);
+  _heap_start = .;
+  _heap_end = ORIGIN(ram) + LENGTH(ram) - 0x8000;
+  _stack_pointer = ORIGIN(ram) + LENGTH(ram) - 0x8;
 }
