@@ -110,9 +110,6 @@ void OPLL_set_quality(OPLL *opll, uint32 q);
 void OPLL_writeIO(OPLL *, uint32 reg, uint32 val);
 void OPLL_writeReg(OPLL *, uint32 reg, uint32 val);
 
-/* Synthsize */
-int16 OPLL_calc(OPLL *);
-
 /* Misc */
 void OPLL_forceRefresh(OPLL *);
 

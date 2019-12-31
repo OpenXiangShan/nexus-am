@@ -159,7 +159,7 @@ static void FixCache(int a, int V) {
 		FreqCache[w] &= ~0x00030000; FreqCache[w] |= (V & 3) << 16;
 		LengthCache[w] = (8 - ((V >> 2) & 7)) << 2;
 		break;
-	case 0x07: EnvCache[w] = (double)(V & 0xF) * 576716; break;
+	case 0x07: EnvCache[w] = (V & 0xF) * 576716; break;
 	}
 }
 

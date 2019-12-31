@@ -282,6 +282,7 @@ static void makeAmTable(void) {
 }
 
 /* Phase increment counter table */
+#if 0
 static void makeDphaseTable(void) {
 	uint32 fnum, block, ML;
 	uint32 mltable[16] =
@@ -292,6 +293,7 @@ static void makeDphaseTable(void) {
 			for (ML = 0; ML < 16; ML++)
 				dphaseTable[fnum][block][ML] = rate_adjust(((fnum * mltable[ML]) << block) >> (20 - DP_BITS));
 }
+#endif
 
 static void makeTllTable(void) {
 #define dB2(x) ((x) * 2)
@@ -321,6 +323,7 @@ static void makeTllTable(void) {
 }
 
 /* Rate Table for Attack */
+#if 0
 static void makeDphaseARTable(void) {
 	int32 AR, Rks, RM, RL;
 	for (AR = 0; AR < 16; AR++)
@@ -342,8 +345,10 @@ static void makeDphaseARTable(void) {
 			}
 		}
 }
+#endif
 
 /* Rate Table for Decay and Release */
+#if 0
 static void makeDphaseDRTable(void) {
 	int32 DR, Rks, RM, RL;
 
@@ -363,6 +368,7 @@ static void makeDphaseDRTable(void) {
 			}
 		}
 }
+#endif
 
 static void makeRksTable(void) {
 	int32 fnum8, block, KR;
@@ -533,11 +539,14 @@ static void OPLL_SLOT_reset(OPLL_SLOT * slot, int type) {
 }
 
 static void internal_refresh(void) {
-	makeDphaseTable();
-	makeDphaseARTable();
-	makeDphaseDRTable();
-	pm_dphase = (uint32)rate_adjust(PM_SPEED * PM_DP_WIDTH / (clk / 72));
-	am_dphase = (uint32)rate_adjust(AM_SPEED * AM_DP_WIDTH / (clk / 72));
+  assert(0);
+	//makeDphaseTable();
+	//makeDphaseARTable();
+	//makeDphaseDRTable();
+	//pm_dphase = (uint32)rate_adjust(PM_SPEED * PM_DP_WIDTH / (clk / 72));
+	//am_dphase = (uint32)rate_adjust(AM_SPEED * AM_DP_WIDTH / (clk / 72));
+	pm_dphase = 0;
+	am_dphase = 0;
 }
 
 static void maketables(uint32 c, uint32 r) {
@@ -829,23 +838,6 @@ void OPLL_fillbuf(OPLL* opll, int32 *buf, int32 len, int shift) {
 		buf++;
 		len--;
 	}
-}
-
-int16 OPLL_calc(OPLL * opll) {
-	if (!opll->quality)
-		return calc(opll);
-
-	while (opll->realstep > opll->oplltime) {
-		opll->oplltime += opll->opllstep;
-		opll->prev = opll->next;
-		opll->next = calc(opll);
-	}
-
-	opll->oplltime -= opll->realstep;
-	opll->out = (int16)(((double)opll->next * (opll->opllstep - opll->oplltime)
-						   + (double)opll->prev * opll->oplltime) / opll->opllstep);
-
-	return (int16)opll->out;
 }
 
 uint32 OPLL_setMask(OPLL * opll, uint32 mask) {
