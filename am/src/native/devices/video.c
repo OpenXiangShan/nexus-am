@@ -4,7 +4,7 @@
 
 #define W 400
 #define H 300
-#define FPS 30
+#define FPS 60
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
