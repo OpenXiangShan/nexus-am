@@ -299,51 +299,7 @@ static void DoNamcoSoundHQ(void) {
 
 
 static void DoNamcoSound(int32 *Wave, int Count) {
-	int P, V;
-	for (P = 7; P >= 7 - ((IRAM[0x7F] >> 4) & 7); P--) {
-		if ((IRAM[0x44 + (P << 3)] & 0xE0) && (IRAM[0x47 + (P << 3)] & 0xF)) {
-			int32 inc;
-			uint32 freq;
-			int32 vco;
-			uint32 duff, duff2, lengo, envelope;
-
-			vco = vcount[P];
-			freq = FreqCache[P];
-			envelope = EnvCache[P];
-			lengo = LengthCache[P];
-
-			if (!freq) { /*printf("Ack");*/
-				continue;
-			}
-
-			{
-				int c = ((IRAM[0x7F] >> 4) & 7) + 1;
-				inc = (long double)(FSettings.SndRate << 15) / ((long double)freq * 21477272 / ((long double)0x400000 * c * 45));
-			}
-
-			duff = IRAM[(((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-			if ((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
-				duff >>= 4;
-			duff &= 0xF;
-			duff2 = (duff * envelope) >> 19;
-			for (V = 0; V < Count * 16; V++) {
-				if (vco >= inc) {
-					PlayIndex[P]++;
-					if (PlayIndex[P] >= lengo)
-						PlayIndex[P] = 0;
-					vco -= inc;
-					duff = IRAM[(((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-					if ((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
-						duff >>= 4;
-					duff &= 0xF;
-					duff2 = (duff * envelope) >> 19;
-				}
-				Wave[V >> 4] += duff2;
-				vco += 0x8000;
-			}
-			vcount[P] = vco;
-		}
-	}
+  assert(0);
 }
 
 static void Mapper19_StateRestore(int version) {
