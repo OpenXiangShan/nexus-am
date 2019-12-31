@@ -1,20 +1,8 @@
 uint8 *C;
 register uint8 cc;
 uint32 vadr;
-#ifdef PPU_VRC5FETCH
-uint8 tmpd;
-#endif
 
-#ifndef PPUT_MMC5SP
-#ifndef PPUT_MMC5CHR1
-	register uint8 zz;
-#endif
-#else
-	uint8 xs, ys;
-	xs = X1;
-	ys = ((scanline >> 3) + MMC5HackSPScroll) & 0x1F;
-	if (ys >= 0x1E) ys -= 0x1E;
-#endif
+register uint8 zz;
 
 if (X1 >= 2) {
 	uint8 *S = PALRAM;
@@ -42,35 +30,12 @@ if (X1 >= 2) {
 	P += 8;
 }
 
-#ifdef PPUT_MMC5SP
-	vadr = (MMC5HackExNTARAMPtr[xs | (ys << 5)] << 4) + (vofs & 7);
-#else
-#ifndef PPUT_MMC5CHR1
 	zz = RefreshAddr & 0x1F;
-#endif
 	C = vnapage[(RefreshAddr >> 10) & 3];
-#ifdef PPU_VRC5FETCH
-	tmpd = QTAINTRAM[((((RefreshAddr >> 10) & 3) >> ((qtaintramreg >> 1)) & 1) << 10) | (RefreshAddr & 0x3FF)];
-	vofs = ((tmpd & 0x3F) << 12) | ((RefreshAddr >> 12) & 7);	// recalculate VROM offset 
-#endif
 	vadr = (C[RefreshAddr & 0x3ff] << 4) + vofs;				// Fetch name table byte.
-#endif
 
-#ifdef PPUT_HOOK
-	PPU_hook(0x2000 | (RefreshAddr & 0xfff));
-#endif
-
-#ifdef PPUT_MMC5SP
-	cc = MMC5HackExNTARAMPtr[0x3c0 + (xs >> 2) + ((ys & 0x1C) << 1)];
-	cc = ((cc >> ((xs & 2) + ((ys & 0x2) << 1))) & 3);
-#else
-	#ifdef PPUT_MMC5CHR1
-		cc = (MMC5HackExNTARAMPtr[RefreshAddr & 0x3ff] & 0xC0) >> 6;
-	#else
-		cc = C[0x3c0 + (zz >> 2) + ((RefreshAddr & 0x380) >> 4)];	// Fetch attribute table byte.
-		cc = ((cc >> ((zz & 2) + ((RefreshAddr & 0x40) >> 4))) & 3);
-	#endif
-#endif
+  cc = C[0x3c0 + (zz >> 2) + ((RefreshAddr & 0x380) >> 4)];	// Fetch attribute table byte.
+  cc = ((cc >> ((zz & 2) + ((RefreshAddr & 0x40) >> 4))) & 3);
 
 atlatch >>= 2;
 atlatch |= cc << 2;
@@ -78,69 +43,18 @@ atlatch |= cc << 2;
 pshift[0] <<= 8;
 pshift[1] <<= 8;
 
-#ifdef PPUT_MMC5SP
-	C = MMC5HackVROMPTR + vadr;
-	C += ((MMC5HackSPPage & 0x3f & MMC5HackVROMMask) << 12);
-#else
-	#ifdef PPUT_MMC5CHR1
-		C = MMC5HackVROMPTR;
-		C += (((MMC5HackExNTARAMPtr[RefreshAddr & 0x3ff]) & 0x3f & MMC5HackVROMMask) << 12) + (vadr & 0xfff);
-		C += (MMC50x5130 & 0x3) << 18; //11-jun-2009 for kuja_killer
-	#elif defined(PPUT_MMC5)
-		C = MMC5BGVRAMADR(vadr);
-	#else
 
-	#ifdef PPU_VRC5FETCH
-	if(tmpd & 0x40)
-		C = CHRptr[0] + vadr;
-	else
 		C = VRAMADR(vadr);
-	#else
-		C = VRAMADR(vadr);
-#endif
 
-	#endif
-#endif
 
-#ifdef PPUT_HOOK
-	PPU_hook(vadr);
-#endif
-
-#ifdef PPU_BGFETCH
-	if (RefreshAddr & 1) {
-		if(ScreenON)
-			RENDER_LOGP(C + 8);
-		pshift[0] |= C[8];
-		pshift[1] |= C[8];
-	} else {
-		if(ScreenON)
-			RENDER_LOGP(C);
-		pshift[0] |= C[0];
-		pshift[1] |= C[0];
-	}
-#else
-	#ifdef PPU_VRC5FETCH
-	pshift[0] |= C[0];
-	if(tmpd & 0x40)
-		pshift[1] |= (tmpd & 0x80) ? 0xFF : 0x00;
-	else
-		pshift[1] |= C[8];
-	#else
 	if(ScreenON)
 		RENDER_LOGP(C);
 	pshift[0] |= C[0];
 	if(ScreenON)
 		RENDER_LOGP(C + 8);
 	pshift[1] |= C[8];
-	#endif
-#endif
 
 if ((RefreshAddr & 0x1f) == 0x1f)
 	RefreshAddr ^= 0x41F;
 else
 	RefreshAddr++;
-
-#ifdef PPUT_HOOK
-	PPU_hook(0x2000 | (RefreshAddr & 0xfff));
-#endif
-

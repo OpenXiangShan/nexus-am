@@ -1090,12 +1090,12 @@ static void RefreshLine(int lastpixel) {
 
 	P = Pline;
 
-	vofs = 0;
+  assert(!PPU_hook);
+  assert(!PEC586Hack);
+  assert(!MMC5Hack);
+  assert(!QTAIHack);
 
-	if(PEC586Hack)
-		vofs = ((RefreshAddr & 0x200) << 3) | ((RefreshAddr >> 12) & 7);
-	else
-		vofs = ((PPU[0] & 0x10) << 8) | ((RefreshAddr >> 12) & 7);
+  vofs = ((PPU[0] & 0x10) << 8) | ((RefreshAddr >> 12) & 7);
 
 	if (!ScreenON && !SpriteON) {
 		uint32 tem;
@@ -1125,83 +1125,9 @@ static void RefreshLine(int lastpixel) {
 	PALRAM[8] |= 64;
 	PALRAM[0xC] |= 64;
 
-	//This high-level graphics MMC5 emulation code was written for MMC5 carts in "CL" mode.
-	//It's probably not totally correct for carts in "SL" mode.
-
-#define PPUT_MMC5
-	if (MMC5Hack && geniestage != 1) {
-		if (MMC5HackCHRMode == 0 && (MMC5HackSPMode & 0x80)) {
-			int tochange = MMC5HackSPMode & 0x1F;
-			tochange -= firsttile;
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				if ((tochange <= 0 && MMC5HackSPMode & 0x40) || (tochange > 0 && !(MMC5HackSPMode & 0x40))) {
-					#define PPUT_MMC5SP
-					#include "pputile.inc"
-					#undef PPUT_MMC5SP
-				} else {
-					#include "pputile.inc"
-				}
-				tochange--;
-			}
-		} else if (MMC5HackCHRMode == 1 && (MMC5HackSPMode & 0x80)) {
-			int tochange = MMC5HackSPMode & 0x1F;
-			tochange -= firsttile;
-
-			#define PPUT_MMC5SP
-			#define PPUT_MMC5CHR1
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-			#undef PPUT_MMC5CHR1
-			#undef PPUT_MMC5SP
-		} else if (MMC5HackCHRMode == 1) {
-			#define PPUT_MMC5CHR1
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-			#undef PPUT_MMC5CHR1
-		} else {
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-		}
-	}
-	#undef PPUT_MMC5
-	else if (PPU_hook) {
-		norecurse = 1;
-		#define PPUT_HOOK
-		if (PEC586Hack) {
-			#define PPU_BGFETCH
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-			#undef PPU_BGFETCH
-		} else {
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-		}
-		#undef PPUT_HOOK
-		norecurse = 0;
-	} else {
-		if (PEC586Hack) {
-			#define PPU_BGFETCH
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-			#undef PPU_BGFETCH
-		} if (QTAIHack) {
-			#define PPU_VRC5FETCH
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-			#undef PPU_VRC5FETCH
-		} else {
-			for (X1 = firsttile; X1 < lasttile; X1++) {
-				#include "pputile.inc"
-			}
-		}
-	}
+  for (X1 = firsttile; X1 < lasttile; X1++) {
+#include "pputile.inc"
+  }
 
 #undef vofs
 #undef RefreshAddr
