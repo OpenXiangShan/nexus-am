@@ -44,11 +44,22 @@ void __am_irq_handle(_Context *c) {
 
 static void timer_handler(int sig, siginfo_t *info, void *ucontext) {
   ucontext_t *c = ucontext;
-  uintptr_t rip = c->uc_mcontext.gregs[REG_RIP];
+  uintptr_t *rip = (uintptr_t *)c->uc_mcontext.gregs[REG_RIP];
+  extern uintptr_t _start, _etext;
+  if (!((rip >= &_start && rip < &_etext) || (uintptr_t)rip < 0x100000000ul)) {
+    // Shared libraries contain code which are not reenterable.
+    // If the signal comes when executing code in shared libraries,
+    // the signal handler can not call any function which is not signal-safe,
+    // else the behavior is undefined (may be dead lock).
+    // To handle this, we just refuse to handle the signal and return directly
+    // to pretend missing the interrupt.
+    // See man 7 signal-safety for more information.
+    return;
+  }
   // setup the stack as if we had called __am_async_ex();
   uintptr_t rsp = c->uc_mcontext.gregs[REG_RSP];
   rsp -= sizeof(uintptr_t);
-  *(uintptr_t *)rsp = rip;
+  *(uintptr_t *)rsp = (uintptr_t)rip;
   rsp -= sizeof(uintptr_t);
   // we directly put the irq number on the stack to avoid the corruption of %rdi
   *(uintptr_t *)rsp = 2;
