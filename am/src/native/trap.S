@@ -13,6 +13,8 @@ __am_syscall:
 __am_async_ex:
   # will be used as the argument of __am_irq_handle, save it manually
   pushq %rdi
+  pushq %r11
+  pushq %r10
   pushq %rax
   # must have sizeof(ucontext_t) < 1024
   subq $1024, %rsp
@@ -24,6 +26,8 @@ __am_ret_from_trap:
 
   addq $1024, %rsp
   popq %rax
+  popq %r10
+  popq %r11
   popq %rdi
   addq $8, %rsp # irq
   retq
