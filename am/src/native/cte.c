@@ -37,6 +37,7 @@ void __am_irq_handle(_Context *c) {
 
   __am_switch(c);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
+  c->uc.uc_mcontext.gregs[REG_RDI] = (irq == 2); // indicate different returning code, see trap.S
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
 
   setcontext(&c->uc);
@@ -57,7 +58,8 @@ static void timer_handler(int sig, siginfo_t *info, void *ucontext) {
     return;
   }
   // setup the stack as if we had called __am_async_ex();
-  uintptr_t rsp = c->uc_mcontext.gregs[REG_RSP];
+  // use `-128` to skip the red zone of the stack frame, see the amd64 ABI manual for details
+  uintptr_t rsp = c->uc_mcontext.gregs[REG_RSP] - 128;
   rsp -= sizeof(uintptr_t);
   *(uintptr_t *)rsp = (uintptr_t)rip;
   rsp -= sizeof(uintptr_t);

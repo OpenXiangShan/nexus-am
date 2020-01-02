@@ -30,7 +30,17 @@ __am_ret_from_trap:
   popq %rax
   popq %r10
   popq %r11
+
+  testq %rdi, %rdi
+  jnz __am_ret_from_intr
+
   popfq
   popq %rdi
   lea 8(%rsp), %rsp # irq, do not use addq, since it will change rflags!
   retq
+
+__am_ret_from_intr:
+  popfq
+  popq %rdi
+  lea 8(%rsp), %rsp # irq, do not use addq, since it will change rflags!
+  retq $128
