@@ -13,6 +13,8 @@ __am_syscall:
 __am_async_ex:
   # will be used as the argument of __am_irq_handle, save it manually
   pushq %rdi
+  # getcontext() does not preserve %rflags, %rax, %r10, %r11, save them manually
+  pushfq
   pushq %r11
   pushq %r10
   pushq %rax
@@ -28,6 +30,7 @@ __am_ret_from_trap:
   popq %rax
   popq %r10
   popq %r11
+  popfq
   popq %rdi
   addq $8, %rsp # irq
   retq
