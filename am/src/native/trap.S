@@ -1,11 +1,15 @@
 .global __am_ret_from_trap
 .global __am_asm_trap
+.global __am_async_ex
 
 __am_asm_trap:
-  # getcontext() does not preserve %rax, save it manually
-  pushq %rax
+  pushq %rdi # irq number
+
+__am_async_ex:
+  # will be used as the argument of __am_irq_handle, save it manually
   pushq %rdi
-  # must have sizeof(ucontect_t) < 1024
+  pushq %rax
+  # must have sizeof(ucontext_t) < 1024
   subq $1024, %rsp
 
   movq %rsp, %rdi
@@ -14,6 +18,7 @@ __am_asm_trap:
 __am_ret_from_trap:
 
   addq $1024, %rsp
-  popq %rdi
   popq %rax
+  popq %rdi
+  addq $8, %rsp # irq
   retq

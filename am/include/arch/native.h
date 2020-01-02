@@ -20,8 +20,9 @@ struct _Context {
       void *as;
     };
   };
-  uintptr_t rdi;
   uintptr_t rax;
+  uintptr_t rdi;
+  uintptr_t irq;
   uintptr_t rip;
 };
 
