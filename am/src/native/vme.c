@@ -115,7 +115,7 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
   assert(ret2 == 0);
   c->as = as;
 
-  c->uc.uc_mcontext.gregs[REG_RDI] = 0;
+  c->rdi = 0;
   c->uc.uc_mcontext.gregs[REG_RSI] = ret; // ???
   c->uc.uc_mcontext.gregs[REG_RDX] = ret; // ???
 
