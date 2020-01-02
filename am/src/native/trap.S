@@ -1,9 +1,14 @@
 .global __am_ret_from_trap
 .global __am_asm_trap
+.global __am_syscall
 .global __am_async_ex
 
 __am_asm_trap:
   pushq %rdi # irq number
+  jmp __am_async_ex
+
+__am_syscall:
+  pushq $0
 
 __am_async_ex:
   # will be used as the argument of __am_irq_handle, save it manually

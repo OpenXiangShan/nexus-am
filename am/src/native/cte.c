@@ -9,6 +9,7 @@
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
 void __am_asm_trap(int irq);
+void __am_syscall();
 void __am_async_ex();
 void __am_ret_from_trap();
 
@@ -76,7 +77,7 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   assert(sizeof(ucontext_t) < 1024);  // if this fails, allocate larger space in trap.S for ucontext
 
   void *start = (void *)0x100000;
-  *(uintptr_t *)start = (uintptr_t)__am_asm_trap;
+  *(uintptr_t *)start = (uintptr_t)__am_syscall;
 
   user_handler = handler;
 
