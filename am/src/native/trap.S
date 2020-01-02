@@ -4,7 +4,7 @@
 .global __am_async_ex
 
 __am_asm_trap:
-  pushq %rdi # irq number
+  pushq %rdi # cause number
   jmp __am_async_ex
 
 __am_syscall:
@@ -36,11 +36,11 @@ __am_ret_from_trap:
 
   popfq
   popq %rdi
-  lea 8(%rsp), %rsp # irq, do not use addq, since it will change rflags!
+  lea 8(%rsp), %rsp # cause, do not use addq, since it will change rflags!
   retq
 
 __am_ret_from_intr:
   popfq
   popq %rdi
-  lea 8(%rsp), %rsp # irq, do not use addq, since it will change rflags!
+  lea 8(%rsp), %rsp # cause, do not use addq, since it will change rflags!
   retq $128

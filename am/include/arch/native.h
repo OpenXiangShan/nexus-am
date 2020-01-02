@@ -22,7 +22,7 @@ struct _Context {
   };
   uintptr_t rax, r10, r11, rflags; // registers not preserved by getcontext()
   uintptr_t rdi;
-  uintptr_t irq;
+  uintptr_t cause;
   uintptr_t rip;
 };
 

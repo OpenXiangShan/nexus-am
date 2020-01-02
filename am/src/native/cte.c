@@ -5,10 +5,11 @@
 #include <signal.h>
 
 #define TIMER_HZ 100
+enum { CAUSE_SYSCALL, CAUSE_YIELD, CAUSE_TIMER };
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
-void __am_asm_trap(int irq);
+void __am_asm_trap(int cause);
 void __am_syscall();
 void __am_async_ex();
 void __am_ret_from_trap();
@@ -22,13 +23,13 @@ void __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
 
   _Event e;
-  int irq = c->irq;
+  int cause = c->cause;
 
-  switch (irq) {
-    case 0: e.event = _EVENT_SYSCALL; break;
-    case 1: e.event = _EVENT_YIELD; break;
-    case 2: e.event = _EVENT_IRQ_TIMER; break;
-    default: printf("Unhandle irq = %d\n", irq); assert(0);
+  switch (cause) {
+    case CAUSE_SYSCALL: e.event = _EVENT_SYSCALL; break;
+    case CAUSE_YIELD  : e.event = _EVENT_YIELD; break;
+    case CAUSE_TIMER  : e.event = _EVENT_IRQ_TIMER; break;
+    default: printf("Unhandle cause = %d\n", cause); assert(0);
   }
   _Context *ret = user_handler(e, c);
   if (ret != NULL) {
@@ -37,7 +38,7 @@ void __am_irq_handle(_Context *c) {
 
   __am_switch(c);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
-  c->uc.uc_mcontext.gregs[REG_RDI] = (irq == 2); // indicate different returning code, see trap.S
+  c->uc.uc_mcontext.gregs[REG_RDI] = (cause == CAUSE_TIMER); // indicate different returning code, see trap.S
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
 
   setcontext(&c->uc);
@@ -63,8 +64,8 @@ static void timer_handler(int sig, siginfo_t *info, void *ucontext) {
   rsp -= sizeof(uintptr_t);
   *(uintptr_t *)rsp = (uintptr_t)rip;
   rsp -= sizeof(uintptr_t);
-  // we directly put the irq number on the stack to avoid the corruption of %rdi
-  *(uintptr_t *)rsp = 2;
+  // we directly put the cause number on the stack to avoid the corruption of %rdi
+  *(uintptr_t *)rsp = CAUSE_TIMER;
 
   c->uc_mcontext.gregs[REG_RSP] = rsp;
   c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_async_ex;
