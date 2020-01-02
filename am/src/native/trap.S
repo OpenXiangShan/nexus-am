@@ -32,5 +32,5 @@ __am_ret_from_trap:
   popq %r11
   popfq
   popq %rdi
-  addq $8, %rsp # irq
+  lea 8(%rsp), %rsp # irq, do not use addq, since it will change rflags!
   retq
