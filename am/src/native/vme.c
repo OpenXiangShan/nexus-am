@@ -1,6 +1,7 @@
 #include <am.h>
 #include <stdlib.h>
 #include <klib.h>
+#include <signal.h>
 
 #define PGSIZE  4096
 #define PGSHIFT 12
@@ -110,6 +111,8 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
   _Context *c = (_Context*)ustack.end - 1;
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
+  int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
+  assert(ret2 == 0);
   c->as = as;
 
   c->uc.uc_mcontext.gregs[REG_RDI] = 0;
