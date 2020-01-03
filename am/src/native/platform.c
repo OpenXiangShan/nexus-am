@@ -1,5 +1,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <klib.h>
@@ -29,6 +30,10 @@ static void init_platform() {
   _heap.end = (void *)PMEM_MAP_END;
 
   getcontext(&uc_example);
+
+  // block SIGVTALRM to simulate disabling interrupt
+  int ret2 = sigaddset(&uc_example.uc_sigmask, SIGVTALRM);
+  assert(ret2 == 0);
 
   const char *args = getenv("mainargs");
   exit(main(args ? args : "")); // call main here!
