@@ -69,6 +69,24 @@ static void init_platform() {
   }
   assert(*(int *)PMEM_MAP_START == 0x464c457f);
 
+  extern Elf64_Dyn _DYNAMIC[];
+  Elf64_Dyn *pDyn;
+  Elf64_Rela *rela_dyn = NULL;
+  int nr_rela_dyn = 0;
+  for (pDyn = _DYNAMIC; pDyn->d_tag != DT_NULL; pDyn ++) {
+    switch (pDyn->d_tag) {
+      case DT_RELA: rela_dyn = (void *)pDyn->d_un.d_ptr; break;
+      case DT_RELASZ: nr_rela_dyn = pDyn->d_un.d_val / sizeof(Elf64_Rela); break;
+    }
+  }
+  assert(rela_dyn != NULL && nr_rela_dyn != 0);
+
+  for (i = 0; i < nr_rela_dyn; i ++) {
+    if (ELF64_R_TYPE(rela_dyn[i].r_info) == R_X86_64_RELATIVE) {
+      *(uintptr_t *)(rela_dyn[i].r_offset + PMEM_MAP_START) += PMEM_MAP_START - aslr_offset;
+    }
+  }
+
   const char *args = getenv("mainargs");
   int (*entry)(const char *) = REBASE(main);
   exit(entry(args ? args : "")); // call main here!
