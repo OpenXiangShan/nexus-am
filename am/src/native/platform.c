@@ -7,13 +7,13 @@
 #include <klib.h>
 #include "platform.h"
 
-#define PMEM_SHM_FILE "/native-pmem"
 #define PMEM_SIZE (128 * 1024 * 1024) // 128MB
 #define PMEM_MAP_START (uintptr_t)0x100000
 #define PMEM_MAP_END   (uintptr_t)PMEM_SIZE
 #define PMEM_MAP_SIZE  (PMEM_MAP_END - PMEM_MAP_START)
 
 static int pmem_fd = 0;
+static char pmem_shm_file[] = "/native-pmem-XXXXXX";
 static ucontext_t uc_example = {};
 uintptr_t __am_rebase_offset = 0;
 
@@ -21,7 +21,8 @@ int main(const char *args);
 
 static void init_platform() __attribute__((constructor));
 static void init_platform() {
-  pmem_fd = shm_open(PMEM_SHM_FILE, O_RDWR | O_CREAT, 0700);
+  mktemp(pmem_shm_file);
+  pmem_fd = shm_open(pmem_shm_file, O_RDWR | O_CREAT | O_EXCL, 0700);
   assert(pmem_fd != -1);
   assert(0 == ftruncate(pmem_fd, PMEM_SIZE));
 
@@ -93,7 +94,7 @@ static void exit_platform() {
   int ret = munmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE);
   assert(ret == 0);
   close(pmem_fd);
-  ret = shm_unlink(PMEM_SHM_FILE);
+  ret = shm_unlink(pmem_shm_file);
   assert(ret == 0);
 }
 
