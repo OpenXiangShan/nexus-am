@@ -1,34 +1,31 @@
 #include <am.h>
-#include <stdio.h>
+#include <klib.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include <assert.h>
 #include <stdatomic.h>
+#include "platform.h"
 
+#define MAX_SMP 16
 static int ncpu;
-static __thread int cpuid;
-static atomic_int cpu_cnt = 0;
-
-void *thread_wrapper(void *entry) {
-  cpuid = atomic_fetch_add(&cpu_cnt, 1);
-  ((void (*)())entry)();
-  printf("MP entry should not return\n");
-  exit(1);
-  return NULL;
-}
+static int cpuid;
 
 int _mpe_init(void (*entry)()) {
   char *smp = getenv("smp");
   ncpu = smp ? atoi(smp) : 1;
-  assert(0 < ncpu && ncpu <= 16);
+  assert(0 < ncpu && ncpu <= MAX_SMP);
 
-  pthread_t threads[ncpu];
+  REBASE_ORIGINAL_VAL(cpuid) = 0;
+  for (int i = 1; i < ncpu; i++) {
+    if (fork() == 0) {
+      REBASE_ORIGINAL_VAL(cpuid) = i;
+      break;
+    }
+  }
 
-  for (int i = 0; i < ncpu; i++)
-    pthread_create(&threads[i], NULL, thread_wrapper, entry);
-  for (int i = 0; i < ncpu; i++)
-    pthread_join(threads[i], NULL);
-  exit(1);
+  entry();
+
+  printf("MP entry should not return\n");
+  assert(0);
+  return 0;
 }
 
 int _ncpu() {
@@ -36,7 +33,7 @@ int _ncpu() {
 }
 
 int _cpu() {
-  return cpuid;
+  return REBASE_ORIGINAL_VAL(cpuid);
 }
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
