@@ -39,7 +39,7 @@ static void init_platform() {
   exit(main(args ? args : "")); // call main here!
 }
 
-static void exit_platform() __attribute__((constructor));
+static void exit_platform() __attribute__((destructor));
 static void exit_platform() {
   int ret = munmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE);
   assert(ret == 0);
