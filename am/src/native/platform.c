@@ -21,6 +21,7 @@ int main(const char *args);
 
 static void init_platform() __attribute__((constructor));
 static void init_platform() {
+  // create shared memory object and set up mapping to simulate the physical memory
   mktemp(pmem_shm_file);
   pmem_fd = shm_open(pmem_shm_file, O_RDWR | O_CREAT | O_EXCL, 0700);
   assert(pmem_fd != -1);
@@ -30,6 +31,7 @@ static void init_platform() {
       MAP_SHARED | MAP_FIXED, pmem_fd, PMEM_MAP_START);
   assert(ret != (void *)-1);
 
+  // compute ASLR offset
   Elf64_Phdr *phdr = (void *)getauxval(AT_PHDR);
   int phnum = (int)getauxval(AT_PHNUM);
   extern char end;
@@ -46,6 +48,7 @@ static void init_platform() {
   assert(aslr_offset != 0);
   __am_rebase_offset = aslr_offset - PMEM_MAP_START;
 
+  // set up the AM heap
   _heap.start = REBASE_PTR(&end);
   _heap.end = (void *)PMEM_MAP_END;
 
@@ -66,6 +69,10 @@ static void init_platform() {
   }
   assert(*(int *)PMEM_MAP_START == 0x464c457f);
 
+  // NOTE: the heap is not relocated, so do not use memory
+  // returnedby malloc() in the code
+
+  // relocate the vaule of data
   extern Elf64_Dyn _DYNAMIC[];
   Elf64_Dyn *pDyn;
   Elf64_Rela *rela_dyn = NULL;
@@ -84,6 +91,7 @@ static void init_platform() {
     }
   }
 
+  // call main()
   const char *args = getenv("mainargs");
   int (*entry)(const char *) = REBASE_PTR(main);
   exit(entry(args ? args : "")); // call main here!
