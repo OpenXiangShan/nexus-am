@@ -1,6 +1,7 @@
 #include <am.h>
 #include <amdev.h>
 #include <SDL2/SDL.h>
+#include <unistd.h>
 
 #define KEYDOWN_MASK 0x8000
 

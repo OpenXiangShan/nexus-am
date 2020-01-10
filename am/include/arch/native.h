@@ -5,9 +5,7 @@
 # define __USE_GNU
 #endif
 
-#include <unistd.h>
 #include <ucontext.h>
-#include <sys/types.h>
 
 #define false 0
 #define true 1
