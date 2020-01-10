@@ -2,6 +2,8 @@
 #include <klib.h>
 #include <stdlib.h>
 #include <stdatomic.h>
+#include <sys/prctl.h>
+#include <signal.h>
 #include "platform.h"
 
 #define MAX_SMP 16
@@ -13,14 +15,21 @@ int _mpe_init(void (*entry)()) {
   ncpu = smp ? atoi(smp) : 1;
   assert(0 < ncpu && ncpu <= MAX_SMP);
 
-  REBASE_ORIGINAL_VAL(cpuid) = 0;
+
+  int ppid_before_fork = getpid();
   for (int i = 1; i < ncpu; i++) {
     if (fork() == 0) {
+      // install a parent death signal in the chlid
+      int r = prctl(PR_SET_PDEATHSIG, SIGTERM);
+      assert(r != -1);
+      assert(getppid() == ppid_before_fork);
+
       REBASE_ORIGINAL_VAL(cpuid) = i;
-      break;
+      entry();
     }
   }
 
+  REBASE_ORIGINAL_VAL(cpuid) = 0;
   entry();
 
   printf("MP entry should not return\n");
