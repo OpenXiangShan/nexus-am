@@ -8,7 +8,7 @@ void _trm_init() {
 }
 
 void _putc(char ch) {
-  putchar(ch);
+  fputc(ch, stderr);
 }
 
 void _halt(int code) {
