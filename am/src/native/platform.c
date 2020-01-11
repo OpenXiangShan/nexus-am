@@ -37,12 +37,43 @@ static void init_platform() {
   extern char end;
   uintptr_t aslr_offset = 0;
   int i;
+  int ret2;
   for (i = 0; i < phnum; i ++) {
     if (phdr[i].p_type == PT_LOAD && (phdr[i].p_flags & PF_W)) {
       void *end_in_elf = (void *)(phdr[i].p_vaddr + phdr[i].p_memsz);
       aslr_offset = (void *)&end - end_in_elf;
       assert((aslr_offset & 0xfff) == 0);
-      break;
+
+      // allocate temporary memory
+      uintptr_t vaddr = phdr[i].p_vaddr + aslr_offset;
+      uintptr_t pad = vaddr & 0xfff;
+      void *vaddr_align = (void *)(vaddr - pad);
+      uintptr_t size = phdr[i].p_memsz + pad;
+      void *temp_mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+      assert(temp_mem != (void *)-1);
+
+      // save data and bss sections
+      memcpy(temp_mem, vaddr_align, size);
+
+      // save the addresses of library functions which will be used after munamp()
+      // since calling the library functions requires accessing GOT, which will be unmapped
+      void *(*volatile mmap_libc)(void *, size_t, int, int, int, off_t) = &mmap;
+      void *(*volatile memcpy_libc)(void *, const void *, size_t) = &memcpy;
+
+      // unmap the data and bss sections
+      ret2 = munmap(vaddr_align, size);
+      assert(ret2 == 0);
+
+      // map the sections again with MAP_SHARED, which will be shared across fork()
+      ret = mmap_libc(vaddr_align, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_FIXED | MAP_ANONYMOUS, -1, 0);
+      assert(ret == vaddr_align);
+
+      // restore the data in the sections
+      memcpy_libc(vaddr_align, temp_mem, size);
+
+      // unmap the temporary memory
+      ret2 = munmap(temp_mem, size);
+      assert(ret2 == 0);
     }
   }
   assert(aslr_offset != 0);
@@ -55,9 +86,10 @@ static void init_platform() {
   getcontext(&uc_example);
 
   // block SIGVTALRM to simulate disabling interrupt
-  int ret2 = sigaddset(&uc_example.uc_sigmask, SIGVTALRM);
+  ret2 = sigaddset(&uc_example.uc_sigmask, SIGVTALRM);
   assert(ret2 == 0);
 
+#if 0
   // relocation, now we should not write any global variables
   // before calling the rebase verison of main(), else the update
   // can not be catched by the relocation process
@@ -90,11 +122,10 @@ static void init_platform() {
       *(uintptr_t *)(rela_dyn[i].r_offset + PMEM_MAP_START) += -__am_rebase_offset;
     }
   }
+#endif
 
-  // call main()
   const char *args = getenv("mainargs");
-  int (*entry)(const char *) = REBASE_PTR(main);
-  exit(entry(args ? args : "")); // call main here!
+  exit(main(args ? args : "")); // call main here!
 }
 
 static void exit_platform() __attribute__((destructor));
