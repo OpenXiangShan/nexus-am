@@ -90,8 +90,7 @@ static inline void init_timer(void) {
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   assert(sizeof(ucontext_t) < 1024);  // if this fails, allocate larger space in trap.S for ucontext
 
-  void *start = (void *)0x100000;
-  *(uintptr_t *)start = (uintptr_t)__am_syscall;
+  *(uintptr_t *)0x100000 = (uintptr_t)__am_syscall;
 
   user_handler = handler;
 

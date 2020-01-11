@@ -14,8 +14,19 @@
 
 static int pmem_fd = 0;
 static char pmem_shm_file[] = "/native-pmem-XXXXXX";
+static void *pmem = NULL;
 static ucontext_t uc_example = {};
 uintptr_t __am_rebase_offset = 0;
+
+#define PRIVATE_MEM_START (void *)0x100000
+#define PRIVATE_MEM_SIZE 4096
+void *__am_private_alloc(size_t n) {
+  static void *p = PRIVATE_MEM_START + sizeof(uintptr_t);  // skip syscall entry
+  void *ret = p;
+  p += n;
+  assert(p < PRIVATE_MEM_START + PRIVATE_MEM_SIZE);
+  return ret;
+}
 
 int main(const char *args);
 
@@ -27,8 +38,12 @@ static void init_platform() {
   assert(pmem_fd != -1);
   assert(0 == ftruncate(pmem_fd, PMEM_SIZE));
 
-  void *ret = mmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
-      MAP_SHARED | MAP_FIXED, pmem_fd, PMEM_MAP_START);
+  pmem = mmap(NULL, PMEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED, pmem_fd, 0);
+  assert(_heap.start != (void *)-1);
+
+  // create private memory to simulate per-cpu data
+  void *ret = mmap(PRIVATE_MEM_START, PRIVATE_MEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
+      MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   assert(ret != (void *)-1);
 
   // compute ASLR offset
@@ -80,8 +95,8 @@ static void init_platform() {
   __am_rebase_offset = aslr_offset - PMEM_MAP_START;
 
   // set up the AM heap
-  _heap.start = REBASE_PTR(&end);
-  _heap.end = (void *)PMEM_MAP_END;
+  _heap.start = pmem;
+  _heap.end = pmem + PMEM_SIZE;
 
   getcontext(&uc_example);
 
@@ -130,16 +145,19 @@ static void init_platform() {
 
 static void exit_platform() __attribute__((destructor));
 static void exit_platform() {
-  int ret = munmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE);
+  int ret = munmap(pmem, PMEM_SIZE);
   assert(ret == 0);
   close(pmem_fd);
   ret = shm_unlink(pmem_shm_file);
+  assert(ret == 0);
+
+  ret = munmap(PRIVATE_MEM_START, PRIVATE_MEM_SIZE);
   assert(ret == 0);
 }
 
 void __am_shm_mmap(void *va, void *pa, int prot) {
   void *ret = mmap(va, 4096, PROT_READ | PROT_WRITE | PROT_EXEC,
-      MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)pa);
+      MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)(pa - pmem));
   assert(ret != (void *)-1);
 }
 

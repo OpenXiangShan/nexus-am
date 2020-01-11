@@ -8,13 +8,14 @@
 
 #define MAX_SMP 16
 static int ncpu;
-static int cpuid;
+static int *cpuid = NULL;
 
 int _mpe_init(void (*entry)()) {
   char *smp = getenv("smp");
   ncpu = smp ? atoi(smp) : 1;
   assert(0 < ncpu && ncpu <= MAX_SMP);
 
+  cpuid = __am_private_alloc(sizeof(*cpuid));
 
   int ppid_before_fork = getpid();
   for (int i = 1; i < ncpu; i++) {
@@ -24,12 +25,12 @@ int _mpe_init(void (*entry)()) {
       assert(r != -1);
       assert(getppid() == ppid_before_fork);
 
-      REBASE_ORIGINAL_VAL(cpuid) = i;
+      *cpuid = i;
       entry();
     }
   }
 
-  REBASE_ORIGINAL_VAL(cpuid) = 0;
+  *cpuid = 0;
   entry();
 
   printf("MP entry should not return\n");
@@ -42,7 +43,7 @@ int _ncpu() {
 }
 
 int _cpu() {
-  return REBASE_ORIGINAL_VAL(cpuid);
+  return (cpuid ? *cpuid : 0);
 }
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
