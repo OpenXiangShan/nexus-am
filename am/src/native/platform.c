@@ -53,8 +53,8 @@ static void init_platform() {
       uintptr_t pad = (uintptr_t)vaddr & 0xfff;
       void *vaddr_align = vaddr - pad;
       uintptr_t size = phdr[i].p_memsz + pad;
-      void *temp_mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-      assert(temp_mem != (void *)-1);
+      void *temp_mem = malloc(size);
+      assert(temp_mem != NULL);
 
       // save data and bss sections
       memcpy(temp_mem, vaddr_align, size);
@@ -76,9 +76,7 @@ static void init_platform() {
       // restore the data in the sections
       memcpy_libc(vaddr_align, temp_mem, size);
 
-      // unmap the temporary memory
-      ret2 = munmap(temp_mem, size);
-      assert(ret2 == 0);
+      free(temp_mem);
     }
   }
 
