@@ -1,12 +1,14 @@
 #ifndef __PLATFORM_H__
 #define __PLATFORM_H__
 
+#include <am.h>
 #include <unistd.h>
-
-extern uintptr_t __am_rebase_offset;
-#define REBASE_PTR(p) ((void *)(p) - __am_rebase_offset)
-#define REBASE_ORIGINAL_VAL(x) (*(typeof(x) *)((void *)&x + __am_rebase_offset))
+#include <signal.h>
+#include <klib.h>
 
 void *__am_private_alloc(size_t n);
+void __am_get_example_uc(_Context *r);
+void __am_shm_mmap(void *va, void *pa, int prot);
+void __am_shm_munmap(void *va);
 
 #endif

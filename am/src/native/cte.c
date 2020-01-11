@@ -1,8 +1,5 @@
-#include <am.h>
-#include <klib.h>
-
 #include <sys/time.h>
-#include <signal.h>
+#include "platform.h"
 
 #define TIMER_HZ 100
 enum { CAUSE_SYSCALL, CAUSE_YIELD, CAUSE_TIMER };
@@ -14,7 +11,6 @@ void __am_syscall();
 void __am_async_ex();
 void __am_ret_from_trap();
 
-void __am_get_example_uc(_Context *c);
 void __am_get_cur_as(_Context *c);
 void __am_switch(_Context *c);
 
@@ -48,6 +44,7 @@ static void timer_handler(int sig, siginfo_t *info, void *ucontext) {
   ucontext_t *c = ucontext;
   uintptr_t *rip = (uintptr_t *)c->uc_mcontext.gregs[REG_RIP];
   extern uintptr_t _start, _etext;
+  // assume the virtual address space of user process is not above 0xffffffff
   if (!((rip >= &_start && rip < &_etext) || (uintptr_t)rip < 0x100000000ul)) {
     // Shared libraries contain code which are not reenterable.
     // If the signal comes when executing code in shared libraries,

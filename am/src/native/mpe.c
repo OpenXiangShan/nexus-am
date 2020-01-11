@@ -1,9 +1,6 @@
-#include <am.h>
-#include <klib.h>
 #include <stdlib.h>
 #include <stdatomic.h>
 #include <sys/prctl.h>
-#include <signal.h>
 #include "platform.h"
 
 #define MAX_SMP 16

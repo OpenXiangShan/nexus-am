@@ -1,7 +1,4 @@
-#include <am.h>
-#include <stdlib.h>
-#include <klib.h>
-#include <signal.h>
+#include "platform.h"
 
 #define PGSIZE  4096
 #define PGSHIFT 12
@@ -15,9 +12,6 @@ typedef struct PageMap {
 
 #define list_foreach(p, head) \
   for (p = head; p != NULL; p = p->next)
-
-void __am_shm_mmap(void *va, void *pa, int prot);
-void __am_shm_munmap(void *va);
 
 static int vme_enable = 0;
 
@@ -100,8 +94,6 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   
   return 0;
 }
-
-void __am_get_example_uc(_Context *r);
 
 _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
   ustack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr

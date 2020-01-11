@@ -1,22 +1,14 @@
 #include <sys/mman.h>
 #include <sys/auxv.h>
-#include <signal.h>
 #include <fcntl.h>
 #include <elf.h>
 #include <stdlib.h>
-#include <klib.h>
 #include "platform.h"
 
 #define PMEM_SIZE (128 * 1024 * 1024) // 128MB
-#define PMEM_MAP_START (uintptr_t)0x100000
-#define PMEM_MAP_END   (uintptr_t)PMEM_SIZE
-#define PMEM_MAP_SIZE  (PMEM_MAP_END - PMEM_MAP_START)
-
 static int pmem_fd = 0;
 static char pmem_shm_file[] = "/native-pmem-XXXXXX";
 static void *pmem = NULL;
-static ucontext_t uc_example = {};
-uintptr_t __am_rebase_offset = 0;
 
 #define PRIVATE_MEM_START (void *)0x100000
 #define PRIVATE_MEM_SIZE 4096
@@ -27,6 +19,8 @@ void *__am_private_alloc(size_t n) {
   assert(p < PRIVATE_MEM_START + PRIVATE_MEM_SIZE);
   return ret;
 }
+
+static ucontext_t uc_example = {};
 
 int main(const char *args);
 
@@ -46,23 +40,18 @@ static void init_platform() {
       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   assert(ret != (void *)-1);
 
-  // compute ASLR offset
+  // remap writable sections as MAP_SHARED
   Elf64_Phdr *phdr = (void *)getauxval(AT_PHDR);
   int phnum = (int)getauxval(AT_PHNUM);
-  extern char end;
-  uintptr_t aslr_offset = 0;
   int i;
   int ret2;
   for (i = 0; i < phnum; i ++) {
     if (phdr[i].p_type == PT_LOAD && (phdr[i].p_flags & PF_W)) {
-      void *end_in_elf = (void *)(phdr[i].p_vaddr + phdr[i].p_memsz);
-      aslr_offset = (void *)&end - end_in_elf;
-      assert((aslr_offset & 0xfff) == 0);
-
       // allocate temporary memory
-      uintptr_t vaddr = phdr[i].p_vaddr + aslr_offset;
-      uintptr_t pad = vaddr & 0xfff;
-      void *vaddr_align = (void *)(vaddr - pad);
+      extern char end;
+      void *vaddr = (void *)&end - phdr[i].p_memsz;
+      uintptr_t pad = (uintptr_t)vaddr & 0xfff;
+      void *vaddr_align = vaddr - pad;
       uintptr_t size = phdr[i].p_memsz + pad;
       void *temp_mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
       assert(temp_mem != (void *)-1);
@@ -80,7 +69,8 @@ static void init_platform() {
       assert(ret2 == 0);
 
       // map the sections again with MAP_SHARED, which will be shared across fork()
-      ret = mmap_libc(vaddr_align, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_FIXED | MAP_ANONYMOUS, -1, 0);
+      ret = mmap_libc(vaddr_align, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+          MAP_SHARED | MAP_FIXED | MAP_ANONYMOUS, -1, 0);
       assert(ret == vaddr_align);
 
       // restore the data in the sections
@@ -91,8 +81,6 @@ static void init_platform() {
       assert(ret2 == 0);
     }
   }
-  assert(aslr_offset != 0);
-  __am_rebase_offset = aslr_offset - PMEM_MAP_START;
 
   // set up the AM heap
   _heap.start = pmem;
@@ -103,41 +91,6 @@ static void init_platform() {
   // block SIGVTALRM to simulate disabling interrupt
   ret2 = sigaddset(&uc_example.uc_sigmask, SIGVTALRM);
   assert(ret2 == 0);
-
-#if 0
-  // relocation, now we should not write any global variables
-  // before calling the rebase verison of main(), else the update
-  // can not be catched by the relocation process
-  for (i = 0; i < phnum; i ++) {
-    if (phdr[i].p_type == PT_LOAD) {
-      void *vaddr = (void *)(phdr[i].p_vaddr + aslr_offset);
-      memcpy(REBASE_PTR(vaddr), vaddr, phdr[i].p_memsz);
-    }
-  }
-  assert(*(int *)PMEM_MAP_START == 0x464c457f);
-
-  // NOTE: the heap is not relocated, so do not use memory
-  // returnedby malloc() in the code
-
-  // relocate the vaule of data
-  extern Elf64_Dyn _DYNAMIC[];
-  Elf64_Dyn *pDyn;
-  Elf64_Rela *rela_dyn = NULL;
-  int nr_rela_dyn = 0;
-  for (pDyn = _DYNAMIC; pDyn->d_tag != DT_NULL; pDyn ++) {
-    switch (pDyn->d_tag) {
-      case DT_RELA: rela_dyn = (void *)pDyn->d_un.d_ptr; break;
-      case DT_RELASZ: nr_rela_dyn = pDyn->d_un.d_val / sizeof(Elf64_Rela); break;
-    }
-  }
-  assert(rela_dyn != NULL && nr_rela_dyn != 0);
-
-  for (i = 0; i < nr_rela_dyn; i ++) {
-    if (ELF64_R_TYPE(rela_dyn[i].r_info) == R_X86_64_RELATIVE) {
-      *(uintptr_t *)(rela_dyn[i].r_offset + PMEM_MAP_START) += -__am_rebase_offset;
-    }
-  }
-#endif
 
   const char *args = getenv("mainargs");
   exit(main(args ? args : "")); // call main here!
