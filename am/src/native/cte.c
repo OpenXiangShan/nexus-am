@@ -68,7 +68,9 @@ static void timer_handler(int sig, siginfo_t *info, void *ucontext) {
   c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_async_ex;
 }
 
-static inline void init_timer(void) {
+void __am_init_timer() {
+  _intr_write(0);
+
   struct sigaction s;
   memset(&s, 0, sizeof(s));
   s.sa_sigaction = timer_handler;
@@ -91,8 +93,7 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
 
   user_handler = handler;
 
-  _intr_write(0);
-  init_timer();
+  __am_init_timer();
   return 0;
 }
 

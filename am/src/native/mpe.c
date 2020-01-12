@@ -22,6 +22,8 @@ int _mpe_init(void (*entry)()) {
       assert(r != -1);
       assert(getppid() == ppid_before_fork);
 
+      __am_init_timer();
+
       *cpuid = i;
       entry();
     }
