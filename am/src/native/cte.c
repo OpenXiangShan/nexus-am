@@ -16,6 +16,7 @@ void __am_switch(_Context *c);
 
 void __am_irq_handle(_Context *c) {
   getcontext(&c->uc);
+  _intr_write(0);
   __am_get_cur_as(c);
 
   _Event e;
