@@ -35,7 +35,7 @@ void __am_irq_handle(_Context *c) {
 
   __am_switch(c);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
-  c->uc.uc_mcontext.gregs[REG_RDI] = (cause == CAUSE_TIMER); // indicate different returning code, see trap.S
+  c->uc.uc_mcontext.gregs[REG_RDI] = (c->cause == CAUSE_TIMER); // indicate different returning code, see trap.S
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
 
   setcontext(&c->uc);
