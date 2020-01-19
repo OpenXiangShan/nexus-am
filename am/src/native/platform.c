@@ -96,6 +96,9 @@ static void init_platform() {
 
 static void exit_platform() __attribute__((destructor));
 static void exit_platform() {
+  printf("%s\n", __func__);
+  kill(0, SIGKILL);
+
   int ret = munmap(pmem, PMEM_SIZE);
   assert(ret == 0);
   close(pmem_fd);
