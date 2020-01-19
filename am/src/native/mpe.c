@@ -4,18 +4,14 @@
 #include "platform.h"
 
 #define MAX_SMP 16
-static int ncpu;
+static int ncpu = 0;
 static int *cpuid = NULL;
 
 int _mpe_init(void (*entry)()) {
-  char *smp = getenv("smp");
-  ncpu = smp ? atoi(smp) : 1;
-  assert(0 < ncpu && ncpu <= MAX_SMP);
-
   cpuid = __am_private_alloc(sizeof(*cpuid));
 
   int ppid_before_fork = getpid();
-  for (int i = 1; i < ncpu; i++) {
+  for (int i = 1; i < _ncpu(); i++) {
     if (fork() == 0) {
       // install a parent death signal in the chlid
       int r = prctl(PR_SET_PDEATHSIG, SIGTERM);
@@ -38,6 +34,12 @@ int _mpe_init(void (*entry)()) {
 }
 
 int _ncpu() {
+  if (ncpu == 0) {
+    char *smp = getenv("smp");
+    ncpu = smp ? atoi(smp) : 1;
+    assert(0 < ncpu && ncpu <= MAX_SMP);
+  }
+
   return ncpu;
 }
 
