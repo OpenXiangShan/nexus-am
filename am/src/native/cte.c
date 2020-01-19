@@ -99,6 +99,10 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
 }
 
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
+  // (rsp + 8) should be multiple of 16 when
+  // control is transfered to the function entry point.
+  // See amd64 ABI manual for more details
+  stack.end = (void *)(((uintptr_t)stack.end & ~15ul) - 8);
   _Context *c = (_Context*)stack.end - 1;
 
   __am_get_example_uc(c);
