@@ -29,7 +29,7 @@ void bootmain(void) {
 
   char *mainargs = (void *)0x7e00;
   readseg(mainargs, 512, -512);
-  ((void(*)(const char *))(uint32_t)elf->e_entry + KERNEL_BASE)(mainargs);
+  ((void(*)())(uint32_t)elf->e_entry + KERNEL_BASE)();
 }
 
 void waitdisk(void) {

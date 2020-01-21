@@ -1,6 +1,8 @@
 include $(AM_HOME)/am/arch/isa/x86_64.mk
 
-AM_SRCS   := x86_64/qemu/trm.c
+AM_SRCS   := x86_64/qemu/start.S \
+             x86_64/qemu/trm.c \
+
 LD_SCRIPT := $(AM_HOME)/am/src/x86_64/qemu/boot/loader.ld
 
 image:
@@ -13,3 +15,7 @@ image:
 run:
 	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
 	@qemu-system-x86_64 -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic
+
+debug:
+	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
+	@qemu-system-x86_64 -S -s -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic # & pid=$$!; gdb -x x.gdb && kill -9 $$pid
