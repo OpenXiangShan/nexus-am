@@ -14,6 +14,7 @@ extern "C" {
 #define _DEV_TIMER   0x0000ac03 // AM Virtual Timer
 #define _DEV_VIDEO   0x0000ac04 // AM Virtual Video Controller
 #define _DEV_SERIAL  0x0000ac05 // AM Virtual Serial
+#define _DEV_STORAGE 0x0000ac06 // AM Virtual Persistent Storage
 #define _DEV_PCICONF 0x00000080 // PCI Configuration Space
 
 #define _AM_DEVREG(dev, reg, id, ...) \
@@ -23,15 +24,17 @@ extern "C" {
 
 // ================= Device Register Specifications ==================
 
-_AM_DEVREG(INPUT,  KBD,    1, int keydown, keycode);
-_AM_DEVREG(TIMER,  UPTIME, 1, uint32_t hi, lo);
-_AM_DEVREG(TIMER,  DATE,   2, int year, month, day, hour, minute, second);
-_AM_DEVREG(VIDEO,  INFO,   1, int width, height);
-_AM_DEVREG(VIDEO,  FBCTL,  2, int x, y; uint32_t *pixels; int w, h, sync);
-_AM_DEVREG(SERIAL, RECV,   1, uint8_t data);
-_AM_DEVREG(SERIAL, SEND,   2, uint8_t data);
-_AM_DEVREG(SERIAL, STAT,   3, uint8_t data);
-_AM_DEVREG(SERIAL, CTRL,   4, uint8_t data);
+_AM_DEVREG(INPUT,   KBD,    1, int keydown, keycode);
+_AM_DEVREG(TIMER,   UPTIME, 1, uint32_t hi, lo);
+_AM_DEVREG(TIMER,   DATE,   2, int year, month, day, hour, minute, second);
+_AM_DEVREG(VIDEO,   INFO,   1, int width, height);
+_AM_DEVREG(VIDEO,   FBCTRL, 2, int x, y; uint32_t *pixels; int w, h, sync);
+_AM_DEVREG(SERIAL,  RECV,   1, uint8_t data);
+_AM_DEVREG(SERIAL,  SEND,   2, uint8_t data);
+_AM_DEVREG(SERIAL,  STAT,   3, uint8_t data);
+_AM_DEVREG(SERIAL,  CTRL,   4, uint8_t data);
+_AM_DEVREG(STORAGE, RDCTRL, 1, void *dst, *src; uintptr_t size);
+_AM_DEVREG(STORAGE, WRCTRL, 2, void *dst, *src; uintptr_t size);
 #define _DEVREG_PCICONF(bus, slot, func, offset) \
   ((uint32_t)(   1) << 31) | ((uint32_t)( bus) << 16) | \
   ((uint32_t)(slot) << 11) | ((uint32_t)(func) <<  8) | (offset)

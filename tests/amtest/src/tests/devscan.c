@@ -26,14 +26,14 @@ static void video_test() {
   printf("Screen size: %d x %d\n", info.width, info.height);
   for (int x = 0; x < 100; x++)
     for (int y = 0; y < 100; y++) {
-      _DEV_VIDEO_FBCTL_t ctl;
+      _DEV_VIDEO_FBCTRL_t ctl;
       uint32_t pixel = 0x006a005f;
       ctl.x = info.width / 2 - 50 + x;
       ctl.y = info.height / 2 - 50 + y;
       ctl.w = ctl.h = 1;
       ctl.sync = 1;
       ctl.pixels = &pixel;
-      _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
+      _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTRL, &ctl, sizeof(ctl));
     }
   printf("You should see a purple square on the screen.\n");
 }
