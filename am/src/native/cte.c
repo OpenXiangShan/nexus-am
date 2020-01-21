@@ -2,7 +2,7 @@
 #include "platform.h"
 
 #define TIMER_HZ 100
-enum { CAUSE_SYSCALL, CAUSE_YIELD, CAUSE_TIMER };
+enum { CAUSE_SYSCALL, CAUSE_YIELD, CAUSE_TIMER, CAUSE_IODEV };
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
@@ -26,6 +26,7 @@ void __am_irq_handle(_Context *c) {
     case CAUSE_SYSCALL: e.event = _EVENT_SYSCALL; break;
     case CAUSE_YIELD  : e.event = _EVENT_YIELD; break;
     case CAUSE_TIMER  : e.event = _EVENT_IRQ_TIMER; break;
+    case CAUSE_IODEV  : e.event = _EVENT_IRQ_IODEV; break;
     default: printf("Unhandle cause = %d\n", cause); assert(0);
   }
   _Context *ret = user_handler(e, c);
@@ -35,14 +36,14 @@ void __am_irq_handle(_Context *c) {
 
   __am_switch(c);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
-  c->uc.uc_mcontext.gregs[REG_RDI] = (c->cause == CAUSE_TIMER); // indicate different returning code, see trap.S
+  // indicate different returning code, see trap.S
+  c->uc.uc_mcontext.gregs[REG_RDI] = (c->cause == CAUSE_TIMER || c->cause == CAUSE_IODEV);
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
 
   setcontext(&c->uc);
 }
 
-static void timer_handler(int sig, siginfo_t *info, void *ucontext) {
-  ucontext_t *c = ucontext;
+static void setup_stack(uintptr_t cause, ucontext_t *c) {
   uintptr_t *rip = (uintptr_t *)c->uc_mcontext.gregs[REG_RIP];
   extern uintptr_t _start, _etext;
   // assume the virtual address space of user process is not above 0xffffffff
@@ -63,20 +64,28 @@ static void timer_handler(int sig, siginfo_t *info, void *ucontext) {
   *(uintptr_t *)rsp = (uintptr_t)rip;
   rsp -= sizeof(uintptr_t);
   // we directly put the cause number on the stack to avoid the corruption of %rdi
-  *(uintptr_t *)rsp = CAUSE_TIMER;
+  *(uintptr_t *)rsp = cause;
 
   c->uc_mcontext.gregs[REG_RSP] = rsp;
   c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_async_ex;
 }
 
-void __am_init_timer() {
+static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
+  uintptr_t cause = (sig == SIGUSR1 ? CAUSE_IODEV : CAUSE_TIMER);
+  setup_stack(cause, ucontext);
+}
+
+void __am_init_irq() {
   _intr_write(0);
 
   struct sigaction s;
   memset(&s, 0, sizeof(s));
-  s.sa_sigaction = timer_handler;
+  s.sa_sigaction = sig_handler;
   s.sa_flags = SA_SIGINFO | SA_RESTART;
   int ret = sigaction(SIGVTALRM, &s, NULL);
+  assert(ret == 0);
+
+  ret = sigaction(SIGUSR1, &s, NULL);
   assert(ret == 0);
 
   struct itimerval it = {};
@@ -94,7 +103,7 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
 
   user_handler = handler;
 
-  __am_init_timer();
+  __am_init_irq();
   return 0;
 }
 
@@ -134,6 +143,8 @@ void _intr_write(int enable) {
   int ret = sigemptyset(&set);
   assert(ret == 0);
   ret = sigaddset(&set, SIGVTALRM);
+  assert(ret == 0);
+  ret = sigaddset(&set, SIGUSR1);
   assert(ret == 0);
 
   // NOTE: sigprocmask does not supported in multithreading

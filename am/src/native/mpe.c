@@ -11,7 +11,7 @@ int _mpe_init(void (*entry)()) {
 
   for (int i = 1; i < _ncpu(); i++) {
     if (fork() == 0) {
-      __am_init_timer();
+      __am_init_irq();
 
       *cpuid = i;
       entry();

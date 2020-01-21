@@ -86,8 +86,10 @@ static void init_platform() {
 
   getcontext(&uc_example);
 
-  // block SIGVTALRM to simulate disabling interrupt
+  // block SIGVTALRM and SIGUSR1 to simulate disabling interrupt
   ret2 = sigaddset(&uc_example.uc_sigmask, SIGVTALRM);
+  assert(ret2 == 0);
+  ret2 = sigaddset(&uc_example.uc_sigmask, SIGUSR1);
   assert(ret2 == 0);
 
   const char *args = getenv("mainargs");
