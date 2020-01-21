@@ -119,7 +119,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret2 == 0);
   c->rflags = 0;
-  c->cause = 0;
+  c->cause = CAUSE_YIELD;
 
   c->rdi = (uintptr_t)arg;
 
@@ -127,7 +127,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
 }
 
 void _yield() {
-  __am_asm_trap(1);
+  __am_asm_trap(CAUSE_YIELD);
 }
 
 int _intr_read() {
