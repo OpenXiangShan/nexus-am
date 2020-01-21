@@ -21,6 +21,7 @@ void *__am_private_alloc(size_t n) {
 }
 
 static ucontext_t uc_example = {};
+static sigset_t intr_sigmask = {};
 
 int main(const char *args);
 
@@ -84,13 +85,16 @@ static void init_platform() {
   _heap.start = pmem;
   _heap.end = pmem + PMEM_SIZE;
 
-  getcontext(&uc_example);
+  // initialize sigmask for interrupts
+  ret2 = sigemptyset(&intr_sigmask);
+  assert(ret2 == 0);
+  ret2 = sigaddset(&intr_sigmask, SIGVTALRM);
+  assert(ret2 == 0);
+  ret2 = sigaddset(&intr_sigmask, SIGUSR1);
+  assert(ret2 == 0);
 
-  // block SIGVTALRM and SIGUSR1 to simulate disabling interrupt
-  ret2 = sigaddset(&uc_example.uc_sigmask, SIGVTALRM);
-  assert(ret2 == 0);
-  ret2 = sigaddset(&uc_example.uc_sigmask, SIGUSR1);
-  assert(ret2 == 0);
+  getcontext(&uc_example);
+  __am_get_intr_sigmask(&uc_example.uc_sigmask);
 
   const char *args = getenv("mainargs");
   exit(main(args ? args : "")); // call main here!
@@ -124,6 +128,10 @@ void __am_shm_munmap(void *va) {
 
 void __am_get_example_uc(_Context *r) {
   memcpy(&r->uc, &uc_example, sizeof(uc_example));
+}
+
+void __am_get_intr_sigmask(sigset_t *s) {
+  memcpy(s, &intr_sigmask, sizeof(intr_sigmask));
 }
 
 // This dummy function will be called in trm.c.

@@ -82,9 +82,10 @@ void __am_init_irq() {
   memset(&s, 0, sizeof(s));
   s.sa_sigaction = sig_handler;
   s.sa_flags = SA_SIGINFO | SA_RESTART;
+  __am_get_intr_sigmask(&s.sa_mask);
+
   int ret = sigaction(SIGVTALRM, &s, NULL);
   assert(ret == 0);
-
   ret = sigaction(SIGUSR1, &s, NULL);
   assert(ret == 0);
 
@@ -140,14 +141,9 @@ int _intr_read() {
 
 void _intr_write(int enable) {
   sigset_t set;
-  int ret = sigemptyset(&set);
-  assert(ret == 0);
-  ret = sigaddset(&set, SIGVTALRM);
-  assert(ret == 0);
-  ret = sigaddset(&set, SIGUSR1);
-  assert(ret == 0);
+  __am_get_intr_sigmask(&set);
 
   // NOTE: sigprocmask does not supported in multithreading
-  ret = sigprocmask(enable ? SIG_UNBLOCK : SIG_BLOCK, &set, NULL);
+  int ret = sigprocmask(enable ? SIG_UNBLOCK : SIG_BLOCK, &set, NULL);
   assert(ret == 0);
 }
