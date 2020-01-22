@@ -266,7 +266,7 @@ static inline void set_cr0(uint32_t cr0) {
 }
 
 
-/*
+#ifndef __x86_64__
 static inline void set_idt(GateDesc *idt, int size) {
   volatile static uint16_t data[3];
   data[0] = size - 1;
@@ -286,7 +286,7 @@ static inline void set_gdt(SegDesc *gdt, int size) {
 static inline void set_tr(int selector) {
   asm volatile ("ltr %0" : : "r"((uint16_t)selector));
 }
-*/
+#endif
 
 static inline uint32_t get_cr2() {
   volatile uint32_t val;
