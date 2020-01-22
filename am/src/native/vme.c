@@ -106,6 +106,7 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
   int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret2 == 0);
   c->rflags = 0;
+  c->event = _EVENT_YIELD;
   c->as = as;
 
   c->rdi = 0;

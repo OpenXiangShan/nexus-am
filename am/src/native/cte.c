@@ -2,11 +2,10 @@
 #include "platform.h"
 
 #define TIMER_HZ 100
-enum { CAUSE_SYSCALL, CAUSE_YIELD, CAUSE_TIMER, CAUSE_IODEV };
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
-void __am_asm_trap(int cause);
+void __am_asm_trap(int event);
 void __am_syscall();
 void __am_async_ex();
 void __am_ret_from_trap();
@@ -19,16 +18,8 @@ void __am_irq_handle(_Context *c) {
   _intr_write(0);
   __am_get_cur_as(c);
 
-  _Event e;
-  int cause = c->cause;
-
-  switch (cause) {
-    case CAUSE_SYSCALL: e.event = _EVENT_SYSCALL; break;
-    case CAUSE_YIELD  : e.event = _EVENT_YIELD; break;
-    case CAUSE_TIMER  : e.event = _EVENT_IRQ_TIMER; break;
-    case CAUSE_IODEV  : e.event = _EVENT_IRQ_IODEV; break;
-    default: printf("Unhandle cause = %d\n", cause); assert(0);
-  }
+  _Event e = {};
+  e.event = c->event;
   _Context *ret = user_handler(e, c);
   if (ret != NULL) {
     c = ret;
@@ -40,15 +31,15 @@ void __am_irq_handle(_Context *c) {
   c->uc.uc_mcontext.gregs[REG_RDI] = __am_is_sigmask_sti(&c->uc.uc_sigmask);
   // delay restoring of sigmask after setcontext()
   __am_get_intr_sigmask(&c->uc.uc_sigmask);
-  // update c->cause to indicate different returning code, see trap.S
-  c->cause = (c->cause == CAUSE_TIMER || c->cause == CAUSE_IODEV);
+  // update c->event to indicate different returning code, see trap.S
+  c->event = (c->event == _EVENT_IRQ_TIMER || c->event == _EVENT_IRQ_IODEV);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c + 1024;
 
   setcontext(&c->uc);
 }
 
-static void setup_stack(uintptr_t cause, ucontext_t *c) {
+static void setup_stack(uintptr_t event, ucontext_t *c) {
   uintptr_t *rip = (uintptr_t *)c->uc_mcontext.gregs[REG_RIP];
   extern uintptr_t _start, _etext;
   void *sigprocmask_base = &sigprocmask;
@@ -74,16 +65,16 @@ static void setup_stack(uintptr_t cause, ucontext_t *c) {
   rsp -= sizeof(uintptr_t);
   *(uintptr_t *)rsp = (uintptr_t)rip;
   rsp -= sizeof(uintptr_t);
-  // we directly put the cause number on the stack to avoid the corruption of %rdi
-  *(uintptr_t *)rsp = cause;
+  // we directly put the event number on the stack to avoid the corruption of %rdi
+  *(uintptr_t *)rsp = event;
 
   c->uc_mcontext.gregs[REG_RSP] = rsp;
   c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_async_ex;
 }
 
 static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
-  uintptr_t cause = (sig == SIGUSR1 ? CAUSE_IODEV : CAUSE_TIMER);
-  setup_stack(cause, ucontext);
+  uintptr_t event = (sig == SIGUSR1 ? _EVENT_IRQ_IODEV : _EVENT_IRQ_TIMER);
+  setup_stack(event, ucontext);
 }
 
 void __am_init_irq() {
@@ -110,6 +101,7 @@ void __am_init_irq() {
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   assert(sizeof(ucontext_t) < 1024);  // if this fails, allocate larger space in trap.S for ucontext
+  assert(_EVENT_SYSCALL == 6); // if this fails, change the number in trap.S for __am_syscall()
 
   *(uintptr_t *)0x100000 = (uintptr_t)__am_syscall;
 
@@ -131,7 +123,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret2 == 0);
   c->rflags = 0;
-  c->cause = CAUSE_YIELD;
+  c->event = _EVENT_YIELD;
 
   c->rdi = (uintptr_t)arg;
 
@@ -139,7 +131,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
 }
 
 void _yield() {
-  __am_asm_trap(CAUSE_YIELD);
+  __am_asm_trap(_EVENT_YIELD);
 }
 
 int _intr_read() {

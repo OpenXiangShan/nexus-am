@@ -4,11 +4,11 @@
 .global __am_async_ex
 
 __am_asm_trap:
-  pushq %rdi # cause number
+  pushq %rdi # event number
   jmp __am_async_ex
 
 __am_syscall:
-  pushq $0
+  pushq $6  # _EVENT_SYSCALL
 
 __am_async_ex:
   # getcontext() does not preserve %rflags, %rax, %r10, %r11,
@@ -53,16 +53,16 @@ no_need:
   popq %r10
   popq %r11
 
-  movq 16(%rsp), %rdi  # c->cause updated at the end of __am_irq_handle()
+  movq 16(%rsp), %rdi  # c->event updated at the end of __am_irq_handle()
   testq %rdi, %rdi
   popq %rdi
   jnz __am_ret_from_intr
 
   popfq
-  lea 8(%rsp), %rsp # cause, do not use addq, since it will change rflags!
+  lea 8(%rsp), %rsp # event, do not use addq, since it will change rflags!
   retq
 
 __am_ret_from_intr:
   popfq
-  lea 8(%rsp), %rsp # cause, do not use addq, since it will change rflags!
+  lea 8(%rsp), %rsp # event, do not use addq, since it will change rflags!
   retq $128
