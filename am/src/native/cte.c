@@ -35,10 +35,15 @@ void __am_irq_handle(_Context *c) {
   }
 
   __am_switch(c);
+
+  // interrupt flag, see trap.S
+  c->uc.uc_mcontext.gregs[REG_RDI] = __am_is_sigmask_sti(&c->uc.uc_sigmask);
+  // delay restoring of sigmask after setcontext()
+  __am_get_intr_sigmask(&c->uc.uc_sigmask);
+  // update c->cause to indicate different returning code, see trap.S
+  c->cause = (c->cause == CAUSE_TIMER || c->cause == CAUSE_IODEV);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
-  // indicate different returning code, see trap.S
-  c->uc.uc_mcontext.gregs[REG_RDI] = (c->cause == CAUSE_TIMER || c->cause == CAUSE_IODEV);
-  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
+  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c + 1024;
 
   setcontext(&c->uc);
 }
@@ -141,15 +146,12 @@ int _intr_read() {
   sigset_t set;
   int ret = sigprocmask(0, NULL, &set);
   assert(ret == 0);
-  int cli = sigismember(&set, SIGVTALRM);
-  return !cli;
+  return __am_is_sigmask_sti(&set);
 }
 
 void _intr_write(int enable) {
-  sigset_t set;
-  __am_get_intr_sigmask(&set);
-
+  extern sigset_t __am_intr_sigmask;
   // NOTE: sigprocmask does not supported in multithreading
-  int ret = sigprocmask(enable ? SIG_UNBLOCK : SIG_BLOCK, &set, NULL);
+  int ret = sigprocmask(enable ? SIG_UNBLOCK : SIG_BLOCK, &__am_intr_sigmask, NULL);
   assert(ret == 0);
 }

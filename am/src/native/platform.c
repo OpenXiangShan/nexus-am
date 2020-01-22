@@ -21,7 +21,7 @@ void *__am_private_alloc(size_t n) {
 }
 
 static ucontext_t uc_example = {};
-static sigset_t intr_sigmask = {};
+sigset_t __am_intr_sigmask = {};
 
 int main(const char *args);
 
@@ -86,11 +86,11 @@ static void init_platform() {
   _heap.end = pmem + PMEM_SIZE;
 
   // initialize sigmask for interrupts
-  ret2 = sigemptyset(&intr_sigmask);
+  ret2 = sigemptyset(&__am_intr_sigmask);
   assert(ret2 == 0);
-  ret2 = sigaddset(&intr_sigmask, SIGVTALRM);
+  ret2 = sigaddset(&__am_intr_sigmask, SIGVTALRM);
   assert(ret2 == 0);
-  ret2 = sigaddset(&intr_sigmask, SIGUSR1);
+  ret2 = sigaddset(&__am_intr_sigmask, SIGUSR1);
   assert(ret2 == 0);
 
   getcontext(&uc_example);
@@ -131,7 +131,11 @@ void __am_get_example_uc(_Context *r) {
 }
 
 void __am_get_intr_sigmask(sigset_t *s) {
-  memcpy(s, &intr_sigmask, sizeof(intr_sigmask));
+  memcpy(s, &__am_intr_sigmask, sizeof(__am_intr_sigmask));
+}
+
+int __am_is_sigmask_sti(sigset_t *s) {
+  return !sigismember(s, SIGVTALRM);
 }
 
 // This dummy function will be called in trm.c.
