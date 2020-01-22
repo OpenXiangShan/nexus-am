@@ -46,8 +46,14 @@ void __am_irq_handle(_Context *c) {
 static void setup_stack(uintptr_t cause, ucontext_t *c) {
   uintptr_t *rip = (uintptr_t *)c->uc_mcontext.gregs[REG_RIP];
   extern uintptr_t _start, _etext;
+  void *sigprocmask_base = &sigprocmask;
   // assume the virtual address space of user process is not above 0xffffffff
-  if (!((rip >= &_start && rip < &_etext) || (uintptr_t)rip < 0x100000000ul)) {
+  if (!((rip >= &_start && rip < &_etext) ||
+        // Hack here: "+13" points to the instruction after syscall.
+        // This is the instruction which will trigger the pending signal
+        // if interrupt is enabled.
+        (rip == sigprocmask_base + 13) ||
+        (uintptr_t)rip < 0x100000000ul)) {
     // Shared libraries contain code which are not reenterable.
     // If the signal comes when executing code in shared libraries,
     // the signal handler can not call any function which is not signal-safe,
