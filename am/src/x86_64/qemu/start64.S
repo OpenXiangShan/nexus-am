@@ -4,8 +4,7 @@
 #define PDPT 0x2000
 #define PDT  0x3000
 
-.section .text
-.global _start
+.globl _start
 .type _start, @function
 _start:
   movl $PDPT + 3, %eax
@@ -13,14 +12,12 @@ _start:
   movl $PDT + 3, %eax
   movl %eax, PDPT
   movl $0, %ecx
-  movl $_end, %esi
-  shrl $21, %esi
-  addl $1, %esi
+  movl $512, %esi
 
 .loop:
   movl $0x200000, %eax
   mul %ecx
-  or $0x83, %eax
+  or $0x83, %eax // 2 MiB page
   movl %eax, PDT(, %ecx, 8)
   inc %ecx
   cmp %esi, %ecx
@@ -56,8 +53,6 @@ gdt64_end:
 
 .code64
 
-.global _start64
-.type _start64, @function
 _start64:
   movw $0, %ax
   movw %ax, %ds

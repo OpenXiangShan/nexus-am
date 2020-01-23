@@ -46,7 +46,7 @@ start32:
   movw    %ax, %ss
 
   movl    $0x7000, %esp
-  call    bootmain
+  call    load_kernel
 
 # GDT
 .p2align 2

@@ -4,6 +4,6 @@ layout regs
 set pagination off
 set confirm off
 file build/hello-x86_64-qemu.o
-b _start
+b _start_c
 c
 

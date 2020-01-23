@@ -2,60 +2,60 @@
 #include <linux/elf.h>
 #include <x86.h>
 
-#define SECTSIZE     512
-#define KERNEL_BASE  0x00100000
+#define SECTSIZE 512
 
-void readseg(void *, int, int);
+void load(void *paddr, int nbytes, int offset);
 
-void bootmain(void) {
+void load_kernel(void) {
   struct elf64_hdr *elf;
   struct elf64_phdr *ph, *eph;
 
   elf = (struct elf64_hdr *)0x8000;
-  readseg(elf, 4096, 0);
+  load(elf, 4096, 0);
 
   ph = (struct elf64_phdr *)((char *)elf + elf->e_phoff);
   eph = ph + elf->e_phnum;
 
   for(; ph < eph; ph ++) {
-    uint8_t *paddr = (void *)((uintptr_t)(ph->p_paddr));
-    readseg(paddr, ph->p_filesz, ph->p_offset);
+    uint32_t filesz = (uint32_t)ph->p_filesz;
+    uint32_t memsz =  (uint32_t)ph->p_memsz;
+    void *paddr = (void *)((uint32_t)ph->p_paddr);
+    load(paddr, ph->p_filesz, ph->p_offset);
 
-    char *ptr = paddr + (uintptr_t)ph->p_filesz;
-    while (ph->p_memsz--) {
-      *ptr++ = 0;
+    char *bss = paddr + filesz;
+    for (uint32_t i = filesz; i != memsz; i++) {
+      *bss++ = 0xff;
     }
   }
 
   char *mainargs = (void *)0x7e00;
-  readseg(mainargs, 512, -512);
+  load(mainargs, 512, -512);
   ((void(*)())(uint32_t)elf->e_entry)();
 }
 
 void waitdisk(void) {
-  while ((inb(0x1F7) & 0xC0) != 0x40);
+  while ((inb(0x1f7) & 0xC0) != 0x40);
 }
 
-void readsect(volatile void *dst, int offset) {
+void readsect(void *ptr, int sect) {
   waitdisk();
   outb(0x1f2, 1);
-  outb(0x1f3, offset);
-  outb(0x1f4, offset >> 8);
-  outb(0x1f5, offset >> 16);
-  outb(0x1f6, (offset >> 24) | 0xE0);
+  outb(0x1f3, sect);
+  outb(0x1f4, sect >> 8);
+  outb(0x1f5, sect >> 16);
+  outb(0x1f6, (sect >> 24) | 0xE0);
   outb(0x1f7, 0x20);
-
   waitdisk();
   for (int i = 0; i < SECTSIZE / 4; i ++) {
-    ((int *)dst)[i] = inl(0x1F0);
+    ((uint32_t *)ptr)[i] = inl(0x1f0);
   }
 }
 
-void readseg(void *addr, int count, int offset) {
-  unsigned char *pa = addr;
-  unsigned char *epa = pa + count;
-  pa -= offset % SECTSIZE;
-  offset = (offset / SECTSIZE) + 1 + 1 /* args */;
-  for(; pa < epa; pa += SECTSIZE, offset ++)
-    readsect(pa, offset);
+void load(void *paddr, int nbytes, int offset) {
+  unsigned char *cur = paddr;
+  unsigned char *ed = paddr + nbytes;
+  cur -= offset % SECTSIZE;
+  int sect = (offset / SECTSIZE) + 1 + 1 /* args */;
+  for(; cur < ed; cur += SECTSIZE, sect ++)
+    readsect(cur, sect);
 }

@@ -1,6 +1,6 @@
 include $(AM_HOME)/am/arch/isa/x86_64.mk
 
-AM_SRCS   := x86_64/qemu/start.S \
+AM_SRCS   := x86_64/qemu/start64.S \
              x86_64/qemu/trm.c \
 
 LD_SCRIPT := $(AM_HOME)/am/src/x86_64/qemu/boot/loader.ld
