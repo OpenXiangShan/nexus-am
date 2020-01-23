@@ -4,8 +4,8 @@
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 char *printch(char ch, char **s, int *limit_n);
-int printdec(unsigned int dec, int base, int width, char abs, char flagc, char **s, int *limit_n);
-int vprintdec(unsigned int dec, int base, int width, char abs, char flagc, char **s, int count, int *limit_n);
+int printdec(unsigned long dec, int base, int width, char abs, char flagc, char **s, int *limit_n);
+int vprintdec(unsigned long dec, int base, int width, char abs, char flagc, char **s, int count, int *limit_n);
 char *printstr(char *str, char **s, int *limit_n);
 void myputc(char c, char **s_h, int *limit_n) {
   if (*s_h == 0)
@@ -22,7 +22,7 @@ int vprintk(char *out, int limit, const char *fmt, va_list ap) {
   char **s_v = &out;
   int *limit_n = &limit;
   int vargint = 0;
-  unsigned int varguint = 0;
+  unsigned long varguint = 0;
   char *vargpch = 0;
   char vargch = 0;
   char flagc = ' ', abs = '+';
@@ -76,7 +76,7 @@ int vprintk(char *out, int limit, const char *fmt, va_list ap) {
         rewid++;
         break;
       case 'd':
-        vargint = va_arg(ap, int);
+        vargint = va_arg(ap, int) & 0xffffffff;
         base = 10;
         if (vargint < 0) {
           abs = '-';
@@ -86,12 +86,12 @@ int vprintk(char *out, int limit, const char *fmt, va_list ap) {
         }
         goto nump;
       case 'u':
-        varguint = va_arg(ap, unsigned int);
+        varguint = va_arg(ap, unsigned int) & 0xffffffff;
         base = 10;
         goto nump;
       case 'x':
       case 'X':
-        varguint = va_arg(ap, int);
+        varguint = va_arg(ap, int) & 0xffffffff;
         base = 16;
         goto nump;
       case 'p':
@@ -160,7 +160,7 @@ char *printch(char ch, char **s, int *limit_n) {
   return *s;
 }
 
-int printdec(unsigned int dec, int base, int width, char abs, char flagc, char **s, int *limit_n) {
+int printdec(unsigned long dec, int base, int width, char abs, char flagc, char **s, int *limit_n) {
   int rewid = 0, twid = width;
   if (abs == '-')
     rewid++;
@@ -179,7 +179,7 @@ int printdec(unsigned int dec, int base, int width, char abs, char flagc, char *
     rewid = width;
   return rewid;
 }
-int vprintdec(unsigned int dec, int base, int width, char abs, char flagc,
+int vprintdec(unsigned long dec, int base, int width, char abs, char flagc,
               char **s, int count, int *limit_n) {
   if (dec == 0) {
     if (flagc != '-') {
