@@ -4,7 +4,7 @@
 #define PDPT_ADDR_TO_ENTRY_INDEX(addr) (((addr) >> 30) & 0x1FF)
 #define TWO_MEGABYTES_SHIFT 21
 #define TWO_MEGABYTES (1 << TWO_MEGABYTES_SHIFT)
-#define KERNEL_BASE 0x00100000
+#define KERNEL_BASE 0x0
 
 .section .bss
 // bootstrap page table
@@ -18,13 +18,17 @@
 .global _start
 .type _start, @function
 _start:
-  movl $low_pdpt + 3, %eax
+  movl $low_pdpt, %eax
+  addl $3, %eax
   movl %eax, pml4 + (PML4_ADDR_TO_ENTRY_INDEX(KERNEL_BASE) * 8)
-  movl $high_pdpt + 3, %eax
+  movl $high_pdpt, %eax
+  addl $3, %eax
   movl %eax, pml4 + (PML4_ADDR_TO_ENTRY_INDEX(KERNEL_BASE) * 8)
-  movl $low_page_directory_table + 3, %eax
+  movl $low_page_directory_table, %eax
+  addl $3, %eax
   movl %eax, low_pdpt + (PDPT_ADDR_TO_ENTRY_INDEX(KERNEL_BASE) * 8)
-  movl $high_page_directory_table + 3, %eax
+  movl $high_page_directory_table, %eax
+  addl $3, %eax
   movl %eax, high_pdpt + (PDPT_ADDR_TO_ENTRY_INDEX(KERNEL_BASE) * 8)
   mov $0, %ecx
   movl $_end, %esi

@@ -3,6 +3,7 @@ layout asm
 layout regs
 set pagination off
 set confirm off
-add-symbol-file build/hello-x86_64-qemu.o 0x100000
-b *0x100200
+file build/hello-x86_64-qemu.o
+b _start
 c
+

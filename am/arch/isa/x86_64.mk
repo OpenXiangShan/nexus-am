@@ -1,3 +1,3 @@
-CFLAGS  += -m64 -fpic -fno-omit-frame-pointer
-ASFLAGS += -m64 -fpic
+CFLAGS  += -m64 -fPIC
+ASFLAGS += -m64 -fPIC
 LDFLAGS += -melf_x86_64

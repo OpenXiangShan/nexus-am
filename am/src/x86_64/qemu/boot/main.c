@@ -18,7 +18,7 @@ void bootmain(void) {
   eph = ph + elf->e_phnum;
 
   for(; ph < eph; ph ++) {
-    uint8_t *paddr = (void *)((uintptr_t)(ph->p_paddr) + KERNEL_BASE);
+    uint8_t *paddr = (void *)((uintptr_t)(ph->p_paddr));
     readseg(paddr, ph->p_filesz, ph->p_offset);
 
     char *ptr = paddr + (uintptr_t)ph->p_filesz;
@@ -29,7 +29,7 @@ void bootmain(void) {
 
   char *mainargs = (void *)0x7e00;
   readseg(mainargs, 512, -512);
-  ((void(*)())(uint32_t)elf->e_entry + KERNEL_BASE)();
+  ((void(*)())(uint32_t)elf->e_entry)();
 }
 
 void waitdisk(void) {

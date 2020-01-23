@@ -8,7 +8,7 @@ LD_SCRIPT := $(AM_HOME)/am/src/x86_64/qemu/boot/loader.ld
 image:
 	@make -s -C $(AM_HOME)/am/src/x86_64/qemu/boot
 	@echo + LD "->" $(BINARY_REL).o
-	@$(LD) $(LDFLAGS) -Ttext-segment 0 -o $(BINARY).o $(LINK_FILES)
+	@$(LD) $(LDFLAGS) -N -Ttext-segment=0x00100000 -o $(BINARY).o $(LINK_FILES)
 	@echo + CREATE "->" $(BINARY_REL)
 	@( cat $(AM_HOME)/am/src/x86_64/qemu/boot/mbr; head -c 512 /dev/zero; cat $(BINARY).o ) > $(BINARY)
 
