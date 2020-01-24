@@ -3,14 +3,15 @@
 
 #define MAX_CPU 8
 
-
 void lapic_init();
 _Area memory_probe();
 
 struct cpu_local {
-  _AddressSpace *uvm;
+//  _AddressSpace *uvm;
+#ifndef __x86_64__
   SegDesc gdt[NR_SEG];
-  TSS tss;
+#endif
+//  TSS tss;
   uint8_t stack[4096];
 };
 

@@ -1,7 +1,7 @@
-/*
-#include "x86-qemu.h"
+#include <am.h>
+#include "x86_64-qemu.h"
+#include <x86.h>
 
-int __am_ncpu = 0;
 struct cpu_local __am_cpuinfo[MAX_CPU] = {};
 
 static void (* volatile user_entry)();
@@ -28,7 +28,7 @@ int _cpu(void) {
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   intptr_t result;
-  asm volatile ("lock xchgl %0, %1":
+  asm volatile ("lock xchg %0, %1":
     "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
   return result;
 }
@@ -36,8 +36,8 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
 static void percpu_entry() {
   if (_cpu() == 0) { // bootstrap cpu, boot all aps
     for (int cpu = 1; cpu < __am_ncpu; cpu++) {
-      BOOTREC->is_ap = 1;
-      BOOTREC->entry = percpu_entry;
+//      BOOTREC->is_ap = 1;
+//      BOOTREC->entry = percpu_entry;
       __am_lapic_bootap(cpu, 0x7c00);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
@@ -50,20 +50,63 @@ static void percpu_entry() {
 }
 
 static void ap_entry() {
-  __am_percpu_initgdt();
-  __am_percpu_initirq();
+//  __am_percpu_initgdt();
+//  __am_percpu_initirq();
   __am_percpu_initlapic();
-  __am_percpu_initpg();
+//  __am_percpu_initpg();
   _atomic_xchg(&apboot_done, 1);
   user_entry();
 }
 
 static void jump_to(void (*entry)()) {
-  void *esp = CPU->stack + sizeof(CPU->stack);
+  void *sp = ((uint8_t *)CPU->stack) + sizeof(CPU->stack);
   asm volatile (
-    "movl %0, %%esp;" // switch stack, and the bootstrap stack at
-    "call *%1"        // 0x7000 can be reused by ap's bootloader
-      : : "r"(esp) , "r"(entry));
+#ifndef __x86_64__
+    "mov %0, %%esp; call *%1" : : "r"(sp), "r"(entry)
+#else
+    "mov %0, %%rsp; call *%1" : : "r"(sp), "r"(entry)
+#endif
+    
+  );
 }
 
+
+/*
+void __am_percpu_initgdt() {
+  SegDesc *gdt = CPU->gdt;
+  TSS *tss = &CPU->tss;
+  gdt[SEG_KCODE] = SEG  (STA_X | STA_R,   0,     0xffffffff, DPL_KERN);
+  gdt[SEG_KDATA] = SEG  (STA_W,           0,     0xffffffff, DPL_KERN);
+  gdt[SEG_UCODE] = SEG  (STA_X | STA_R,   0,     0xffffffff, DPL_USER);
+  gdt[SEG_UDATA] = SEG  (STA_W,           0,     0xffffffff, DPL_USER);
+  gdt[SEG_TSS]   = SEG16(STS_T32A,      tss, sizeof(*tss)-1, DPL_KERN);
+  set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
+  set_tr(KSEL(SEG_TSS));
+}
+*/
+
+/*
+void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0) {
+  CPU->tss.ss0 = ss0;
+  CPU->tss.esp0 = esp0;
+}
+*/
+
+/*
+void __am_thiscpu_halt() {
+  cli();
+  while (1) hlt();
+}
+*/
+
+/*
+void __am_othercpu_halt() {
+  BOOTREC->is_ap = 1;
+  BOOTREC->entry = __am_thiscpu_halt;
+  for (int cpu = 0; cpu < __am_ncpu; cpu++) {
+    if (cpu != _cpu()) {
+      __am_lapic_bootap(cpu, 0x7c00);
+    }
+  }
+}
 */
