@@ -24,7 +24,7 @@ void load_kernel(void) {
 
     char *bss = paddr + filesz;
     for (uint32_t i = filesz; i != memsz; i++) {
-      *bss++ = 0xff;
+      *bss++ = 0;
     }
   }
 
@@ -34,7 +34,7 @@ void load_kernel(void) {
 }
 
 void waitdisk(void) {
-  while ((inb(0x1f7) & 0xC0) != 0x40);
+  while ((inb(0x1f7) & 0xc0) != 0x40);
 }
 
 void readsect(void *ptr, int sect) {

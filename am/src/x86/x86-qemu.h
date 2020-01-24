@@ -4,7 +4,6 @@
 #include <am.h>
 #include <amdev.h>
 #include <x86.h>
-#include <klib.h> // for debugging
 
 #define MAX_CPU 8
 

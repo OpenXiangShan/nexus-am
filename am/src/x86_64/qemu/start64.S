@@ -1,24 +1,34 @@
-.code32
-
-#define PML4 0x1000
-#define PDPT 0x2000
-#define PDT  0x3000
-
 .globl _start
 .type _start, @function
 _start:
+
+#ifdef __x86_64__
+.code32
+
+  #define PML4 0x1000
+  #define PDPT 0x2000
+  #define PDT  0x3000
+  #define PDTH 0x4000
+
   movl $PDPT + 3, %eax
   movl %eax, PML4
   movl $PDT + 3, %eax
   movl %eax, PDPT
+  movl $PDTH + 3, %eax
+  movl %eax, 24 + PDPT
+
   movl $0, %ecx
   movl $512, %esi
 
 .loop:
   movl $0x200000, %eax
   mul %ecx
-  or $0x83, %eax // 2 MiB page
+  orl $0x83, %eax // 2 MiB page
   movl %eax, PDT(, %ecx, 8)
+  
+  orl $0xc0000000, %eax
+  movl %eax, PDTH(, %ecx, 8)
+
   inc %ecx
   cmp %esi, %ecx
   jne .loop
@@ -64,6 +74,13 @@ _start64:
   movq $0x7000, %rsp
   movq $0x7e00, %rdi
   call _start_c
-
   cli
   hlt
+
+#else
+  pushl $0x7e00
+  call _start_c
+  cli
+  hlt
+#endif
+

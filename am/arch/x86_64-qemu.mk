@@ -2,8 +2,11 @@ include $(AM_HOME)/am/arch/isa/x86_64.mk
 
 AM_SRCS   := x86_64/qemu/start64.S \
              x86_64/qemu/trm.c \
-
-LD_SCRIPT := $(AM_HOME)/am/src/x86_64/qemu/boot/loader.ld
+             x86_64/qemu/cte.c \
+             x86_64/qemu/ioe.c \
+             x86_64/qemu/vme.c \
+             x86_64/qemu/mpe.c \
+             x86_64/qemu/x86.c
 
 image:
 	@make -s -C $(AM_HOME)/am/src/x86_64/qemu/boot
@@ -14,8 +17,8 @@ image:
 
 run:
 	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
-	@qemu-system-x86_64 -serial stdio -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)
+	@qemu-system-x86_64 -smp 2 -serial stdio -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)
 
 debug:
 	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
-	@qemu-system-x86_64 -S -s -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic # & pid=$$!; gdb -x x.gdb && kill -9 $$pid
+	@qemu-system-x86_64 -smp 2 -S -s -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic # & pid=$$!; gdb -x x.gdb && kill -9 $$pid
