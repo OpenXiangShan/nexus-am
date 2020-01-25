@@ -1,5 +1,4 @@
 #include <am.h>
-#include <x86.h>
 #include "x86_64-qemu.h"
 #include <klib.h>
 
@@ -36,7 +35,19 @@ static inline void *upcast(uint32_t ptr) {
   return (void *)(uintptr_t)ptr;
 }
 
-void lapic_init() {
+void bootcpu_init() {
+  int32_t magic = 0x5a5aa5a5;
+  int32_t step = 1L << 20;
+  extern char end;
+  uintptr_t st, ed;
+  for (st = ed = ROUNDUP(&end, step); ; ed += step) {
+    volatile uint32_t *ptr = (uint32_t *)ed;
+    if ((*ptr = magic, *ptr) != magic) {
+      break; // read-after-write fail
+    }
+  }
+  _heap = RANGE(st, ed);
+
   for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
     if (*(volatile uint32_t *)st == 0x5f504d5f) {
       uint32_t mpconf_ptr = ((volatile struct mpdesc *)st)->conf;
@@ -57,27 +68,6 @@ void lapic_init() {
   }
   panic("seems not an x86-qemu virtual machine");
 }
-
-void boot_othercpu() {
-}
-
-_Area memory_probe() {
-  int32_t magic = 0x5a5aa5a5;
-  int32_t step = 1L << 20;
-  extern char end;
-  uintptr_t st, ed;
-  for (st = ed = ROUNDUP(&end, step); ; ed += step) {
-    volatile uint32_t *ptr = (uint32_t *)ed;
-    if ((*ptr = magic, *ptr) != magic) {
-      break; // read-after-write fail
-    }
-  }
-  return RANGE(st, ed);
-}
-
-
-
-
 
 // apic.c
 

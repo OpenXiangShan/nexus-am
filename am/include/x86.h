@@ -99,6 +99,8 @@
 // Below are only defined for c/cpp files
 #ifndef __ASSEMBLER__
 
+#include <stdint.h>
+
 // +--------10------+-------10-------+---------12----------+
 // | Page Directory |   Page Table   | Offset within Page  |
 // |      Index     |      Index     |                     |
@@ -269,26 +271,36 @@ static inline void set_cr0(uint32_t cr0) {
 }
 
 
-#ifndef __x86_64__
-static inline void set_idt(GateDesc *idt, int size) {
-  volatile static uint16_t data[3];
-  data[0] = size - 1;
-  data[1] = (uint32_t)idt;
-  data[2] = (uint32_t)idt >> 16;
-  asm volatile ("lidt (%0)" : : "r"(data));
+static inline void set_idt(void *idt, int size) {
+  volatile static struct {
+    int16_t size;
+    void *idt;
+  } __attribute__((packed)) data;
+  data.size = size;
+  data.idt = idt;
+  asm volatile ("lidt (%0)" : : "r"(&data));
 }
 
-static inline void set_gdt(SegDesc *gdt, int size) {
-  volatile static uint16_t data[3];
-  data[0] = size - 1;
-  data[1] = (uint32_t)gdt;
-  data[2] = (uint32_t)gdt >> 16;
-  asm volatile ("lgdt (%0)" : : "r"(data));
+static inline void set_gdt(void *gdt, int size) {
+  volatile static struct {
+    int16_t size;
+    void *gdt;
+  } __attribute__((packed)) data;
+  data.size = size;
+  data.gdt = gdt;
+  asm volatile ("lgdt (%0)" : : "r"(&data));
 }
 
 static inline void set_tr(int selector) {
   asm volatile ("ltr %0" : : "r"((uint16_t)selector));
 }
+
+
+#ifdef __x86_64__
+typedef uint64_t SegDesc64;
+typedef struct {
+  uint64_t data[64];
+} TSS64;
 #endif
 
 static inline uint32_t get_cr2() {

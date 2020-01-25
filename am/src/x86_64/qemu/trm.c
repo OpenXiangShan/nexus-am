@@ -1,5 +1,4 @@
 #include <am.h>
-#include <x86.h>
 #include "x86_64-qemu.h"
 #include <klib.h>
 
@@ -16,8 +15,8 @@ void _start_c(char *args) {
     (boot_record()->entry)();
   }
 
-  _heap = memory_probe();
-  lapic_init();
+  bootcpu_init();
+  percpu_init();
 
   int ret = main(args);
   _halt(ret);

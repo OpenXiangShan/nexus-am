@@ -1,6 +1,6 @@
 include $(AM_HOME)/am/arch/isa/x86_64.mk
 
-AM_SRCS   := x86_64/qemu/start64.S \
+AM_SRCS   := x86_64/qemu/start.S \
              x86_64/qemu/trm.c \
              x86_64/qemu/cte.c \
              x86_64/qemu/ioe.c \

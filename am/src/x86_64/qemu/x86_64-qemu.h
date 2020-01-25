@@ -1,17 +1,23 @@
 #ifndef __X86_64_QEMU_H__
 #define __X86_64_QEMU_H__
 
+#include <x86.h>
+#include <klib.h>
 #define MAX_CPU 8
 
-void lapic_init();
+void bootcpu_init();
+void percpu_init();
 _Area memory_probe();
 
 struct cpu_local {
 //  _AddressSpace *uvm;
 #ifndef __x86_64__
-//  SegDesc gdt[NR_SEG];
+  SegDesc gdt[NR_SEG];
+  TSS tss;
+#else
+  SegDesc64 gdt[NR_SEG + 1];
+  TSS64 tss;
 #endif
-//  TSS tss;
   uint8_t stack[4096];
 };
 

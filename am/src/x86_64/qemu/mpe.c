@@ -1,6 +1,5 @@
 #include <am.h>
 #include "x86_64-qemu.h"
-#include <x86.h>
 
 struct cpu_local __am_cpuinfo[MAX_CPU] = {};
 
@@ -50,12 +49,17 @@ static void percpu_entry() {
 }
 
 static void ap_entry() {
-//  __am_percpu_initgdt();
+  percpu_init();
+  _atomic_xchg(&apboot_done, 1);
+  user_entry();
+}
+
+void percpu_init() {
+  __am_percpu_initgdt();
 //  __am_percpu_initirq();
   __am_percpu_initlapic();
 //  __am_percpu_initpg();
-  _atomic_xchg(&apboot_done, 1);
-  user_entry();
+
 }
 
 static void jump_to(void (*entry)()) {
@@ -70,8 +74,8 @@ static void jump_to(void (*entry)()) {
 }
 
 
-/*
 void __am_percpu_initgdt() {
+#ifndef __x86_64__
   SegDesc *gdt = CPU->gdt;
   TSS *tss = &CPU->tss;
   gdt[SEG_KCODE] = SEG  (STA_X | STA_R,   0,     0xffffffff, DPL_KERN);
@@ -81,8 +85,21 @@ void __am_percpu_initgdt() {
   gdt[SEG_TSS]   = SEG16(STS_T32A,      tss, sizeof(*tss)-1, DPL_KERN);
   set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
   set_tr(KSEL(SEG_TSS));
+#else
+  SegDesc64 *gdt = CPU->gdt;
+  uint64_t tss = (uint64_t)(&CPU->tss);
+  gdt[0]         = 0;
+  gdt[SEG_KCODE] = 0x0020980000000000LL;
+  gdt[SEG_KDATA] = 0x0000920000000000LL;
+  gdt[SEG_UCODE] = 0x0020F80000000000LL;
+  gdt[SEG_UDATA] = 0x0000F20000000000LL;
+  gdt[SEG_TSS+0] = (0x0067) | ((tss & 0xFFFFFF) << 16) |
+                   (0x00E9LL << 40) | (((tss >> 24) & 0xFF) << 56);
+  gdt[SEG_TSS+1] = (tss >> 32);
+  set_gdt(gdt, sizeof(SegDesc64) * (NR_SEG + 1));
+  set_tr(KSEL(SEG_TSS));
+#endif
 }
-*/
 
 /*
 void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0) {
