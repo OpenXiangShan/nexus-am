@@ -93,11 +93,11 @@ void __am_percpu_initgdt() {
   gdt[SEG_KDATA] = 0x0000920000000000LL;
   gdt[SEG_UCODE] = 0x0020F80000000000LL;
   gdt[SEG_UDATA] = 0x0000F20000000000LL;
-  gdt[SEG_TSS+0] = (0x0067) | ((tss & 0xFFFFFF) << 16) |
-                   (0x00E9LL << 40) | (((tss >> 24) & 0xFF) << 56);
+  gdt[SEG_TSS+0] = (0x0067) | ((tss & 0xffffff) << 16) |
+                   (0x00e9LL << 40) | (((tss >> 24) & 0xff) << 56);
   gdt[SEG_TSS+1] = (tss >> 32);
-  set_gdt(gdt, sizeof(SegDesc64) * (NR_SEG + 1));
-  set_tr(KSEL(SEG_TSS));
+//  set_gdt(gdt, sizeof(SegDesc64) * (NR_SEG + 1));
+//  set_tr(KSEL(SEG_TSS));
 #endif
 }
 

@@ -10,13 +10,13 @@ void percpu_init();
 _Area memory_probe();
 
 struct cpu_local {
-//  _AddressSpace *uvm;
-#ifndef __x86_64__
-  SegDesc gdt[NR_SEG];
-  TSS tss;
-#else
+  _AddressSpace *uvm;
+#if __x86_64__
   SegDesc64 gdt[NR_SEG + 1];
   TSS64 tss;
+#else
+  SegDesc gdt[NR_SEG];
+  TSS tss;
 #endif
   uint8_t stack[4096];
 };

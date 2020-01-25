@@ -1,9 +1,19 @@
 #include "x86_64-qemu.h"
 #include <stdarg.h>
 
-/*
+void am_on_irq() {
+  printf("%d", _cpu());
+}
+
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
-static GateDesc idt[NR_IRQ];
+#if __x86_64__
+static GateDesc64 idt[NR_IRQ];
+#define GATE GATE64
+#else
+static GateDesc32 idt[NR_IRQ];
+#define GATE GATE32
+#endif
+
 
 #define IRQHANDLE_DECL(id, dpl, err)  void __am_irq##id();
 IRQS(IRQHANDLE_DECL)
@@ -13,10 +23,10 @@ int _cte_init(_Context *(*handler)(_Event, _Context *)) {
   if (_cpu() != 0) panic("init CTE in non-bootstrap CPU");
 
   for (int i = 0; i < NR_IRQ; i ++) {
-    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_irqall, DPL_KERN);
+    idt[i] = GATE(STS_TG, KSEL(SEG_KCODE), __am_irqall, DPL_KERN);
   }
 #define IDT_ENTRY(id, dpl, err) \
-  idt[id] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_irq##id, DPL_##dpl);
+  idt[id] = GATE(STS_TG, KSEL(SEG_KCODE), __am_irq##id, DPL_##dpl);
   IRQS(IDT_ENTRY)
 
   user_handler = handler;
@@ -43,52 +53,19 @@ void _intr_write(int enable) {
   }
 }
 
-static void panic_on_return() { panic("kernel context returns"); }
+// static void panic_on_return() { panic("kernel context returns"); }
 
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Area stk_safe = {
-    (void *)ROUNDUP(stack.start, 64),
-    (void *)ROUNDDOWN(stack.end, 64),
-  };
-
-  _Context *ctx = (_Context *)stk_safe.start;
-  *ctx = (_Context) {
-    .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
-    .esi = 0, .edi = 0, .ebp = 0, .esp3 = 0,
-    .ss0 = 0, .esp0 = (uint32_t)stk_safe.end,
-    .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
-    .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
-    .uvm = NULL,
-  };
-
-  void *values[] = { panic_on_return, arg }; // copy to stack
-  ctx->esp0 -= sizeof(values);
-  for (int i = 0; i < LENGTH(values); i++) {
-    ((uintptr_t *)ctx->esp0)[i] = (uintptr_t)values[i];
-  }
-  return ctx;
+  panic("!");
+  return NULL;
 }
 
 #define IRQ    T_IRQ0 + 
 #define MSG(m) ev.msg = m;
 
 void __am_irq_handle(TrapFrame *tf) {
-  // saving processor context
-  _Context ctx = {
-    .eax = tf->eax, .ebx = tf->ebx, .ecx  = tf->ecx, .edx  = tf->edx,
-    .esi = tf->esi, .edi = tf->edi, .ebp  = tf->ebp, .esp3 = 0,
-    .eip = tf->eip, .eflags = tf->eflags,
-    .cs  = tf->cs,  .ds  = tf->ds,  .es   = tf->es,  .ss   = 0,
-    .ss0 = KSEL(SEG_KDATA),         .esp0 = (uint32_t)(tf + 1),
-    .uvm = CPU->uvm,
-  };
-
   if (tf->cs & DPL_USER) { // interrupt at user code
-    ctx.ss = tf->ss;
-    ctx.esp3 = tf->esp;
   } else { // interrupt at kernel code
-    // tf (without ss0/esp0) is everything saved on the stack
-    ctx.esp0 -= sizeof(uint32_t) * 2;
   }
 
   // sending end-of-interrupt
@@ -143,54 +120,6 @@ void __am_irq_handle(TrapFrame *tf) {
       ev.cause = tf->err;
       break;
   }
-
-  // call user handlers (registered in _cte_init)
-  _Context *ret_ctx = &ctx;
-  if (user_handler) {
-    _Context *next = user_handler(ev, &ctx);
-    if (!next) {
-      panic("return to a null context");
-    }
-    ret_ctx = next;
-  }
-
-  // Return to context @ret_ctx
-#define REGS_KERNEL(_) \
-  _(eflags) _(cs) _(eip) _(ds) _(es) \
-  _(eax) _(ecx) _(edx) _(ebx) _(esp0) _(ebp) _(esi) _(edi)
-#define REGS_USER(_) \
-  _(ss) _(esp3) REGS_KERNEL(_)
-#define push(r) "push %[" #r "];"      // -> push %[eax]
-#define def(r)  , [r] "m"(ret_ctx->r)  // -> [eax] "m"(ret_ctx->eax)
- 
-  CPU->uvm = ret_ctx->uvm;
-  if (ret_ctx->cs & DPL_USER) { // return to user
-    _AddressSpace *uvm = ret_ctx->uvm;
-    if (uvm) {
-      set_cr3(uvm->ptr);
-    }
-    __am_thiscpu_setstk0(ret_ctx->ss0, ret_ctx->esp0);
-    asm volatile goto (
-      "movl %[esp], %%esp;" // move stack
-      REGS_USER(push)       // push reg context onto stack
-      "jmp %l[iret]"        // goto iret
-    : : [esp] "m"(ret_ctx->esp0)
-        REGS_USER(def) : : iret );
-  } else { // return to kernel
-    asm volatile goto (
-      "movl %[esp], %%esp;" // move stack
-      REGS_KERNEL(push)     // push reg context onto stack
-      "jmp %l[iret]"        // goto iret
-    : : [esp] "m"(ret_ctx->esp0)
-        REGS_KERNEL(def) : : iret );
-  }
-iret:
-  asm volatile (
-    "popal;"     // restore context
-    "popl %es;"
-    "popl %ds;"
-    "iret;"      // interrupt return
-  );
 }
 
 void __am_percpu_initirq() {
@@ -199,5 +128,3 @@ void __am_percpu_initirq() {
     set_idt(idt, sizeof(idt));
   }
 }
-
-*/

@@ -12,8 +12,8 @@
 
 // System segment type bits
 #define STS_T32A       0x9     // Available 32-bit TSS
-#define STS_IG32       0xE     // 32-bit Interrupt Gate
-#define STS_TG32       0xF     // 32-bit Trap Gate
+#define STS_IG         0xE     // 32/64-bit Interrupt Gate
+#define STS_TG         0xF     // 32/64-bit Trap Gate
 
 // Eflags register
 #define FL_TF          0x00000100  // Trap Flag
@@ -144,7 +144,7 @@ typedef struct SegDesc {
   (uint32_t)(lim) >> 16, 0, 0, 1, 0, (uint32_t)(base) >> 24 }
 
 // Gate descriptors for interrupts and traps
-typedef struct GateDesc {
+typedef struct GateDesc32 {
   uint32_t off_15_0 : 16;   // Low 16 bits of offset in segment
   uint32_t cs : 16;         // Code segment selector
   uint32_t args : 5;        // # args, 0 for interrupt/trap gates
@@ -154,12 +154,29 @@ typedef struct GateDesc {
   uint32_t dpl : 2;         // Descriptor(meaning new) privilege level
   uint32_t p : 1;           // Present
   uint32_t off_31_16 : 16;  // High bits of offset in segment
-} GateDesc;
+} GateDesc32;
 
-#define GATE(type, cs, entry, dpl) (GateDesc)                \
-{  (uint32_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
+#define GATE32(type, cs, entry, dpl) (GateDesc32)                \
+  {  (uint32_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
   1, (uint32_t)(entry) >> 16 }
 
+typedef struct GateDesc64 {
+  uint32_t off_15_0 : 16;
+  uint32_t cs : 16;
+  uint32_t isv : 3;
+  uint32_t zero1 : 5;
+  uint32_t type : 4;
+  uint32_t zero2 : 1;
+  uint32_t dpl : 2;
+  uint32_t p : 1;
+  uint32_t off_31_16 : 16;
+  uint32_t off_63_32 : 32;
+  uint32_t rsv : 32;
+} GateDesc64;
+
+#define GATE64(type, cs, entry, dpl) (GateDesc64) \
+  { (uint64_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
+    1, ((uint64_t)(entry) >> 16) & 0xffff, (uint64_t)(entry) >> 32, 0 }
 
 // Task state segment format
 typedef struct TSS {
@@ -255,7 +272,7 @@ static inline void pause() {
 }
 
 static inline uint32_t get_efl() {
-  volatile uint32_t efl;
+  volatile uintptr_t efl;
   asm volatile ("pushf; pop %0": "=r"(efl));
   return efl;
 }
@@ -303,9 +320,9 @@ typedef struct {
 } TSS64;
 #endif
 
-static inline uint32_t get_cr2() {
-  volatile uint32_t val;
-  asm volatile ("movl %%cr2, %0" : "=r"(val));
+static inline uintptr_t get_cr2() {
+  volatile uintptr_t val;
+  asm volatile ("mov %%cr2, %0" : "=r"(val));
   return val;
 }
 

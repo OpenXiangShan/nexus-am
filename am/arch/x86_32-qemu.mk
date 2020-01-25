@@ -1,6 +1,7 @@
 include $(AM_HOME)/am/arch/isa/x86.mk
 
 AM_SRCS   := x86_64/qemu/start.S \
+             x86_64/qemu/trap.S \
              x86_64/qemu/trm.c \
              x86_64/qemu/cte.c \
              x86_64/qemu/ioe.c \
@@ -18,8 +19,8 @@ image:
 
 run:
 	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
-	@qemu-system-i386 -smp 2 -serial stdio -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)
+	@qemu-system-i386 -serial stdio -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)
 
 debug:
 	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
-	@qemu-system-i386 -smp 2 -S -s -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic # & pid=$$!; gdb -x x.gdb && kill -9 $$pid
+	@qemu-system-i386 -S -s -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic # & pid=$$!; gdb -x x.gdb && kill -9 $$pid

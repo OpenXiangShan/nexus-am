@@ -7,16 +7,14 @@ _start:
 #ifndef __x86_64__
   // 32-bit code
   pushl $0x7e00
-  call _start_c
-  cli
-  hlt
+  jmp _start_c
 
 #else
   // 64-bit code
 .code32
   movl $0, %eax
   cmpl (BOOT_RECORD), %eax
-  jne .x86_64init
+  jne .long_mode_init
 
   #define PML4 0x1000
   #define PDPT 0x2000
@@ -46,14 +44,14 @@ _start:
   cmp %esi, %ecx
   jne .loop
 
-.x86_64init:
+.long_mode_init:
   movl $PML4, %eax
   movl %eax, %cr3     // %cr3 = PML4 base
   movl $0x80000021, %eax
   movl %eax, %cr4     // %cr4.PAE = 1
   movl $0xc0000080, %ecx
   rdmsr
-  or $0x100, %eax
+  orl $0x100, %eax
   wrmsr // %msr.LME = 1.
   movl $0x80000011, %eax
   movl %eax, %cr0    // %cr0.PG = 1; %cr0.PE = 1;
@@ -63,16 +61,16 @@ _start:
   hlt
 
 gdt_ptr:
-  .word gdt64_end - gdt64_begin - 1;
+  .word gdt64_end - gdt64_begin - 1
   .quad gdt64_begin
 
 gdt64_begin:
-  .long 0xffff0000 # 0: null desc
+  .long 0x00000000 # 0: null desc
   .long 0x00000000
   .long 0x00000000 # 1: Code, R/X, Nonconforming
   .long 0x00209800
   .long 0x00000000 # 2: Data, R/W, Expand Down
-  .long 0x00009000
+  .long 0x00009800
 gdt64_end:
 
 .code64
@@ -81,14 +79,12 @@ _start64:
   movw $0, %ax
   movw %ax, %ds
   movw %ax, %es
+  movw %ax, %ss
   movw %ax, %fs
   movw %ax, %gs
-  movw %ax, %ss
 
   movq $0x7000, %rsp
   movq $0x7e00, %rdi
-  call _start_c
-  cli
-  hlt
+  jmp _start_c
 
 #endif
