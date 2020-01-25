@@ -12,6 +12,10 @@ int __am_ncpu = 0;
 struct cpu_local __am_cpuinfo[MAX_CPU];
 
 void _start_c(char *args) {
+  if (boot_record()->is_ap) {
+    (boot_record()->entry)();
+  }
+
   _heap = memory_probe();
   lapic_init();
 

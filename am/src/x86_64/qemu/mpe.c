@@ -36,8 +36,8 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
 static void percpu_entry() {
   if (_cpu() == 0) { // bootstrap cpu, boot all aps
     for (int cpu = 1; cpu < __am_ncpu; cpu++) {
-//      BOOTREC->is_ap = 1;
-//      BOOTREC->entry = percpu_entry;
+      boot_record()->is_ap = 1;
+      boot_record()->entry = percpu_entry;
       __am_lapic_bootap(cpu, 0x7c00);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
@@ -66,7 +66,6 @@ static void jump_to(void (*entry)()) {
 #else
     "mov %0, %%rsp; call *%1" : : "r"(sp), "r"(entry)
 #endif
-    
   );
 }
 
@@ -92,21 +91,17 @@ void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0) {
 }
 */
 
-/*
 void __am_thiscpu_halt() {
   cli();
   while (1) hlt();
 }
-*/
 
-/*
 void __am_othercpu_halt() {
-  BOOTREC->is_ap = 1;
-  BOOTREC->entry = __am_thiscpu_halt;
+  boot_record()->is_ap = 1;
+  boot_record()->entry = __am_thiscpu_halt;
   for (int cpu = 0; cpu < __am_ncpu; cpu++) {
     if (cpu != _cpu()) {
       __am_lapic_bootap(cpu, 0x7c00);
     }
   }
 }
-*/

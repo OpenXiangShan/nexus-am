@@ -11,25 +11,29 @@ void load_kernel(void) {
   struct elf64_phdr *ph, *eph;
 
   elf = (struct elf64_hdr *)0x8000;
-  load(elf, 4096, 0);
 
-  ph = (struct elf64_phdr *)((char *)elf + elf->e_phoff);
-  eph = ph + elf->e_phnum;
-
-  for(; ph < eph; ph ++) {
-    uint32_t filesz = (uint32_t)ph->p_filesz;
-    uint32_t memsz =  (uint32_t)ph->p_memsz;
-    void *paddr = (void *)((uint32_t)ph->p_paddr);
-    load(paddr, ph->p_filesz, ph->p_offset);
-
-    char *bss = paddr + filesz;
-    for (uint32_t i = filesz; i != memsz; i++) {
-      *bss++ = 0;
+  if (!boot_record()->is_ap) {
+    load(elf, 4096, 0);
+  
+    ph = (struct elf64_phdr *)((char *)elf + elf->e_phoff);
+    eph = ph + elf->e_phnum;
+  
+    for(; ph < eph; ph ++) {
+      uint32_t filesz = (uint32_t)ph->p_filesz;
+      uint32_t memsz =  (uint32_t)ph->p_memsz;
+      void *paddr = (void *)((uint32_t)ph->p_paddr);
+      load(paddr, ph->p_filesz, ph->p_offset);
+  
+      char *bss = paddr + filesz;
+      for (uint32_t i = filesz; i != memsz; i++) {
+        *bss++ = 0;
+      }
     }
+  
+    char *mainargs = (void *)0x7e00;
+    load(mainargs, 512, -512);
+  } else {
   }
-
-  char *mainargs = (void *)0x7e00;
-  load(mainargs, 512, -512);
   ((void(*)())(uint32_t)elf->e_entry)();
 }
 

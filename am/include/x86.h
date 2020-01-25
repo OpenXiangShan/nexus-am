@@ -93,6 +93,9 @@
   _( 46, KERN, NOERR) _( 47, KERN, NOERR) \
   _(128, USER, NOERR)
 
+// boot record address
+#define BOOT_RECORD 0x7000
+
 // Below are only defined for c/cpp files
 #ifndef __ASSEMBLER__
 
@@ -296,6 +299,16 @@ static inline uint32_t get_cr2() {
 
 static inline void set_cr3(void *pdir) {
   asm volatile ("movl %0, %%cr3" : : "r"(pdir));
+}
+
+
+struct boot_record {
+  int32_t is_ap;
+  void (*entry)();
+};
+
+static inline struct boot_record *boot_record() {
+  return (struct boot_record *)BOOT_RECORD;
 }
 
 #endif

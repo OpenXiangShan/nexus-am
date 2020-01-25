@@ -1,9 +1,22 @@
+#include <x86.h>
+
 .globl _start
 .type _start, @function
 _start:
 
-#ifdef __x86_64__
+#ifndef __x86_64__
+  // 32-bit code
+  pushl $0x7e00
+  call _start_c
+  cli
+  hlt
+
+#else
+  // 64-bit code
 .code32
+  movl $0, %eax
+  cmpl (BOOT_RECORD), %eax
+  jne .x86_64init
 
   #define PML4 0x1000
   #define PDPT 0x2000
@@ -33,6 +46,7 @@ _start:
   cmp %esi, %ecx
   jne .loop
 
+.x86_64init:
   movl $PML4, %eax
   movl %eax, %cr3     // %cr3 = PML4 base
   movl $0x80000021, %eax
@@ -77,10 +91,4 @@ _start64:
   cli
   hlt
 
-#else
-  pushl $0x7e00
-  call _start_c
-  cli
-  hlt
 #endif
-

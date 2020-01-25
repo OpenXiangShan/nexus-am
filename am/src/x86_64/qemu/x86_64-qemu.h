@@ -9,7 +9,7 @@ _Area memory_probe();
 struct cpu_local {
 //  _AddressSpace *uvm;
 #ifndef __x86_64__
-  SegDesc gdt[NR_SEG];
+//  SegDesc gdt[NR_SEG];
 #endif
 //  TSS tss;
   uint8_t stack[4096];
@@ -54,7 +54,6 @@ void __am_percpu_initpg();
 void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
 void __am_thiscpu_halt() __attribute__((__noreturn__));
 void __am_othercpu_halt();
-
 
 
 #endif

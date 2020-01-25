@@ -1,8 +1,12 @@
 #include <am.h>
 #include <klib.h>
 
+void hello() {
+  printf("CPU %d: hello!\n", _cpu());
+  while (1);
+}
 int main(const char *args) {
-  printf("Hello with args=\"%s\"\n", args);
-  printf("Heap: %p, %p, %p\n", _heap.start, _heap.end, -1L);
+  printf("CPU0: hello with args=\"%s\"\n", args);
+  _mpe_init(hello);
   return 0;
 }
