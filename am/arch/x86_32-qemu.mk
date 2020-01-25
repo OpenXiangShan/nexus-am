@@ -9,11 +9,11 @@ AM_SRCS   := x86_64/qemu/start64.S \
              x86_64/qemu/x86.c
 
 image:
-	@make -s -C $(AM_HOME)/am/src/x86/qemu/boot
+	@make -s -C $(AM_HOME)/am/src/x86_64/qemu/boot
 	@echo + LD "->" $(BINARY_REL).o
 	@$(LD) $(LDFLAGS) -Ttext 0x00100000 -o $(BINARY).o $(LINK_FILES)
 	@echo + CREATE "->" $(BINARY_REL)
-	@( cat $(AM_HOME)/am/src/x86/qemu/boot/mbr; head -c 512 /dev/zero; cat $(BINARY).o ) > $(BINARY)
+	@( cat $(AM_HOME)/am/src/x86_64/qemu/boot/mbr; head -c 512 /dev/zero; cat $(BINARY).o ) > $(BINARY)
 
 
 run:
