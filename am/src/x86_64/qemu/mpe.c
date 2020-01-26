@@ -37,6 +37,7 @@ static void percpu_entry() {
       boot_record()->is_ap = 1;
       boot_record()->entry = percpu_entry;
       __am_lapic_bootap(cpu, 0x7c00);
+      printf("Wait AP boot complete\n");
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
       }
@@ -48,7 +49,9 @@ static void percpu_entry() {
 }
 
 static void ap_entry() {
+  printf("AP init start!\n");
   percpu_init();
+  printf("AP init done!\n");
   _atomic_xchg(&apboot_done, 1);
   user_entry();
 }

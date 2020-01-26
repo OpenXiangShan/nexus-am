@@ -34,13 +34,15 @@ void irq_x86(struct trap_frame *tf) {
   ctx.eflags = tf->eflags;
   if (tf->cs & DPL_USER) {
   } else {
-    ctx.esp += sizeof(struct trap_frame) + 8; // arg and ret-addr
+    ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
     ctx.ss  = 0;
   }
 
+/*
   dump(eax); dump(ebx); dump(ecx); dump(edx); 
   dump(ebp); dump(esp); dump(esi); dump(edi);
   dump(cs); dump(ds); dump(eip); dump(eflags); 
+*/
 #endif
 
   if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {

@@ -12,7 +12,7 @@ trap:
   pushl %ebx
   pushl %eax
   movw %ds, %ax
-  pushl %ax
+  pushl %eax
   pushl $0  // uvm
 
   movw $KSEL(SEG_KDATA), %ax
@@ -23,8 +23,8 @@ trap:
   pushl %esp
   call am_on_irq
 
+.globl __am_iret
 __am_iret:
-  movl 
   addl $4, %esp
   popl %eax
   movl %eax, %esp
@@ -37,6 +37,32 @@ __am_iret:
   popl %ebx
   popl %ecx
   popl %edx
+  
+  /* on (current) stack: 
+     28 ss
+     24 new-esp
+     20 eflags
+     16 cs
+     12 eip
+     8  ebp 
+     4  edi 
+     0  esi <--- %esp, %ebp
+
+     XXXXXX (old contents) <---- %edi
+      */
+  
+  movl %esp, %ebp
+  movl 24(%ebp), %edi   // %edi is new-esp
+
+  movl 20(%ebp), %esi;  movl %esi, -4(%edi)
+  movl 16(%ebp), %esi;  movl %esi, -8(%edi)
+  movl 12(%ebp), %esi;  movl %esi, -12(%edi)
+  movl  8(%ebp), %esi;  movl %esi, -16(%edi)
+  movl  4(%ebp), %esi;  movl %esi, -20(%edi)
+  movl  0(%ebp), %esi;  movl %esi, -24(%edi)
+
+  leal -24(%edi), %esp
+
   popl %esi
   popl %edi
   popl %ebp
