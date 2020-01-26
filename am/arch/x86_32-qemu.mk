@@ -1,7 +1,7 @@
 include $(AM_HOME)/am/arch/isa/x86.mk
 
 AM_SRCS   := x86_64/qemu/start.S \
-             x86_64/qemu/trap.S \
+             x86_64/qemu/trap32.S \
              x86_64/qemu/trm.c \
              x86_64/qemu/cte.c \
              x86_64/qemu/ioe.c \

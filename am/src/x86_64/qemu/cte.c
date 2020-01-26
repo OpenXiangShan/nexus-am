@@ -12,6 +12,7 @@
 
 void irq_x86(struct trap_frame *tf) {
   _Context ctx;
+  printf("[%d/%d] ", tf->irq, _cpu());
 
 #if __x86_64
   ctx        = tf->saved_context;
@@ -20,9 +21,12 @@ void irq_x86(struct trap_frame *tf) {
   ctx.rflags = tf->rflags;
   ctx.rsp    = tf->rsp;
   ctx.ss     = tf->ss;
+
+  /*
   dump(rax); dump(rbx); dump(rcx); dump(rdx); dump(rbp); dump(rsp); dump(rsi); dump(rdi);
   dump(r8); dump(r9); dump(r10); dump(r11); dump(r12); dump(r13); dump(r14); dump(r15);
   dump(cs); dump(ss); dump(rip); dump(rflags);
+  */
 #else
   ctx     = tf->saved_context;
   ctx.eip = tf->eip;
@@ -35,7 +39,8 @@ void irq_x86(struct trap_frame *tf) {
   }
 
   dump(eax); dump(ebx); dump(ecx); dump(edx); 
-  dump(ebp); dump(esp); dump(esi); dump(edi); dump(cs); dump(eip); dump(eflags); 
+  dump(ebp); dump(esp); dump(esi); dump(edi);
+  dump(cs); dump(ds); dump(eip); dump(eflags); 
 #endif
 
   if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {

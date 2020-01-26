@@ -3,30 +3,6 @@
 trap:
   cli
 
-#if __x86_64__
-  subq $56, %rsp
-
-  pushq %r15
-  pushq %r14
-  pushq %r13
-  pushq %r12
-  pushq %r11
-  pushq %r10
-  pushq %r9
-  pushq %r8
-  pushq %rdi
-  pushq %rsi
-  pushq %rbp
-  pushq %rdx
-  pushq %rcx
-  pushq %rbx
-  pushq %rax
-  pushq $0  //uvm
-
-  movq %rsp, %rdi
-  call am_on_irq
-
-#else
   subl $20, %esp
   pushl %ebp
   pushl %edi
@@ -35,6 +11,8 @@ trap:
   pushl %ecx
   pushl %ebx
   pushl %eax
+  movw %ds, %ax
+  pushl %ax
   pushl $0  // uvm
 
   movw $KSEL(SEG_KDATA), %ax
@@ -44,16 +22,25 @@ trap:
 
   pushl %esp
   call am_on_irq
-#endif
 
-.globl __am_iret
 __am_iret:
-  jmp __am_iret
-#if __x86_64__
-  iretq
-#else
+  movl 
+  addl $4, %esp
+  popl %eax
+  movl %eax, %esp
+
+  addl $4, %esp
+  popl %eax
+  movw %ax, %ds
+  movw %ax, %es
+  popl %eax
+  popl %ebx
+  popl %ecx
+  popl %edx
+  popl %esi
+  popl %edi
+  popl %ebp
   iret
-#endif
 
 #define NOERR     push $0
 #define ERR

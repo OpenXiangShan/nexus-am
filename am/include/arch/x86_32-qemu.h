@@ -3,7 +3,7 @@
 
 struct _Context {
   struct _AddressSpace *uvm;
-  uint32_t eax, ebx, ecx, edx,
+  uint32_t ds, eax, ebx, ecx, edx,
            esi, edi, ebp,
            eip, cs, eflags, esp, ss;
 };

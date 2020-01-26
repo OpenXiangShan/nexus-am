@@ -13,6 +13,8 @@ _Context *on_intr(_Event ev, _Context *ctx) {
 void foo() {
   _intr_write(1);
   while (1) { 
+//    for (volatile int i = 0; i < 100000; i++);
+//    printf(".");
 //    asm volatile("int $0x80");
   }
 }
