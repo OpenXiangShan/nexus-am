@@ -117,7 +117,7 @@ typedef uint32_t PDE;
 #define PGADDR(d, t, o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 
 // Segment Descriptor
-typedef struct SegDesc {
+typedef struct SegDesc32 {
   uint32_t lim_15_0 : 16;  // Low bits of segment limit
   uint32_t base_15_0 : 16; // Low bits of segment base address
   uint32_t base_23_16 : 8; // Middle bits of segment base address
@@ -131,14 +131,16 @@ typedef struct SegDesc {
   uint32_t db : 1;         // 0 = 16-bit segment, 1 = 32-bit segment
   uint32_t g : 1;          // Granularity: limit scaled by 4K when set
   uint32_t base_31_24 : 8; // High bits of segment base address
-} SegDesc;
+} SegDesc32;
 
-#define SEG(type, base, lim, dpl) (SegDesc)             \
+typedef uint64_t SegDesc64;
+
+#define SEG32(type, base, lim, dpl) (SegDesc32)             \
 {  ((lim) >> 12) & 0xffff, (uint32_t)(base) & 0xffff,   \
   ((uint32_t)(base) >> 16) & 0xff, type, 1, dpl, 1,     \
   (uint32_t)(lim) >> 28, 0, 0, 1, 1, (uint32_t)(base) >> 24 }
 
-#define SEG16(type, base, lim, dpl) (SegDesc)           \
+#define SEG16(type, base, lim, dpl) (SegDesc32)           \
 {  (lim) & 0xffff, (uint32_t)(base) & 0xffff,           \
   ((uint32_t)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
   (uint32_t)(lim) >> 16, 0, 0, 1, 0, (uint32_t)(base) >> 24 }
@@ -179,22 +181,18 @@ typedef struct GateDesc64 {
     1, ((uint64_t)(entry) >> 16) & 0xffff, (uint64_t)(entry) >> 32, 0 }
 
 // Task state segment format
-typedef struct TSS {
+typedef struct TSS32 {
   uint32_t link;     // Unused
   uint32_t esp0;     // Stack pointers and segment selectors
   uint32_t ss0;      //   after an increase in privilege level
   char     padding[88];
-} TSS;
+} __attribute__((packed)) TSS32;
 
-// Interrupt and exception frame
-typedef struct TrapFrame {
-  uint32_t edi, esi, ebp, esp_;
-  uint32_t ebx, edx, ecx, eax;   // Register saved by pushal
-  uint32_t es, ds;               // Segment register
-  int32_t  irq;                  // # of irq
-  uint32_t err, eip, cs, eflags; // Execution state before trap 
-  uint32_t esp, ss;              // Used only when returning to DPL=3
-} TrapFrame;
+typedef struct TSS64 {
+  uint32_t rsv;
+  uint64_t rsp0, rsp1, rsp2;
+  uint32_t padding[19];
+} __attribute__((packed)) TSS64;
 
 // Multiprocesor configuration
 typedef struct MPConf {    // configuration table header
@@ -312,14 +310,6 @@ static inline void set_tr(int selector) {
   asm volatile ("ltr %0" : : "r"((uint16_t)selector));
 }
 
-
-#ifdef __x86_64__
-typedef uint64_t SegDesc64;
-typedef struct {
-  uint64_t data[64];
-} TSS64;
-#endif
-
 static inline uintptr_t get_cr2() {
   volatile uintptr_t val;
   asm volatile ("mov %%cr2, %0" : "=r"(val));
@@ -338,6 +328,17 @@ struct boot_record {
 
 static inline struct boot_record *boot_record() {
   return (struct boot_record *)BOOT_RECORD;
+}
+
+static inline void stack_jump(void *sp, void *entry, uintptr_t arg) {
+  uintptr_t aligned_stk = ROUNDDOWN((uintptr_t)sp, 16);
+  asm volatile (
+#if __x86_64__
+    "movq %0, %%rsp; movq %2, %%rdi; jmp *%1" : : "b"(aligned_stk), "d"(entry), "a"(arg)
+#else
+    "movl %0, %%esp; movl %2, 4(%0); jmp *%1" : : "b"(aligned_stk - 8), "d"(entry), "a"(arg)
+#endif
+  );
 }
 
 #endif

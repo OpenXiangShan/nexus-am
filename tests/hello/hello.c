@@ -12,15 +12,14 @@ _Context *on_intr(_Event ev, _Context *ctx) {
 
 void foo() {
   _intr_write(1);
-  while (1) {
-    asm volatile("int $0x80;");
+  while (1) { 
+//    asm volatile("int $0x80");
   }
 }
 
 int main(const char *args) {
   printf("CPU0: hello with args=\"%s\"\n", args);
   _cte_init(on_intr);
-
   _mpe_init(foo);
   return 0;
 }

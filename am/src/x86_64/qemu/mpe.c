@@ -8,11 +8,10 @@ static volatile intptr_t apboot_done = 0;
 
 static void percpu_entry();
 static void ap_entry();
-static void jump_to(void (*entry)());
 
 int _mpe_init(void (*entry)()) {
   user_entry = entry;
-  jump_to(percpu_entry);
+  stack_jump(stack_top(&CPU->stack), percpu_entry, 0);
   panic("bug: should not return");
   return 1;
 }
@@ -44,7 +43,7 @@ static void percpu_entry() {
     }
     user_entry();
   } else { // this is an ap
-    jump_to(ap_entry);
+    stack_jump(stack_top(&CPU->stack), ap_entry, 0);
   }
 }
 
@@ -55,37 +54,17 @@ static void ap_entry() {
 }
 
 void percpu_init() {
+  printf("CPU %d start init\n", _cpu());
   __am_percpu_initgdt();
-//  __am_percpu_initirq();
   __am_percpu_initlapic();
+  __am_percpu_initirq();
 //  __am_percpu_initpg();
 
+  printf("CPU %d init done.\n", _cpu());
 }
-
-static void jump_to(void (*entry)()) {
-  void *sp = ((uint8_t *)CPU->stack) + sizeof(CPU->stack);
-  asm volatile (
-#ifndef __x86_64__
-    "mov %0, %%esp; call *%1" : : "r"(sp), "r"(entry)
-#else
-    "mov %0, %%rsp; call *%1" : : "r"(sp), "r"(entry)
-#endif
-  );
-}
-
 
 void __am_percpu_initgdt() {
-#ifndef __x86_64__
-  SegDesc *gdt = CPU->gdt;
-  TSS *tss = &CPU->tss;
-  gdt[SEG_KCODE] = SEG  (STA_X | STA_R,   0,     0xffffffff, DPL_KERN);
-  gdt[SEG_KDATA] = SEG  (STA_W,           0,     0xffffffff, DPL_KERN);
-  gdt[SEG_UCODE] = SEG  (STA_X | STA_R,   0,     0xffffffff, DPL_USER);
-  gdt[SEG_UDATA] = SEG  (STA_W,           0,     0xffffffff, DPL_USER);
-  gdt[SEG_TSS]   = SEG16(STS_T32A,      tss, sizeof(*tss)-1, DPL_KERN);
-  set_gdt(gdt, sizeof(SegDesc) * NR_SEG);
-  set_tr(KSEL(SEG_TSS));
-#else
+#if __x86_64__
   SegDesc64 *gdt = CPU->gdt;
   uint64_t tss = (uint64_t)(&CPU->tss);
   gdt[0]         = 0;
@@ -96,8 +75,18 @@ void __am_percpu_initgdt() {
   gdt[SEG_TSS+0] = (0x0067) | ((tss & 0xffffff) << 16) |
                    (0x00e9LL << 40) | (((tss >> 24) & 0xff) << 56);
   gdt[SEG_TSS+1] = (tss >> 32);
-//  set_gdt(gdt, sizeof(SegDesc64) * (NR_SEG + 1));
-//  set_tr(KSEL(SEG_TSS));
+  set_gdt(gdt, sizeof(SegDesc64) * (NR_SEG + 1));
+  set_tr(KSEL(SEG_TSS));
+#else
+  SegDesc32 *gdt = CPU->gdt;
+  TSS32 *tss = &CPU->tss;
+  gdt[SEG_KCODE] = SEG32(STA_X | STA_R,   0,     0xffffffff, DPL_KERN);
+  gdt[SEG_KDATA] = SEG32(STA_W,           0,     0xffffffff, DPL_KERN);
+  gdt[SEG_UCODE] = SEG32(STA_X | STA_R,   0,     0xffffffff, DPL_USER);
+  gdt[SEG_UDATA] = SEG32(STA_W,           0,     0xffffffff, DPL_USER);
+  gdt[SEG_TSS]   = SEG16(STS_T32A,      tss, sizeof(*tss)-1, DPL_KERN);
+  set_gdt(gdt, sizeof(SegDesc32) * NR_SEG);
+  set_tr(KSEL(SEG_TSS));
 #endif
 }
 

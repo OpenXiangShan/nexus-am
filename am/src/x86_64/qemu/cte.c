@@ -1,8 +1,52 @@
 #include "x86_64-qemu.h"
 #include <stdarg.h>
 
-void am_on_irq() {
-  printf("%d", _cpu());
+#define IRQ    T_IRQ0 + 
+#define MSG(m) ev.msg = m;
+
+#define dump(name) \
+  printf("%s = %08x (%d)\n", #name, ctx.name, ctx.name);
+
+#define offset(name) \
+  printf("%s @ %d\n", #name, (char *)&tf.name - (char*)tf);
+
+void irq_x86(struct trap_frame *tf) {
+  _Context ctx;
+
+#if __x86_64
+  ctx        = tf->saved_context;
+  ctx.rip    = tf->rip;
+  ctx.cs     = tf->cs;
+  ctx.rflags = tf->rflags;
+  ctx.rsp    = tf->rsp;
+  ctx.ss     = tf->ss;
+  dump(rax); dump(rbx); dump(rcx); dump(rdx); dump(rbp); dump(rsp); dump(rsi); dump(rdi);
+  dump(r8); dump(r9); dump(r10); dump(r11); dump(r12); dump(r13); dump(r14); dump(r15);
+  dump(cs); dump(ss); dump(rip); dump(rflags);
+#else
+  ctx     = tf->saved_context;
+  ctx.eip = tf->eip;
+  ctx.cs  = tf->cs;
+  ctx.eflags = tf->eflags;
+  if (tf->cs & DPL_USER) {
+  } else {
+    ctx.esp += sizeof(struct trap_frame) + 8; // arg and ret-addr
+    ctx.ss  = 0;
+  }
+
+  dump(eax); dump(ebx); dump(ecx); dump(edx); 
+  dump(ebp); dump(esp); dump(esi); dump(edi); dump(cs); dump(eip); dump(eflags); 
+#endif
+
+  if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
+    __am_lapic_eoi();
+  }
+
+  __am_iret(&ctx);
+}
+
+void am_on_irq(struct trap_frame *tf) {
+  stack_jump(stack_top(&CPU->irq_stack), irq_x86, (uintptr_t)tf);
 }
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
@@ -30,7 +74,6 @@ int _cte_init(_Context *(*handler)(_Event, _Context *)) {
   IRQS(IDT_ENTRY)
 
   user_handler = handler;
-  __am_percpu_initirq();
   return 0;
 }
 
@@ -60,9 +103,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   return NULL;
 }
 
-#define IRQ    T_IRQ0 + 
-#define MSG(m) ev.msg = m;
-
+/*
 void __am_irq_handle(TrapFrame *tf) {
   if (tf->cs & DPL_USER) { // interrupt at user code
   } else { // interrupt at kernel code
@@ -121,10 +162,9 @@ void __am_irq_handle(TrapFrame *tf) {
       break;
   }
 }
+*/
 
 void __am_percpu_initirq() {
-  if (user_handler) {
-    __am_ioapic_enable(IRQ_KBD, 0);
-    set_idt(idt, sizeof(idt));
-  }
+  __am_ioapic_enable(IRQ_KBD, 0);
+  set_idt(idt, sizeof(idt));
 }

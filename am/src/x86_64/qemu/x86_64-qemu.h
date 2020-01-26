@@ -9,17 +9,45 @@ void bootcpu_init();
 void percpu_init();
 _Area memory_probe();
 
+struct kernel_stack {
+  uint8_t stack[8192];
+};
+
+static inline void *stack_top(struct kernel_stack *stk) {
+  return stk->stack + sizeof(stk->stack);
+}
+
+void __am_iret(_Context *ctx);
+
 struct cpu_local {
   _AddressSpace *uvm;
 #if __x86_64__
   SegDesc64 gdt[NR_SEG + 1];
   TSS64 tss;
 #else
-  SegDesc gdt[NR_SEG];
-  TSS tss;
+  SegDesc32 gdt[NR_SEG];
+  TSS32 tss;
 #endif
-  uint8_t stack[4096];
+  struct kernel_stack stack;
+  struct kernel_stack irq_stack;
 };
+
+#if __x86_64__
+struct trap_frame {
+  _Context saved_context;
+  uint64_t irq, errcode;
+  uint64_t rip, cs, rflags, rsp, ss;
+};
+#else
+struct trap_frame {
+  _Context saved_context;
+  uint32_t irq, errcode;
+  uint32_t eip, cs, eflags, esp, ss;
+};
+#endif
+
+
+
 
 extern volatile uint32_t *__am_lapic;
 extern int __am_ncpu;

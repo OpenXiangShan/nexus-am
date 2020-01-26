@@ -30,12 +30,12 @@ struct mpdesc {
   uint8_t  reserved[3];
 };
 
-
 static inline void *upcast(uint32_t ptr) {
   return (void *)(uintptr_t)ptr;
 }
 
 void bootcpu_init() {
+
   int32_t magic = 0x5a5aa5a5;
   int32_t step = 1L << 20;
   extern char end;
@@ -67,6 +67,8 @@ void bootcpu_init() {
     }
   }
   panic("seems not an x86-qemu virtual machine");
+
+  __am_ioapic_init();
 }
 
 // apic.c

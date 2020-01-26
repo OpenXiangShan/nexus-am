@@ -4,45 +4,54 @@ trap:
   cli
 
 #if __x86_64__
-  push %r15
-  push %r14
-  push %r13
-  push %r12
-  push %r11
-  push %r10
-  push %r9
-  push %r8
-  push %rdi
-  push %rsi
-  push %rbp
-  push %rdx
-  push %rcx
-  push %rbx
-  push %rax
+  subq $56, %rsp
 
+  pushq %r15
+  pushq %r14
+  pushq %r13
+  pushq %r12
+  pushq %r11
+  pushq %r10
+  pushq %r9
+  pushq %r8
+  pushq %rdi
+  pushq %rsi
+  pushq %rbp
+  pushq %rdx
+  pushq %rcx
+  pushq %rbx
+  pushq %rax
+  pushq $0  //uvm
 
+  movq %rsp, %rdi
   call am_on_irq
 
-  pop %rax
-  pop %rbx
-  pop %rcx
-  pop %rdx
-  pop %rbp
-  pop %rsi
-  pop %rdi
-  pop %r8
-  pop %r9
-  pop %r10
-  pop %r11
-  pop %r12
-  pop %r13
-  pop %r14
-  pop %r15
-  addq $16, %rsp
-  iretq
-
 #else
-  addl $8, %esp
+  subl $20, %esp
+  pushl %ebp
+  pushl %edi
+  pushl %esi
+  pushl %edx
+  pushl %ecx
+  pushl %ebx
+  pushl %eax
+  pushl $0  // uvm
+
+  movw $KSEL(SEG_KDATA), %ax
+  movw %ax, %ds
+  movw %ax, %es
+  movw %ax, %ss
+
+  pushl %esp
+  call am_on_irq
+#endif
+
+.globl __am_iret
+__am_iret:
+  jmp __am_iret
+#if __x86_64__
+  iretq
+#else
   iret
 #endif
 
