@@ -1,6 +1,9 @@
 #include <am.h>
 #include "x86_64-qemu.h"
-#include <klib.h>
+
+volatile uint32_t *__am_lapic;
+int __am_ncpu = 0;
+struct cpu_local __am_cpuinfo[MAX_CPU];
 
 // Multiprocesor configuration
 struct mpconf {           // configuration table header
@@ -18,7 +21,6 @@ struct mpconf {           // configuration table header
   uint8_t  reserved;
 };
 
-
 struct mpdesc {
   int      magic;
   uint32_t conf;     // MP config table addr
@@ -35,7 +37,6 @@ static inline void *upcast(uint32_t ptr) {
 }
 
 void bootcpu_init() {
-
   int32_t magic = 0x5a5aa5a5;
   int32_t step = 1L << 20;
   extern char end;
@@ -71,8 +72,61 @@ void bootcpu_init() {
   __am_ioapic_init();
 }
 
-// apic.c
 
+void __am_percpu_init() {
+  __am_percpu_initgdt();
+  __am_percpu_initlapic();
+  __am_percpu_initirq();
+//  __am_percpu_initpg();
+
+}
+
+void __am_percpu_initgdt() {
+#if __x86_64__
+  SegDesc64 *gdt = CPU->gdt;
+  uint64_t tss = (uint64_t)(&CPU->tss);
+  gdt[0]         = 0;
+  gdt[SEG_KCODE] = 0x0020980000000000LL;
+  gdt[SEG_KDATA] = 0x0000920000000000LL;
+  gdt[SEG_UCODE] = 0x0020F80000000000LL;
+  gdt[SEG_UDATA] = 0x0000F20000000000LL;
+  gdt[SEG_TSS+0] = (0x0067) | ((tss & 0xffffff) << 16) |
+                   (0x00e9LL << 40) | (((tss >> 24) & 0xff) << 56);
+  gdt[SEG_TSS+1] = (tss >> 32);
+  set_gdt(gdt, sizeof(SegDesc64) * (NR_SEG + 1));
+  set_tr(KSEL(SEG_TSS));
+#else
+  SegDesc32 *gdt = CPU->gdt;
+  TSS32 *tss = &CPU->tss;
+  gdt[SEG_KCODE] = SEG32(STA_X | STA_R,   0,     0xffffffff, DPL_KERN);
+  gdt[SEG_KDATA] = SEG32(STA_W,           0,     0xffffffff, DPL_KERN);
+  gdt[SEG_UCODE] = SEG32(STA_X | STA_R,   0,     0xffffffff, DPL_USER);
+  gdt[SEG_UDATA] = SEG32(STA_W,           0,     0xffffffff, DPL_USER);
+  gdt[SEG_TSS]   = SEG16(STS_T32A,      tss, sizeof(*tss)-1, DPL_KERN);
+  set_gdt(gdt, sizeof(SegDesc32) * NR_SEG);
+  set_tr(KSEL(SEG_TSS));
+#endif
+}
+
+/*
+void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0) {
+  CPU->tss.ss0 = ss0;
+  CPU->tss.esp0 = esp0;
+}
+*/
+
+void __am_thiscpu_halt() {
+  while (1) hlt();
+}
+
+void __am_othercpu_halt() {
+  boot_record()->jmp_code = 0x0000feeb; // (16-bit) jmp .
+  for (int cpu = 0; cpu < __am_ncpu; cpu++) {
+    if (cpu != _cpu()) {
+      __am_lapic_bootap(cpu, 0x7000);
+    }
+  }
+}
 
 // LAPIC/IOAPIC related code
 // from xv6
@@ -137,7 +191,7 @@ void __am_percpu_initlapic(void) {
   lapicw(TICR, 10000000); 
   lapicw(LINT0, MASKED);
   lapicw(LINT1, MASKED);
-  if(((__am_lapic[VER]>>16) & 0xFF) >= 4)
+  if (((__am_lapic[VER]>>16) & 0xFF) >= 4)
     lapicw(PCINT, MASKED);
   lapicw(ERROR, T_IRQ0 + IRQ_ERROR);
   lapicw(ESR, 0);
@@ -149,9 +203,8 @@ void __am_percpu_initlapic(void) {
   lapicw(TPR, 0);
 }
 
-// Acknowledge interrupt.
 void __am_lapic_eoi(void) {
-  if(__am_lapic)
+  if (__am_lapic)
     lapicw(EOI, 0);
 }
 
@@ -168,7 +221,7 @@ void __am_lapic_bootap(uint32_t apicid, uint32_t addr) {
   lapicw(ICRLO, INIT | LEVEL | ASSERT);
   lapicw(ICRLO, INIT | LEVEL);
   
- for(i = 0; i < 2; i++){
+ for (i = 0; i < 2; i++){
     lapicw(ICRHI, apicid<<24);
     lapicw(ICRLO, STARTUP | (addr>>12));
   }
@@ -190,7 +243,7 @@ void __am_ioapic_init(void) {
   ioapic = (volatile IOAPIC*)IOAPIC_ADDR;
   maxintr = (ioapicread(REG_VER) >> 16) & 0xFF;
 
-  for(i = 0; i <= maxintr; i++){
+  for (i = 0; i <= maxintr; i++){
     ioapicwrite(REG_TABLE+2*i, INT_DISABLED | (T_IRQ0 + i));
     ioapicwrite(REG_TABLE+2*i+1, 0);
   }

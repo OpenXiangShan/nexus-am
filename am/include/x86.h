@@ -329,7 +329,7 @@ static inline volatile struct boot_record *boot_record() {
   return (struct boot_record *)BOOT_RECORD_ADDR;
 }
 
-static inline void stack_jump(void *sp, void *entry, uintptr_t arg) {
+static inline void stack_switch(void *sp, void *entry, uintptr_t arg) {
   uintptr_t aligned_stk = ROUNDDOWN((uintptr_t)sp, 16);
   asm volatile (
 #if __x86_64__

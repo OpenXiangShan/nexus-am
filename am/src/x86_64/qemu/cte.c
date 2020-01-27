@@ -53,7 +53,7 @@ void irq_x86(struct trap_frame *tf) {
 }
 
 void am_on_irq(struct trap_frame *tf) {
-  stack_jump(stack_top(&CPU->irq_stack), irq_x86, (uintptr_t)tf);
+  stack_switch(stack_top(&CPU->irq_stack), irq_x86, (uintptr_t)tf);
 }
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;

@@ -13,7 +13,7 @@ void foo() {
     for (volatile int i = 0; i < 100000; i++);
     _putc("_-=+"[_cpu()]);
     asm volatile("int $0x80");
-    if (n == 1000) _halt(241);
+    // if (n == 100) _halt(241);
   }
 }
 

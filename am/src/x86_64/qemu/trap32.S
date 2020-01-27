@@ -33,24 +33,37 @@ __am_iret:
   popl %eax
   movw %ax, %ds
   movw %ax, %es
+
+  cmpw $KSEL(SEG_KDATA), %ax
+  je .kernel_iret
+
+  /* stack frame after popping %eax, %ebx, %ecx, %edx:
+     28  ss
+     24  esp  (not popped by iret when returning to ring0)
+     20  eflags
+     16  cs
+     12  eip
+      8  ebp 
+      4  edi 
+      0  esi <--- %esp
+      */
+ 
+.user_iret:
   popl %eax
   popl %ebx
   popl %ecx
   popl %edx
-  
-  /* on (current) stack: 
-     28 ss
-     24 new-esp
-     20 eflags
-     16 cs
-     12 eip
-     8  ebp 
-     4  edi 
-     0  esi <--- %esp, %ebp
-
-     XXXXXX (old contents) <---- %edi
-      */
-  
+  popl %esi
+  popl %edi
+  popl %ebp
+  iret
+ 
+.kernel_iret:
+  popl %eax
+  popl %ebx
+  popl %ecx
+  popl %edx
+ 
   movl %esp, %ebp
   movl 24(%ebp), %edi   // %edi is new-esp
 

@@ -5,9 +5,8 @@
 #include <klib.h>
 #define MAX_CPU 8
 
-void percpu_entry();
+void othercpu_entry();
 void bootcpu_init();
-void percpu_init();
 _Area memory_probe();
 
 struct kernel_stack {
@@ -85,6 +84,7 @@ void __am_percpu_initirq();
 void __am_percpu_initgdt();
 void __am_percpu_initlapic();
 void __am_percpu_initpg();
+void __am_percpu_init();
 void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
 void __am_thiscpu_halt() __attribute__((__noreturn__));
 void __am_othercpu_halt();
