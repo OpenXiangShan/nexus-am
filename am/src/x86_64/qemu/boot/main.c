@@ -66,9 +66,9 @@ static void load_elf32(struct elf32_hdr *elf) {
 void load_kernel(void) {
   struct elf32_hdr *elf32 = (void *)0x8000;
   struct elf64_hdr *elf64 = (void *)0x8000;
-  int is_ap = !boot_record()->is_ap;
+  int is_ap = boot_record()->is_ap;
   
-  if (is_ap) {
+  if (!is_ap) {
     load(elf32, 4096, 0); // load elf header
     char *mainargs = (void *)0x7e00; // load main args
     load(mainargs, 512, -512);
@@ -77,6 +77,7 @@ void load_kernel(void) {
     } else {
       load_elf32(elf32);
     }
+  } else {
   }
 
   if (elf32->e_machine == EM_X86_64) {

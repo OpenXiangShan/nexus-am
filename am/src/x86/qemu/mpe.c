@@ -37,7 +37,7 @@ static void percpu_entry() {
     for (int cpu = 1; cpu < __am_ncpu; cpu++) {
       BOOTREC->is_ap = 1;
       BOOTREC->entry = percpu_entry;
-      __am_lapic_bootap(cpu, 0x7c00);
+      __am_lapic_bootap(cpu, 0x7000);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
       }
@@ -60,7 +60,7 @@ static void ap_entry() {
 static void jump_to(void (*entry)()) {
   void *esp = CPU->stack + sizeof(CPU->stack);
   asm volatile (
-    "movl %0, %%esp;" // switch stack, and the bootstrap stack at
-    "call *%1"        // 0x7000 can be reused by ap's bootloader
+    "movl %0, %%esp;"
+    "call *%1"
       : : "r"(esp) , "r"(entry));
 }

@@ -4,5 +4,5 @@ layout regs
 set pagination off
 set confirm off
 file build/hello-x86_64-qemu.o
-b __am_iret
+b main
 c

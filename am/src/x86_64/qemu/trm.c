@@ -1,6 +1,5 @@
 #include <am.h>
 #include "x86_64-qemu.h"
-#include <klib.h>
 
 _Area _heap = {}; // the heap memory defined in AM spec
 
@@ -13,13 +12,12 @@ struct cpu_local __am_cpuinfo[MAX_CPU];
 void _start_c(char *args) {
   if (boot_record()->is_ap) {
     (boot_record()->entry)();
+  } else {
+    bootcpu_init();
+    percpu_init();
+    int ret = main(args);
+    _halt(ret);
   }
-
-  bootcpu_init();
-  percpu_init();
-
-  int ret = main(args);
-  _halt(ret);
 }
 
 void _putc(char ch) {

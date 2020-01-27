@@ -120,7 +120,7 @@ void bootcpu_init() {
 volatile unsigned int *__am_lapic = NULL;  // Initialized in mp.c
 struct IOAPIC {
     uint32_t reg, pad[3], data;
-};
+} __attribute__((packed));
 typedef struct IOAPIC IOAPIC;
 
 static volatile IOAPIC *ioapic;
@@ -155,9 +155,9 @@ void __am_lapic_eoi(void) {
     lapicw(EOI, 0);
 }
 
-void __am_lapic_bootap(unsigned int apicid, unsigned int addr) {
+void __am_lapic_bootap(uint32_t apicid, uint32_t addr) {
   int i;
-  unsigned short *wrv;
+  uint16_t *wrv;
   outb(0x70, 0xF);
   outb(0x71, 0x0A);
   wrv = (unsigned short*)((0x40<<4 | 0x67));

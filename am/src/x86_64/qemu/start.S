@@ -7,26 +7,26 @@ _start:
 #ifndef __x86_64__
   // 32-bit code
   pushl $0x7e00
+  pushl $0
   jmp _start_c
 
 #else
   // 64-bit code
 .code32
-  movl $0, %eax
-  cmpl (BOOT_RECORD), %eax
-  jne .long_mode_init
-
   #define PML4 0x1000
   #define PDPT 0x2000
   #define PDT  0x3000
   #define PDTH 0x4000
 
   movl $PDPT + 3, %eax
-  movl %eax, PML4
+  cmpl (PML4), %eax
+  je .long_mode_init
+
+  movl %eax, (PML4)
   movl $PDT + 3, %eax
-  movl %eax, PDPT
+  movl %eax, (PDPT)
   movl $PDTH + 3, %eax
-  movl %eax, 24 + PDPT
+  movl %eax, (24 + PDPT)
 
   movl $0, %ecx
   movl $512, %esi
@@ -83,8 +83,8 @@ _start64:
   movw %ax, %fs
   movw %ax, %gs
 
-  movq $0x7000, %rsp
   movq $0x7e00, %rdi
+  pushq $0
   jmp _start_c
 
 #endif

@@ -33,11 +33,11 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
 
 static void percpu_entry() {
   if (_cpu() == 0) { // bootstrap cpu, boot all aps
+    boot_record()->jmp_code = 0x000bfde9;
     for (int cpu = 1; cpu < __am_ncpu; cpu++) {
       boot_record()->is_ap = 1;
       boot_record()->entry = percpu_entry;
-      __am_lapic_bootap(cpu, 0x7c00);
-      printf("Wait AP boot complete\n");
+      __am_lapic_bootap(cpu, 0x7000);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
       }
@@ -49,21 +49,17 @@ static void percpu_entry() {
 }
 
 static void ap_entry() {
-  printf("AP init start!\n");
   percpu_init();
-  printf("AP init done!\n");
   _atomic_xchg(&apboot_done, 1);
   user_entry();
 }
 
 void percpu_init() {
-  printf("CPU %d start init\n", _cpu());
   __am_percpu_initgdt();
   __am_percpu_initlapic();
   __am_percpu_initirq();
 //  __am_percpu_initpg();
 
-  printf("CPU %d init done.\n", _cpu());
 }
 
 void __am_percpu_initgdt() {
@@ -110,7 +106,7 @@ void __am_othercpu_halt() {
   boot_record()->entry = __am_thiscpu_halt;
   for (int cpu = 0; cpu < __am_ncpu; cpu++) {
     if (cpu != _cpu()) {
-      __am_lapic_bootap(cpu, 0x7c00);
+      __am_lapic_bootap(cpu, 0x7000);
     }
   }
 }

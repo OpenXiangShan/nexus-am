@@ -54,8 +54,8 @@ extern int __am_ncpu;
 extern struct cpu_local __am_cpuinfo[MAX_CPU];
 
 #define CPU (&__am_cpuinfo[_cpu()])
-#define BOOTREC ((volatile struct boot_info *)0x7000)
-#define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define BOOTREC ((volatile struct boot_info *)0x700)0)
+#define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0])
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
 #define IN_RANGE(ptr, area) ((area).start <= (ptr) && (ptr) < (area).end)
 #define STRINGIFY(s) #s
@@ -76,7 +76,7 @@ static inline void puts(const char *s) {
 // apic utils
 void __am_lapic_eoi();
 void __am_ioapic_init();
-void __am_lapic_bootap(unsigned int cpu, uint32_t address);
+void __am_lapic_bootap(uint32_t cpu, uint32_t address);
 void __am_ioapic_enable(int irq, int cpu);
 
 // per-cpu x86-specific operations

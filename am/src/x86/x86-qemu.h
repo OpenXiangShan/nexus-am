@@ -24,7 +24,6 @@ extern int __am_ncpu;
 extern struct cpu_local __am_cpuinfo[MAX_CPU];
 
 #define CPU (&__am_cpuinfo[_cpu()])
-#define BOOTREC ((volatile struct boot_info *)0x7000)
 #define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
 #define IN_RANGE(ptr, area) ((area).start <= (ptr) && (ptr) < (area).end)
