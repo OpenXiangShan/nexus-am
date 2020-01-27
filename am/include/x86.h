@@ -323,7 +323,6 @@ static inline void set_cr3(void *pdir) {
 struct boot_record {
   uint32_t jmp_code;
   int32_t is_ap;
-  void (*entry)();
 };
 
 static inline volatile struct boot_record *boot_record() {

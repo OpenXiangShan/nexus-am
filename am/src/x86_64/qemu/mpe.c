@@ -6,7 +6,6 @@ struct cpu_local __am_cpuinfo[MAX_CPU] = {};
 static void (* volatile user_entry)();
 static volatile intptr_t apboot_done = 0;
 
-static void percpu_entry();
 static void ap_entry();
 
 int _mpe_init(void (*entry)()) {
@@ -31,12 +30,11 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   return result;
 }
 
-static void percpu_entry() {
+void percpu_entry() {
   if (_cpu() == 0) { // bootstrap cpu, boot all aps
-    boot_record()->jmp_code = 0x000bfde9;
+    boot_record()->jmp_code = 0x000bfde9; // (16-bit) jmp (0x7c00)
     for (int cpu = 1; cpu < __am_ncpu; cpu++) {
       boot_record()->is_ap = 1;
-      boot_record()->entry = percpu_entry;
       __am_lapic_bootap(cpu, 0x7000);
       while (_atomic_xchg(&apboot_done, 0) != 1) {
         pause();
@@ -97,13 +95,11 @@ void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0) {
 */
 
 void __am_thiscpu_halt() {
-  cli();
   while (1) hlt();
 }
 
 void __am_othercpu_halt() {
-  boot_record()->is_ap = 1;
-  boot_record()->entry = __am_thiscpu_halt;
+  boot_record()->jmp_code = 0x0000feeb; // (16-bit) jmp .
   for (int cpu = 0; cpu < __am_ncpu; cpu++) {
     if (cpu != _cpu()) {
       __am_lapic_bootap(cpu, 0x7000);

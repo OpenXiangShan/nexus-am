@@ -11,7 +11,7 @@ struct cpu_local __am_cpuinfo[MAX_CPU];
 
 void _start_c(char *args) {
   if (boot_record()->is_ap) {
-    (boot_record()->entry)();
+    percpu_entry();
   } else {
     bootcpu_init();
     percpu_init();
@@ -26,5 +26,22 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
-  while (1);
+  const char *hex = "0123456789abcdef";
+  char buf[] = "\nCPU #$ Halt (40).\n";
+  cli();
+  __am_othercpu_halt();
+  for (char *p = buf; *p; p++) {
+    char ch = *p;
+    switch (ch) {
+      case '$':
+        _putc(hex[_cpu()]);
+        break;
+      case '0': case '4':
+        _putc(hex[(code >> (ch - '0')) & 0xf]);
+        break;
+      default:
+        _putc(ch);
+    }
+  }
+  __am_thiscpu_halt();
 }
