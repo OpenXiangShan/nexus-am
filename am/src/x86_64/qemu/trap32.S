@@ -21,7 +21,7 @@ trap:
   movw %ax, %ss
 
   pushl %esp
-  call am_on_irq
+  call __am_irq_handle
 
 .globl __am_iret
 __am_iret:

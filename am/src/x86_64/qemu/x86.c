@@ -5,38 +5,25 @@ volatile uint32_t *__am_lapic;
 int __am_ncpu = 0;
 struct cpu_local __am_cpuinfo[MAX_CPU];
 
-// Multiprocesor configuration
-struct mpconf {           // configuration table header
-  uint8_t  signature[4];  // "PCMP"
-  uint16_t length;        // total table length
-  uint8_t  version;       // [14]
-  uint8_t  checksum;      // all bytes must add up to 0
-  uint8_t  product[20];   // product id
-  uint32_t oemtable;      // OEM table pointer
-  uint16_t oemlength;     // OEM table length
-  uint16_t entry;         // entry count
-  uint32_t lapicaddr;     // address of local APIC
-  uint16_t xlength;       // extended table length
-  uint8_t  xchecksum;     // extended table checksum
-  uint8_t  reserved;
-};
-
-struct mpdesc {
-  int      magic;
-  uint32_t conf;     // MP config table addr
-  uint8_t  length;   // 1
-  uint8_t  specrev;  // [14]
-  uint8_t  checksum; // all bytes add to 0
-  uint8_t  type;     // config type
-  uint8_t  imcrp;
-  uint8_t  reserved[3];
-};
-
 static inline void *upcast(uint32_t ptr) {
   return (void *)(uintptr_t)ptr;
 }
 
-void bootcpu_init() {
+void __am_bootcpu_init() {
+  _heap = __am_heap_init();
+  __am_lapic_init();
+  __am_ioapic_init();
+  __am_percpu_init();
+}
+
+void __am_percpu_init() {
+  __am_percpu_initgdt();
+  __am_percpu_initlapic();
+  __am_percpu_initirq();
+//  __am_percpu_initpg();
+}
+
+_Area __am_heap_init() {
   int32_t magic = 0x5a5aa5a5;
   int32_t step = 1L << 20;
   extern char end;
@@ -47,12 +34,14 @@ void bootcpu_init() {
       break; // read-after-write fail
     }
   }
-  _heap = RANGE(st, ed);
+  return RANGE(st, ed);
+}
 
+void __am_lapic_init() {
   for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
     if (*(volatile uint32_t *)st == 0x5f504d5f) {
-      uint32_t mpconf_ptr = ((volatile struct mpdesc *)st)->conf;
-      struct mpconf *conf = upcast(mpconf_ptr);
+      uint32_t mpconf_ptr = ((volatile MPDesc *)st)->conf;
+      MPConf *conf = upcast(mpconf_ptr);
       __am_lapic = upcast(conf->lapicaddr);
       for (volatile char *ptr = (char *)(conf + 1);
                  ptr < (char *)conf + conf->length; ptr += 8) {
@@ -68,17 +57,6 @@ void bootcpu_init() {
     }
   }
   panic("seems not an x86-qemu virtual machine");
-
-  __am_ioapic_init();
-}
-
-
-void __am_percpu_init() {
-  __am_percpu_initgdt();
-  __am_percpu_initlapic();
-  __am_percpu_initirq();
-//  __am_percpu_initpg();
-
 }
 
 void __am_percpu_initgdt() {
@@ -115,11 +93,7 @@ void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0) {
 }
 */
 
-void __am_thiscpu_halt() {
-  while (1) hlt();
-}
-
-void __am_othercpu_halt() {
+void __am_stop_the_world() {
   boot_record()->jmp_code = 0x0000feeb; // (16-bit) jmp .
   for (int cpu = 0; cpu < __am_ncpu; cpu++) {
     if (cpu != _cpu()) {

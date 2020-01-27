@@ -5,7 +5,6 @@
 #include <klib.h>
 #define MAX_CPU 8
 
-void othercpu_entry();
 void bootcpu_init();
 _Area memory_probe();
 
@@ -54,7 +53,7 @@ extern int __am_ncpu;
 extern struct cpu_local __am_cpuinfo[MAX_CPU];
 
 #define CPU (&__am_cpuinfo[_cpu()])
-#define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0])
+#define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
 #define IN_RANGE(ptr, area) ((area).start <= (ptr) && (ptr) < (area).end)
 #define STRINGIFY(s) #s
@@ -78,16 +77,18 @@ void __am_ioapic_init();
 void __am_lapic_bootap(uint32_t cpu, uint32_t address);
 void __am_ioapic_enable(int irq, int cpu);
 
-// per-cpu x86-specific operations
+// x86-specific operations
 void __am_bootcpu_init();
+void __am_percpu_init();
+_Area __am_heap_init();
+void  __am_lapic_init();
+void __am_othercpu_entry();
 void __am_percpu_initirq();
 void __am_percpu_initgdt();
 void __am_percpu_initlapic();
 void __am_percpu_initpg();
-void __am_percpu_init();
 void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
-void __am_thiscpu_halt() __attribute__((__noreturn__));
-void __am_othercpu_halt();
+void __am_stop_the_world();
 
 
 #endif

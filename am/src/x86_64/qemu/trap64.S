@@ -23,7 +23,7 @@ trap:
   pushq $0  //uvm
 
   movq %rsp, %rdi
-  call am_on_irq
+  call __am_irq_handle
 
 .globl __am_iret
 __am_iret:

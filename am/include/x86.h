@@ -192,30 +192,30 @@ typedef struct TSS64 {
 } __attribute__((packed)) TSS64;
 
 // Multiprocesor configuration
-typedef struct MPConf {    // configuration table header
-  uint8_t  signature[4];    // "PCMP"
-  uint16_t length;         // total table length
-  uint8_t  version;         // [14]
-  uint8_t  checksum;        // all bytes must add up to 0
-  uint8_t  product[20];     // product id
-  uint32_t *oemtable;      // OEM table pointer
-  uint16_t oemlength;      // OEM table length
-  uint16_t entry;          // entry count
-  uint32_t *lapicaddr;     // address of local APIC
-  uint16_t xlength;        // extended table length
-  uint8_t  xchecksum;       // extended table checksum
+typedef struct MPConf {           // configuration table header
+  uint8_t  signature[4];  // "PCMP"
+  uint16_t length;        // total table length
+  uint8_t  version;       // [14]
+  uint8_t  checksum;      // all bytes must add up to 0
+  uint8_t  product[20];   // product id
+  uint32_t oemtable;      // OEM table pointer
+  uint16_t oemlength;     // OEM table length
+  uint16_t entry;         // entry count
+  uint32_t lapicaddr;     // address of local APIC
+  uint16_t xlength;       // extended table length
+  uint8_t  xchecksum;     // extended table checksum
   uint8_t  reserved;
-} MPConf;
+} MPConf ;
 
 typedef struct MPDesc {
-  int     magic;
-  MPConf  *conf;     // MP config table addr
-  uint8_t length;   // 1
-  uint8_t specrev;  // [14]
-  uint8_t checksum; // all bytes add to 0
-  uint8_t type;     // config type
-  uint8_t imcrp;
-  uint8_t reserved[3];
+  int      magic;
+  uint32_t conf;     // MP config table addr
+  uint8_t  length;   // 1
+  uint8_t  specrev;  // [14]
+  uint8_t  checksum; // all bytes add to 0
+  uint8_t  type;     // config type
+  uint8_t  imcrp;
+  uint8_t  reserved[3];
 } MPDesc;
 
 #define asm  __asm__
@@ -329,7 +329,7 @@ static inline volatile struct boot_record *boot_record() {
   return (struct boot_record *)BOOT_RECORD_ADDR;
 }
 
-static inline void stack_switch(void *sp, void *entry, uintptr_t arg) {
+static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
   uintptr_t aligned_stk = ROUNDDOWN((uintptr_t)sp, 16);
   asm volatile (
 #if __x86_64__
