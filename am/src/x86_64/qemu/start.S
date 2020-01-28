@@ -15,30 +15,27 @@ _start:
 .code32
   #define PML4 0x1000
   #define PDPT 0x2000
-  #define PDT  0x3000
-  #define PDTH 0x5000
 
   movl $PDPT + 3, %eax
   cmpl (PML4), %eax
   je .long_mode_init
 
+  movl $PDPT + 3, %eax
   movl %eax, (PML4)
-  movl $PDT + 3, %eax
-  movl %eax, (PDPT)
-  movl $PDTH + 3, %eax
-  movl %eax, (24 + PDPT)
 
   movl $0, %ecx
-  movl $512, %esi
+  movl $512, %esi //  512 pages
+                  //   |
+.loop:            //   x
+  movl %ecx, %eax //   |
+  shll $30, %eax  //   |
+  orl $0x83, %eax // 1 GiB page
 
-.loop:
-  movl $0x200000, %eax
-  mul %ecx
-  orl $0x83, %eax // 2 MiB page
-  movl %eax, PDT(, %ecx, 8)
-  
-  orl $0xc0000000, %eax
-  movl %eax, PDTH(, %ecx, 8)
+  movl %eax, PDPT(, %ecx, 8)
+
+  movl %ecx, %eax
+  shrl $2, %eax
+  movl %eax, PDPT + 4(, %ecx, 8)
 
   inc %ecx
   cmp %esi, %ecx
