@@ -65,50 +65,51 @@ static inline uint64_t rdtsc() {
   return ((uint64_t)hi << 32) | lo;
 }
 
-static int read_rtc(int reg) {
+static inline int read_rtc(int reg) {
   outb(0x70, reg);
   int ret = inb(0x71);
   return (ret & 0xf) + (ret >> 4) * 10;
 }
 
-static void wait_sec() {
+static void read_rtc_async(_DEV_TIMER_DATE_t *rtc) {
+  rtc->second = read_rtc(0);
+  rtc->minute = read_rtc(2);
+  rtc->hour   = read_rtc(4);
+  rtc->day    = read_rtc(7);
+  rtc->month  = read_rtc(8);
+  rtc->year   = read_rtc(9) + 2000;
+}
+
+static void wait_sec(_DEV_TIMER_DATE_t *t1) {
+  _DEV_TIMER_DATE_t t0;
   while (1) {
-    int volatile s1 = read_rtc(0);
-    for (int volatile i = 0; i < 10000; i++) ;
-    int volatile s2 = read_rtc(0);
-    if (s1 != s2) {
+    read_rtc_async(&t0);
+    for (int volatile i = 0; i < 100000; i++) ;
+    read_rtc_async(t1);
+    if (t0.second != t1->second) {
       return;
     }
   }
 }
 
 static uint32_t estimate_freq() {
-  int h, m, s, t1, t2;
-  uint64_t tsc1, tsc2;
-  wait_sec();
-  tsc1 = rdtsc();
-  h = read_rtc(4); m = read_rtc(2); s = read_rtc(0);
-  t1 = h * 3600 + m * 60 + s;
-  wait_sec();
-  tsc2 = rdtsc();
-  h = read_rtc(4); m = read_rtc(2); s = read_rtc(0);
-  t2 = h * 3600 + m * 60 + s;
-  if (t1 >= t2) return 0; // passed a day, unlikely to happen
+  _DEV_TIMER_DATE_t rtc1, rtc2;
+  uint64_t tsc1, tsc2, t1, t2;
 
-  uint32_t freq = (tsc2 - tsc1) >> 20;
-  freq /= (t2 - t1);
-  return freq;
+  wait_sec(&rtc1);
+  tsc1 = rdtsc();
+  t1 = rtc1.hour * 3600 + rtc1.minute * 60 + rtc1.second;
+  wait_sec(&rtc2);
+  tsc2 = rdtsc();
+  t2 = rtc2.hour * 3600 + rtc2.minute * 60 + rtc2.second;
+  if (t1 >= t2) return estimate_freq(); // passed a day; try again
+  return ((tsc2 - tsc1) >> 20) / (t2 - t1);
 }
 
 static void get_date(_DEV_TIMER_DATE_t *rtc) {
   int tmp;
   do {
-    rtc->second = read_rtc(0);
-    rtc->minute = read_rtc(2);
-    rtc->hour   = read_rtc(4);
-    rtc->day    = read_rtc(7);
-    rtc->month  = read_rtc(8);
-    rtc->year   = read_rtc(9) + 2000;
+    read_rtc_async(rtc);
     tmp         = read_rtc(0);
   } while (tmp != rtc->second);
 }
@@ -237,11 +238,69 @@ size_t __am_video_write(uintptr_t reg, void *buf, size_t size) {
   return 0;
 }
 
+
+size_t __am_storage_read(uintptr_t reg, void *buf, size_t size) {
+  switch(reg) {
+    case _DEVREG_STORAGE_INFO: {
+      _DEV_STORAGE_INFO_t *info = (void *)buf;
+      info->blksz = 512;
+      info->blkcnt = 524288;
+      return sizeof(*info);
+    }
+  }
+  return 0;
+}
+
+static inline void wait_disk(void) {
+  while ((inb(0x1f7) & 0xc0) != 0x40);
+}
+
+static inline void read_sect(void *buf, uint32_t sect, uint32_t remain) {
+}
+
+size_t __am_storage_write(uintptr_t reg, void *buf, size_t size) {
+  _DEV_STORAGE_RDCTRL_t *ctl = (void *)buf;
+  int is_read = 0;
+  switch(reg) {
+    case _DEVREG_STORAGE_RDCTRL:
+      is_read = 1;
+      break;
+    case _DEVREG_STORAGE_WRCTRL:
+      break;
+    default:
+      return 0;
+  }
+
+  uint32_t blkno = ctl->blkno, remain = ctl->blkcnt;
+  uint32_t *ptr = ctl->buf;
+  for (remain = ctl->blkcnt; remain; remain--, blkno++) {
+    wait_disk();
+    outb(0x1f2, 1);
+    outb(0x1f3, blkno);
+    outb(0x1f4, blkno >> 8);
+    outb(0x1f5, blkno >> 16);
+    outb(0x1f6, (blkno >> 24) | 0xe0);
+    outb(0x1f7, is_read ? 0x20 : 0x30);
+    wait_disk();
+    if (is_read) {
+      for (int i = 0; i < 512 / 4; i ++) {
+        *ptr++ = inl(0x1f0);
+      }
+    } else {
+      for (int i = 0; i < 512 / 4; i ++) {
+        outl(0x1f0, *ptr++);
+      }
+    }
+  }
+  return sizeof(*ctl);
+}
+
 size_t _io_read(uint32_t dev, uintptr_t reg, void *buf, size_t size) {
   switch (dev) {
     case _DEV_INPUT:   return __am_input_read(reg, buf, size);
     case _DEV_TIMER:   return __am_timer_read(reg, buf, size);
     case _DEV_VIDEO:   return __am_video_read(reg, buf, size);
+    case _DEV_STORAGE: return __am_storage_read(reg, buf, size);
   }
   return 0;
 }
@@ -249,6 +308,7 @@ size_t _io_read(uint32_t dev, uintptr_t reg, void *buf, size_t size) {
 size_t _io_write(uint32_t dev, uintptr_t reg, void *buf, size_t size) {
   switch (dev) {
     case _DEV_VIDEO:   return __am_video_write(reg, buf, size);
+    case _DEV_STORAGE: return __am_storage_write(reg, buf, size);
   }
   return 0;
 }
@@ -259,4 +319,3 @@ int _ioe_init() {
   __am_vga_init();
   return 0;
 }
-
