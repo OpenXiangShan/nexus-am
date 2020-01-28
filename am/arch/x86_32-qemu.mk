@@ -1,6 +1,6 @@
 include $(AM_HOME)/am/arch/isa/x86.mk
 
-AM_SRCS   := x86_64/qemu/start.S \
+AM_SRCS   := x86_64/qemu/start32.S \
              x86_64/qemu/trap32.S \
              x86_64/qemu/trm.c \
              x86_64/qemu/cte.c \
@@ -14,13 +14,13 @@ image:
 	@echo + LD "->" $(BINARY_REL).o
 	@$(LD) $(LDFLAGS) -Ttext 0x00100000 -o $(BINARY).o $(LINK_FILES)
 	@echo + CREATE "->" $(BINARY_REL)
-	@( cat $(AM_HOME)/am/src/x86_64/qemu/boot/mbr; head -c 512 /dev/zero; cat $(BINARY).o ) > $(BINARY)
+	@( cat $(AM_HOME)/am/src/x86_64/qemu/boot/mbr; head -c 1024 /dev/zero; cat $(BINARY).o ) > $(BINARY)
 
 
 run:
-	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
+	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=2 seek=1 conv=notrunc status=none
 	@qemu-system-i386 -serial stdio -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)
 
 debug:
-	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=1 seek=1 conv=notrunc status=none
+	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=2 seek=1 conv=notrunc status=none
 	@qemu-system-i386 -S -s -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic # & pid=$$!; gdb -x x.gdb && kill -9 $$pid

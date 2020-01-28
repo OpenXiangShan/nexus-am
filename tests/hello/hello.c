@@ -18,7 +18,7 @@ void foo() {
 }
 
 int main(const char *args) {
-  printf("");
+  printf("Hello, args = \"%s\"\n", args);
   _cte_init(on_intr);
   _mpe_init(foo);
   return 0;

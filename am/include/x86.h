@@ -93,6 +93,9 @@
   _( 46, KERN, NOERR) _( 47, KERN, NOERR) \
   _(128, USER, NOERR)
 
+#define BOOT_REC_ADDR 0x07000
+#define ARG_ADDR      0x10000
+
 // Below are only defined for c/cpp files
 #ifndef __ASSEMBLER__
 
@@ -218,6 +221,11 @@ typedef struct MPDesc {
   uint8_t  reserved[3];
 } MPDesc;
 
+struct boot_record {
+  uint32_t jmp_code;
+  int32_t is_ap;
+};
+
 #define asm  __asm__
 
 static inline uint8_t inb(int port) {
@@ -317,16 +325,8 @@ static inline void set_cr3(void *pdir) {
   asm volatile ("movl %0, %%cr3" : : "r"(pdir));
 }
 
-// boot record address
-#define BOOT_RECORD_ADDR 0x7000
-
-struct boot_record {
-  uint32_t jmp_code;
-  int32_t is_ap;
-};
-
 static inline volatile struct boot_record *boot_record() {
-  return (struct boot_record *)BOOT_RECORD_ADDR;
+  return (struct boot_record *)BOOT_REC_ADDR;
 }
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {

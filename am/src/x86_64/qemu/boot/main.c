@@ -5,34 +5,34 @@
 
 #define SECTSIZE 512
 
-static inline void waitdisk(void) {
+static inline void wait_disk(void) {
   while ((inb(0x1f7) & 0xc0) != 0x40);
 }
 
-static inline void load_sect(void *ptr, int sect) {
-  waitdisk();
+static inline void read_disk(void *buf, int sect) {
+  wait_disk();
   outb(0x1f2, 1);
   outb(0x1f3, sect);
   outb(0x1f4, sect >> 8);
   outb(0x1f5, sect >> 16);
   outb(0x1f6, (sect >> 24) | 0xE0);
   outb(0x1f7, 0x20);
-  waitdisk();
+  wait_disk();
   for (int i = 0; i < SECTSIZE / 4; i ++) {
-    ((uint32_t *)ptr)[i] = inl(0x1f0);
+    ((uint32_t *)buf)[i] = inl(0x1f0);
   }
 }
 
-static inline void load(void *paddr, int nbytes, int offset) {
-  uint32_t cur = (uint32_t)paddr & ~511;
-  uint32_t ed = (uint32_t)paddr + nbytes;
-  uint32_t sect = (offset >> 9) + 2;
+static inline void copy_from_disk(void *buf, int nbytes, int disk_offset) {
+  uint32_t cur  = (uint32_t)buf & ~511;
+  uint32_t ed   = (uint32_t)buf + nbytes;
+  uint32_t sect = (disk_offset >> 9) + 3;
   for(; cur < ed; cur += SECTSIZE, sect ++)
-    load_sect((void *)cur, sect);
+    read_disk((void *)cur, sect);
 }
 
 static void load_program(uint32_t filesz, uint32_t memsz, uint32_t paddr, uint32_t offset) {
-  load((void *)paddr, filesz, offset);
+  copy_from_disk((void *)paddr, filesz, offset);
   char *bss = (void *)(paddr + filesz);
   for (uint32_t i = filesz; i != memsz; i++) {
     *bss++ = 0;
@@ -69,15 +69,17 @@ void load_kernel(void) {
   int is_ap = boot_record()->is_ap;
   
   if (!is_ap) {
-    load(elf32, 4096, 0); // load elf header
-    char *mainargs = (void *)0x7e00; // load main args
-    load(mainargs, 512, -512);
+    // load argument (string) to memory
+    copy_from_disk((void *)ARG_ADDR, 1024, -1024);
+    // load elf header to memory
+    copy_from_disk(elf32, 4096, 0); 
     if (elf32->e_machine == EM_X86_64) {
       load_elf64(elf64);
     } else {
       load_elf32(elf32);
     }
   } else {
+    // everything should be loaded
   }
 
   if (elf32->e_machine == EM_X86_64) {
