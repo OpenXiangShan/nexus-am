@@ -68,7 +68,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
         ev.event = _EVENT_SYSCALL;
       }
       break;
-    case EX_DIV: MSG("divide by zero")
+    case EX_DE: MSG("DE #0 divide by zero")
       ev.event = _EVENT_ERROR; break;
     case EX_UD: MSG("UD #6 invalid opcode")
       ev.event = _EVENT_ERROR; break;
@@ -163,6 +163,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   ctx->cs = KSEL(SEG_KCODE);
   ctx->rip = (uintptr_t)entry;
   ctx->rflags = FL_IF;
+  ctx->rdi = (uintptr_t)arg;
   void *values[] = { panic_on_return }; 
 #else
 #define sp esp
@@ -171,7 +172,6 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   ctx->eip = (uint32_t)entry;
   ctx->esp = stk_top;
   ctx->eflags = FL_IF;
-
   void *values[] = { panic_on_return, arg }; 
 #endif
   ctx->sp -= sizeof(values);

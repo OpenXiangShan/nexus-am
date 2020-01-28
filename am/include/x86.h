@@ -60,7 +60,7 @@
 #define IRQ_KBD        1
 #define IRQ_ERROR      19
 #define IRQ_SPURIOUS   31
-#define EX_DIV         0
+#define EX_DE          0
 #define EX_UD          6
 #define EX_NM          7
 #define EX_DF          8

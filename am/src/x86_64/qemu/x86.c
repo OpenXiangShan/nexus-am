@@ -5,10 +5,6 @@ volatile uint32_t *__am_lapic;
 int __am_ncpu = 0;
 struct cpu_local __am_cpuinfo[MAX_CPU];
 
-static inline void *upcast(uint32_t ptr) {
-  return (void *)(uintptr_t)ptr;
-}
-
 void __am_bootcpu_init() {
   _heap = __am_heap_init();
   __am_lapic_init();

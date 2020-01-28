@@ -58,6 +58,9 @@ extern struct cpu_local __am_cpuinfo[MAX_CPU];
 #define IN_RANGE(ptr, area) ((area).start <= (ptr) && (ptr) < (area).end)
 #define STRINGIFY(s) #s
 #define TOSTRING(s) STRINGIFY(s)
+static inline void *upcast(uint32_t ptr) {
+  return (void *)(uintptr_t)ptr;
+}
 
 #define panic(s) \
   do { \

@@ -16,7 +16,7 @@ _start:
   #define PML4 0x1000
   #define PDPT 0x2000
   #define PDT  0x3000
-  #define PDTH 0x4000
+  #define PDTH 0x5000
 
   movl $PDPT + 3, %eax
   cmpl (PML4), %eax
