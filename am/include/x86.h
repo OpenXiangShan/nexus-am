@@ -40,6 +40,7 @@
 #define PTE_PCD        0x010   // Cache-Disable
 #define PTE_A          0x020   // Accessed
 #define PTE_D          0x040   // Dirty
+#define PTE_PS         0x080   // Page Size
 
 // GDT entries
 #define NR_SEG         6       // GDT size

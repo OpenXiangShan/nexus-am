@@ -54,7 +54,7 @@ uint8_t code[] = {
 };
 
 void vm_test() {
-  if (strcmp(__ISA__, "x86") != 0) {
+  if (strncmp(__ISA__, "x86", 3) != 0) {
     printf("VM test: only runs on x86.\n");
     return;
   }

@@ -43,9 +43,7 @@ void __am_lapic_init() {
                  ptr < (char *)conf + conf->length; ptr += 8) {
         if (*ptr == '\0') {
           ptr += 12;
-          if (++__am_ncpu > MAX_CPU) {
-            panic("cannot support > MAX_CPU processors");
-          }
+          panic_on(++__am_ncpu > MAX_CPU, "cannot support > MAX_CPU processors");
         }
       }
       printf("There are %d cpus, lapic at %p\n", __am_ncpu, __am_lapic);

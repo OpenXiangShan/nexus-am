@@ -62,17 +62,28 @@ static inline void *upcast(uint32_t ptr) {
   return (void *)(uintptr_t)ptr;
 }
 
-#define panic(s) \
-  do { \
-    puts("AM Panic: "); puts(s); \
-    puts(" @ " __FILE__ ":" TOSTRING(__LINE__) "  \n"); \
-    _halt(1); \
-  } while(0)
-
 static inline void puts(const char *s) {
   for (; *s; s++)
     _putc(*s);
 }
+
+#define panic_on(cond, s) \
+  do { \
+    if (cond) { \
+      puts("AM Panic: "); puts(s); \
+      puts(" @ " __FILE__ ":" TOSTRING(__LINE__) "  \n"); \
+      _halt(1); \
+    } \
+  } while (0)
+
+#define panic(s) panic_on(1, s)
+
+#define bug_on(cond) \
+  do { \
+    if (cond) panic("internal error (likely a bug in AM)"); \
+  } while (0)
+
+#define bug() bug_on(1)
 
 // apic utils
 void __am_lapic_eoi();

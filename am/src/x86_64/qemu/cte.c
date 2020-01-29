@@ -115,8 +115,8 @@ static GateDesc32 idt[NR_IRQ];
 
 
 int _cte_init(_Context *(*handler)(_Event, _Context *)) {
-  if (_cpu() != 0) panic("init CTE in non-bootstrap CPU");
-  if (!handler) panic("no interrupt handler");
+  panic_on(_cpu() != 0, "init CTE in non-bootstrap CPU");
+  panic_on(!handler, "no interrupt handler");
 
   for (int i = 0; i < NR_IRQ; i ++) {
     idt[i] = GATE(STS_TG, KSEL(SEG_KCODE), __am_irqall, DPL_KERN);
