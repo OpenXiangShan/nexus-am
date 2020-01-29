@@ -2,9 +2,7 @@
 
 trap:
   cli
-
   subq $56, %rsp
-
   pushq %r15
   pushq %r14
   pushq %r13

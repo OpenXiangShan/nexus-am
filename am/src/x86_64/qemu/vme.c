@@ -13,7 +13,7 @@ const struct mmu_config {
 #if __x86_64__
   .pglevels = 4,
   .pgtables = {
-    { "CR3",  0x000000000000,  0, 1 },
+    { "CR3",  0x000000000000,  0, 0 },
     { "PML4", 0xff8000000000, 39, 9 },
     { "PDPT", 0x007fc0000000, 30, 9 },
     { "PD",   0x00003fe00000, 21, 9 },
@@ -23,7 +23,7 @@ const struct mmu_config {
 #else
   .pglevels = 2,
   .pgtables = {
-    { "CR3",      0x00000000,  0, 1 },
+    { "CR3",      0x00000000,  0, 0 },
     { "PD",       0xffc00000, 22, 10 },
     { "PT",       0x003ff000, 12, 10 },
     { "PAGE",     0x00000fff,  0, 12 },
@@ -31,17 +31,24 @@ const struct mmu_config {
 #endif
 };
 
-const struct vm_area {
+struct vm_area {
   _Area area;
-  int user;
-} vm_areas[] = {
-  { RANGE(0x800000000000, 0x808000000000), 1 },
-  { RANGE(0x000000000000, 0x008000000000), 0 },
+  int kernel;
+};
+
+static const struct vm_area vm_areas[] = {
+#ifdef __x86_64__
+  { RANGE(0x800000000000, 0x808000000000), 0 }, // 512 GiB user space
+  { RANGE(0x000000000000, 0x008000000000), 1 }, // 512 GiB kernel
+#else
+  { RANGE(    0x40000000,     0x80000000), 0 }, // 1 GiB user space
+  { RANGE(    0x00000000,     0x40000000), 1 }, // 1 GiB kernel
+  { RANGE(    0xf0000000,     0x00000000), 1 }, // memory-mapped I/O
+#endif
 };
 #define uvm_area (vm_areas[0].area)
 
-uint64_t *PML4 = (void *)0x1000;
-uint64_t *PDPT = (void *)0x2000;
+static uintptr_t *kpt;
 static void *(*pgalloc)(size_t size);
 static void (*pgfree)(void *);
 
@@ -54,54 +61,98 @@ static void *zalloc(size_t size) {
   return base;
 }
 
-static uintptr_t *ptwalk(_AddressSpace *as, uintptr_t addr) {
+static int indexof(uintptr_t addr, const struct ptinfo *info) {
+  return ((uintptr_t)addr & info->mask) >> info->shift;
+}
+
+static uintptr_t baseof(uintptr_t addr) {
+  return addr & ~mmu.pgmask;
+}
+
+static uintptr_t *ptwalk(_AddressSpace *as, uintptr_t addr, int flags) {
   uintptr_t cur = (uintptr_t)&as->ptr;
 
   for (int i = 0; i <= mmu.pglevels; i++) {
     const struct ptinfo *ptinfo = &mmu.pgtables[i];
-    uintptr_t  mask = ptinfo->mask;
-    uintptr_t shift = ptinfo->shift;
-
-    int index = ((uintptr_t)addr & mask) >> shift;
     uintptr_t *pt = (uintptr_t *)cur, next_page;
-    bug_on(index >= (1 << ptinfo->bits));
-
-    printf("level %d[%d]: %p\n", i, index, pt[index]);
+    int index = indexof(addr, ptinfo);
+//    printf("level %d[%d]: %p\n", i, index, pt[index]);
     if (i == mmu.pglevels) return &pt[index];
 
     if (!(pt[index] & PTE_P)) {
       next_page = (uintptr_t)zalloc(mmu.pgsize);
-      printf("  = allocate %p\n", next_page);
-      pt[index] = next_page | PTE_P | PTE_W | PTE_U;
+//      printf("  = allocate %p\n", next_page);
+      pt[index] = next_page | PTE_P | flags;
     } else {
-      next_page = pt[index] & ~mmu.pgmask;
+      next_page = baseof(pt[index]);
     }
     cur = next_page;
   }
   bug();
 }
 
+static void teardown(int level, uintptr_t *pt) {
+  if (level > mmu.pglevels) return;
+  for (int index = 0; index < (1 << mmu.pgtables[level].bits); index++) {
+    if (pt[index] & PTE_P) {
+      teardown(level + 1, (void *)(pt[index] & ~mmu.pgmask));
+    }
+  }
+  if (level >= 1) {
+    pgfree(pt);
+  }
+}
+
 int _vme_init(void *(*f1)(size_t size), void (*f2)(void *)) {
   pgalloc = f1;
   pgfree  = f2;
 
+#if __x86_64__
+  kpt = (void *)0x1000; // PML4
+#else
   _AddressSpace as;
-  _protect(&as);
-
-  _halt(0);
+  as.ptr = NULL;
+  for (int i = 0; i < LENGTH(vm_areas); i++) {
+    const struct vm_area *vma = &vm_areas[i];
+    if (vma->kernel) {
+      for (uintptr_t cur = (uintptr_t)vma->area.start;
+           cur != (uintptr_t)vma->area.end;
+           cur += mmu.pgsize) {
+        *ptwalk(&as, cur, PTE_W) = cur | PTE_P | PTE_W;
+      }
+    }
+  }
+  kpt = (void *)baseof((uintptr_t)as.ptr);
+  set_cr3(kpt);
+  set_cr0(get_cr0() | CR0_PG);
+#endif
   return 0;
 }
 
 int _protect(_AddressSpace *as) {
-  as->pgsize = PGSIZE;
-  as->area = uvm_area;
-  as->ptr = NULL;
-  _map(as, (void *)0x800000000000, zalloc(mmu.pgsize), _PROT_READ);
-  _map(as, (void *)0x807801247000, zalloc(mmu.pgsize) + 4, _PROT_READ | _PROT_WRITE);
+  *as = (_AddressSpace) {
+    .pgsize = mmu.pgsize,
+    .area   = uvm_area,
+    .ptr    = zalloc(mmu.pgsize),
+  };
+
+  for (int i = 0; i < LENGTH(vm_areas); i++) {
+    const struct vm_area *vma = &vm_areas[i];
+    if (vma->kernel) {
+      const struct ptinfo *info = &mmu.pgtables[1]; // level-1 page table
+      for (uintptr_t cur = (uintptr_t)vma->area.start;
+           cur != (uintptr_t)vma->area.end;
+           cur += (1L << info->shift)) {
+        int index = indexof(cur, info);
+        ((uintptr_t *)as->ptr)[index] = kpt[index];
+      }
+    }
+  }
   return 0;
 }
+
 void _unprotect(_AddressSpace *as) {
-  pgfree(as->ptr);
+  teardown(0, (void *)&as->ptr);
 }
 
 int _map(_AddressSpace *as, void *va, void *pa, int prot) {
@@ -110,7 +161,7 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   panic_on((uintptr_t)va != ROUNDDOWN(va, mmu.pgsize) ||
            (uintptr_t)pa != ROUNDDOWN(pa, mmu.pgsize), "non-page-boundary address");
 
-  uintptr_t *ptentry = ptwalk(as, (uintptr_t)va);
+  uintptr_t *ptentry = ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
   if (prot & _PROT_NONE) {
     panic_on(!(*ptentry & PTE_P), "unmapping an non-mapped page");
     *ptentry = 0;
@@ -122,5 +173,27 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack,
-                                 void *entry, void *args) { return NULL; }
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry, void *args) {
+  _Area stk_aligned = {
+    (void *)ROUNDUP(kstack.start, 16),
+    (void *)ROUNDDOWN(kstack.end, 16),
+  };
+  uintptr_t stk_top = (uintptr_t)stk_aligned.end;
+
+  _Context *ctx = (_Context *)stk_aligned.start;
+  *ctx = (_Context) { 0 };
+
+#if __x86_64__
+  ctx->cs = KSEL(SEG_KCODE);
+  ctx->rip = (uintptr_t)entry;
+  ctx->rsp0 = stk_top;
+#else
+  ctx->cs = USEL(SEG_UCODE);
+  ctx->ds = ctx->ss3 = USEL(SEG_UDATA);
+  ctx->eip = (uint32_t)entry;
+  ctx->esp0 = stk_top;
+#endif
+  ctx->GPRx = (uintptr_t)args;
+  ctx->uvm = as;
+  return ctx;
+}

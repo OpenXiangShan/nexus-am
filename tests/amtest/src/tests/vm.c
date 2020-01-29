@@ -73,9 +73,7 @@ void vm_test() {
 
   static uint8_t kstk[4096];
   _Area k = { .start = kstk, .end = kstk + 4096 };
-  _Area u = { .start = ptr + pgsz, .end = ptr + pgsz };
-
-  uctx = _ucontext(&prot, u, k, ptr, 0);
+  uctx = _ucontext(&prot, k, ptr, 0);
 
   _intr_write(1);
   while (1) {

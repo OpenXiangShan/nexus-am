@@ -8,7 +8,7 @@ struct _Context {
            r8, r9, r10, r11,
            r12, r13, r14, r15,
            rip, cs, rflags,
-           rsp, ss, rsp0, ss0;
+           rsp, ss, rsp0;
 };
 
 

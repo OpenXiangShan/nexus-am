@@ -39,7 +39,6 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   if (tf->cs & DPL_USER) {
   } else {
     saved_ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
-    saved_ctx.ss  = 0;
   }
 
 /*
@@ -98,6 +97,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
+  printf("return to %x\n", ret_ctx->cs);
   __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
 }
 
@@ -167,7 +167,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   void *values[] = { panic_on_return }; 
 #else
 #define sp esp
-  ctx->ds = ctx->ss = KSEL(SEG_KDATA);
+  ctx->ds = KSEL(SEG_KDATA);
   ctx->cs = KSEL(SEG_KCODE);
   ctx->eip = (uint32_t)entry;
   ctx->esp = stk_top;

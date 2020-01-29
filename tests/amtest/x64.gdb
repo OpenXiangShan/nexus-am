@@ -3,6 +3,6 @@ layout asm
 layout regs
 set pagination off
 set confirm off
-file build/hello-x86_32-qemu.o
-b *0x7c00
+file build/amtest-x86_64-qemu.o
+b main
 c

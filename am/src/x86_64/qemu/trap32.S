@@ -7,6 +7,7 @@ trap:
   pushl %ebp
   pushl %edi
   pushl %esi
+  pushl $0 // ring3 -> ring0 %esp
   pushl %edx
   pushl %ecx
   pushl %ebx
@@ -53,6 +54,7 @@ __am_iret:
   popl %ebx
   popl %ecx
   popl %edx
+  addl $4, %esp
   popl %esi
   popl %edi
   popl %ebp
@@ -63,6 +65,7 @@ __am_iret:
   popl %ebx
   popl %ecx
   popl %edx
+  addl $4, %esp
  
   movl %esp, %ebp
   movl 24(%ebp), %edi   // %edi is new-esp
