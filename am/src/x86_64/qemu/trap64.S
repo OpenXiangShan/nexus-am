@@ -2,7 +2,7 @@
 
 trap:
   cli
-  subq $56, %rsp
+  subq $48, %rsp
   pushq %r15
   pushq %r14
   pushq %r13
@@ -26,6 +26,9 @@ trap:
 .globl __am_iret
 __am_iret:
   movq %rdi, %rsp
+  movq 160(%rsp), %rax
+  movw %ax, %ds
+  movw %ax, %es
   addq $8, %rsp
   popq %rax
   popq %rbx

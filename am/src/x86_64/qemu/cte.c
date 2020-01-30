@@ -14,10 +14,10 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     .msg = "(no message)",
   };
  
-  printf("[%d/%d] ", tf->irq, _cpu());
+//  printf("[%d/%d] ", tf->irq, _cpu());
 
-#define dump(name) printf("%s = %08x (%d)\n", #name, saved_ctx.name, saved_ctx.name);
-#define offset(name) printf("%s @ %d\n", #name, (char *)&tf.name - (char*)tf);
+#define dump(ctx, name) printf("%s = %08x (%d) %p\n", #name, (ctx).name, (ctx).name, (ctx).name);
+
 #if __x86_64
   saved_ctx        = tf->saved_context;
   saved_ctx.rip    = tf->rip;
@@ -26,11 +26,12 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   saved_ctx.rsp    = tf->rsp;
   saved_ctx.ss     = tf->ss;
 
-  /*
-  dump(rax); dump(rbx); dump(rcx); dump(rdx); dump(rbp); dump(rsp); dump(rsi); dump(rdi);
-  dump(r8); dump(r9); dump(r10); dump(r11); dump(r12); dump(r13); dump(r14); dump(r15);
-  dump(cs); dump(ss); dump(rip); dump(rflags);
-  */
+#define DUMP(ctx) \
+  dump((ctx),rax); dump((ctx),rbx); dump((ctx),rcx); dump((ctx),rdx); dump((ctx),rbp); dump((ctx),rsi); dump((ctx),rdi); \
+  dump((ctx),r8); dump((ctx),r9); dump((ctx),r10); dump((ctx),r11); dump((ctx),r12); dump((ctx),r13); dump((ctx),r14); dump((ctx),r15); \
+  dump((ctx),cs); dump((ctx),ss); dump((ctx),rip); dump((ctx),rflags); \
+  dump((ctx),rsp); dump((ctx),rsp0); dump((ctx),uvm);
+
 #else
   saved_ctx     = tf->saved_context;
   saved_ctx.eip = tf->eip;
@@ -41,11 +42,11 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     saved_ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
   }
 
-/*
-  dump(eax); dump(ebx); dump(ecx); dump(edx); 
-  dump(ebp); dump(esp); dump(esi); dump(edi);
-  dump(cs); dump(ds); dump(eip); dump(eflags); 
-*/
+#define DUMP(ctx) \
+  dump((ctx),eax); dump((ctx),ebx); dump((ctx),ecx); dump((ctx),edx);  \
+  dump((ctx),ebp); dump((ctx),esi); dump((ctx),edi); \
+  dump((ctx),cs); dump((ctx),ds); dump((ctx),eip); dump((ctx),eflags); \
+  dump((ctx),esp);  dump((ctx),esp0);  dump((ctx),uvm);  
 #endif
 
   #define IRQ    T_IRQ0 + 
@@ -97,7 +98,16 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
-  printf("return to %x\n", ret_ctx->cs);
+
+  if (ret_ctx->uvm) {
+    bug_on(ret_ctx->cs != USEL(SEG_UCODE));
+    set_cr3(ret_ctx->uvm);
+#if __x86_64__
+    __am_thiscpu_setstk0(0, ret_ctx->rsp0);
+#else
+    __am_thiscpu_setstk0(ret_ctx->ds, ret_ctx->esp0);
+#endif
+  }
   __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
 }
 

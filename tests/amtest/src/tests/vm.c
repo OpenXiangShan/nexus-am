@@ -31,7 +31,7 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
         (ev.cause & _PROT_WRITE) ? "[write fail]" : "");
       break;
     case _EVENT_SYSCALL:
-      printf("%d ", ctx->GPR1);
+      // printf("%d ", ctx->GPRx);
       break;
     default:
       assert(0);
@@ -69,11 +69,12 @@ void vm_test() {
   _map(&prot, ptr, up1, _PROT_WRITE);
 
   memcpy(up1, code, sizeof(code));
-  printf("Code copied to %x execute\n", ptr);
+  printf("Code copied to %p (physical %p) execute\n", ptr, up1);
 
   static uint8_t kstk[4096];
   _Area k = { .start = kstk, .end = kstk + 4096 };
-  uctx = _ucontext(&prot, k, ptr, 0);
+  _Area u = { .start = 0, .end = 0 };
+  uctx = _ucontext(&prot, u, k, ptr, 0);
 
   _intr_write(1);
   while (1) {

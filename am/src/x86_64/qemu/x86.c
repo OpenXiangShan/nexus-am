@@ -16,7 +16,6 @@ void __am_percpu_init() {
   __am_percpu_initgdt();
   __am_percpu_initlapic();
   __am_percpu_initirq();
-//  __am_percpu_initpg();
 }
 
 _Area __am_heap_init() {
@@ -61,7 +60,7 @@ void __am_percpu_initgdt() {
   gdt[SEG_KDATA] = 0x0000920000000000LL;
   gdt[SEG_UCODE] = 0x0020F80000000000LL;
   gdt[SEG_UDATA] = 0x0000F20000000000LL;
-  gdt[SEG_TSS+0] = (0x0067) | ((tss & 0xffffff) << 16) |
+  gdt[SEG_TSS+0] = (sizeof(CPU->tss) - 1) | ((tss & 0xffffff) << 16) |
                    (0x00e9LL << 40) | (((tss >> 24) & 0xff) << 56);
   gdt[SEG_TSS+1] = (tss >> 32);
   set_gdt(gdt, sizeof(SegDesc64) * (NR_SEG + 1));
@@ -79,12 +78,14 @@ void __am_percpu_initgdt() {
 #endif
 }
 
-/*
-void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0) {
-  CPU->tss.ss0 = ss0;
-  CPU->tss.esp0 = esp0;
+void __am_thiscpu_setstk0(uintptr_t ss, uintptr_t sp) {
+#if __x86_64__
+  CPU->tss.rsp0 = sp;
+#else
+  CPU->tss.ss0 = ss;
+  CPU->tss.esp0 = sp;
+#endif
 }
-*/
 
 void __am_stop_the_world() {
   boot_record()->jmp_code = 0x0000feeb; // (16-bit) jmp .

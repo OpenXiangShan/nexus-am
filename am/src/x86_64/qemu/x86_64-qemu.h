@@ -45,9 +45,6 @@ struct trap_frame {
 };
 #endif
 
-
-
-
 extern volatile uint32_t *__am_lapic;
 extern int __am_ncpu;
 extern struct cpu_local __am_cpuinfo[MAX_CPU];
@@ -100,8 +97,7 @@ void __am_othercpu_entry();
 void __am_percpu_initirq();
 void __am_percpu_initgdt();
 void __am_percpu_initlapic();
-void __am_percpu_initpg();
-void __am_thiscpu_setstk0(uintptr_t ss0, uintptr_t esp0);
+void __am_thiscpu_setstk0(uintptr_t ss, uintptr_t sp);
 void __am_stop_the_world();
 
 

@@ -313,7 +313,7 @@ size_t _io_write(uint32_t dev, uintptr_t reg, void *buf, size_t size) {
 }
 
 int _ioe_init() {
-  if (_cpu() != 0) panic("init IOE in non-bootstrap CPU");
+  panic_on(_cpu() != 0, "init IOE in non-bootstrap CPU");
   __am_timer_init();
   __am_vga_init();
   return 0;

@@ -38,7 +38,7 @@ struct vm_area {
 
 static const struct vm_area vm_areas[] = {
 #ifdef __x86_64__
-  { RANGE(0x800000000000, 0x808000000000), 0 }, // 512 GiB user space
+  { RANGE(0x100000000000, 0x108000000000), 0 }, // 512 GiB user space
   { RANGE(0x000000000000, 0x008000000000), 1 }, // 512 GiB kernel
 #else
   { RANGE(    0x40000000,     0x80000000), 0 }, // 1 GiB user space
@@ -104,6 +104,7 @@ static void teardown(int level, uintptr_t *pt) {
 }
 
 int _vme_init(void *(*f1)(size_t size), void (*f2)(void *)) {
+  panic_on(_cpu() != 0, "init VME in non-bootstrap CPU");
   pgalloc = f1;
   pgfree  = f2;
 
@@ -123,18 +124,15 @@ int _vme_init(void *(*f1)(size_t size), void (*f2)(void *)) {
     }
   }
   kpt = (void *)baseof((uintptr_t)as.ptr);
+#endif
+
   set_cr3(kpt);
   set_cr0(get_cr0() | CR0_PG);
-#endif
   return 0;
 }
 
 int _protect(_AddressSpace *as) {
-  *as = (_AddressSpace) {
-    .pgsize = mmu.pgsize,
-    .area   = uvm_area,
-    .ptr    = zalloc(mmu.pgsize),
-  };
+  uintptr_t *upt = zalloc(mmu.pgsize);
 
   for (int i = 0; i < LENGTH(vm_areas); i++) {
     const struct vm_area *vma = &vm_areas[i];
@@ -144,10 +142,19 @@ int _protect(_AddressSpace *as) {
            cur != (uintptr_t)vma->area.end;
            cur += (1L << info->shift)) {
         int index = indexof(cur, info);
-        ((uintptr_t *)as->ptr)[index] = kpt[index];
+        upt[index] = kpt[index];
       }
     }
   }
+
+  *as = (_AddressSpace) {
+    .pgsize = mmu.pgsize,
+    .area   = uvm_area,
+    .ptr    = (void *)((uintptr_t)upt | PTE_P),
+  };
+
+  set_cr3(as->ptr);
+ 
   return 0;
 }
 
@@ -161,7 +168,9 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   panic_on((uintptr_t)va != ROUNDDOWN(va, mmu.pgsize) ||
            (uintptr_t)pa != ROUNDDOWN(pa, mmu.pgsize), "non-page-boundary address");
 
+  printf("map %p -> %p, %d\n", va, pa, prot);
   uintptr_t *ptentry = ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
+  printf("ptentry: %p\n", ptentry);
   if (prot & _PROT_NONE) {
     panic_on(!(*ptentry & PTE_P), "unmapping an non-mapped page");
     *ptentry = 0;
@@ -170,10 +179,11 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
     uintptr_t pte = (uintptr_t)pa | PTE_P | PTE_U | ((prot & _PROT_WRITE) ? PTE_W : 0);
     *ptentry = pte;
   }
+  ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
   _Area stk_aligned = {
     (void *)ROUNDUP(kstack.start, 16),
     (void *)ROUNDDOWN(kstack.end, 16),
@@ -184,7 +194,9 @@ _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry, void *args) {
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
-  ctx->cs = KSEL(SEG_KCODE);
+  ctx->cs = USEL(SEG_UCODE);
+  ctx->ss = USEL(SEG_UDATA);
+  ctx->rsp = ROUNDDOWN(ustack.end, 16);
   ctx->rip = (uintptr_t)entry;
   ctx->rsp0 = stk_top;
 #else
@@ -192,8 +204,10 @@ _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry, void *args) {
   ctx->ds = ctx->ss3 = USEL(SEG_UDATA);
   ctx->eip = (uint32_t)entry;
   ctx->esp0 = stk_top;
+  ctx->esp = ROUNDDOWN(ustack.end, 16);
 #endif
   ctx->GPRx = (uintptr_t)args;
-  ctx->uvm = as;
+  ctx->uvm = as->ptr;
+  printf("uvm (cr3) = %p\n", ctx->uvm);
   return ctx;
 }

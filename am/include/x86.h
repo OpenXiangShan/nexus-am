@@ -186,7 +186,7 @@ typedef struct TSS32 {
   uint32_t link;     // Unused
   uint32_t esp0;     // Stack pointers and segment selectors
   uint32_t ss0;      //   after an increase in privilege level
-  char     padding[88];
+  uint32_t padding[23];
 } __attribute__((packed)) TSS32;
 
 typedef struct TSS64 {
@@ -281,14 +281,14 @@ static inline uint32_t get_efl() {
   return efl;
 }
 
-static inline uint32_t get_cr0(void) {
-  volatile uint32_t val;
-  asm volatile ("movl %%cr0, %0" : "=r"(val));
+static inline uintptr_t get_cr0(void) {
+  volatile uintptr_t val;
+  asm volatile ("mov %%cr0, %0" : "=r"(val));
   return val;
 }
 
-static inline void set_cr0(uint32_t cr0) {
-  asm volatile ("movl %0, %%cr0" : : "r"(cr0));
+static inline void set_cr0(uintptr_t cr0) {
+  asm volatile ("mov %0, %%cr0" : : "r"(cr0));
 }
 
 
@@ -323,7 +323,7 @@ static inline uintptr_t get_cr2() {
 }
 
 static inline void set_cr3(void *pdir) {
-  asm volatile ("movl %0, %%cr3" : : "r"(pdir));
+  asm volatile ("mov %0, %%cr3" : : "r"(pdir));
 }
 
 static inline volatile struct boot_record *boot_record() {
