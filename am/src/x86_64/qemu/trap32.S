@@ -35,7 +35,7 @@ __am_iret:
   movw %ax, %ds
   movw %ax, %es
 
-  cmpw $KSEL(SEG_KDATA), %ax
+  cmpw $KSEL(SEG_KCODE), 36(%esp)
   je .kernel_iret
 
   /* stack frame after popping %eax, %ebx, %ecx, %edx:

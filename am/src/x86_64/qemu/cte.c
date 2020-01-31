@@ -14,8 +14,6 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     .msg = "(no message)",
   };
  
-  printf("[%d/%d] ", tf->irq, _cpu());
-
 #define dump(ctx, name) printf("%s = %08x (%d) %p\n", #name, (ctx).name, (ctx).name, (ctx).name);
 
 #if __x86_64
@@ -41,8 +39,8 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   saved_ctx.eflags = tf->eflags;
   saved_ctx.esp0   = CPU->tss.esp0;
   saved_ctx.uvm    = (void *)get_cr3();
+  saved_ctx.ss3    = USEL(SEG_UDATA);
   if (tf->cs & DPL_USER) {
-    saved_ctx.ss3 = USEL(SEG_UDATA);
   } else {
     saved_ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
   }
@@ -50,8 +48,8 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 #define DUMP(ctx) \
   dump((ctx),eax); dump((ctx),ebx); dump((ctx),ecx); dump((ctx),edx);  \
   dump((ctx),ebp); dump((ctx),esi); dump((ctx),edi); \
-  dump((ctx),cs); dump((ctx),ds); dump((ctx),eip); dump((ctx),eflags); \
-  dump((ctx),esp);  dump((ctx),esp0);  dump((ctx),uvm);  
+  dump((ctx),cs);  dump((ctx),ds); dump((ctx),eip); dump((ctx),eflags); \
+  dump((ctx),ss3); dump((ctx),esp);  dump((ctx),esp0);  dump((ctx),uvm);  
 #endif
 
 //  DUMP(saved_ctx);
@@ -110,7 +108,6 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 //  DUMP(*ret_ctx);
 
   if (ret_ctx->uvm) {
-    bug_on(ret_ctx->cs != USEL(SEG_UCODE));
     set_cr3(ret_ctx->uvm);
 #if __x86_64__
     __am_thiscpu_setstk0(0, ret_ctx->rsp0);
