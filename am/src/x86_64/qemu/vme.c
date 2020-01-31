@@ -43,7 +43,7 @@ static const struct vm_area vm_areas[] = {
 #else
   { RANGE(    0x40000000,     0x80000000), 0 }, // 1 GiB user space
   { RANGE(    0x00000000,     0x40000000), 1 }, // 1 GiB kernel
-  { RANGE(    0xf0000000,     0x00000000), 1 }, // memory-mapped I/O
+  { RANGE(    0xfd000000,     0x00000000), 1 }, // memory-mapped I/O
 #endif
 };
 #define uvm_area (vm_areas[0].area)
@@ -195,14 +195,16 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
 
 #if __x86_64__
   ctx->cs = USEL(SEG_UCODE);
+  ctx->rip = (uintptr_t)entry;
+  ctx->rflags = FL_IF;
   ctx->ss = USEL(SEG_UDATA);
   ctx->rsp = ROUNDDOWN(ustack.end, 16);
-  ctx->rip = (uintptr_t)entry;
   ctx->rsp0 = stk_top;
 #else
   ctx->cs = USEL(SEG_UCODE);
-  ctx->ds = ctx->ss3 = USEL(SEG_UDATA);
   ctx->eip = (uint32_t)entry;
+  ctx->eflags = FL_IF;
+  ctx->ds = ctx->ss3 = USEL(SEG_UDATA);
   ctx->esp0 = stk_top;
   ctx->esp = ROUNDDOWN(ustack.end, 16);
 #endif

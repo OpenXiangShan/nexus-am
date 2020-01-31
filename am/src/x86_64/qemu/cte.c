@@ -14,7 +14,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     .msg = "(no message)",
   };
  
-//  printf("[%d/%d] ", tf->irq, _cpu());
+  printf("[%d/%d] ", tf->irq, _cpu());
 
 #define dump(ctx, name) printf("%s = %08x (%d) %p\n", #name, (ctx).name, (ctx).name, (ctx).name);
 
@@ -25,6 +25,8 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   saved_ctx.rflags = tf->rflags;
   saved_ctx.rsp    = tf->rsp;
   saved_ctx.ss     = tf->ss;
+  saved_ctx.uvm    = (void *)get_cr3();
+
 
 #define DUMP(ctx) \
   dump((ctx),rax); dump((ctx),rbx); dump((ctx),rcx); dump((ctx),rdx); dump((ctx),rbp); dump((ctx),rsi); dump((ctx),rdi); \
@@ -33,11 +35,14 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   dump((ctx),rsp); dump((ctx),rsp0); dump((ctx),uvm);
 
 #else
-  saved_ctx     = tf->saved_context;
-  saved_ctx.eip = tf->eip;
-  saved_ctx.cs  = tf->cs;
+  saved_ctx        = tf->saved_context;
+  saved_ctx.eip    = tf->eip;
+  saved_ctx.cs     = tf->cs;
   saved_ctx.eflags = tf->eflags;
+  saved_ctx.esp0   = CPU->tss.esp0;
+  saved_ctx.uvm    = (void *)get_cr3();
   if (tf->cs & DPL_USER) {
+    saved_ctx.ss3 = USEL(SEG_UDATA);
   } else {
     saved_ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
   }
@@ -48,6 +53,8 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   dump((ctx),cs); dump((ctx),ds); dump((ctx),eip); dump((ctx),eflags); \
   dump((ctx),esp);  dump((ctx),esp0);  dump((ctx),uvm);  
 #endif
+
+//  DUMP(saved_ctx);
 
   #define IRQ    T_IRQ0 + 
   #define MSG(m) ev.msg = m;
@@ -99,13 +106,16 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
 
+//  printf("====== return ========\n");
+//  DUMP(*ret_ctx);
+
   if (ret_ctx->uvm) {
     bug_on(ret_ctx->cs != USEL(SEG_UCODE));
     set_cr3(ret_ctx->uvm);
 #if __x86_64__
     __am_thiscpu_setstk0(0, ret_ctx->rsp0);
 #else
-    __am_thiscpu_setstk0(ret_ctx->ds, ret_ctx->esp0);
+    __am_thiscpu_setstk0(KSEL(SEG_KDATA), ret_ctx->esp0);
 #endif
   }
   __am_iret(ret_ctx ? ret_ctx : &saved_ctx);

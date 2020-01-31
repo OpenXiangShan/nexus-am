@@ -31,7 +31,7 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
         (ev.cause & _PROT_WRITE) ? "[write fail]" : "");
       break;
     case _EVENT_SYSCALL:
-      // printf("%d ", ctx->GPRx);
+      printf("%d ", ctx->GPRx);
       break;
     default:
       assert(0);

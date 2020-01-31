@@ -322,6 +322,12 @@ static inline uintptr_t get_cr2() {
   return val;
 }
 
+static inline uintptr_t get_cr3() {
+  volatile uintptr_t val;
+  asm volatile ("mov %%cr3, %0" : "=r"(val));
+  return val;
+}
+
 static inline void set_cr3(void *pdir) {
   asm volatile ("mov %0, %%cr3" : : "r"(pdir));
 }
