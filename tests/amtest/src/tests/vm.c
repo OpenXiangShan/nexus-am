@@ -77,7 +77,5 @@ void vm_test() {
   uctx = _ucontext(&prot, u, k, ptr, 0);
 
   _intr_write(1);
-  while (1) {
-    _yield();
-  }
+  while (1) ;
 }

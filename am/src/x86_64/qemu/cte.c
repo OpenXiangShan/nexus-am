@@ -22,6 +22,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   saved_ctx.cs     = tf->cs;
   saved_ctx.rflags = tf->rflags;
   saved_ctx.rsp    = tf->rsp;
+  saved_ctx.rsp0   = CPU->tss.rsp0;
   saved_ctx.ss     = tf->ss;
   saved_ctx.uvm    = (void *)get_cr3();
 
@@ -104,9 +105,6 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
 
-//  printf("====== return ========\n");
-//  DUMP(*ret_ctx);
-
   if (ret_ctx->uvm) {
     set_cr3(ret_ctx->uvm);
 #if __x86_64__
@@ -114,6 +112,8 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 #else
     __am_thiscpu_setstk0(KSEL(SEG_KDATA), ret_ctx->esp0);
 #endif
+  } else {
+    __am_thiscpu_setstk0(0, (intptr_t)-1);
   }
   __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
 }
