@@ -1,6 +1,9 @@
 #include "x86_64-qemu.h"
 
-_Area _heap = {}; // the heap memory defined in AM spec
+_Area _heap = {};
+volatile uint32_t *__am_lapic;
+int __am_ncpu = 0;
+struct cpu_local __am_cpuinfo[MAX_CPU];
 
 int main(const char *args);
 
@@ -55,4 +58,66 @@ void _halt(int code) {
   }
   outw(0x604, 0x2000); // offer of qemu :)
   while (1) hlt();
+
+}
+
+_Area __am_heap_init() {
+  int32_t magic = 0x5a5aa5a5;
+  int32_t step = 1L << 20;
+  extern char end;
+  uintptr_t st, ed;
+  for (st = ed = ROUNDUP(&end, step); ; ed += step) {
+    volatile uint32_t *ptr = (uint32_t *)ed;
+    if ((*ptr = magic, *ptr) != magic) {
+      break; // read-after-write fail
+    }
+  }
+  return RANGE(st, ed);
+}
+
+void __am_lapic_init() {
+  for (char *st = (char *)0xf0000; st != (char *)0xffffff; st ++) {
+    if (*(volatile uint32_t *)st == 0x5f504d5f) {
+      uint32_t mpconf_ptr = ((volatile MPDesc *)st)->conf;
+      MPConf *conf = upcast(mpconf_ptr);
+      __am_lapic = upcast(conf->lapicaddr);
+      for (volatile char *ptr = (char *)(conf + 1);
+                 ptr < (char *)conf + conf->length; ptr += 8) {
+        if (*ptr == '\0') {
+          ptr += 12;
+          panic_on(++__am_ncpu > MAX_CPU, "cannot support > MAX_CPU processors");
+        }
+      }
+      return;
+    }
+  }
+  panic("seems not an x86-qemu virtual machine");
+}
+
+void __am_percpu_initgdt() {
+#if __x86_64__
+  SegDesc64 *gdt = CPU->gdt;
+  uint64_t tss = (uint64_t)(&CPU->tss);
+  gdt[0]         = 0;
+  gdt[SEG_KCODE] = 0x0020980000000000LL;
+  gdt[SEG_KDATA] = 0x0000920000000000LL;
+  gdt[SEG_UCODE] = 0x0020F80000000000LL;
+  gdt[SEG_UDATA] = 0x0000F20000000000LL;
+  gdt[SEG_TSS+0] = (sizeof(CPU->tss) - 1) | ((tss & 0xffffff) << 16) |
+                   (0x00e9LL << 40) | (((tss >> 24) & 0xff) << 56);
+  gdt[SEG_TSS+1] = (tss >> 32);
+  set_gdt(gdt, sizeof(gdt[0]) * (NR_SEG + 1));
+  set_tr(KSEL(SEG_TSS));
+#else
+  SegDesc32 *gdt = CPU->gdt;
+  TSS32 *tss = &CPU->tss;
+  gdt[SEG_KCODE] = SEG32(STA_X | STA_R,   0,     0xffffffff, DPL_KERN);
+  gdt[SEG_KDATA] = SEG32(STA_W,           0,     0xffffffff, DPL_KERN);
+  gdt[SEG_UCODE] = SEG32(STA_X | STA_R,   0,     0xffffffff, DPL_USER);
+  gdt[SEG_UDATA] = SEG32(STA_W,           0,     0xffffffff, DPL_USER);
+  gdt[SEG_TSS]   = SEG16(STS_T32A,      tss, sizeof(*tss)-1, DPL_KERN);
+
+  set_gdt(gdt, sizeof(gdt[0]) * NR_SEG);
+  set_tr(KSEL(SEG_TSS));
+#endif
 }

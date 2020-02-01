@@ -6,8 +6,7 @@ AM_SRCS   := x86_64/qemu/start64.S \
              x86_64/qemu/cte.c \
              x86_64/qemu/ioe.c \
              x86_64/qemu/vme.c \
-             x86_64/qemu/mpe.c \
-             x86_64/qemu/x86.c
+             x86_64/qemu/mpe.c
 
 image:
 	@make -s -C $(AM_HOME)/am/src/x86_64/qemu/boot

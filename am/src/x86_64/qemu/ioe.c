@@ -13,6 +13,8 @@ DEF_DEVOP(__am_video_read);
 DEF_DEVOP(__am_video_write);
 
 
+// AM INPUT (keyboard)
+
 static int scan_code[] = {
    0, 1, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 87, 88,
      41,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
@@ -20,7 +22,7 @@ static int scan_code[] = {
      58, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 28,
      42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
      29, 91, 56, 57, 56, 29, 
-     72, 80, 75, 77, 0, 0, 0, 0, 0, 0
+     72, 80, 75, 77
 };
 
 size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
@@ -36,7 +38,7 @@ size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
     } else {
       int code = inb(0x60) & 0xff;
 
-      for (int i = 0; i < sizeof(scan_code) / sizeof(scan_code[0]); i ++) {
+      for (int i = 0; i < LENGTH(scan_code); i ++) {
         if (scan_code[i] == 0) continue;
         if (scan_code[i] == code) {
           kbd->keydown = 1;
@@ -54,6 +56,7 @@ size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
 }
 
 
+// AM TIMER (based on rdtsc)
 
 static _DEV_TIMER_DATE_t boot_date;
 static uint32_t freq_mhz = 2000;
@@ -95,14 +98,9 @@ static void wait_sec(_DEV_TIMER_DATE_t *t1) {
 static uint32_t estimate_freq() {
   _DEV_TIMER_DATE_t rtc1, rtc2;
   uint64_t tsc1, tsc2, t1, t2;
-
-  wait_sec(&rtc1);
-  tsc1 = rdtsc();
-  t1 = rtc1.hour * 3600 + rtc1.minute * 60 + rtc1.second;
-  wait_sec(&rtc2);
-  tsc2 = rdtsc();
-  t2 = rtc2.hour * 3600 + rtc2.minute * 60 + rtc2.second;
-  if (t1 >= t2) return estimate_freq(); // passed a day; try again
+  wait_sec(&rtc1); tsc1 = rdtsc(); t1 = rtc1.minute * 60 + rtc1.second;
+  wait_sec(&rtc2); tsc2 = rdtsc(); t2 = rtc2.minute * 60 + rtc2.second;
+  if (t1 >= t2) return estimate_freq(); // passed an hour; try again
   return ((tsc2 - tsc1) >> 20) / (t2 - t1);
 }
 
@@ -110,7 +108,7 @@ static void get_date(_DEV_TIMER_DATE_t *rtc) {
   int tmp;
   do {
     read_rtc_async(rtc);
-    tmp         = read_rtc(0);
+    tmp = read_rtc(0);
   } while (tmp != rtc->second);
 }
 
@@ -123,10 +121,10 @@ void __am_timer_init() {
 size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_TIMER_UPTIME: {
+      _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
       uint64_t tsc = rdtsc() - uptsc;
       uint32_t mticks = (tsc >> 20);
       uint32_t ms = mticks * 1000 / freq_mhz;
-      _DEV_TIMER_UPTIME_t *uptime = (_DEV_TIMER_UPTIME_t *)buf;
       uptime->hi = 0;
       uptime->lo = ms;
       return sizeof(_DEV_TIMER_UPTIME_t);
@@ -139,68 +137,37 @@ size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
   return 0;
 }
 
+// AM VIDEO
 
-struct VBEInfo {
-  uint16_t attributes;
-  uint8_t window_a;
-  uint8_t window_b;
-  uint16_t granularity;
-  uint16_t window_size;
-  uint16_t segment_a;
-  uint16_t segment_b;
-  uint32_t win_func_ptr;
-  uint16_t pitch;
+struct vbe_info {
+  uint8_t  ignore[18];
   uint16_t width;
   uint16_t height;
-  uint8_t w_char;
-  uint8_t y_char;
-  uint8_t planes;
-  uint8_t bpp;
-  uint8_t banks;
-  uint8_t memory_model;
-  uint8_t bank_size;
-  uint8_t image_pages;
-  uint8_t reserved0;
- 
-  uint8_t red_mask;
-  uint8_t red_position;
-  uint8_t green_mask;
-  uint8_t green_position;
-  uint8_t blue_mask;
-  uint8_t blue_position;
-  uint8_t reserved_mask;
-  uint8_t reserved_position;
-  uint8_t direct_color_attributes;
- 
+  uint8_t  ignore1[18];
   uint32_t framebuffer;
-  uint32_t off_screen_mem_off;
-  uint16_t off_screen_mem_size;
-  uint8_t reserved1[206];
 } __attribute__ ((packed));
-typedef struct VBEInfo VBEInfo;
 
-static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 16) | (g << 8) | b;
-}
-static uint8_t R(uint32_t p) { return p >> 16; }
-static uint8_t G(uint32_t p) { return p >> 8; }
-static uint8_t B(uint32_t p) { return p; }
+static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) { return (r << 16) | (g << 8) | b; }
+static inline uint8_t R(uint32_t p) { return p >> 16; }
+static inline uint8_t G(uint32_t p) { return p >> 8; }
+static inline uint8_t B(uint32_t p) { return p; }
 
-static struct FBPixel {
+struct pixel {
   uint8_t b, g, r;
-} __attribute__ ((packed)) *fb;
-typedef struct FBPixel FBPixel;
+} __attribute__ ((packed));
+
+struct pixel *fb;
 static int W, H;
 
 void __am_vga_init() {
-  VBEInfo *info = (VBEInfo *)0x00004000;
+  struct vbe_info *info = (struct vbe_info *)0x00004000;
   W = info->width;
   H = info->height;
   fb = upcast(info->framebuffer);
 }
 
 size_t __am_video_read(uintptr_t reg, void *buf, size_t size) {
-  switch(reg) {
+  switch (reg) {
     case _DEVREG_VIDEO_INFO: {
       _DEV_VIDEO_INFO_t *info = (_DEV_VIDEO_INFO_t *)buf;
       info->width = W;
@@ -212,25 +179,20 @@ size_t __am_video_read(uintptr_t reg, void *buf, size_t size) {
 }
 
 size_t __am_video_write(uintptr_t reg, void *buf, size_t size) {
-  switch(reg) {
+  switch (reg) {
     case _DEVREG_VIDEO_FBCTRL: {
       _DEV_VIDEO_FBCTRL_t *ctl = (_DEV_VIDEO_FBCTRL_t *)buf;
       int x = ctl->x, y = ctl->y, w = ctl->w, h = ctl->h;
       uint32_t *pixels = ctl->pixels;
       int len = (x + w >= W) ? W - x : w;
-      FBPixel *v;
-      for (int j = 0; j < h; j ++) {
+      for (int j = 0; j < h; j ++, pixels += w) {
         if (y + j < H) {
-          v = &fb[x + (j + y) * W];
-          for (int i = 0; i < len; i ++, v ++) {
+          struct pixel *px = &fb[x + (j + y) * W];
+          for (int i = 0; i < len; i ++, px ++) {
             uint32_t p = pixels[i];
-            v->r = R(p); v->g = G(p); v->b = B(p);
+            px->r = R(p); px->g = G(p); px->b = B(p);
           }
         }
-        pixels += w;
-      }
-      if (ctl->sync) {
-        // do nothing, hardware syncs.
       }
       return sizeof(*ctl);
     }
@@ -238,8 +200,10 @@ size_t __am_video_write(uintptr_t reg, void *buf, size_t size) {
   return 0;
 }
 
+// AM STORAGE
+
 size_t __am_storage_read(uintptr_t reg, void *buf, size_t size) {
-  switch(reg) {
+  switch (reg) {
     case _DEVREG_STORAGE_INFO: {
       _DEV_STORAGE_INFO_t *info = (void *)buf;
       info->blksz = 512;
@@ -254,20 +218,13 @@ static inline void wait_disk(void) {
   while ((inb(0x1f7) & 0xc0) != 0x40);
 }
 
-static inline void read_sect(void *buf, uint32_t sect, uint32_t remain) {
-}
-
 size_t __am_storage_write(uintptr_t reg, void *buf, size_t size) {
   _DEV_STORAGE_RDCTRL_t *ctl = (void *)buf;
   int is_read = 0;
-  switch(reg) {
-    case _DEVREG_STORAGE_RDCTRL:
-      is_read = 1;
-      break;
-    case _DEVREG_STORAGE_WRCTRL:
-      break;
-    default:
-      return 0;
+  switch (reg) {
+    case _DEVREG_STORAGE_RDCTRL: is_read = 1; break;
+    case _DEVREG_STORAGE_WRCTRL:              break;
+    default: return 0;
   }
 
   uint32_t blkno = ctl->blkno, remain = ctl->blkcnt;
@@ -317,4 +274,129 @@ int _ioe_init() {
   __am_timer_init();
   __am_vga_init();
   return 0;
+}
+
+// LAPIC/IOAPIC (from xv6)
+
+#define ID      (0x0020/4)   // ID
+#define VER     (0x0030/4)   // Version
+#define TPR     (0x0080/4)   // Task Priority
+#define EOI     (0x00B0/4)   // EOI
+#define SVR     (0x00F0/4)   // Spurious Interrupt Vector
+  #define ENABLE     0x00000100   // Unit Enable
+#define ESR     (0x0280/4)   // Error Status
+#define ICRLO   (0x0300/4)   // Interrupt Command
+  #define INIT       0x00000500   // INIT/RESET
+  #define STARTUP    0x00000600   // Startup IPI
+  #define DELIVS     0x00001000   // Delivery status
+  #define ASSERT     0x00004000   // Assert interrupt (vs deassert)
+  #define DEASSERT   0x00000000
+  #define LEVEL      0x00008000   // Level triggered
+  #define BCAST      0x00080000   // Send to all APICs, including self.
+  #define BUSY       0x00001000
+  #define FIXED      0x00000000
+#define ICRHI   (0x0310/4)   // Interrupt Command [63:32]
+#define TIMER   (0x0320/4)   // Local Vector Table 0 (TIMER)
+  #define X1         0x0000000B   // divide counts by 1
+  #define PERIODIC   0x00020000   // Periodic
+#define PCINT   (0x0340/4)   // Performance Counter LVT
+#define LINT0   (0x0350/4)   // Local Vector Table 1 (LINT0)
+#define LINT1   (0x0360/4)   // Local Vector Table 2 (LINT1)
+#define ERROR   (0x0370/4)   // Local Vector Table 3 (ERROR)
+  #define MASKED     0x00010000   // Interrupt masked
+#define TICR    (0x0380/4)   // Timer Initial Count
+#define TCCR    (0x0390/4)   // Timer Current Count
+#define TDCR    (0x03E0/4)   // Timer Divide Configuration
+
+#define IOAPIC_ADDR  0xFEC00000   // Default physical address of IO APIC
+#define REG_ID     0x00  // Register index: ID
+#define REG_VER    0x01  // Register index: version
+#define REG_TABLE  0x10  // Redirection table base
+
+#define INT_DISABLED   0x00010000  // Interrupt disabled
+#define INT_LEVEL      0x00008000  // Level-triggered (vs edge-)
+#define INT_ACTIVELOW  0x00002000  // Active low (vs high)
+#define INT_LOGICAL    0x00000800  // Destination is CPU id (vs APIC ID)
+
+volatile unsigned int *__am_lapic = NULL;  // Initialized in mp.c
+struct IOAPIC {
+    uint32_t reg, pad[3], data;
+} __attribute__((packed));
+typedef struct IOAPIC IOAPIC;
+
+static volatile IOAPIC *ioapic;
+
+static void lapicw(int index, int value) {
+  __am_lapic[index] = value;
+  __am_lapic[ID];
+}
+
+void __am_percpu_initlapic(void) {
+  lapicw(SVR, ENABLE | (T_IRQ0 + IRQ_SPURIOUS));
+  lapicw(TDCR, X1);
+  lapicw(TIMER, PERIODIC | (T_IRQ0 + IRQ_TIMER));
+  lapicw(TICR, 10000000); 
+  lapicw(LINT0, MASKED);
+  lapicw(LINT1, MASKED);
+  if (((__am_lapic[VER]>>16) & 0xFF) >= 4)
+    lapicw(PCINT, MASKED);
+  lapicw(ERROR, T_IRQ0 + IRQ_ERROR);
+  lapicw(ESR, 0);
+  lapicw(ESR, 0);
+  lapicw(EOI, 0);
+  lapicw(ICRHI, 0);
+  lapicw(ICRLO, BCAST | INIT | LEVEL);
+  while(__am_lapic[ICRLO] & DELIVS) ;
+  lapicw(TPR, 0);
+}
+
+void __am_lapic_eoi(void) {
+  if (__am_lapic)
+    lapicw(EOI, 0);
+}
+
+void __am_lapic_bootap(uint32_t apicid, uint32_t addr) {
+  int i;
+  uint16_t *wrv;
+  outb(0x70, 0xF);
+  outb(0x71, 0x0A);
+  wrv = (unsigned short*)((0x40<<4 | 0x67));
+  wrv[0] = 0;
+  wrv[1] = addr >> 4;
+
+  lapicw(ICRHI, apicid<<24);
+  lapicw(ICRLO, INIT | LEVEL | ASSERT);
+  lapicw(ICRLO, INIT | LEVEL);
+  
+ for (i = 0; i < 2; i++){
+    lapicw(ICRHI, apicid<<24);
+    lapicw(ICRLO, STARTUP | (addr>>12));
+  }
+}
+
+static unsigned int ioapicread(int reg) {
+  ioapic->reg = reg;
+  return ioapic->data;
+}
+
+static void ioapicwrite(int reg, unsigned int data) {
+  ioapic->reg = reg;
+  ioapic->data = data;
+}
+
+void __am_ioapic_init(void) {
+  int i, maxintr;
+
+  ioapic = (volatile IOAPIC*)IOAPIC_ADDR;
+  maxintr = (ioapicread(REG_VER) >> 16) & 0xFF;
+
+  for (i = 0; i <= maxintr; i++){
+    ioapicwrite(REG_TABLE+2*i, INT_DISABLED | (T_IRQ0 + i));
+    ioapicwrite(REG_TABLE+2*i+1, 0);
+  }
+}
+
+void __am_ioapic_enable(int irq, int cpunum) {
+  ioapicwrite(REG_TABLE+2*irq, T_IRQ0 + irq);
+  ioapicwrite(REG_TABLE+2*irq+1, cpunum << 24);
 }

@@ -112,7 +112,6 @@ void __am_othercpu_entry();
 void __am_percpu_initirq();
 void __am_percpu_initgdt();
 void __am_percpu_initlapic();
-void __am_thiscpu_setstk0(uintptr_t ss, uintptr_t sp);
 void __am_stop_the_world();
 
 

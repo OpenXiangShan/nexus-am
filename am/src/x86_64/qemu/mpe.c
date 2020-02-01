@@ -47,3 +47,12 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
     "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
   return result;
 }
+
+void __am_stop_the_world() {
+  boot_record()->jmp_code = 0x0000feeb; // (16-bit) jmp .
+  for (int cpu = 0; cpu < __am_ncpu; cpu++) {
+    if (cpu != _cpu()) {
+      __am_lapic_bootap(cpu, 0x7000);
+    }
+  }
+}

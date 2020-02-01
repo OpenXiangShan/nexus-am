@@ -2,7 +2,7 @@
 
 trap:
   cli
-  subq $48, %rsp
+  subq  $48, %rsp
   pushq %r15
   pushq %r14
   pushq %r13
@@ -20,31 +20,31 @@ trap:
   pushq %rax
   pushq $0  //uvm
 
-  movq %rsp, %rdi
-  call __am_irq_handle
+  movq  %rsp, %rdi
+  call  __am_irq_handle
 
 .globl __am_iret
 __am_iret:
-  movq %rdi, %rsp
-  movq 160(%rsp), %rax
-  movw %ax, %ds
-  movw %ax, %es
-  addq $8, %rsp
-  popq %rax
-  popq %rbx
-  popq %rcx
-  popq %rdx
-  popq %rbp
-  popq %rsi
-  popq %rdi
-  popq %r8
-  popq %r9
-  popq %r10
-  popq %r11
-  popq %r12
-  popq %r13
-  popq %r14
-  popq %r15
+  movq  %rdi, %rsp
+  movq  160(%rsp), %rax
+  movw  %ax, %ds
+  movw  %ax, %es
+  addq  $8, %rsp
+  popq  %rax
+  popq  %rbx
+  popq  %rcx
+  popq  %rdx
+  popq  %rbp
+  popq  %rsi
+  popq  %rdi
+  popq  %r8
+  popq  %r9
+  popq  %r10
+  popq  %r11
+  popq  %r12
+  popq  %r13
+  popq  %r14
+  popq  %r15
   iretq
 
 #define NOERR     push $0

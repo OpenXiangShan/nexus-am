@@ -31,6 +31,8 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
         (ev.cause & _PROT_WRITE) ? "[write fail]" : "");
       break;
     case _EVENT_SYSCALL:
+      _intr_write(1);
+      for (volatile int i = 0; i < 100000000; i++);
       printf("%d ", ctx->GPRx);
       break;
     default:

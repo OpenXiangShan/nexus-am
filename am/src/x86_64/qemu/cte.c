@@ -1,10 +1,20 @@
 #include "x86_64-qemu.h"
 #include <stdarg.h>
 
-#define IRQHANDLE_DECL(id, dpl, err)  void __am_irq##id();
+static _Context* (*user_handler)(_Event, _Context*) = NULL;
+#if __x86_64__
+static GateDesc64 idt[NR_IRQ];
+#define GATE GATE64
+#else
+static GateDesc32 idt[NR_IRQ];
+#define GATE GATE32
+#endif
+
+#define IRQHANDLE_DECL(id, dpl, err) \
+  void __am_irq##id();
+
 IRQS(IRQHANDLE_DECL)
 void __am_irqall();
-static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
 static void __am_irq_handle_internal(struct trap_frame *tf) {
   _Context saved_ctx;
@@ -14,8 +24,6 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     .msg = "(no message)",
   };
  
-#define dump(ctx, name) printf("%s = %08x (%d) %p\n", #name, (ctx).name, (ctx).name, (ctx).name);
-
 #if __x86_64
   saved_ctx        = tf->saved_context;
   saved_ctx.rip    = tf->rip;
@@ -25,35 +33,18 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   saved_ctx.rsp0   = CPU->tss.rsp0;
   saved_ctx.ss     = tf->ss;
   saved_ctx.uvm    = (void *)get_cr3();
-
-
-#define DUMP(ctx) \
-  dump((ctx),rax); dump((ctx),rbx); dump((ctx),rcx); dump((ctx),rdx); dump((ctx),rbp); dump((ctx),rsi); dump((ctx),rdi); \
-  dump((ctx),r8); dump((ctx),r9); dump((ctx),r10); dump((ctx),r11); dump((ctx),r12); dump((ctx),r13); dump((ctx),r14); dump((ctx),r15); \
-  dump((ctx),cs); dump((ctx),ss); dump((ctx),rip); dump((ctx),rflags); \
-  dump((ctx),rsp); dump((ctx),rsp0); dump((ctx),uvm);
-
 #else
   saved_ctx        = tf->saved_context;
   saved_ctx.eip    = tf->eip;
   saved_ctx.cs     = tf->cs;
   saved_ctx.eflags = tf->eflags;
   saved_ctx.esp0   = CPU->tss.esp0;
-  saved_ctx.uvm    = (void *)get_cr3();
   saved_ctx.ss3    = USEL(SEG_UDATA);
-  if (tf->cs & DPL_USER) {
-  } else {
+  saved_ctx.uvm    = (void *)get_cr3();
+  if (!(tf->cs & DPL_USER)) {
     saved_ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
   }
-
-#define DUMP(ctx) \
-  dump((ctx),eax); dump((ctx),ebx); dump((ctx),ecx); dump((ctx),edx);  \
-  dump((ctx),ebp); dump((ctx),esi); dump((ctx),edi); \
-  dump((ctx),cs);  dump((ctx),ds); dump((ctx),eip); dump((ctx),eflags); \
-  dump((ctx),ss3); dump((ctx),esp);  dump((ctx),esp0);  dump((ctx),uvm);  
 #endif
-
-//  DUMP(saved_ctx);
 
   #define IRQ    T_IRQ0 + 
   #define MSG(m) ev.msg = m;
@@ -108,13 +99,13 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   if (ret_ctx->uvm) {
     set_cr3(ret_ctx->uvm);
 #if __x86_64__
-    __am_thiscpu_setstk0(0, ret_ctx->rsp0);
+    CPU->tss.rsp0 = ret_ctx->rsp0;
 #else
-    __am_thiscpu_setstk0(KSEL(SEG_KDATA), ret_ctx->esp0);
+    CPU->tss.ss0  = KSEL(SEG_KDATA);
+    CPU->tss.esp0 = ret_ctx->esp0;
 #endif
-  } else {
-    __am_thiscpu_setstk0(0, (intptr_t)-1);
   }
+
   __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
 }
 
@@ -122,24 +113,15 @@ void __am_irq_handle(struct trap_frame *tf) {
   stack_switch_call(stack_top(&CPU->irq_stack), __am_irq_handle_internal, (uintptr_t)tf);
 }
 
-#if __x86_64__
-static GateDesc64 idt[NR_IRQ];
-#define GATE GATE64
-#else
-static GateDesc32 idt[NR_IRQ];
-#define GATE GATE32
-#endif
-
-
 int _cte_init(_Context *(*handler)(_Event, _Context *)) {
   panic_on(_cpu() != 0, "init CTE in non-bootstrap CPU");
   panic_on(!handler, "no interrupt handler");
 
   for (int i = 0; i < NR_IRQ; i ++) {
-    idt[i] = GATE(STS_TG, KSEL(SEG_KCODE), __am_irqall, DPL_KERN);
+    idt[i]  = GATE(STS_TG, KSEL(SEG_KCODE), __am_irqall,  DPL_KERN);
   }
 #define IDT_ENTRY(id, dpl, err) \
-  idt[id] = GATE(STS_TG, KSEL(SEG_KCODE), __am_irq##id, DPL_##dpl);
+    idt[id] = GATE(STS_TG, KSEL(SEG_KCODE), __am_irq##id, DPL_##dpl);
   IRQS(IDT_ENTRY)
 
   user_handler = handler;
@@ -176,24 +158,24 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
 
 #if __x86_64__
 #define sp rsp
-  ctx->rsp = stk_top;
-  ctx->cs = KSEL(SEG_KCODE);
-  ctx->rip = (uintptr_t)entry;
+  ctx->rsp    = stk_top;
+  ctx->cs     = KSEL(SEG_KCODE);
+  ctx->rip    = (uintptr_t)entry;
   ctx->rflags = FL_IF;
-  ctx->rdi = (uintptr_t)arg;
-  void *values[] = { panic_on_return }; 
+  ctx->rdi    = (uintptr_t)arg;
+  void *stk[] = { panic_on_return }; 
 #else
 #define sp esp
-  ctx->ds = KSEL(SEG_KDATA);
-  ctx->cs = KSEL(SEG_KCODE);
-  ctx->eip = (uint32_t)entry;
-  ctx->esp = stk_top;
+  ctx->esp    = stk_top;
+  ctx->ds     = KSEL(SEG_KDATA);
+  ctx->cs     = KSEL(SEG_KCODE);
+  ctx->eip    = (uint32_t)entry;
   ctx->eflags = FL_IF;
-  void *values[] = { panic_on_return, arg }; 
+  void *stk[] = { panic_on_return, arg }; 
 #endif
-  ctx->sp -= sizeof(values);
-  for (int i = 0; i < LENGTH(values); i++) {
-    ((uintptr_t *)ctx->sp)[i] = (uintptr_t)values[i];
+  ctx->sp -= sizeof(stk);
+  for (int i = 0; i < LENGTH(stk); i++) {
+    ((uintptr_t *)ctx->sp)[i] = (uintptr_t)stk[i];
   }
   return ctx;
 }
