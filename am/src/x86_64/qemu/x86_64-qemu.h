@@ -1,10 +1,27 @@
 #ifndef __X86_64_QEMU_H__
 #define __X86_64_QEMU_H__
 
+#define MAX_CPU               8
+#define BOOT_REC_ADDR   0x07000
+#define ARG_ADDR        0x10000
+
+#ifndef __ASSEMBLER__
+
 #include <x86.h>
 #include <am.h>
 #include <klib.h>
-#define MAX_CPU 8
+
+#define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
+#define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
+
+struct boot_record {
+  uint32_t jmp_code;
+  int32_t is_ap;
+};
+
+static inline volatile struct boot_record *boot_record() {
+  return (struct boot_record *)BOOT_REC_ADDR;
+}
 
 void bootcpu_init();
 _Area memory_probe();
@@ -36,10 +53,10 @@ void __am_iret(_Context *ctx);
 struct cpu_local {
   _AddressSpace *uvm;
 #if __x86_64__
-  SegDesc64 gdt[NR_SEG + 1];
+  SegDesc gdt[NR_SEG + 1];
   TSS64 tss;
 #else
-  SegDesc32 gdt[NR_SEG];
+  SegDesc gdt[NR_SEG];
   TSS32 tss;
 #endif
   struct kernel_stack stack;
@@ -114,5 +131,6 @@ void __am_percpu_initgdt();
 void __am_percpu_initlapic();
 void __am_stop_the_world();
 
+#endif
 
 #endif
