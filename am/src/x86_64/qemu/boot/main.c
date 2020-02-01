@@ -70,7 +70,7 @@ void load_kernel(void) {
   
   if (!is_ap) {
     // load argument (string) to memory
-    copy_from_disk((void *)ARG_ADDR, 1024, -1024);
+    copy_from_disk((void *)MAINARG_ADDR, 1024, -1024);
     // load elf header to memory
     copy_from_disk(elf32, 4096, 0); 
     if (elf32->e_machine == EM_X86_64) {

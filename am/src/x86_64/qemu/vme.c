@@ -92,7 +92,7 @@ int _vme_init(void *(*_pgalloc)(size_t size), void (*_pgfree)(void *)) {
   pgfree  = _pgfree;
 
 #if __x86_64__
-  kpt = (void *)0x1000;
+  kpt = (void *)PML4_ADDR;
 #else
   _AddressSpace as;
   as.ptr = NULL;

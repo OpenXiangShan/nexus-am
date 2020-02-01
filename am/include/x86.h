@@ -24,6 +24,7 @@
 #define PTE_P          0x001   // Present
 #define PTE_W          0x002   // Writeable
 #define PTE_U          0x004   // User
+#define PTE_PS         0x080   // Large Page (1 GiB or 2 MiB)
 
 // GDT entries
 #define NR_SEG         6       // GDT size
@@ -95,6 +96,11 @@
   _( 47, KERN, NOERR) \
   _(128, USER, NOERR)
 
+// AM-specific configurations
+#define MAX_CPU             8
+#define BOOTREC_ADDR  0x07000
+#define MAINARG_ADDR  0x10000
+
 // Below are only visible to c/cpp files
 #ifndef __ASSEMBLER__
 
@@ -102,39 +108,20 @@
 
 // Segment Descriptor
 typedef struct {
-  uint32_t lim_15_0 : 16;  // Low bits of segment limit
-  uint32_t base_15_0 : 16; // Low bits of segment base address
-  uint32_t base_23_16 : 8; // Middle bits of segment base address
-  uint32_t type : 4  ;     // Segment type (see STS_ constants)
-  uint32_t s : 1;          // 0 = system, 1 = application
-  uint32_t dpl : 2;        // Descriptor Privilege Level
-  uint32_t p : 1;          // Present
-  uint32_t lim_19_16 : 4;  // High bits of segment limit
-  uint32_t avl : 1;        // Unused (available for software use)
-  uint32_t l : 1;          // 1 = 64-bit
-  uint32_t db : 1;         // 0 = 16-bit segment, 1 = 32-bit segment
-  uint32_t g : 1;          // Granularity: limit scaled by 4K when set
-  uint32_t base_31_24 : 8; // High bits of segment base address
+  uint32_t lim_15_0   : 16; // Low bits of segment limit
+  uint32_t base_15_0  : 16; // Low bits of segment base address
+  uint32_t base_23_16 :  8; // Middle bits of segment base address
+  uint32_t type       :  4; // Segment type (see STS_ constants)
+  uint32_t s          :  1; // 0 = system, 1 = application
+  uint32_t dpl        :  2; // Descriptor Privilege Level
+  uint32_t p          :  1; // Present
+  uint32_t lim_19_16  :  4; // High bits of segment limit
+  uint32_t avl        :  1; // Unused (available for software use)
+  uint32_t l          :  1; // 64-bit segment
+  uint32_t db         :  1; // 32-bit segment
+  uint32_t g          :  1; // Granularity: limit scaled by 4K when set
+  uint32_t base_31_24 :  8; // High bits of segment base address
 } SegDesc;
-
-#define SEG16(type, base, lim, dpl) (SegDesc)           \
-{ (lim) & 0xffff, (uintptr_t)(base) & 0xffff,            \
-  ((uintptr_t)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
-  (uintptr_t)(lim) >> 16, 0, 0, 1, 0, (uintptr_t)(base) >> 24 }
-
-#define SEG32(type, base, lim, dpl) (SegDesc)           \
-{ ((lim) >> 12) & 0xffff, (uintptr_t)(base) & 0xffff,    \
-  ((uintptr_t)(base) >> 16) & 0xff, type, 1, dpl, 1,     \
-  (uintptr_t)(lim) >> 28, 0, 0, 1, 1, (uintptr_t)(base) >> 24 }
-
-#define SEG64(type, dpl) (SegDesc) \
-  { 0, 0, 0, type, 1, dpl, 1, 0, 0, 1, 0, 0 }
-
-#define SEGTSS64(type, base, lim, dpl) (SegDesc) \
-{ (lim) & 0xffff, (uint32_t)(base) & 0xffff,            \
-  ((uint32_t)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
-  (uint32_t)(lim) >> 16, 0, 0, 0, 0, (uint32_t)(base) >> 24 }
-
 
 // Gate descriptors for interrupts and traps
 typedef struct {
@@ -148,10 +135,6 @@ typedef struct {
   uint32_t p         :  1; // Present
   uint32_t off_31_16 : 16; // High bits of offset in segment
 } GateDesc32;
-
-#define GATE32(type, cs, entry, dpl) (GateDesc32)                \
-  {  (uint32_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
-  1, (uint32_t)(entry) >> 16 }
 
 typedef struct {
   uint32_t off_15_0  : 16;
@@ -167,11 +150,7 @@ typedef struct {
   uint32_t rsv       : 32;
 } GateDesc64;
 
-#define GATE64(type, cs, entry, dpl) (GateDesc64) \
-  { (uint64_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
-    1, ((uint64_t)(entry) >> 16) & 0xffff, (uint64_t)(entry) >> 32, 0 }
-
-// Task state segment format
+// Task State Segment (TSS)
 typedef struct {
   uint32_t link;     // Unused
   uint32_t esp0;     // Stack pointers and segment selectors
@@ -212,7 +191,36 @@ typedef struct {
   uint8_t  reserved[3];
 } MPDesc;
 
-#define asm  __asm__
+typedef struct {
+  uint32_t jmp_code;
+  int32_t is_ap;
+} BootRecord;
+
+#define SEG16(type, base, lim, dpl) (SegDesc)        \
+{ (lim) & 0xffff, (uintptr_t)(base) & 0xffff,        \
+  ((uintptr_t)(base) >> 16) & 0xff, type, 0, dpl, 1, \
+  (uintptr_t)(lim) >> 16, 0, 0, 1, 0, (uintptr_t)(base) >> 24 }
+
+#define SEG32(type, base, lim, dpl) (SegDesc)         \
+{ ((lim) >> 12) & 0xffff, (uintptr_t)(base) & 0xffff, \
+  ((uintptr_t)(base) >> 16) & 0xff, type, 1, dpl, 1,  \
+  (uintptr_t)(lim) >> 28, 0, 0, 1, 1, (uintptr_t)(base) >> 24 }
+
+#define SEG64(type, dpl) (SegDesc) \
+  { 0, 0, 0, type, 1, dpl, 1, 0, 0, 1, 0, 0 }
+
+#define SEGTSS64(type, base, lim, dpl) (SegDesc)    \
+{ (lim) & 0xffff, (uint32_t)(base) & 0xffff,        \
+  ((uint32_t)(base) >> 16) & 0xff, type, 0, dpl, 1, \
+  (uint32_t)(lim) >> 16, 0, 0, 0, 0, (uint32_t)(base) >> 24 }
+
+#define GATE32(type, cs, entry, dpl) (GateDesc32)              \
+  {  (uint32_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
+  1, (uint32_t)(entry) >> 16 }
+
+#define GATE64(type, cs, entry, dpl) (GateDesc64)             \
+  { (uint64_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
+    1, ((uint64_t)(entry) >> 16) & 0xffff, (uint64_t)(entry) >> 32, 0 }
 
 static inline uint8_t inb(int port) {
   uint8_t data;
@@ -324,6 +332,10 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
     "movl %0, %%esp; movl %2, 4(%0); jmp *%1" : : "b"((uintptr_t)sp - 8), "d"(entry), "a"(arg)
 #endif
   );
+}
+
+static inline volatile BootRecord *boot_record() {
+  return (BootRecord *)BOOTREC_ADDR;
 }
 
 #endif // __ASSEMBLER__

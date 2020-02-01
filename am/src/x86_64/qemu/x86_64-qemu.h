@@ -1,6 +1,5 @@
-#define MAX_CPU               8
-#define BOOT_REC_ADDR   0x07000
-#define ARG_ADDR        0x10000
+#define PML4_ADDR  0x1000
+#define PDPT_ADDR  0x2000
 
 #ifndef __ASSEMBLER__
 
@@ -10,18 +9,6 @@
 
 #define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 #define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
-
-struct boot_record {
-  uint32_t jmp_code;
-  int32_t is_ap;
-};
-
-static inline volatile struct boot_record *boot_record() {
-  return (struct boot_record *)BOOT_REC_ADDR;
-}
-
-void bootcpu_init();
-_Area memory_probe();
 
 struct kernel_stack {
   uint8_t stack[8192];
@@ -114,7 +101,7 @@ static inline void puts(const char *s) {
 // apic utils
 void __am_lapic_eoi();
 void __am_ioapic_init();
-void __am_lapic_bootap(uint32_t cpu, uint32_t address);
+void __am_lapic_bootap(uint32_t cpu, void *address);
 void __am_ioapic_enable(int irq, int cpu);
 
 // x86-specific operations

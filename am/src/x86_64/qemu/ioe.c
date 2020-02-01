@@ -355,14 +355,14 @@ void __am_lapic_eoi(void) {
     lapicw(EOI, 0);
 }
 
-void __am_lapic_bootap(uint32_t apicid, uint32_t addr) {
+void __am_lapic_bootap(uint32_t apicid, void *addr) {
   int i;
   uint16_t *wrv;
   outb(0x70, 0xF);
   outb(0x71, 0x0A);
   wrv = (unsigned short*)((0x40<<4 | 0x67));
   wrv[0] = 0;
-  wrv[1] = addr >> 4;
+  wrv[1] = (uintptr_t)addr >> 4;
 
   lapicw(ICRHI, apicid<<24);
   lapicw(ICRLO, INIT | LEVEL | ASSERT);
@@ -370,7 +370,7 @@ void __am_lapic_bootap(uint32_t apicid, uint32_t addr) {
   
  for (i = 0; i < 2; i++){
     lapicw(ICRHI, apicid<<24);
-    lapicw(ICRLO, STARTUP | (addr>>12));
+    lapicw(ICRLO, STARTUP | ((uintptr_t)addr>>12));
   }
 }
 
