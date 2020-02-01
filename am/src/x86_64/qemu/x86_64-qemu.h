@@ -1,6 +1,3 @@
-#ifndef __X86_64_QEMU_H__
-#define __X86_64_QEMU_H__
-
 #define MAX_CPU               8
 #define BOOT_REC_ADDR   0x07000
 #define ARG_ADDR        0x10000
@@ -130,7 +127,5 @@ void __am_percpu_initirq();
 void __am_percpu_initgdt();
 void __am_percpu_initlapic();
 void __am_stop_the_world();
-
-#endif
 
 #endif

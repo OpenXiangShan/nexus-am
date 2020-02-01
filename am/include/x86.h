@@ -1,6 +1,3 @@
-#ifndef __X86_H__
-#define __X86_H__
-
 // CPU rings
 #define DPL_KERN       0x0     // Kernel (ring 0)
 #define DPL_USER       0x3     // User (ring 3)
@@ -120,30 +117,36 @@ typedef struct {
   uint32_t base_31_24 : 8; // High bits of segment base address
 } SegDesc;
 
+#define SEG16(type, base, lim, dpl) (SegDesc)           \
+{ (lim) & 0xffff, (uintptr_t)(base) & 0xffff,            \
+  ((uintptr_t)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
+  (uintptr_t)(lim) >> 16, 0, 0, 1, 0, (uintptr_t)(base) >> 24 }
+
+#define SEG32(type, base, lim, dpl) (SegDesc)           \
+{ ((lim) >> 12) & 0xffff, (uintptr_t)(base) & 0xffff,    \
+  ((uintptr_t)(base) >> 16) & 0xff, type, 1, dpl, 1,     \
+  (uintptr_t)(lim) >> 28, 0, 0, 1, 1, (uintptr_t)(base) >> 24 }
+
 #define SEG64(type, dpl) (SegDesc) \
   { 0, 0, 0, type, 1, dpl, 1, 0, 0, 1, 0, 0 }
 
-#define SEG32(type, base, lim, dpl) (SegDesc)             \
-{  ((lim) >> 12) & 0xffff, (uint32_t)(base) & 0xffff,   \
-  ((uint32_t)(base) >> 16) & 0xff, type, 1, dpl, 1,     \
-  (uint32_t)(lim) >> 28, 0, 0, 1, 1, (uint32_t)(base) >> 24 }
-
-#define SEG16(type, base, lim, dpl) (SegDesc)           \
-{  (lim) & 0xffff, (uint32_t)(base) & 0xffff,           \
+#define SEGTSS64(type, base, lim, dpl) (SegDesc) \
+{ (lim) & 0xffff, (uint32_t)(base) & 0xffff,            \
   ((uint32_t)(base) >> 16) & 0xff, type, 0, dpl, 1,     \
-  (uint32_t)(lim) >> 16, 0, 0, 1, 0, (uint32_t)(base) >> 24 }
+  (uint32_t)(lim) >> 16, 0, 0, 0, 0, (uint32_t)(base) >> 24 }
+
 
 // Gate descriptors for interrupts and traps
 typedef struct {
-  uint32_t off_15_0 : 16;   // Low 16 bits of offset in segment
-  uint32_t cs : 16;         // Code segment selector
-  uint32_t args : 5;        // # args, 0 for interrupt/trap gates
-  uint32_t rsv1 : 3;        // Reserved(should be zero I guess)
-  uint32_t type : 4;        // Type(STS_{TG,IG32,TG32})
-  uint32_t s : 1;           // Must be 0 (system)
-  uint32_t dpl : 2;         // Descriptor(meaning new) privilege level
-  uint32_t p : 1;           // Present
-  uint32_t off_31_16 : 16;  // High bits of offset in segment
+  uint32_t off_15_0  : 16; // Low 16 bits of offset in segment
+  uint32_t cs        : 16; // Code segment selector
+  uint32_t args      :  5; // # args, 0 for interrupt/trap gates
+  uint32_t rsv1      :  3; // Reserved(should be zero I guess)
+  uint32_t type      :  4; // Type(STS_{TG,IG32,TG32})
+  uint32_t s         :  1; // Must be 0 (system)
+  uint32_t dpl       :  2; // Descriptor(meaning new) privilege level
+  uint32_t p         :  1; // Present
+  uint32_t off_31_16 : 16; // High bits of offset in segment
 } GateDesc32;
 
 #define GATE32(type, cs, entry, dpl) (GateDesc32)                \
@@ -151,17 +154,17 @@ typedef struct {
   1, (uint32_t)(entry) >> 16 }
 
 typedef struct {
-  uint32_t off_15_0 : 16;
-  uint32_t cs : 16;
-  uint32_t isv : 3;
-  uint32_t zero1 : 5;
-  uint32_t type : 4;
-  uint32_t zero2 : 1;
-  uint32_t dpl : 2;
-  uint32_t p : 1;
+  uint32_t off_15_0  : 16;
+  uint32_t cs        : 16;
+  uint32_t isv       :  3;
+  uint32_t zero1     :  5;
+  uint32_t type      :  4;
+  uint32_t zero2     :  1;
+  uint32_t dpl       :  2;
+  uint32_t p         :  1;
   uint32_t off_31_16 : 16;
   uint32_t off_63_32 : 32;
-  uint32_t rsv : 32;
+  uint32_t rsv       : 32;
 } GateDesc64;
 
 #define GATE64(type, cs, entry, dpl) (GateDesc64) \
@@ -323,6 +326,4 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
   );
 }
 
-#endif
-
-#endif
+#endif // __ASSEMBLER__
