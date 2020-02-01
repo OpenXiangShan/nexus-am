@@ -55,18 +55,11 @@ size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
   return sizeof(*kbd);
 }
 
-
 // AM TIMER (based on rdtsc)
 
 static _DEV_TIMER_DATE_t boot_date;
 static uint32_t freq_mhz = 2000;
 static uint64_t uptsc;
-
-static inline uint64_t rdtsc() {
-  uint32_t lo, hi;
-  asm volatile ("rdtsc": "=a"(lo), "=d"(hi));
-  return ((uint64_t)hi << 32) | lo;
-}
 
 static inline int read_rtc(int reg) {
   outb(0x70, reg);

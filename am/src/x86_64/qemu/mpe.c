@@ -42,10 +42,7 @@ int _cpu(void) {
 }
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
-  intptr_t result;
-  asm volatile ("lock xchg %0, %1":
-    "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
-  return result;
+  return xchg(addr, newval);
 }
 
 void __am_stop_the_world() {

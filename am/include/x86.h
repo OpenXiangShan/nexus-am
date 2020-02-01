@@ -9,16 +9,16 @@
 
 // System Segment type bits
 #define STS_T32A       0x9     // Available 32-bit TSS
-#define STS_IG         0xE     // 32/64-bit Interrupt Gate
-#define STS_TG         0xF     // 32/64-bit Trap Gate
+#define STS_IG         0xe     // 32/64-bit Interrupt Gate
+#define STS_TG         0xf     // 32/64-bit Trap Gate
 
 // EFLAGS register
-#define FL_TF          0x00000100  // Trap Flag
 #define FL_IF          0x00000200  // Interrupt Enable
 
 // Control Register flags
 #define CR0_PE         0x00000001  // Protection Enable
 #define CR0_PG         0x80000000  // Paging
+#define CR4_PAE        0x00000020  // Physical Address Extension
 
 // Page table/directory entry flags
 #define PTE_P          0x001   // Present
@@ -26,18 +26,9 @@
 #define PTE_U          0x004   // User
 #define PTE_PS         0x080   // Large Page (1 GiB or 2 MiB)
 
-// GDT entries
-#define NR_SEG         6       // GDT size
-#define SEG_KCODE      1       // Kernel code
-#define SEG_KDATA      2       // Kernel data/stack
-#define SEG_UCODE      3       // User code
-#define SEG_UDATA      4       // User data/stack
-#define SEG_TSS        5       // Global unique task state segement
-#define KSEL(desc)     (((desc) << 3) | DPL_KERN)
-#define USEL(desc)     (((desc) << 3) | DPL_USER)
-
-// IDT size
-#define NR_IRQ         256     // IDT size
+// GDT selectors
+#define KSEL(seg)      (((seg) << 3) | DPL_KERN)
+#define USEL(seg)      (((seg) << 3) | DPL_USER)
 
 // Interrupts and exceptions
 #define T_IRQ0         32
@@ -97,7 +88,7 @@
   _(128, USER, NOERR)
 
 // AM-specific configurations
-#define MAX_CPU             8
+#define MAX_CPU       8
 #define BOOTREC_ADDR  0x07000
 #define MAINARG_ADDR  0x10000
 
@@ -165,7 +156,7 @@ typedef struct {
 } __attribute__((packed)) TSS64;
 
 // Multiprocesor configuration
-typedef struct {           // configuration table header
+typedef struct {          // configuration table header
   uint8_t  signature[4];  // "PCMP"
   uint16_t length;        // total table length
   uint8_t  version;       // [14]
@@ -178,7 +169,7 @@ typedef struct {           // configuration table header
   uint16_t xlength;       // extended table length
   uint8_t  xchecksum;     // extended table checksum
   uint8_t  reserved;
-} MPConf ;
+} MPConf;
 
 typedef struct {
   int      magic;
@@ -221,6 +212,8 @@ typedef struct {
 #define GATE64(type, cs, entry, dpl) (GateDesc64)             \
   { (uint64_t)(entry) & 0xffff, (cs), 0, 0, (type), 0, (dpl), \
     1, ((uint64_t)(entry) >> 16) & 0xffff, (uint64_t)(entry) >> 32, 0 }
+
+// Instruction wrappers
 
 static inline uint8_t inb(int port) {
   uint8_t data;
@@ -323,6 +316,22 @@ static inline uintptr_t get_cr3() {
 static inline void set_cr3(void *pdir) {
   asm volatile ("mov %0, %%cr3" : : "r"(pdir));
 }
+
+static inline intptr_t xchg(volatile intptr_t *addr, intptr_t newval) {
+  intptr_t result;
+  asm volatile ("lock xchg %0, %1":
+    "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
+  return result;
+}
+
+static inline uint64_t rdtsc() {
+  uint32_t lo, hi;
+  asm volatile ("rdtsc": "=a"(lo), "=d"(hi));
+  return ((uint64_t)hi << 32) | lo;
+}
+
+#define interrupt(id, ax) \
+  asm volatile ("int $" #id : : "a"(ax));
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
   asm volatile (

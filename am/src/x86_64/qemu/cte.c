@@ -129,7 +129,7 @@ int _cte_init(_Context *(*handler)(_Event, _Context *)) {
 }
 
 void _yield() {
-  asm volatile ("int $0x80" : : "a"(-1));
+  interrupt(0x80, -1);
 }
 
 int _intr_read() {
