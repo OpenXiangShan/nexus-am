@@ -93,6 +93,9 @@ static void init_platform() {
   ret2 = sigaddset(&__am_intr_sigmask, SIGUSR1);
   assert(ret2 == 0);
 
+  // disable interrupts by default
+  _intr_write(0);
+
   getcontext(&uc_example);
   __am_get_intr_sigmask(&uc_example.uc_sigmask);
 
