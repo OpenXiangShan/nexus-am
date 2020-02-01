@@ -1,39 +1,24 @@
 #include "x86_64-qemu.h"
 
-const struct mmu_config {
-  int pglevels, pgsize, pgmask;
-  struct ptinfo {
-    const char *name;
-    uintptr_t mask;
-    int shift, bits;
-  } pgtables[];
-} mmu = {
+const struct mmu_config mmu = {
   .pgsize = 4096,
-  .pgmask = 4095,
 #if __x86_64__
-  .pglevels = 4,
+  .ptlevels = 4,
   .pgtables = {
-    { "CR3",  0x000000000000,  0, 0 },
-    { "PML4", 0xff8000000000, 39, 9 },
-    { "PDPT", 0x007fc0000000, 30, 9 },
-    { "PD",   0x00003fe00000, 21, 9 },
-    { "PT",   0x0000001ff000, 12, 9 },
-    { "PAGE", 0x000000000fff,  0, 12 },
+    { "CR3",  0x000000000000,  0,  0 },
+    { "PML4", 0xff8000000000, 39,  9 },
+    { "PDPT", 0x007fc0000000, 30,  9 },
+    { "PD",   0x00003fe00000, 21,  9 },
+    { "PT",   0x0000001ff000, 12,  9 },
   },
 #else
-  .pglevels = 2,
+  .ptlevels = 2,
   .pgtables = {
-    { "CR3",      0x00000000,  0, 0 },
+    { "CR3",      0x00000000,  0,  0 },
     { "PD",       0xffc00000, 22, 10 },
     { "PT",       0x003ff000, 12, 10 },
-    { "PAGE",     0x00000fff,  0, 12 },
   },
 #endif
-};
-
-struct vm_area {
-  _Area area;
-  int kernel;
 };
 
 static const struct vm_area vm_areas[] = {
@@ -52,10 +37,10 @@ static uintptr_t *kpt;
 static void *(*pgalloc)(size_t size);
 static void (*pgfree)(void *);
 
-static void *zalloc(size_t size) {
-  uintptr_t *base = pgalloc(size);
+static void *pgallocz() {
+  uintptr_t *base = pgalloc(mmu.pgsize);
   panic_on(!base, "cannot allocate page");
-  for (int i = 0; i < size / sizeof(uintptr_t); i++) {
+  for (int i = 0; i < mmu.pgsize / sizeof(uintptr_t); i++) {
     base[i] = 0;
   }
   return base;
@@ -66,22 +51,20 @@ static int indexof(uintptr_t addr, const struct ptinfo *info) {
 }
 
 static uintptr_t baseof(uintptr_t addr) {
-  return addr & ~mmu.pgmask;
+  return addr & ~(mmu.pgsize - 1);
 }
 
 static uintptr_t *ptwalk(_AddressSpace *as, uintptr_t addr, int flags) {
   uintptr_t cur = (uintptr_t)&as->ptr;
 
-  for (int i = 0; i <= mmu.pglevels; i++) {
+  for (int i = 0; i <= mmu.ptlevels; i++) {
     const struct ptinfo *ptinfo = &mmu.pgtables[i];
     uintptr_t *pt = (uintptr_t *)cur, next_page;
     int index = indexof(addr, ptinfo);
-//    printf("level %d[%d]: %p\n", i, index, pt[index]);
-    if (i == mmu.pglevels) return &pt[index];
+    if (i == mmu.ptlevels) return &pt[index];
 
     if (!(pt[index] & PTE_P)) {
-      next_page = (uintptr_t)zalloc(mmu.pgsize);
-//      printf("  = allocate %p\n", next_page);
+      next_page = (uintptr_t)pgallocz();
       pt[index] = next_page | PTE_P | flags;
     } else {
       next_page = baseof(pt[index]);
@@ -92,10 +75,10 @@ static uintptr_t *ptwalk(_AddressSpace *as, uintptr_t addr, int flags) {
 }
 
 static void teardown(int level, uintptr_t *pt) {
-  if (level > mmu.pglevels) return;
+  if (level > mmu.ptlevels) return;
   for (int index = 0; index < (1 << mmu.pgtables[level].bits); index++) {
-    if (pt[index] & PTE_P) {
-      teardown(level + 1, (void *)(pt[index] & ~mmu.pgmask));
+    if ((pt[index] & PTE_P) && (pt[index] & PTE_U)) {
+      teardown(level + 1, (void *)baseof(pt[index]));
     }
   }
   if (level >= 1) {
@@ -103,13 +86,13 @@ static void teardown(int level, uintptr_t *pt) {
   }
 }
 
-int _vme_init(void *(*f1)(size_t size), void (*f2)(void *)) {
+int _vme_init(void *(*_pgalloc)(size_t size), void (*_pgfree)(void *)) {
   panic_on(_cpu() != 0, "init VME in non-bootstrap CPU");
-  pgalloc = f1;
-  pgfree  = f2;
+  pgalloc = _pgalloc;
+  pgfree  = _pgfree;
 
 #if __x86_64__
-  kpt = (void *)0x1000; // PML4
+  kpt = (void *)0x1000;
 #else
   _AddressSpace as;
   as.ptr = NULL;
@@ -132,7 +115,7 @@ int _vme_init(void *(*f1)(size_t size), void (*f2)(void *)) {
 }
 
 int _protect(_AddressSpace *as) {
-  uintptr_t *upt = zalloc(mmu.pgsize);
+  uintptr_t *upt = pgallocz();
 
   for (int i = 0; i < LENGTH(vm_areas); i++) {
     const struct vm_area *vma = &vm_areas[i];
@@ -147,14 +130,9 @@ int _protect(_AddressSpace *as) {
     }
   }
 
-  *as = (_AddressSpace) {
-    .pgsize = mmu.pgsize,
-    .area   = uvm_area,
-    .ptr    = (void *)((uintptr_t)upt | PTE_P),
-  };
-
-  set_cr3(as->ptr);
- 
+  as->pgsize = mmu.pgsize;
+  as->area   = uvm_area;
+  as->ptr    = (void *)((uintptr_t)upt | PTE_P | PTE_U);
   return 0;
 }
 
@@ -168,14 +146,12 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   panic_on((uintptr_t)va != ROUNDDOWN(va, mmu.pgsize) ||
            (uintptr_t)pa != ROUNDDOWN(pa, mmu.pgsize), "non-page-boundary address");
 
-  printf("map %p -> %p, %d\n", va, pa, prot);
   uintptr_t *ptentry = ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
-  printf("ptentry: %p\n", ptentry);
   if (prot & _PROT_NONE) {
-    panic_on(!(*ptentry & PTE_P), "unmapping an non-mapped page");
+    panic_on(!(*ptentry & PTE_P), "unmapping a non-mapped page");
     *ptentry = 0;
   } else {
-    panic_on(*ptentry & PTE_P, "remapping an existing page");
+    panic_on(*ptentry & PTE_P, "remapping a mapped page");
     uintptr_t pte = (uintptr_t)pa | PTE_P | PTE_U | ((prot & _PROT_WRITE) ? PTE_W : 0);
     *ptentry = pte;
   }
@@ -210,6 +186,5 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
 #endif
   ctx->GPRx = (uintptr_t)args;
   ctx->uvm = as->ptr;
-  printf("uvm (cr3) = %p\n", ctx->uvm);
   return ctx;
 }

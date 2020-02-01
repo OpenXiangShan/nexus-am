@@ -2,6 +2,7 @@
 #define __X86_64_QEMU_H__
 
 #include <x86.h>
+#include <am.h>
 #include <klib.h>
 #define MAX_CPU 8
 
@@ -15,6 +16,20 @@ struct kernel_stack {
 static inline void *stack_top(struct kernel_stack *stk) {
   return stk->stack + sizeof(stk->stack);
 }
+
+struct mmu_config {
+  int ptlevels, pgsize;
+  struct ptinfo {
+    const char *name;
+    uintptr_t mask;
+    int shift, bits;
+  } pgtables[];
+};
+
+struct vm_area {
+  _Area area;
+  int kernel;
+};
 
 void __am_iret(_Context *ctx);
 

@@ -17,6 +17,19 @@ void _start_c(char *args) {
   }
 }
 
+void __am_bootcpu_init() {
+  _heap = __am_heap_init();
+  __am_lapic_init();
+  __am_ioapic_init();
+  __am_percpu_init();
+}
+
+void __am_percpu_init() {
+  __am_percpu_initgdt();
+  __am_percpu_initlapic();
+  __am_percpu_initirq();
+}
+
 void _putc(char ch) {
   #define COM1 0x3f8
   outb(COM1, ch);

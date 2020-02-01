@@ -5,19 +5,6 @@ volatile uint32_t *__am_lapic;
 int __am_ncpu = 0;
 struct cpu_local __am_cpuinfo[MAX_CPU];
 
-void __am_bootcpu_init() {
-  _heap = __am_heap_init();
-  __am_lapic_init();
-  __am_ioapic_init();
-  __am_percpu_init();
-}
-
-void __am_percpu_init() {
-  __am_percpu_initgdt();
-  __am_percpu_initlapic();
-  __am_percpu_initirq();
-}
-
 _Area __am_heap_init() {
   int32_t magic = 0x5a5aa5a5;
   int32_t step = 1L << 20;
