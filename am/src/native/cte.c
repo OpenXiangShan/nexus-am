@@ -11,6 +11,7 @@ void __am_async_ex();
 void __am_ret_from_trap();
 
 void __am_get_cur_as(_Context *c);
+void __am_get_empty_as(_Context *c);
 void __am_switch(_Context *c);
 
 void __am_irq_handle(_Context *c) {
@@ -124,6 +125,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   assert(ret2 == 0);
   c->rflags = 0;
   c->event = _EVENT_YIELD;
+  __am_get_empty_as(c);
 
   c->rdi = (uintptr_t)arg;
 

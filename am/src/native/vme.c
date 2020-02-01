@@ -38,6 +38,10 @@ void __am_get_cur_as(_Context *c) {
   c->as = cur_as;
 }
 
+void __am_get_empty_as(_Context *c) {
+  c->as = &empty_as;
+}
+
 void __am_switch(_Context *c) {
   if (!vme_enable) return;
 
