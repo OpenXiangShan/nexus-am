@@ -1,115 +1,90 @@
 #include <stdint.h>
-
-struct ELFHeader {
-  uint32_t magic;
-  uint8_t  elf[12];
-  uint16_t type;
-  uint16_t machine;
-  uint32_t version;
-  uint32_t entry;
-  uint32_t phoff;
-  uint32_t shoff;
-  uint32_t flags;
-  uint16_t ehsize;
-  uint16_t phentsize;
-  uint16_t phnum;
-  uint16_t shentsize;
-  uint16_t shnum;
-  uint16_t shstrndx;
-};
-
-struct ProgramHeader {
-  uint32_t type;
-  uint32_t off;
-  uint32_t vaddr;
-  uint32_t paddr;
-  uint32_t filesz;
-  uint32_t memsz;
-  uint32_t flags;
-  uint32_t align;
-};
-
-static inline char in_byte(short port) {
-  char data;
-  __asm__ volatile ("in %1,%0" : "=a" (data) : "d" (port));
-  return data;
-}
-
-static inline int in_long(short port) {
-  int data;
-  __asm__ volatile ("in %1, %0" : "=a" (data) : "d" (port));
-  return data;
-}
-
-static inline void out_byte(short port, char data) {
-  __asm__ volatile ("out %0,%1" : : "a" (data), "d" (port));
-}
-
-static inline void hlt() {
-  __asm__ volatile ("hlt");
-}
+#include <linux/elf.h>
+#include <linux/elf-em.h>
+#include <x86.h>
 
 #define SECTSIZE 512
 
-void readseg(void *, int, int);
-
-struct boot_info {
-  int is_ap;
-  void (*entry)();
-};
-
-void
-bootmain(void) {
-  volatile struct boot_info *boot = (void*)0x7000;
-  int is_ap = boot->is_ap;
-  if (is_ap == 1) {
-    boot->entry();
-  }
-  struct ELFHeader *elf;
-  struct ProgramHeader *ph, *eph;
-  unsigned char *pa, *i;
-
-  elf = (struct ELFHeader*)0x8000;
-
-  readseg(elf, 4096, 0);
-
-  ph = (struct ProgramHeader*)((char *)elf + elf->phoff);
-  eph = ph + elf->phnum;
-  for(; ph < eph; ph ++) {
-    pa = (void *)(ph->paddr);
-    readseg(pa, ph->filesz, ph->off);
-    for (i = pa + ph->filesz; i < pa + ph->memsz; *i++ = 0);
-  }
-
-  char *mainargs = (void *)0x7e00;
-  readseg(mainargs, 512, -512);
-  ((void(*)(const char *))elf->entry)(mainargs);
+static inline void wait_disk(void) {
+  while ((inb(0x1f7) & 0xc0) != 0x40);
 }
 
-void waitdisk(void) {
-  while ((in_byte(0x1F7) & 0xC0) != 0x40);
-}
-
-void readsect(volatile void *dst, int offset) {
-  waitdisk();
-  out_byte(0x1F2, 1);
-  out_byte(0x1F3, offset);
-  out_byte(0x1F4, offset >> 8);
-  out_byte(0x1F5, offset >> 16);
-  out_byte(0x1F6, (offset >> 24) | 0xE0);
-  out_byte(0x1F7, 0x20);
-
-  waitdisk();
+static inline void read_disk(void *buf, int sect) {
+  wait_disk();
+  outb(0x1f2, 1);
+  outb(0x1f3, sect);
+  outb(0x1f4, sect >> 8);
+  outb(0x1f5, sect >> 16);
+  outb(0x1f6, (sect >> 24) | 0xE0);
+  outb(0x1f7, 0x20);
+  wait_disk();
   for (int i = 0; i < SECTSIZE / 4; i ++) {
-    ((int *)dst)[i] = in_long(0x1F0);
+    ((uint32_t *)buf)[i] = inl(0x1f0);
   }
 }
 
-void readseg(void *addr, int count, int offset) {
-  unsigned char *pa = addr;
-  unsigned char *epa = pa + count;
-  pa -= offset % SECTSIZE;
-  offset = (offset / SECTSIZE) + 1 + 1 /* args */;
-  for(; pa < epa; pa += SECTSIZE, offset ++)
-    readsect(pa, offset);
+static inline void copy_from_disk(void *buf, int nbytes, int disk_offset) {
+  uint32_t cur  = (uint32_t)buf & ~511;
+  uint32_t ed   = (uint32_t)buf + nbytes;
+  uint32_t sect = (disk_offset >> 9) + 3;
+  for(; cur < ed; cur += SECTSIZE, sect ++)
+    read_disk((void *)cur, sect);
+}
+
+static void load_program(uint32_t filesz, uint32_t memsz, uint32_t paddr, uint32_t offset) {
+  copy_from_disk((void *)paddr, filesz, offset);
+  char *bss = (void *)(paddr + filesz);
+  for (uint32_t i = filesz; i != memsz; i++) {
+    *bss++ = 0;
+  }
+}
+
+static void load_elf64(struct elf64_hdr *elf) {
+  struct elf64_phdr *ph = (struct elf64_phdr *)((char *)elf + elf->e_phoff);
+  for (int i = 0; i < elf->e_phnum; i++, ph++) {
+    load_program(
+      (uint32_t)ph->p_filesz,
+      (uint32_t)ph->p_memsz,
+      (uint32_t)ph->p_paddr,
+      (uint32_t)ph->p_offset
+    );
+  }
+}
+
+static void load_elf32(struct elf32_hdr *elf) {
+  struct elf32_phdr *ph = (struct elf32_phdr *)((char *)elf + elf->e_phoff);
+  for (int i = 0; i < elf->e_phnum; i++, ph++) {
+    load_program(
+      (uint32_t)ph->p_filesz,
+      (uint32_t)ph->p_memsz,
+      (uint32_t)ph->p_paddr,
+      (uint32_t)ph->p_offset
+    );
+  }
+}
+
+void load_kernel(void) {
+  struct elf32_hdr *elf32 = (void *)0x8000;
+  struct elf64_hdr *elf64 = (void *)0x8000;
+  int is_ap = boot_record()->is_ap;
+
+  if (!is_ap) {
+    // load argument (string) to memory
+    copy_from_disk((void *)MAINARG_ADDR, 1024, -1024);
+    // load elf header to memory
+    copy_from_disk(elf32, 4096, 0);
+    if (elf32->e_machine == EM_X86_64) {
+      load_elf64(elf64);
+    } else {
+      load_elf32(elf32);
+    }
+  } else {
+    // everything should be loaded
+  }
+
+  if (elf32->e_machine == EM_X86_64) {
+    ((void(*)())(uint32_t)elf64->e_entry)();
+  } else {
+    ((void(*)())(uint32_t)elf32->e_entry)();
+  }
 }

@@ -97,7 +97,7 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   else {
     pp->is_mapped = false;
   }
-  
+
   return 0;
 }
 

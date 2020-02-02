@@ -67,13 +67,17 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  #warning "TODO";
+  return NULL;
+  /*
   _Context *c = (_Context*)ustack.end - 1;
 
   c->as = as;
   c->epc = (uintptr_t)entry;
   c->status = 0x1;
   return c;
+  */
 }
 
 void __am_tlb_refill() {

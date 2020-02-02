@@ -1,7 +1,23 @@
 #include <am.h>
-#include <x86.h>
 #include <nemu.h>
+#include "x86-nemu.h"
 
+typedef uint32_t PTE;
+typedef uint32_t PDE;
+
+#define NR_PDE         1024    // # directory entries per page directory
+#define NR_PTE         1024    // # PTEs per page table
+#define PGSHFT         12      // log2(PGSIZE)
+#define PTXSHFT        12      // Offset of PTX in a linear address
+#define PDXSHFT        22      // Offset of PDX in a linear address
+
+#define PDX(va)          (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
+#define PTX(va)          (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
+#define OFF(va)          ((uint32_t)(va) & 0xfff)
+#define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
+#define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
+#define PTE_ADDR(pte)    ((uint32_t)(pte) & ~0xfff)
+#define PGADDR(d, t, o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
 static PDE kpdirs[NR_PDE] PG_ALIGN = {};
@@ -93,7 +109,10 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  #warning "TODO"
+  return NULL;
+  /*
   ustack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
   uintptr_t *esp = ustack.end;
   esp[1] = esp[2] = esp[3] = 0;
@@ -105,5 +124,5 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
   c->eip = (uintptr_t)entry;
   c->eflags = 0x2 | FL_IF;
   return c;
-//  return NULL;
+  */
 }

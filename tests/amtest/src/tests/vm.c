@@ -31,7 +31,7 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
         (ev.cause & _PROT_WRITE) ? "[write fail]" : "");
       break;
     case _EVENT_SYSCALL:
-      printf("%d ", ctx->GPR1);
+      printf("%d ", ctx->GPRx);
       break;
     default:
       assert(0);
@@ -54,7 +54,7 @@ uint8_t code[] = {
 };
 
 void vm_test() {
-  if (strcmp(__ISA__, "x86") != 0) {
+  if (strncmp(__ISA__, "x86", 3) != 0) {
     printf("VM test: only runs on x86.\n");
     return;
   }
@@ -69,16 +69,12 @@ void vm_test() {
   _map(&prot, ptr, up1, _PROT_WRITE);
 
   memcpy(up1, code, sizeof(code));
-  printf("Code copied to %x execute\n", ptr);
+  printf("Code copied to %p (physical %p) execute\n", ptr, up1);
 
   static uint8_t kstk[4096];
   _Area k = { .start = kstk, .end = kstk + 4096 };
-  _Area u = { .start = ptr + pgsz, .end = ptr + pgsz };
-
-  uctx = _ucontext(&prot, u, k, ptr, 0);
+  uctx = _ucontext(&prot, k, ptr);
 
   _intr_write(1);
-  while (1) {
-    _yield();
-  }
+  while (1) ;
 }

@@ -1,6 +1,11 @@
 #include <am.h>
 #include <x86.h>
+#include "x86-nemu.h"
 #include <klib.h>
+
+#define NR_IRQ         256     // IDT size
+#define SEG_KCODE      1
+#define SEG_KDATA      2
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
@@ -37,18 +42,18 @@ _Context* __am_irq_handle(_Context *c) {
 }
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
-  static GateDesc idt[NR_IRQ];
+  static GateDesc32 idt[NR_IRQ];
 
   // initialize IDT
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
-    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_vecnull, DPL_KERN);
+    idt[i]  = GATE32(STS_TG, KSEL(SEG_KCODE), __am_vecnull, DPL_KERN);
   }
 
   // ----------------------- interrupts ----------------------------
-  idt[32]   = GATE(STS_IG32, KSEL(SEG_KCODE), __am_irq0,   DPL_KERN);
+  idt[32]   = GATE32(STS_IG, KSEL(SEG_KCODE), __am_irq0,    DPL_KERN);
   // ---------------------- system call ----------------------------
-  idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_vecsys, DPL_USER);
-  idt[0x81] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_vectrap, DPL_KERN);
+  idt[0x80] = GATE32(STS_TG, KSEL(SEG_KCODE), __am_vecsys,  DPL_USER);
+  idt[0x81] = GATE32(STS_TG, KSEL(SEG_KCODE), __am_vectrap, DPL_KERN);
 
   set_idt(idt, sizeof(idt));
 

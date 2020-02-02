@@ -24,7 +24,7 @@ C++ to perform the initialization. See `src/platform.cpp` for details. Also see 
 * `_DEVREG_TIMER_UPTIME` -> `gettimeofday()`
 * `_DEVREG_TIMER_DATE` -> `localtime()`
 * `_DEVREG_INPUT_KBD` -> SDL key events
-* `_DEVREG_VIDEO_FBCTL` -> SDL texture update & render
+* `_DEVREG_VIDEO_FBCTRL` -> SDL texture update & render
 
 We provide an auto-sync frame buffer by periodically call SDL APIs to render the screen.
 The contents written into frame buffer by applications will be eventually rendered.
