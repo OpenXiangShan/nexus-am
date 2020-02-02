@@ -2,7 +2,8 @@
 from pathlib import Path
 import re, shutil
 
-AM_HOME = (Path(__file__) / '../..').resolve()
+AM_HOME    = (Path(__file__) / '../..').resolve()
+EXPORT_DIR = AM_HOME / 'tools' / 'export'
 
 WHITE_LIST = [
   r'.gitignore',
@@ -31,6 +32,10 @@ BLACK_LIST = [
   r'klib/src/stdio.c',
   r'klib/src/stdlib.c',
   r'klib/src/string.c',
+  r'.o$',
+  r'.a$',
+  r'.d$',
+  r'mbr$',
 ]
 
 
@@ -43,15 +48,23 @@ def list_filter(path, xs):
       return True
   return False
 
-for abspath in AM_HOME.rglob('*'):
-  if abspath.is_file():
-    path = abspath.relative_to(AM_HOME)
-    path_str = '/' + str(path)
-    white = list_filter(path_str, WHITE_LIST)
-    black = list_filter(path_str, BLACK_LIST)
-    if white and not black:
-      print(path)
+def files():
+  for abspath in AM_HOME.rglob('*'):
+    if abspath.is_file():
+      path = abspath.relative_to(AM_HOME)
+      path_str = '/' + str(path)
+      white = list_filter(path_str, WHITE_LIST)
+      black = list_filter(path_str, BLACK_LIST)
+      if white and not black:
+        yield abspath, path
+  
+try:
+  shutil.rmtree(EXPORT_DIR)
+except:
+  pass
 
-export_dir = AM_HOME / 'scripts' / 'export'
-print(export_dir)
-shutil.rmtree(export_dir)
+for abspath, relpath in files():
+  src = abspath
+  dst = EXPORT_DIR / relpath
+  dst.parent.mkdir(parents=True, exist_ok=True)
+  shutil.copyfile(src, dst)
