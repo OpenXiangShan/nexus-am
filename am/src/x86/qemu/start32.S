@@ -1,5 +1,4 @@
-#include <x86.h>
-#include "x86_64-qemu.h"
+#include "x86-qemu.h"
 
 .globl _start
 _start:

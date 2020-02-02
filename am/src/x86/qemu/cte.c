@@ -1,120 +1,71 @@
-#include "../x86-qemu.h"
+#include "x86-qemu.h"
 #include <stdarg.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
-static GateDesc idt[NR_IRQ];
+#if __x86_64__
+static GateDesc64 idt[NR_IRQ];
+#define GATE GATE64
+#else
+static GateDesc32 idt[NR_IRQ];
+#define GATE GATE32
+#endif
 
-#define IRQHANDLE_DECL(id, dpl, err)  void __am_irq##id();
+#define IRQHANDLE_DECL(id, dpl, err) \
+  void __am_irq##id();
+
 IRQS(IRQHANDLE_DECL)
 void __am_irqall();
 
-int _cte_init(_Context *(*handler)(_Event, _Context *)) {
-  if (_cpu() != 0) panic("init CTE in non-bootstrap CPU");
-
-  for (int i = 0; i < NR_IRQ; i ++) {
-    idt[i] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_irqall, DPL_KERN);
-  }
-#define IDT_ENTRY(id, dpl, err) \
-  idt[id] = GATE(STS_TG32, KSEL(SEG_KCODE), __am_irq##id, DPL_##dpl);
-  IRQS(IDT_ENTRY)
-
-  user_handler = handler;
-  __am_percpu_initirq();
-  return 0;
-}
-
-void _yield() {
-  if (!user_handler) panic("no interrupt handler");
-  asm volatile ("int $0x80" : : "a"(-1));
-}
-
-int _intr_read() {
-  if (!user_handler) panic("no interrupt handler");
-  return (get_efl() & FL_IF) != 0;
-}
-
-void _intr_write(int enable) {
-  if (!user_handler) panic("no interrupt handler");
-  if (enable) {
-    sti();
-  } else {
-    cli();
-  }
-}
-
-static void panic_on_return() { panic("kernel context returns"); }
-
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Area stk_safe = {
-    (void *)ROUNDUP(stack.start, 64),
-    (void *)ROUNDDOWN(stack.end, 64),
-  };
-
-  _Context *ctx = (_Context *)stk_safe.start;
-  *ctx = (_Context) {
-    .eax = 0, .ebx = 0, .ecx = 0, .edx = 0,
-    .esi = 0, .edi = 0, .ebp = 0, .esp3 = 0,
-    .ss0 = 0, .esp0 = (uint32_t)stk_safe.end,
-    .cs = KSEL(SEG_KCODE), .eip = (uint32_t)entry, .eflags = FL_IF,
-    .ds = KSEL(SEG_KDATA), .es  = KSEL(SEG_KDATA), .ss = KSEL(SEG_KDATA),
-    .uvm = NULL,
-  };
-
-  void *values[] = { panic_on_return, arg }; // copy to stack
-  ctx->esp0 -= sizeof(values);
-  for (int i = 0; i < LENGTH(values); i++) {
-    ((uintptr_t *)ctx->esp0)[i] = (uintptr_t)values[i];
-  }
-  return ctx;
-}
-
-#define IRQ    T_IRQ0 + 
-#define MSG(m) ev.msg = m;
-
-void __am_irq_handle(TrapFrame *tf) {
-  // saving processor context
-  _Context ctx = {
-    .eax = tf->eax, .ebx = tf->ebx, .ecx  = tf->ecx, .edx  = tf->edx,
-    .esi = tf->esi, .edi = tf->edi, .ebp  = tf->ebp, .esp3 = 0,
-    .eip = tf->eip, .eflags = tf->eflags,
-    .cs  = tf->cs,  .ds  = tf->ds,  .es   = tf->es,  .ss   = 0,
-    .ss0 = KSEL(SEG_KDATA),         .esp0 = (uint32_t)(tf + 1),
-    .uvm = CPU->uvm,
-  };
-
-  if (tf->cs & DPL_USER) { // interrupt at user code
-    ctx.ss = tf->ss;
-    ctx.esp3 = tf->esp;
-  } else { // interrupt at kernel code
-    // tf (without ss0/esp0) is everything saved on the stack
-    ctx.esp0 -= sizeof(uint32_t) * 2;
-  }
-
-  // sending end-of-interrupt
-  if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
-    __am_lapic_eoi();
-  }
-
-  // creating an event
+static void __am_irq_handle_internal(struct trap_frame *tf) {
+  _Context saved_ctx;
   _Event ev = {
     .event = _EVENT_NULL,
     .cause = 0, .ref = 0,
     .msg = "(no message)",
   };
-  
+ 
+#if __x86_64
+  saved_ctx        = tf->saved_context;
+  saved_ctx.rip    = tf->rip;
+  saved_ctx.cs     = tf->cs;
+  saved_ctx.rflags = tf->rflags;
+  saved_ctx.rsp    = tf->rsp;
+  saved_ctx.rsp0   = CPU->tss.rsp0;
+  saved_ctx.ss     = tf->ss;
+  saved_ctx.uvm    = (void *)get_cr3();
+#else
+  saved_ctx        = tf->saved_context;
+  saved_ctx.eip    = tf->eip;
+  saved_ctx.cs     = tf->cs;
+  saved_ctx.eflags = tf->eflags;
+  saved_ctx.esp0   = CPU->tss.esp0;
+  saved_ctx.ss3    = USEL(SEG_UDATA);
+  saved_ctx.uvm    = (void *)get_cr3();
+  if (!(tf->cs & DPL_USER)) {
+    saved_ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
+  }
+#endif
+
+  #define IRQ    T_IRQ0 + 
+  #define MSG(m) ev.msg = m;
+
+  if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
+    __am_lapic_eoi();
+  }
+
   switch (tf->irq) {
     case IRQ 0: MSG("timer interrupt (lapic)")
       ev.event = _EVENT_IRQ_TIMER; break;
     case IRQ 1: MSG("I/O device IRQ1 (keyboard)")
       ev.event = _EVENT_IRQ_IODEV; break;
     case EX_SYSCALL: MSG("int $0x80 trap: _yield() or system call")
-      if ((int32_t)tf->eax == -1) {
+      if ((int32_t)saved_ctx.GPR1 == -1) {
         ev.event = _EVENT_YIELD;
       } else {
         ev.event = _EVENT_SYSCALL;
       }
       break;
-    case EX_DIV: MSG("divide by zero")
+    case EX_DE: MSG("DE #0 divide by zero")
       ev.event = _EVENT_ERROR; break;
     case EX_UD: MSG("UD #6 invalid opcode")
       ev.event = _EVENT_ERROR; break;
@@ -132,69 +83,98 @@ void __am_irq_handle(TrapFrame *tf) {
       ev.event = _EVENT_ERROR; break;
     case EX_PF: MSG("PF #14, page fault, @cause: _PROT_XXX")
       ev.event = _EVENT_PAGEFAULT;
-      if (tf->err & 0x1) ev.cause |= _PROT_NONE;
-      if (tf->err & 0x2) ev.cause |= _PROT_WRITE;
-      else               ev.cause |= _PROT_READ;
+      if (tf->errcode & 0x1) ev.cause |= _PROT_NONE;
+      if (tf->errcode & 0x2) ev.cause |= _PROT_WRITE;
+      else                   ev.cause |= _PROT_READ;
       ev.ref = get_cr2();
       break;
     default: MSG("unrecognized interrupt/exception")
       ev.event = _EVENT_ERROR;
-      ev.cause = tf->err;
+      ev.cause = tf->errcode;
       break;
   }
 
-  // call user handlers (registered in _cte_init)
-  _Context *ret_ctx = &ctx;
-  if (user_handler) {
-    _Context *next = user_handler(ev, &ctx);
-    if (!next) {
-      panic("return to a null context");
-    }
-    ret_ctx = next;
+  _Context *ret_ctx = user_handler(ev, &saved_ctx);
+
+  if (ret_ctx->uvm) {
+    set_cr3(ret_ctx->uvm);
+#if __x86_64__
+    CPU->tss.rsp0 = ret_ctx->rsp0;
+#else
+    CPU->tss.ss0  = KSEL(SEG_KDATA);
+    CPU->tss.esp0 = ret_ctx->esp0;
+#endif
   }
 
-  // Return to context @ret_ctx
-#define REGS_KERNEL(_) \
-  _(eflags) _(cs) _(eip) _(ds) _(es) \
-  _(eax) _(ecx) _(edx) _(ebx) _(esp0) _(ebp) _(esi) _(edi)
-#define REGS_USER(_) \
-  _(ss) _(esp3) REGS_KERNEL(_)
-#define push(r) "push %[" #r "];"      // -> push %[eax]
-#define def(r)  , [r] "m"(ret_ctx->r)  // -> [eax] "m"(ret_ctx->eax)
- 
-  CPU->uvm = ret_ctx->uvm;
-  if (ret_ctx->cs & DPL_USER) { // return to user
-    _AddressSpace *uvm = ret_ctx->uvm;
-    if (uvm) {
-      set_cr3(uvm->ptr);
-    }
-    __am_thiscpu_setstk0(ret_ctx->ss0, ret_ctx->esp0);
-    asm volatile goto (
-      "movl %[esp], %%esp;" // move stack
-      REGS_USER(push)       // push reg context onto stack
-      "jmp %l[iret]"        // goto iret
-    : : [esp] "m"(ret_ctx->esp0)
-        REGS_USER(def) : : iret );
-  } else { // return to kernel
-    asm volatile goto (
-      "movl %[esp], %%esp;" // move stack
-      REGS_KERNEL(push)     // push reg context onto stack
-      "jmp %l[iret]"        // goto iret
-    : : [esp] "m"(ret_ctx->esp0)
-        REGS_KERNEL(def) : : iret );
+  __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
+}
+
+void __am_irq_handle(struct trap_frame *tf) {
+  stack_switch_call(stack_top(&CPU->irq_stack), __am_irq_handle_internal, (uintptr_t)tf);
+}
+
+int _cte_init(_Context *(*handler)(_Event, _Context *)) {
+  panic_on(_cpu() != 0, "init CTE in non-bootstrap CPU");
+  panic_on(!handler, "no interrupt handler");
+
+  for (int i = 0; i < NR_IRQ; i ++) {
+    idt[i]  = GATE(STS_TG, KSEL(SEG_KCODE), __am_irqall,  DPL_KERN);
   }
-iret:
-  asm volatile (
-    "popal;"     // restore context
-    "popl %es;"
-    "popl %ds;"
-    "iret;"      // interrupt return
-  );
+#define IDT_ENTRY(id, dpl, err) \
+    idt[id] = GATE(STS_TG, KSEL(SEG_KCODE), __am_irq##id, DPL_##dpl);
+  IRQS(IDT_ENTRY)
+
+  user_handler = handler;
+  return 0;
+}
+
+void _yield() {
+  interrupt(0x80, -1);
+}
+
+int _intr_read() {
+  return (get_efl() & FL_IF) != 0;
+}
+
+void _intr_write(int enable) {
+  if (enable) {
+    sti();
+  } else {
+    cli();
+  }
+}
+
+static void panic_on_return() { panic("kernel context returns"); }
+
+_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
+  _Context *ctx = (_Context *)stack.start;
+  *ctx = (_Context) { 0 };
+
+#if __x86_64__
+#define sp rsp
+  ctx->rsp    = (uintptr_t)stack.end;
+  ctx->cs     = KSEL(SEG_KCODE);
+  ctx->rip    = (uintptr_t)entry;
+  ctx->rflags = FL_IF;
+  ctx->rdi    = (uintptr_t)arg;
+  void *stk[] = { panic_on_return }; 
+#else
+#define sp esp
+  ctx->esp    = (uintptr_t)stack.end;
+  ctx->ds     = KSEL(SEG_KDATA);
+  ctx->cs     = KSEL(SEG_KCODE);
+  ctx->eip    = (uint32_t)entry;
+  ctx->eflags = FL_IF;
+  void *stk[] = { panic_on_return, arg }; 
+#endif
+  ctx->sp -= sizeof(stk);
+  for (int i = 0; i < LENGTH(stk); i++) {
+    ((uintptr_t *)ctx->sp)[i] = (uintptr_t)stk[i];
+  }
+  return ctx;
 }
 
 void __am_percpu_initirq() {
-  if (user_handler) {
-    __am_ioapic_enable(IRQ_KBD, 0);
-    set_idt(idt, sizeof(idt));
-  }
+  __am_ioapic_enable(IRQ_KBD, 0);
+  set_idt(idt, sizeof(idt));
 }

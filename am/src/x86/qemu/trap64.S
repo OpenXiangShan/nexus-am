@@ -1,4 +1,4 @@
-#include <x86.h>
+#include "x86-qemu.h"
 
 trap:
   cli
@@ -18,7 +18,7 @@ trap:
   pushq %rcx
   pushq %rbx
   pushq %rax
-  pushq $0  //uvm
+  pushq $0  // uvm, saved in __am_irq_handle
 
   movq  %rsp, %rdi
   call  __am_irq_handle

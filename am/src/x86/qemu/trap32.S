@@ -1,4 +1,4 @@
-#include "x86_64-qemu.h"
+#include "x86-qemu.h"
 
 trap:
   cli
