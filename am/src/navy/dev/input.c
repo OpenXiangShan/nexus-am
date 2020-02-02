@@ -22,7 +22,7 @@ int __am_event_thread(void) {
   if (event.type == NDL_EVENT_TIMER) {
     __am_set_systime(event.data);
   }
-  
+
   if (event.type == NDL_EVENT_KEYUP || event.type == NDL_EVENT_KEYDOWN) {
     int keydown = event.type == NDL_EVENT_KEYDOWN;
     int scancode = event.data;

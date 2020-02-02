@@ -20,7 +20,7 @@ static int event_thread(void *args) {
     SDL_WaitEvent(&event);
     switch (event.type) {
       case SDL_QUIT: exit(0); break;
-      case SDL_KEYDOWN: 
+      case SDL_KEYDOWN:
       case SDL_KEYUP:
         {
           SDL_Keysym k = event.key.keysym;

@@ -6,7 +6,7 @@ void memory_test();
 
 int main() {
   printf("Test start!\n");
-  //printk_test();
+  printk_test();
   memory_test();
   printf("Test end!\n");
   return 0;
