@@ -8,11 +8,17 @@ EXPORT_DIR = AM_HOME / 'tools' / 'export'
 WHITE_LIST = [
   r'.gitignore',
   r'x86-qemu',
+  r'x86_64-qemu',
   r'native',
   r'^/*$',
   r'^/am/*$',
-  r'^/tests/',
-  r'^/apps/',
+  r'^/tests/amtest/',
+  r'^/tests/klibtest/',
+  r'^/apps/coremark/',
+  r'^/apps/dhrystone/',
+  r'^/apps/fceux/',
+  r'^/apps/litenes/',
+  r'^/apps/microbench/',
   r'^/libs/',
   r'/am/src/x86/qemu',
   r'/am/include/x86.h',
@@ -26,8 +32,6 @@ BLACK_LIST = [
   r'/build/',
   r'-navy',
   r'.git',
-  r'/nesemu2/',
-  r'/fceux/',
   r'README.md',
   r'.DS_Store',
   r'klib/src/stdio.c',
@@ -38,7 +42,6 @@ BLACK_LIST = [
   r'.d$',
   r'mbr$',
 ]
-
 
 def convert(r):
   return r.replace('.', r'\.').replace('*', r'[^/]*')
