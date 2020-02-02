@@ -62,8 +62,8 @@ gdt_ptr:
   .quad gdt64_begin
 
 gdt64_begin:
-  .long 0x00000000 # 0: null desc
+  .long 0x00000000  // 0: null desc
   .long 0x00000000
-  .long 0x00000000 # 1: code
+  .long 0x00000000  // 1: code
   .long 0x00209800
 gdt64_end:
