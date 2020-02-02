@@ -95,6 +95,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
+  if (!ret_ctx) ret_ctx = &saved_ctx;
 
   if (ret_ctx->uvm) {
     set_cr3(ret_ctx->uvm);
@@ -106,7 +107,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 #endif
   }
 
-  __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
+  __am_iret(ret_ctx);
 }
 
 void __am_irq_handle(struct trap_frame *tf) {
