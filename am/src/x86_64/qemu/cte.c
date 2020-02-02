@@ -147,18 +147,12 @@ void _intr_write(int enable) {
 static void panic_on_return() { panic("kernel context returns"); }
 
 _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-   _Area stk_aligned = {
-    (void *)ROUNDUP(stack.start, 16),
-    (void *)ROUNDDOWN(stack.end, 16),
-  };
-  uintptr_t stk_top = (uintptr_t)stk_aligned.end;
-
-  _Context *ctx = (_Context *)stk_aligned.start;
+  _Context *ctx = (_Context *)stack.start;
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
 #define sp rsp
-  ctx->rsp    = stk_top;
+  ctx->rsp    = (uintptr_t)stack.end;
   ctx->cs     = KSEL(SEG_KCODE);
   ctx->rip    = (uintptr_t)entry;
   ctx->rflags = FL_IF;
@@ -166,7 +160,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   void *stk[] = { panic_on_return }; 
 #else
 #define sp esp
-  ctx->esp    = stk_top;
+  ctx->esp    = (uintptr_t)stack.end;
   ctx->ds     = KSEL(SEG_KDATA);
   ctx->cs     = KSEL(SEG_KCODE);
   ctx->eip    = (uint32_t)entry;

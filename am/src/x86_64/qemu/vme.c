@@ -159,32 +159,26 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
-  _Area stk_aligned = {
-    (void *)ROUNDUP(kstack.start, 16),
-    (void *)ROUNDDOWN(kstack.end, 16),
-  };
-  uintptr_t stk_top = (uintptr_t)stk_aligned.end;
-
-  _Context *ctx = (_Context *)stk_aligned.start;
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *ctx = (_Context *)kstack.start;
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
-  ctx->cs = USEL(SEG_UCODE);
-  ctx->rip = (uintptr_t)entry;
+  ctx->cs     = USEL(SEG_UCODE);
+  ctx->ss     = USEL(SEG_UDATA);
+  ctx->rip    = (uintptr_t)entry;
   ctx->rflags = FL_IF;
-  ctx->ss = USEL(SEG_UDATA);
-  ctx->rsp = ROUNDDOWN(ustack.end, 16);
-  ctx->rsp0 = stk_top;
+  ctx->rsp    = (uintptr_t)uvm_area.end;
+  ctx->rsp0   = (uintptr_t)kstack.end;
 #else
-  ctx->cs = USEL(SEG_UCODE);
-  ctx->eip = (uint32_t)entry;
+  ctx->cs     = USEL(SEG_UCODE);
+  ctx->ds     = USEL(SEG_UDATA);
+  ctx->ss3    = USEL(SEG_UDATA);
+  ctx->eip    = (uintptr_t)entry;
   ctx->eflags = FL_IF;
-  ctx->ds = ctx->ss3 = USEL(SEG_UDATA);
-  ctx->esp0 = stk_top;
-  ctx->esp = ROUNDDOWN(ustack.end, 16);
+  ctx->esp    = (uintptr_t)uvm_area.end;
+  ctx->esp0   = (uintptr_t)kstack.end;
 #endif
-  ctx->GPRx = (uintptr_t)args;
   ctx->uvm = as->ptr;
   return ctx;
 }
