@@ -21,7 +21,7 @@ static int scan_code[] = {
      15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 43,
      58, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 28,
      42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-     29, 91, 56, 57, 56, 29, 
+     29, 91, 56, 57, 56, 29,
      72, 80, 75, 77
 };
 
@@ -328,7 +328,7 @@ void __am_percpu_initlapic(void) {
   lapicw(SVR, ENABLE | (T_IRQ0 + IRQ_SPURIOUS));
   lapicw(TDCR, X1);
   lapicw(TIMER, PERIODIC | (T_IRQ0 + IRQ_TIMER));
-  lapicw(TICR, 10000000); 
+  lapicw(TICR, 10000000);
   lapicw(LINT0, MASKED);
   lapicw(LINT1, MASKED);
   if (((__am_lapic[VER]>>16) & 0xFF) >= 4)
@@ -360,8 +360,8 @@ void __am_lapic_bootap(uint32_t apicid, void *addr) {
   lapicw(ICRHI, apicid<<24);
   lapicw(ICRLO, INIT | LEVEL | ASSERT);
   lapicw(ICRLO, INIT | LEVEL);
-  
- for (i = 0; i < 2; i++){
+
+  for (i = 0; i < 2; i++){
     lapicw(ICRHI, apicid<<24);
     lapicw(ICRLO, STARTUP | ((uintptr_t)addr>>12));
   }

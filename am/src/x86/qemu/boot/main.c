@@ -67,12 +67,12 @@ void load_kernel(void) {
   struct elf32_hdr *elf32 = (void *)0x8000;
   struct elf64_hdr *elf64 = (void *)0x8000;
   int is_ap = boot_record()->is_ap;
-  
+
   if (!is_ap) {
     // load argument (string) to memory
     copy_from_disk((void *)MAINARG_ADDR, 1024, -1024);
     // load elf header to memory
-    copy_from_disk(elf32, 4096, 0); 
+    copy_from_disk(elf32, 4096, 0);
     if (elf32->e_machine == EM_X86_64) {
       load_elf64(elf64);
     } else {

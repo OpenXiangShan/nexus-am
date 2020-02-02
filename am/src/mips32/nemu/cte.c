@@ -20,7 +20,7 @@ _Context* __am_irq_handle(_Context *c) {
       case 0: ev.event = _EVENT_IRQ_TIMER; break;
       case 2:
       case 3: __am_tlb_refill(); return next;
-      case 8: 
+      case 8:
         syscall_instr = *(uint32_t *)(c->epc);
         ev.event = ((syscall_instr >> 6) == 1) ? _EVENT_YIELD : _EVENT_SYSCALL;
         c->epc += 4;

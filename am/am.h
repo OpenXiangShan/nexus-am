@@ -36,7 +36,7 @@ enum {
 // Memory area for [@start, @end)
 typedef struct _Area {
   void *start, *end;
-} _Area; 
+} _Area;
 
 // An event of type @event, caused by @cause of pointer @ref
 typedef struct _Event {

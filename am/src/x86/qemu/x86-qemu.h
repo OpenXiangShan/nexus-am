@@ -15,7 +15,6 @@
 #ifndef __ASSEMBLER__
 
 #include <am.h>
-#include <klib.h>
 
 #define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 #define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))

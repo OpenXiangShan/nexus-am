@@ -23,7 +23,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     .cause = 0, .ref = 0,
     .msg = "(no message)",
   };
- 
+
 #if __x86_64
   saved_ctx        = tf->saved_context;
   saved_ctx.rip    = tf->rip;
@@ -46,7 +46,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 #endif
 
-  #define IRQ    T_IRQ0 + 
+  #define IRQ    T_IRQ0 +
   #define MSG(m) ev.msg = m;
 
   if (IRQ 0 <= tf->irq && tf->irq < IRQ 32) {
@@ -157,7 +157,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   ctx->rip    = (uintptr_t)entry;
   ctx->rflags = FL_IF;
   ctx->rdi    = (uintptr_t)arg;
-  void *stk[] = { panic_on_return }; 
+  void *stk[] = { panic_on_return };
 #else
 #define sp esp
   ctx->esp    = (uintptr_t)stack.end;
@@ -165,7 +165,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   ctx->cs     = KSEL(SEG_KCODE);
   ctx->eip    = (uint32_t)entry;
   ctx->eflags = FL_IF;
-  void *stk[] = { panic_on_return, arg }; 
+  void *stk[] = { panic_on_return, arg };
 #endif
   ctx->sp -= sizeof(stk);
   for (int i = 0; i < LENGTH(stk); i++) {

@@ -58,7 +58,6 @@ void _halt(int code) {
   }
   outw(0x604, 0x2000); // offer of qemu :)
   while (1) hlt();
-
 }
 
 _Area __am_heap_init() {

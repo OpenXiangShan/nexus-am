@@ -9,7 +9,7 @@ extern "C" {
 
 // =========================== AM Devices ============================
 
-#define _DEV_PERFCNT 0x0000ac01 // AM Virtual Performance Counter 
+#define _DEV_PERFCNT 0x0000ac01 // AM Virtual Performance Counter
 #define _DEV_INPUT   0x0000ac02 // AM Virtual Input Device
 #define _DEV_TIMER   0x0000ac03 // AM Virtual Timer
 #define _DEV_VIDEO   0x0000ac04 // AM Virtual Video Controller
