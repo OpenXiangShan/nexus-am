@@ -1,6 +1,5 @@
 #include <stdint.h>
-#include <linux/elf.h>
-#include <linux/elf-em.h>
+#include <elf.h>
 #include <x86.h>
 
 #define SECTSIZE 512
@@ -39,8 +38,8 @@ static void load_program(uint32_t filesz, uint32_t memsz, uint32_t paddr, uint32
   }
 }
 
-static void load_elf64(struct elf64_hdr *elf) {
-  struct elf64_phdr *ph = (struct elf64_phdr *)((char *)elf + elf->e_phoff);
+static void load_elf64(Elf64_Ehdr *elf) {
+  Elf64_Phdr *ph = (Elf64_Phdr *)((char *)elf + elf->e_phoff);
   for (int i = 0; i < elf->e_phnum; i++, ph++) {
     load_program(
       (uint32_t)ph->p_filesz,
@@ -51,8 +50,8 @@ static void load_elf64(struct elf64_hdr *elf) {
   }
 }
 
-static void load_elf32(struct elf32_hdr *elf) {
-  struct elf32_phdr *ph = (struct elf32_phdr *)((char *)elf + elf->e_phoff);
+static void load_elf32(Elf32_Ehdr *elf) {
+  Elf32_Phdr *ph = (Elf32_Phdr *)((char *)elf + elf->e_phoff);
   for (int i = 0; i < elf->e_phnum; i++, ph++) {
     load_program(
       (uint32_t)ph->p_filesz,
@@ -64,8 +63,8 @@ static void load_elf32(struct elf32_hdr *elf) {
 }
 
 void load_kernel(void) {
-  struct elf32_hdr *elf32 = (void *)0x8000;
-  struct elf64_hdr *elf64 = (void *)0x8000;
+  Elf32_Ehdr *elf32 = (void *)0x8000;
+  Elf64_Ehdr *elf64 = (void *)0x8000;
   int is_ap = boot_record()->is_ap;
 
   if (!is_ap) {
