@@ -132,7 +132,8 @@ BlitScreen(uint8 *XBuf)
 
 	int scrw = NWIDTH;
 
+
   // ensure that the display is updated
-  draw_rect(canvas, xo, yo, scrw, s_tlines);
+  draw_rect(canvas, xo + (screen_width() - 256) / 2, yo + (screen_height() - 240) / 2, scrw, s_tlines);
   draw_sync();
 }
