@@ -58,7 +58,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     case IRQ 1: MSG("I/O device IRQ1 (keyboard)")
       ev.event = _EVENT_IRQ_IODEV; break;
     case EX_SYSCALL: MSG("int $0x80 trap: _yield() or system call")
-      if ((int32_t)saved_ctx.GPR1 == -1) {
+      if ((int32_t)saved_ctx.GPRx == -1) {
         ev.event = _EVENT_YIELD;
       } else {
         ev.event = _EVENT_SYSCALL;
