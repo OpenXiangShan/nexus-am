@@ -40,9 +40,8 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   saved_ctx.esp0   = CPU->tss.esp0;
   saved_ctx.ss3    = USEL(SEG_UDATA);
   saved_ctx.uvm    = (void *)get_cr3();
-  if (!(tf->cs & DPL_USER)) {
-    saved_ctx.esp = (uint32_t)(tf + 1) - 8; // no ss/esp saved
-  }
+  // no ss/esp saved for DPL_KERNEL
+  saved_ctx.esp = (tf->cs & DPL_USER ? tf->esp : (uint32_t)(tf + 1) - 8);
 #endif
 
   #define IRQ    T_IRQ0 +
