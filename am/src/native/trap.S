@@ -1,16 +1,9 @@
 .global __am_ret_from_trap
 .global __am_asm_trap
-.global __am_syscall
-.global __am_async_ex
 
 __am_asm_trap:
-  pushq %rdi # event number
-  jmp __am_async_ex
+  # rip and event number is saved by the signal handler
 
-__am_syscall:
-  pushq $6  # _EVENT_SYSCALL
-
-__am_async_ex:
   # getcontext() does not preserve %rflags, %rax, %r10, %r11,
   # also calling __am_irq_handle() requires %rdi to pass the argument,
   # save these registers manually
@@ -52,17 +45,7 @@ no_need:
   popq %rax
   popq %r10
   popq %r11
-
-  movq 16(%rsp), %rdi  # c->event updated at the end of __am_irq_handle()
-  testq %rdi, %rdi
   popq %rdi
-  jnz __am_ret_from_intr
-
-  popfq
-  lea 8(%rsp), %rsp # event, do not use addq, since it will change rflags!
-  retq
-
-__am_ret_from_intr:
   popfq
   lea 8(%rsp), %rsp # event, do not use addq, since it will change rflags!
   retq $128

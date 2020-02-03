@@ -109,6 +109,7 @@ _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   uintptr_t ret = (uintptr_t)kstack.end;
   *(uintptr_t *)ret = 0;
 
+  kstack.end -= RED_NONE_SIZE;
   _Context *c = (_Context*)kstack.end - 1;
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;

@@ -10,10 +10,11 @@ static int pmem_fd = 0;
 static char pmem_shm_file[] = "/native-pmem-XXXXXX";
 static void *pmem = NULL;
 
-#define PRIVATE_MEM_START (void *)0x100000
+#define TRAP_PAGE_START (void *)0x100000
+#define PRIVATE_MEM_START (TRAP_PAGE_START + 4096)
 #define PRIVATE_MEM_SIZE 4096
 void *__am_private_alloc(size_t n) {
-  static void *p = PRIVATE_MEM_START + sizeof(uintptr_t);  // skip syscall entry
+  static void *p = PRIVATE_MEM_START;
   void *ret = p;
   p += n;
   assert(p < PRIVATE_MEM_START + PRIVATE_MEM_SIZE);
@@ -37,8 +38,13 @@ static void init_platform() {
   assert(_heap.start != (void *)-1);
 
   // create private memory to simulate per-cpu data
-  void *ret = mmap(PRIVATE_MEM_START, PRIVATE_MEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
+  void *ret = mmap(PRIVATE_MEM_START, PRIVATE_MEM_SIZE, PROT_READ | PROT_WRITE,
       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+  assert(ret != (void *)-1);
+
+  // create trap page to receive syscall and yield by SIGSEGV
+  ret = mmap(TRAP_PAGE_START, 4096, PROT_NONE,
+      MAP_SHARED | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   assert(ret != (void *)-1);
 
   // remap writable sections as MAP_SHARED
@@ -115,6 +121,9 @@ static void exit_platform() {
   assert(ret == 0);
 
   ret = munmap(PRIVATE_MEM_START, PRIVATE_MEM_SIZE);
+  assert(ret == 0);
+
+  ret = munmap(TRAP_PAGE_START, 4096);
   assert(ret == 0);
 }
 

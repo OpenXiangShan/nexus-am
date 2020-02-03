@@ -3,11 +3,13 @@
 
 #define TIMER_HZ 100
 
+#define YIELD_INSTR "0xff,0x14,0x25,0x08,0x00,0x10,0x00" // callq *0x100008
+#define YIELD_INSTR_LEN ((sizeof(YIELD_INSTR)) / 5)  // sizeof() counts the '\0' byte
+#define SYSCALL_INSTR_LEN YIELD_INSTR_LEN
+
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
-void __am_asm_trap(int event);
-void __am_syscall();
-void __am_async_ex();
+void __am_asm_trap();
 void __am_ret_from_trap();
 
 void __am_get_cur_as(_Context *c);
@@ -34,8 +36,6 @@ void __am_irq_handle(_Context *c) {
   c->uc.uc_mcontext.gregs[REG_RDI] = __am_is_sigmask_sti(&c->uc.uc_sigmask);
   // delay restoring of sigmask after setcontext()
   __am_get_intr_sigmask(&c->uc.uc_sigmask);
-  // update c->event to indicate different returning code, see trap.S
-  c->event = (c->event == _EVENT_IRQ_TIMER || c->event == _EVENT_IRQ_IODEV);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c + 1024;
 
@@ -43,11 +43,12 @@ void __am_irq_handle(_Context *c) {
 }
 
 static void setup_stack(uintptr_t event, ucontext_t *c) {
-  uintptr_t *rip = (uintptr_t *)c->uc_mcontext.gregs[REG_RIP];
-  extern uintptr_t _start, _etext;
+  uint8_t *rip = (uint8_t *)c->uc_mcontext.gregs[REG_RIP];
+  extern uint8_t _start, _etext;
   void *sigprocmask_base = &sigprocmask;
   // assume the virtual address space of user process is not above 0xffffffff
-  if (!((rip >= &_start && rip < &_etext) ||
+  if (((event == _EVENT_IRQ_IODEV) || (event == _EVENT_IRQ_TIMER)) &&
+      !((rip >= &_start && rip < &_etext) ||
         // Hack here: "+13" points to the instruction after syscall.
         // This is the instruction which will trigger the pending signal
         // if interrupt is enabled.
@@ -62,9 +63,14 @@ static void setup_stack(uintptr_t event, ucontext_t *c) {
     // See man 7 signal-safety for more information.
     return;
   }
-  // setup the stack as if we had called __am_async_ex();
-  // use `-128` to skip the red zone of the stack frame, see the amd64 ABI manual for details
-  uintptr_t rsp = c->uc_mcontext.gregs[REG_RSP] - 128;
+
+  // skip the instructions causing SIGSEGV for syscall and yield
+  if (event == _EVENT_SYSCALL) { rip += SYSCALL_INSTR_LEN; }
+  else if (event == _EVENT_YIELD) { rip += YIELD_INSTR_LEN; }
+
+  // setup the stack as if we had called __am_asm_trap();
+  // skip the red zone of the stack frame, see the amd64 ABI manual for details
+  uintptr_t rsp = c->uc_mcontext.gregs[REG_RSP] - RED_NONE_SIZE;
   rsp -= sizeof(uintptr_t);
   *(uintptr_t *)rsp = (uintptr_t)rip;
   rsp -= sizeof(uintptr_t);
@@ -72,11 +78,24 @@ static void setup_stack(uintptr_t event, ucontext_t *c) {
   *(uintptr_t *)rsp = event;
 
   c->uc_mcontext.gregs[REG_RSP] = rsp;
-  c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_async_ex;
+  c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_asm_trap;
 }
 
 static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
-  uintptr_t event = (sig == SIGUSR1 ? _EVENT_IRQ_IODEV : _EVENT_IRQ_TIMER);
+  uintptr_t event = _EVENT_ERROR;
+  switch (sig) {
+    case SIGUSR1: event = _EVENT_IRQ_IODEV; break;
+    case SIGVTALRM: event = _EVENT_IRQ_TIMER; break;
+    case SIGSEGV:
+      if (info->si_code == SEGV_ACCERR) {
+        switch ((uintptr_t)info->si_addr) {
+          case 0x100000: event = _EVENT_SYSCALL; break;
+          case 0x100008: event = _EVENT_YIELD; break;
+        }
+      }
+      break;
+    default: assert(0);
+  }
   setup_stack(event, ucontext);
 }
 
@@ -104,9 +123,15 @@ void __am_init_irq() {
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   assert(sizeof(ucontext_t) < 1024);  // if this fails, allocate larger space in trap.S for ucontext
-  assert(_EVENT_SYSCALL == 6); // if this fails, change the number in trap.S for __am_syscall()
+  assert(SYSCALL_INSTR_LEN == 7);
 
-  *(uintptr_t *)0x100000 = (uintptr_t)__am_syscall;
+  struct sigaction s;
+  memset(&s, 0, sizeof(s));
+  s.sa_sigaction = sig_handler;
+  s.sa_flags = SA_SIGINFO;
+  __am_get_intr_sigmask(&s.sa_mask);
+  int ret = sigaction(SIGSEGV, &s, NULL);
+  assert(ret == 0);
 
   user_handler = handler;
 
@@ -119,6 +144,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   // control is transfered to the function entry point.
   // See amd64 ABI manual for more details
   stack.end = (void *)(((uintptr_t)stack.end & ~15ul) - 8);
+  stack.end -= RED_NONE_SIZE;
   _Context *c = (_Context*)stack.end - 1;
 
   __am_get_example_uc(c);
@@ -136,7 +162,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
 }
 
 void _yield() {
-  __am_asm_trap(_EVENT_YIELD);
+  asm volatile (".byte " YIELD_INSTR);
 }
 
 int _intr_read() {
