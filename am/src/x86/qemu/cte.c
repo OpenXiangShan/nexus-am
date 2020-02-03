@@ -1,5 +1,4 @@
 #include "x86-qemu.h"
-#include <stdarg.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 #if __x86_64__
@@ -59,7 +58,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
     case IRQ 1: MSG("I/O device IRQ1 (keyboard)")
       ev.event = _EVENT_IRQ_IODEV; break;
     case EX_SYSCALL: MSG("int $0x80 trap: _yield() or system call")
-      if ((int32_t)saved_ctx.GPR1 == -1) {
+      if ((int32_t)saved_ctx.GPRx == -1) {
         ev.event = _EVENT_YIELD;
       } else {
         ev.event = _EVENT_SYSCALL;
@@ -95,6 +94,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
+  if (!ret_ctx) ret_ctx = &saved_ctx;
 
   if (ret_ctx->uvm) {
     set_cr3(ret_ctx->uvm);
@@ -106,7 +106,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 #endif
   }
 
-  __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
+  __am_iret(ret_ctx);
 }
 
 void __am_irq_handle(struct trap_frame *tf) {
