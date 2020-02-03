@@ -18,7 +18,6 @@ void __am_switch(_Context *c);
 
 void __am_irq_handle(_Context *c) {
   getcontext(&c->uc);
-  _intr_write(0);
   __am_get_cur_as(c);
 
   _Event e = {};
@@ -33,9 +32,7 @@ void __am_irq_handle(_Context *c) {
   // the original context constructed on the stack
   c = (void *)c->uc.uc_mcontext.gregs[REG_RDI];
   // interrupt flag, see trap.S
-  c->uc.uc_mcontext.gregs[REG_RDI] = __am_is_sigmask_sti(&c->uc.uc_sigmask);
-  // delay restoring of sigmask after setcontext()
-  __am_get_intr_sigmask(&c->uc.uc_sigmask);
+  c->uc.uc_mcontext.gregs[REG_RDI] = c->sti;
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
   c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c + 1024;
 
@@ -68,14 +65,19 @@ static void setup_stack(uintptr_t event, ucontext_t *c) {
   if (event == _EVENT_SYSCALL) { rip += SYSCALL_INSTR_LEN; }
   else if (event == _EVENT_YIELD) { rip += YIELD_INSTR_LEN; }
 
-  // setup the stack as if we had called __am_asm_trap();
   // skip the red zone of the stack frame, see the amd64 ABI manual for details
   uintptr_t rsp = c->uc_mcontext.gregs[REG_RSP] - RED_NONE_SIZE;
-  rsp -= sizeof(uintptr_t);
-  *(uintptr_t *)rsp = (uintptr_t)rip;
-  rsp -= sizeof(uintptr_t);
-  // we directly put the event number on the stack to avoid the corruption of %rdi
-  *(uintptr_t *)rsp = event;
+
+#define PUSH(x) rsp -= sizeof(uintptr_t); *(uintptr_t *)rsp = (uintptr_t)(x)
+  PUSH(rip);
+  // rflags is not preserved by getcontext(), save it here
+  PUSH(c->uc_mcontext.gregs[REG_EFL]);
+  PUSH(event);
+  uintptr_t sti = __am_is_sigmask_sti(&c->uc_sigmask);
+  PUSH(sti);
+
+  // disable interrupt
+  __am_get_intr_sigmask(&c->uc_sigmask);
 
   c->uc_mcontext.gregs[REG_RSP] = rsp;
   c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_asm_trap;
