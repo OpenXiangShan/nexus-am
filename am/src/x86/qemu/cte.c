@@ -91,7 +91,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
-  if (!ret_ctx) ret_ctx = &saved_ctx;
+  panic_on(!ret_ctx, "returning to NULL context");
 
   if (ret_ctx->uvm) {
     set_cr3(ret_ctx->uvm);
@@ -143,8 +143,7 @@ void _intr_write(int enable) {
 
 static void panic_on_return() { panic("kernel context returns"); }
 
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Context *ctx = (_Context *)stack.start;
+void _kcontext(_Context *ctx, _Area stack, void (*entry)(void *), void *arg) {
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
@@ -168,7 +167,6 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   for (int i = 0; i < LENGTH(stk); i++) {
     ((uintptr_t *)ctx->sp)[i] = (uintptr_t)stk[i];
   }
-  return ctx;
 }
 
 void __am_percpu_initirq() {
