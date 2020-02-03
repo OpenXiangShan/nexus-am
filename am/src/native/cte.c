@@ -28,6 +28,8 @@ void __am_irq_handle(_Context *c) {
 
   __am_switch(c);
 
+  // the original context constructed on the stack
+  c = (void *)c->uc.uc_mcontext.gregs[REG_RDI];
   // interrupt flag, see trap.S
   c->uc.uc_mcontext.gregs[REG_RDI] = __am_is_sigmask_sti(&c->uc.uc_sigmask);
   // delay restoring of sigmask after setcontext()
@@ -128,6 +130,7 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   __am_get_empty_as(c);
 
   c->rdi = (uintptr_t)arg;
+  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c; // used in __am_irq_handle()
 
   return c;
 }
