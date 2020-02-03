@@ -47,6 +47,7 @@
 #define EX_PF          14
 #define EX_MF          15
 #define EX_SYSCALL     0x80
+#define EX_YIELD       0x81
 
 // List of interrupts and exceptions (#irq, DPL, hardware errorcode)
 #define IRQS(_) \
@@ -85,7 +86,8 @@
   _( 45, KERN, NOERR) \
   _( 46, KERN, NOERR) \
   _( 47, KERN, NOERR) \
-  _(128, USER, NOERR)
+  _(128, USER, NOERR) \
+  _(129, USER, NOERR)
 
 // AM-specific configurations
 #define MAX_CPU       8
@@ -330,8 +332,8 @@ static inline uint64_t rdtsc() {
   return ((uint64_t)hi << 32) | lo;
 }
 
-#define interrupt(id, ax) \
-  asm volatile ("int $" #id : : "a"(ax));
+#define interrupt(id) \
+  asm volatile ("int $" #id);
 
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg) {
   asm volatile (

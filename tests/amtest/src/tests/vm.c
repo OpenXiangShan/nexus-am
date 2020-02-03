@@ -1,8 +1,9 @@
 #include <amtest.h>
 
-static _Context *uctx;
+static _Context uctx;
 static _AddressSpace prot;
 static uintptr_t st = 0;
+static _Context *current = NULL;
 
 void *simple_pgalloc(size_t size) {
   if (st == 0) { st = (uintptr_t)_heap.start; }
@@ -16,6 +17,11 @@ void simple_pgfree(void *ptr) {
 }
 
 _Context* vm_handler(_Event ev, _Context *ctx) {
+  if (current) {
+    *current = *ctx;
+  } else {
+    current = &uctx;
+  }
   switch (ev.event) {
     case _EVENT_YIELD:
       break;
@@ -26,9 +32,9 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
     case _EVENT_PAGEFAULT:
       printf("PF: %x %s%s%s\n",
         ev.ref,
-        (ev.cause & _PROT_NONE) ? "[not present]" : "",
-        (ev.cause & _PROT_READ) ? "[read fail]" : "",
-        (ev.cause & _PROT_WRITE) ? "[write fail]" : "");
+        (ev.cause & _PROT_NONE)  ? "[not present]" : "",
+        (ev.cause & _PROT_READ)  ? "[read fail]"   : "",
+        (ev.cause & _PROT_WRITE) ? "[write fail]"  : "");
       break;
     case _EVENT_SYSCALL:
       printf("%d ", ctx->GPRx);
@@ -36,21 +42,16 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
     default:
       assert(0);
   }
-
-  if (uctx) {
-    ctx = uctx;
-    uctx = NULL;
-  }
-  return ctx;
+  return current;
 }
 
 uint8_t code[] = {
-  0x31, 0xc0, // xor %eax, %eax
-  0x8d, 0xb6, 0x00, 0x00, 0x00, 0x00, // lea 0(%esi), %esi
-  0x83, 0xc0, 0x01, // add $1, %eax
-//  0x90, 0x90, // nop, nop
-  0xcd, 0x80, // int $0x80
-  0xeb, 0xf9, // jmp 8
+  0x31, 0xc0,             // xor %eax, %eax
+  0x8d, 0xb6,             // lea 0(%esi), %esi
+  0x00, 0x00, 0x00, 0x00,
+  0x83, 0xc0, 0x01,       // add $1, %eax
+  0xcd, 0x80,             // int $0x80
+  0xeb, 0xf9,             // jmp 8
 };
 
 void vm_test() {
@@ -72,8 +73,7 @@ void vm_test() {
   printf("Code copied to %p (physical %p) execute\n", ptr, up1);
 
   static uint8_t kstk[4096];
-  _Area k = { .start = kstk, .end = kstk + 4096 };
-  uctx = _ucontext(&prot, k, ptr);
+  _ucontext(&uctx, &prot, (_Area) { kstk, kstk + 4096 } , ptr);
 
   _intr_write(1);
   while (1) ;
