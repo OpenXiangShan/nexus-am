@@ -34,6 +34,7 @@ BLACK_LIST = [
   r'.git',
   r'README.md',
   r'.DS_Store',
+  r'/roms/gen/',
   r'klib/src/stdio.c',
   r'klib/src/stdlib.c',
   r'klib/src/string.c',
