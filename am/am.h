@@ -22,15 +22,15 @@ enum {
   _EVENT_IRQ_TIMER,
   _EVENT_IRQ_IODEV,
   _EVENT_PAGEFAULT,
-  _EVENT_YIELD,
   _EVENT_SYSCALL,
+  _EVENT_YIELD,
 };
 
 enum {
-  _PROT_NONE  = 1, // no access
-  _PROT_READ  = 2, // can read
-  _PROT_WRITE = 4, // can write
-  _PROT_EXEC  = 8, // can execute
+  _PROT_NONE  = 0x1, // no access
+  _PROT_READ  = 0x2, // can read
+  _PROT_WRITE = 0x4, // can write
+  _PROT_EXEC  = 0x8, // can execute
 };
 
 // Memory area for [@start, @end)
@@ -64,25 +64,25 @@ void _halt(int code) __attribute__((__noreturn__));
 
 // ======================= I/O Extension (IOE) =======================
 
-int _ioe_init();
-size_t _io_read(uint32_t dev, uintptr_t reg, void *buf, size_t size);
+int    _ioe_init();
+size_t _io_read (uint32_t dev, uintptr_t reg, void *buf, size_t size);
 size_t _io_write(uint32_t dev, uintptr_t reg, void *buf, size_t size);
 
 // ====================== Context Extension (CTE) ====================
 
-int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx));
+int  _cte_init(_Context *(*handler)(_Event ev, _Context *ctx));
 void _yield();
-int _intr_read();
+int  _intr_read();
 void _intr_write(int enable);
-_Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg);
+void _kcontext(_Context *ctx, _Area kstack, void (*entry)(void *), void *arg);
 
 // ================= Virtual Memory Extension (VME) ==================
 
-int _vme_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
-int _protect(_AddressSpace *as);
+int  _vme_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
+void _protect(_AddressSpace *as);
 void _unprotect(_AddressSpace *as);
-int _map(_AddressSpace *as, void *va, void *pa, int prot);
-_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry);
+void _map(_AddressSpace *as, void *va, void *pa, int prot);
+void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry);
 
 // ================= Multi-Processor Extension (MPE) =================
 

@@ -75,7 +75,8 @@ struct BITREVLUT {
 	BITREVLUT() {
 		int bits = BITS;
 		int n = 1 << BITS;
-		lut = new T[n];
+//		lut = new T[n];
+		assert(0);
 
 		int m = 1;
 		int a = n >> 1;

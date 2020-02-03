@@ -1,5 +1,4 @@
 #include "x86-qemu.h"
-#include <stdarg.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 #if __x86_64__
@@ -58,13 +57,10 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
       ev.event = _EVENT_IRQ_TIMER; break;
     case IRQ 1: MSG("I/O device IRQ1 (keyboard)")
       ev.event = _EVENT_IRQ_IODEV; break;
-    case EX_SYSCALL: MSG("int $0x80 trap: _yield() or system call")
-      if ((int32_t)saved_ctx.GPR1 == -1) {
-        ev.event = _EVENT_YIELD;
-      } else {
-        ev.event = _EVENT_SYSCALL;
-      }
-      break;
+    case EX_SYSCALL: MSG("int $0x80 system call")
+      ev.event = _EVENT_SYSCALL; break;
+    case EX_YIELD: MSG("int $0x81 yield")
+      ev.event = _EVENT_YIELD; break;
     case EX_DE: MSG("DE #0 divide by zero")
       ev.event = _EVENT_ERROR; break;
     case EX_UD: MSG("UD #6 invalid opcode")
@@ -95,6 +91,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 
   _Context *ret_ctx = user_handler(ev, &saved_ctx);
+  panic_on(!ret_ctx, "returning to NULL context");
 
   if (ret_ctx->uvm) {
     set_cr3(ret_ctx->uvm);
@@ -106,7 +103,7 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
 #endif
   }
 
-  __am_iret(ret_ctx ? ret_ctx : &saved_ctx);
+  __am_iret(ret_ctx);
 }
 
 void __am_irq_handle(struct trap_frame *tf) {
@@ -129,7 +126,7 @@ int _cte_init(_Context *(*handler)(_Event, _Context *)) {
 }
 
 void _yield() {
-  interrupt(0x80, -1);
+  interrupt(0x81);
 }
 
 int _intr_read() {
@@ -146,8 +143,7 @@ void _intr_write(int enable) {
 
 static void panic_on_return() { panic("kernel context returns"); }
 
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Context *ctx = (_Context *)stack.start;
+void _kcontext(_Context *ctx, _Area stack, void (*entry)(void *), void *arg) {
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
@@ -171,7 +167,6 @@ _Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
   for (int i = 0; i < LENGTH(stk); i++) {
     ((uintptr_t *)ctx->sp)[i] = (uintptr_t)stk[i];
   }
-  return ctx;
 }
 
 void __am_percpu_initirq() {

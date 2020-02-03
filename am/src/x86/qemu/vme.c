@@ -114,7 +114,7 @@ int _vme_init(void *(*_pgalloc)(size_t size), void (*_pgfree)(void *)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
+void _protect(_AddressSpace *as) {
   uintptr_t *upt = pgallocz();
 
   for (int i = 0; i < LENGTH(vm_areas); i++) {
@@ -133,14 +133,13 @@ int _protect(_AddressSpace *as) {
   as->pgsize = mmu.pgsize;
   as->area   = uvm_area;
   as->ptr    = (void *)((uintptr_t)upt | PTE_P | PTE_U);
-  return 0;
 }
 
 void _unprotect(_AddressSpace *as) {
   teardown(0, (void *)&as->ptr);
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   panic_on(!IN_RANGE(va, uvm_area), "mapping an invalid address");
   panic_on((prot & _PROT_NONE) && (prot != _PROT_NONE), "invalid protection flags");
   panic_on((uintptr_t)va != ROUNDDOWN(va, mmu.pgsize) ||
@@ -156,11 +155,9 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
     *ptentry = pte;
   }
   ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
-  return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
-  _Context *ctx = (_Context *)kstack.start;
+void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry) {
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
@@ -180,5 +177,4 @@ _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   ctx->esp0   = (uintptr_t)kstack.end;
 #endif
   ctx->uvm = as->ptr;
-  return ctx;
 }

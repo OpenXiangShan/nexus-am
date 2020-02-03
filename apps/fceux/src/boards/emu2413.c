@@ -225,28 +225,20 @@ static void makeDB2LinTable(void) {
 	int32 i;
 
 	for (i = 0; i < DB_MUTE + DB_MUTE; i++) {
-		DB2LIN_TABLE[i] = (int16)((double)((1 << DB2LIN_AMP_BITS) - 1) * pow(10, -(double)i * DB_STEP / 20));
+		assert(0);
+		// DB2LIN_TABLE[i] = (int16)((double)((1 << DB2LIN_AMP_BITS) - 1) * pow(10, -(double)i * DB_STEP / 20));
 		if (i >= DB_MUTE) DB2LIN_TABLE[i] = 0;
 		DB2LIN_TABLE[i + DB_MUTE + DB_MUTE] = (int16)(-DB2LIN_TABLE[i]);
 	}
 }
-
-/* Liner(+0.0 - +1.0) to dB((1<<DB_BITS) - 1 -- 0) */
-static int32 lin2db(double d) {
-  assert(0);
-	//if (d == 0)
-	//	return(DB_MUTE - 1);
-	//else
-	//	return Min(-(int32)(20.0 * log10(d) / DB_STEP), DB_MUTE - 1);  /* 0 -- 127 */
-}
-
 
 /* Sin Table */
 static void makeSinTable(void) {
 	int32 i;
 
 	for (i = 0; i < PG_WIDTH / 4; i++) {
-		fullsintable[i] = (uint32)lin2db(sin(2.0 * PI * i / PG_WIDTH));
+		assert(0);
+		// fullsintable[i] = (uint32)lin2db(sin(2.0 * PI * i / PG_WIDTH));
 	}
 
 	for (i = 0; i < PG_WIDTH / 4; i++) {
