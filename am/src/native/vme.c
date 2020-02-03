@@ -104,7 +104,7 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   kstack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr
   uintptr_t ret = (uintptr_t)kstack.end;
   *(uintptr_t *)ret = 0;
@@ -117,10 +117,7 @@ _Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, 
   c->rflags = 0;
   c->event = _EVENT_YIELD;
   c->as = as;
-
-  c->rdi = 0;
-  c->uc.uc_mcontext.gregs[REG_RSI] = ret; // ???
-  c->uc.uc_mcontext.gregs[REG_RDX] = ret; // ???
+  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c; // used in __am_irq_handle()
 
   return c;
 }
