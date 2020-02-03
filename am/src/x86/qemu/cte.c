@@ -57,13 +57,10 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
       ev.event = _EVENT_IRQ_TIMER; break;
     case IRQ 1: MSG("I/O device IRQ1 (keyboard)")
       ev.event = _EVENT_IRQ_IODEV; break;
-    case EX_SYSCALL: MSG("int $0x80 trap: _yield() or system call")
-      if ((int32_t)saved_ctx.GPRx == -1) {
-        ev.event = _EVENT_YIELD;
-      } else {
-        ev.event = _EVENT_SYSCALL;
-      }
-      break;
+    case EX_SYSCALL: MSG("int $0x80 system call")
+      ev.event = _EVENT_SYSCALL; break;
+    case EX_YIELD: MSG("int $0x81 yield")
+      ev.event = _EVENT_YIELD; break;
     case EX_DE: MSG("DE #0 divide by zero")
       ev.event = _EVENT_ERROR; break;
     case EX_UD: MSG("UD #6 invalid opcode")
@@ -129,7 +126,7 @@ int _cte_init(_Context *(*handler)(_Event, _Context *)) {
 }
 
 void _yield() {
-  interrupt(0x80, -1);
+  interrupt(0x81);
 }
 
 int _intr_read() {
