@@ -1,5 +1,7 @@
 #include "platform.h"
 
+#define USER_SPACE (_Area) { .start = (void *)0x40000000ul, .end = (void *)0xc0000000ul }
+
 #define PGSIZE  4096
 #define PGSHIFT 12
 
@@ -30,6 +32,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 int _protect(_AddressSpace *as) {
   as->ptr = NULL;
   as->pgsize = PGSIZE;
+  as->area = USER_SPACE;
   return 0;
 }
 
