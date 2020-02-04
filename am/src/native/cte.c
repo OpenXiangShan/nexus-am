@@ -20,9 +20,7 @@ void __am_irq_handle(_Context *c) {
   getcontext(&c->uc);
   __am_get_cur_as(c);
 
-  _Event e = {};
-  e.event = c->event;
-  _Context *ret = user_handler(e, c);
+  _Context *ret = user_handler(thiscpu->ev, c);
   if (ret != NULL) {
     c = ret;
   }
@@ -72,7 +70,6 @@ static void setup_stack(uintptr_t event, ucontext_t *c) {
   PUSH(rip);
   // rflags is not preserved by getcontext(), save it here
   PUSH(c->uc_mcontext.gregs[REG_EFL]);
-  PUSH(event);
   uintptr_t sti = __am_is_sigmask_sti(&c->uc_sigmask);
   PUSH(sti);
 
@@ -84,21 +81,22 @@ static void setup_stack(uintptr_t event, ucontext_t *c) {
 }
 
 static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
-  uintptr_t event = _EVENT_ERROR;
+  thiscpu->ev = (_Event) {0};
+  thiscpu->ev.event = _EVENT_ERROR;
   switch (sig) {
-    case SIGUSR1: event = _EVENT_IRQ_IODEV; break;
-    case SIGVTALRM: event = _EVENT_IRQ_TIMER; break;
+    case SIGUSR1: thiscpu->ev.event = _EVENT_IRQ_IODEV; break;
+    case SIGVTALRM: thiscpu->ev.event = _EVENT_IRQ_TIMER; break;
     case SIGSEGV:
       if (info->si_code == SEGV_ACCERR) {
         switch ((uintptr_t)info->si_addr) {
-          case 0x100000: event = _EVENT_SYSCALL; break;
-          case 0x100008: event = _EVENT_YIELD; break;
+          case 0x100000: thiscpu->ev.event = _EVENT_SYSCALL; break;
+          case 0x100008: thiscpu->ev.event = _EVENT_YIELD; break;
         }
       }
       break;
     default: assert(0);
   }
-  setup_stack(event, ucontext);
+  setup_stack(thiscpu->ev.event, ucontext);
 }
 
 void __am_init_irq() {

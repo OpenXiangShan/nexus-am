@@ -19,7 +19,7 @@ struct _Context {
     };
   };
   uintptr_t rax, r10, r11, rdi; // registers not preserved by getcontext()
-  uintptr_t sti, event, rflags, rip; // saved by signal handler
+  uintptr_t sti, rflags, rip;   // saved by signal handler
 };
 
 #define GPR1 rax

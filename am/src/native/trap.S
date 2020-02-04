@@ -2,7 +2,7 @@
 .global __am_asm_trap
 
 __am_asm_trap:
-  # rip, rflags, event number and interrupt flag are saved by the signal handler
+  # rip, rflags and interrupt flag are saved by the signal handler
 
   # getcontext() does not preserve %rax, %r10, %r11,
   # also calling __am_irq_handle() requires %rdi to pass the argument,
@@ -45,6 +45,6 @@ no_need:
   popq %r10
   popq %r11
   popq %rdi
-  addq $16, %rsp
+  addq $8, %rsp
   popfq
   retq $128  # size of red zone

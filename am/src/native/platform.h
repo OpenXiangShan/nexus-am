@@ -20,6 +20,7 @@ void __am_shm_munmap(void *va);
 typedef struct {
   _AddressSpace *cur_as;
   int cpuid;
+  _Event ev; // similar to cause register in mips/riscv
 } __am_cpu_t;
 extern __am_cpu_t *__am_cpu_struct;
 #define thiscpu __am_cpu_struct
