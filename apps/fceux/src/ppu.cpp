@@ -373,6 +373,34 @@ uint8 NTARAM[0x800], PALRAM[0x20], SPRAM[0x100], SPRBUF[0x100];
 uint8 UPALRAM[0x03];//for 0x4/0x8/0xC addresses in palette, the ones in
 					//0x20 are 0 to not break fceu rendering.
 
+static uint16 PALcache[256];
+static int PALcache_outdate = 0;
+
+static void update_PALcache() {
+  if (!PALcache_outdate) return;
+  //Priority bits, needed for sprite emulation.
+  PALRAM[0] |= 64;
+  PALRAM[4] |= 64;
+  PALRAM[8] |= 64;
+  PALRAM[0xC] |= 64;
+
+  int x, y;
+  int i = 0;
+  for (x = 0; x < 16; x ++) {
+    for (y = 0; y < 16; y ++) {
+      PALcache[i ++] = (PALRAM[x] << 8) | PALRAM[y];
+    }
+  }
+
+  //Reverse changes made before.
+  PALRAM[0] &= 63;
+  PALRAM[4] &= 63;
+  PALRAM[8] &= 63;
+  PALRAM[0xC] &= 63;
+
+  PALcache_outdate = 0;
+}
+
 #define MMC5SPRVRAMADR(V)   &MMC5SPRVPage[(V) >> 10][(V)]
 #define VRAMADR(V)          &VPage[(V) >> 10][(V)]
 
@@ -439,11 +467,14 @@ inline void FFCEUX_PPUWrite_Default(uint32 A, uint8 V) {
 			if (!(tmp & 0xC)) {
 				PALRAM[0x00] = PALRAM[0x04] = PALRAM[0x08] = PALRAM[0x0C] = V & 0x3F;
 				PALRAM[0x10] = PALRAM[0x14] = PALRAM[0x18] = PALRAM[0x1C] = V & 0x3F;
+				PALcache_outdate = 1;
 			}
 			else
 				UPALRAM[((tmp & 0xC) >> 2) - 1] = V & 0x3F;
-		} else
+		} else {
 			PALRAM[tmp & 0x1F] = V & 0x3F;
+			PALcache_outdate = 1;
+    }
 	}
 }
 
@@ -957,12 +988,16 @@ static DECLFW(B2007) {
 			}
 		} else {
 			if (!(tmp & 3)) {
-				if (!(tmp & 0xC))
+				if (!(tmp & 0xC)) {
 					PALRAM[0x00] = PALRAM[0x04] = PALRAM[0x08] = PALRAM[0x0C] = V & 0x3F;
+					PALcache_outdate = 1;
+        }
 				else
 					UPALRAM[((tmp & 0xC) >> 2) - 1] = V & 0x3F;
-			} else
+			} else {
 				PALRAM[tmp & 0x1F] = V & 0x3F;
+				PALcache_outdate = 1;
+      }
 		}
 		if (INC32)
 			RefreshAddr += 32;
@@ -1106,12 +1141,7 @@ static void RefreshLine(int lastpixel) {
 		return;
 	}
 
-	//Priority bits, needed for sprite emulation.
-	PALRAM[0] |= 64;
-	PALRAM[4] |= 64;
-	PALRAM[8] |= 64;
-	PALRAM[0xC] |= 64;
-
+  update_PALcache();
   uint32 cc = 0;
   uint8 cc2;
   uint8 *C0 = vnapage[(RefreshAddr >> 10) & 3];
@@ -1124,12 +1154,6 @@ static void RefreshLine(int lastpixel) {
   }
 
 #undef RefreshAddr
-
-	//Reverse changes made before.
-	PALRAM[0] &= 63;
-	PALRAM[4] &= 63;
-	PALRAM[8] &= 63;
-	PALRAM[0xC] &= 63;
 
 	RefreshAddr = smorkus;
 	if (firsttile <= 2 && 2 < lasttile && !(PPU[1] & 2)) {
