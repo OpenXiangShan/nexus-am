@@ -4,23 +4,17 @@
 
 #define MAX_SMP 16
 static int ncpu = 0;
-static int *cpuid = NULL;
 
 int _mpe_init(void (*entry)()) {
-  cpuid = __am_private_alloc(sizeof(*cpuid));
-
   for (int i = 1; i < _ncpu(); i++) {
     if (fork() == 0) {
+      thiscpu->cpuid = i;
       __am_init_irq();
-
-      *cpuid = i;
       entry();
     }
   }
 
-  *cpuid = 0;
   entry();
-
   printf("MP entry should not return\n");
   assert(0);
   return 0;
@@ -37,7 +31,7 @@ int _ncpu() {
 }
 
 int _cpu() {
-  return (cpuid ? *cpuid : 0);
+  return thiscpu->cpuid;
 }
 
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {

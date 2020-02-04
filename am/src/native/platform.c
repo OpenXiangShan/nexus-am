@@ -5,24 +5,14 @@
 #include <stdlib.h>
 #include "platform.h"
 
+#define TRAP_PAGE_START (void *)0x100000
 #define PMEM_SIZE (128 * 1024 * 1024) // 128MB
 static int pmem_fd = 0;
 static char pmem_shm_file[] = "/native-pmem-XXXXXX";
 static void *pmem = NULL;
-
-#define TRAP_PAGE_START (void *)0x100000
-#define PRIVATE_MEM_START (TRAP_PAGE_START + 4096)
-#define PRIVATE_MEM_SIZE 4096
-void *__am_private_alloc(size_t n) {
-  static void *p = PRIVATE_MEM_START;
-  void *ret = p;
-  p += n;
-  assert(p < PRIVATE_MEM_START + PRIVATE_MEM_SIZE);
-  return ret;
-}
-
 static ucontext_t uc_example = {};
 sigset_t __am_intr_sigmask = {};
+__am_cpu_t *__am_cpu_struct = NULL;
 
 int main(const char *args);
 
@@ -37,13 +27,14 @@ static void init_platform() {
   pmem = mmap(NULL, PMEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED, pmem_fd, 0);
   assert(_heap.start != (void *)-1);
 
-  // create private memory to simulate per-cpu data
-  void *ret = mmap(PRIVATE_MEM_START, PRIVATE_MEM_SIZE, PROT_READ | PROT_WRITE,
-      MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
-  assert(ret != (void *)-1);
+  // allocate private per-cpu structure
+  thiscpu = mmap(NULL, sizeof(*thiscpu), PROT_READ | PROT_WRITE,
+      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  assert(thiscpu != (void *)-1);
+  thiscpu->cpuid = 0;
 
   // create trap page to receive syscall and yield by SIGSEGV
-  ret = mmap(TRAP_PAGE_START, 4096, PROT_NONE,
+  void *ret = mmap(TRAP_PAGE_START, 4096, PROT_NONE,
       MAP_SHARED | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   assert(ret != (void *)-1);
 
@@ -120,7 +111,7 @@ static void exit_platform() {
   ret = shm_unlink(pmem_shm_file);
   assert(ret == 0);
 
-  ret = munmap(PRIVATE_MEM_START, PRIVATE_MEM_SIZE);
+  ret = munmap(thiscpu, sizeof(*thiscpu));
   assert(ret == 0);
 
   ret = munmap(TRAP_PAGE_START, 4096);
