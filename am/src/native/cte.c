@@ -15,6 +15,7 @@ void __am_ret_from_trap();
 void __am_get_cur_as(_Context *c);
 void __am_get_empty_as(_Context *c);
 void __am_switch(_Context *c);
+int __am_in_userspace(void *addr);
 
 void __am_irq_handle(_Context *c) {
   getcontext(&c->uc);
@@ -92,9 +93,21 @@ static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
           case 0x100008: thiscpu->ev.event = _EVENT_YIELD; break;
         }
       }
+      if (__am_in_userspace(info->si_addr)) {
+        assert(thiscpu->ev.event == _EVENT_ERROR);
+        thiscpu->ev.event = _EVENT_PAGEFAULT;
+        switch (info->si_code) {
+          case SEGV_MAPERR: thiscpu->ev.cause = _PROT_READ; break;
+          // we do not support mapped user pages with _PROT_NONE
+          case SEGV_ACCERR: thiscpu->ev.cause = _PROT_WRITE; break;
+          default: assert(0);
+        }
+        thiscpu->ev.ref = (uintptr_t)info->si_addr;
+      }
       break;
     default: assert(0);
   }
+  assert(thiscpu->ev.event != _EVENT_ERROR);
   setup_stack(thiscpu->ev.event, ucontext);
 }
 

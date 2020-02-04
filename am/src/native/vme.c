@@ -111,3 +111,7 @@ void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
   //c->esp = 0;  FIXME: we leave the esp undefined
   c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
 }
+
+int __am_in_userspace(void *addr) {
+  return vme_enable && (USER_SPACE.start <= addr) && (addr < USER_SPACE.end);
+}
