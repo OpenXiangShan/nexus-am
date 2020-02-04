@@ -1192,7 +1192,7 @@ static void DoLine(void) {
 	}
 
 	int x;
-	uint8 *target = XBuf + ((scanline < 240 ? scanline : 240) << 8);
+	uint32 *target = (uint32 *)(XBuf + ((scanline < 240 ? scanline : 240) << 8));
 	//u8* dtarget = XDBuf + ((scanline < 240 ? scanline : 240) << 8);
 
 	if (MMC5Hack) MMC5_hb(scanline);
@@ -1210,27 +1210,27 @@ static void DoLine(void) {
 	}
 
 	if (SpriteON)
-		CopySprites(target);
+		CopySprites((uint8 *)target);
 
 	//greyscale handling (mask some bits off the color) ? ? ?
 	if (ScreenON || SpriteON)
 	{
 		if (PPU[1] & 0x01) {
 			for (x = 63; x >= 0; x--)
-				*(uint32*)&target[x << 2] = (*(uint32*)&target[x << 2]) & 0x30303030;
+				target[x] &= 0x30303030;
 		}
 	}
 
 	//some pathetic attempts at deemph
 	if ((PPU[1] >> 5) == 0x7) {
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = ((*(uint32*)&target[x << 2]) & 0x3f3f3f3f) | 0xc0c0c0c0;
+			target[x] |= 0xc0c0c0c0;
 	} else if (PPU[1] & 0xE0)
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = (*(uint32*)&target[x << 2]) | 0x40404040;
+			target[x] |= 0x40404040;
 	else
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = ((*(uint32*)&target[x << 2]) & 0x3f3f3f3f) | 0x80808080;
+			target[x] = (target[x] & 0x3f3f3f3f) | 0x80808080;
 
 	//write the actual deemph
 	//for (x = 63; x >= 0; x--)
