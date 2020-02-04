@@ -149,8 +149,7 @@ void _kcontext(_Context *c, _Area stack, void (*entry)(void *), void *arg) {
 
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
-  int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
-  assert(ret2 == 0);
+  c->sti = 1;
   c->rflags = 0;
   __am_get_empty_as(c);
 

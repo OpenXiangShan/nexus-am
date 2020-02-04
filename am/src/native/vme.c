@@ -106,8 +106,7 @@ void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
 
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
-  int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
-  assert(ret2 == 0);
+  c->sti = 1;
   c->rflags = 0;
   c->as = as;
   //c->esp = 0;  FIXME
