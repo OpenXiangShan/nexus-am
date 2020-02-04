@@ -3,11 +3,10 @@
 #define USER_SPACE (_Area) { .start = (void *)0x40000000ul, .end = (void *)0xc0000000ul }
 
 #define PGSIZE  4096
-#define PGSHIFT 12
 
 typedef struct PageMap {
-  uintptr_t vpn;
-  uintptr_t ppn;
+  void *va;
+  void *pa;
   struct PageMap *next;
   int prot;
   int is_mapped;
@@ -56,14 +55,14 @@ void __am_switch(_Context *c) {
   // munmap all mappings
   list_foreach(pp, thiscpu->cur_as->ptr) {
     if (pp->is_mapped) {
-      __am_shm_munmap((void *)(pp->vpn << PGSHIFT));
+      __am_shm_munmap(pp->va);
       pp->is_mapped = false;
     }
   }
 
   // mmap all mappings
   list_foreach(pp, as->ptr) {
-    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), pp->prot);
+    __am_shm_mmap(pp->va, pp->pa, pp->prot);
     pp->is_mapped = true;
   }
 
@@ -71,29 +70,28 @@ void __am_switch(_Context *c) {
 }
 
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
-  uintptr_t vpn = (uintptr_t)va >> PGSHIFT;
   PageMap *pp;
   list_foreach(pp, as->ptr) {
     // can not remap
     // Actually this is allowed according to the semantics of AM API,
     // but we do this to catch unexcepted behavior from Nanos-lite
-    if (pp->vpn == vpn) {
-      printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->vpn << PGSHIFT, pp->ppn << PGSHIFT);
-      assert(pp->ppn == ((uintptr_t)pa >> PGSHIFT));
+    if (pp->va == va) {
+      printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->va, pp->pa);
+      assert(pp->pa == pa);
       return;
     }
   }
 
   pp = malloc(sizeof(PageMap));
-  pp->vpn = vpn;
-  pp->ppn = (uintptr_t)pa >> PGSHIFT;
+  pp->va = va;
+  pp->pa = pa;
   pp->prot = prot;
   pp->next = as->ptr;
   as->ptr = pp;
 
   if (as == thiscpu->cur_as) {
     // enforce the map immediately
-    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), pp->prot);
+    __am_shm_mmap(pp->va, pp->pa, pp->prot);
     pp->is_mapped = true;
   }
   else {
