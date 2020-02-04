@@ -141,26 +141,25 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
+void _kcontext(_Context *c, _Area stack, void (*entry)(void *), void *arg) {
   // (rsp + 8) should be multiple of 16 when
   // control is transfered to the function entry point.
   // See amd64 ABI manual for more details
   stack.end = (void *)(((uintptr_t)stack.end & ~15ul) - 8);
   stack.end -= RED_NONE_SIZE;
-  _Context *c = (_Context*)stack.end - 1;
+  _Context *c_on_stack = (_Context*)stack.end - 1;
 
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
   int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret2 == 0);
   c->rflags = 0;
-  c->event = _EVENT_YIELD;
   __am_get_empty_as(c);
 
   c->rdi = (uintptr_t)arg;
-  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c; // used in __am_irq_handle()
+  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
 
-  return c;
+  *c_on_stack = *c;
 }
 
 void _yield() {

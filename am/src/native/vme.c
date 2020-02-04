@@ -29,11 +29,10 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
+void _protect(_AddressSpace *as) {
   as->ptr = NULL;
   as->pgsize = PGSIZE;
   as->area = USER_SPACE;
-  return 0;
 }
 
 void _unprotect(_AddressSpace *as) {
@@ -72,7 +71,7 @@ void __am_switch(_Context *c) {
   *cur_as = as;
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   uintptr_t vpn = (uintptr_t)va >> PGSHIFT;
   PageMap *pp;
   list_foreach(pp, as->ptr) {
@@ -82,7 +81,7 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
     if (pp->vpn == vpn) {
       printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->vpn << PGSHIFT, pp->ppn << PGSHIFT);
       assert(pp->ppn == ((uintptr_t)pa >> PGSHIFT));
-      return 0;
+      return;
     }
   }
 
@@ -100,25 +99,21 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   else {
     pp->is_mapped = false;
   }
-
-  return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
-  kstack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr
-  uintptr_t ret = (uintptr_t)kstack.end;
-  *(uintptr_t *)ret = 0;
-
+void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
+  assert(0);
   kstack.end -= RED_NONE_SIZE;
-  _Context *c = (_Context*)kstack.end - 1;
+  _Context *c_on_stack = (_Context*)kstack.end - 1;
+
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
   int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret2 == 0);
   c->rflags = 0;
-  c->event = _EVENT_YIELD;
   c->as = as;
-  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c; // used in __am_irq_handle()
+  //c->esp = 0;  FIXME
+  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
 
-  return c;
+  *c_on_stack = *c;
 }
