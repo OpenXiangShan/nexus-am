@@ -142,18 +142,21 @@ void Blit8ToHigh(uint8 *src, uint8 *dest, int xr, int yr, int pitch, int xscale,
 	int x,y;
 
   assert(Bpp == 4);
+  uint32 * dest32 = (uint32 *)dest;
   int pinc=pitch-(xr<<2);
+  assert(xr % 8 == 0);
+  assert(pinc % 4 == 0);
   for(y=yr;y;y--,src+=256-xr) {
-    for(x=xr;x;x--) {
+    for(x=xr;x;x-=8) {
       //THE MAIN BLITTING CODEPATH (there may be others that are important)
       //*(uint32 *)dest = ModernDeemphColorMap(src,XBuf,1,1);
 
       //look up the legacy translation,
       //do not support deemph palette to optimize performance
-      *(uint32 *)dest = palettetranslate[*src];
-      dest+=4;
-      src++;
+#define macro() *dest32 ++ = palettetranslate[*src ++]
+      macro(); macro(); macro(); macro();
+      macro(); macro(); macro(); macro();
     }
-    dest+=pinc;
+    dest32+=(pinc / 4);
   }
 }
