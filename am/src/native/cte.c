@@ -11,15 +11,12 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
 void __am_asm_trap();
 void __am_ret_from_trap();
-
-void __am_get_cur_as(_Context *c);
-void __am_get_empty_as(_Context *c);
 void __am_switch(_Context *c);
 int __am_in_userspace(void *addr);
 
 void __am_irq_handle(_Context *c) {
   getcontext(&c->uc);
-  __am_get_cur_as(c);
+  c->as = thiscpu->cur_as;
 
   _Context *ret = user_handler(thiscpu->ev, c);
   if (ret == NULL) { ret = c; }
@@ -163,7 +160,7 @@ void _kcontext(_Context *c, _Area stack, void (*entry)(void *), void *arg) {
   c->rip = (uintptr_t)entry;
   c->sti = 1;
   c->rflags = 0;
-  __am_get_empty_as(c);
+  c->as = NULL;
 
   c->rdi = (uintptr_t)arg;
   c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()

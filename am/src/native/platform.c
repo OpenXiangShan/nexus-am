@@ -34,6 +34,7 @@ static void init_platform() {
       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   assert(thiscpu != (void *)-1);
   thiscpu->cpuid = 0;
+  thiscpu->cur_as = NULL;
 
   // create trap page to receive syscall and yield by SIGSEGV
   void *ret = mmap(TRAP_PAGE_START, 4096, PROT_NONE,

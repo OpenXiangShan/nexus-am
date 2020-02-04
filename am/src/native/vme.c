@@ -15,13 +15,11 @@ typedef struct PageMap {
 #define list_foreach(p, head) \
   for (p = head; p != NULL; p = p->next)
 
-static _AddressSpace empty_as = { .ptr = NULL };
 static int vme_enable = 0;
 static void* (*pgalloc)(size_t) = NULL;
 static void (*pgfree)(void *) = NULL;
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
-  thiscpu->cur_as = &empty_as;
   pgalloc = pgalloc_f;
   pgfree = pgfree_f;
   vme_enable = 1;
@@ -29,6 +27,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 void _protect(_AddressSpace *as) {
+  assert(as != NULL);
   as->ptr = NULL;
   as->pgsize = PGSIZE;
   as->area = USER_SPACE;
@@ -37,36 +36,30 @@ void _protect(_AddressSpace *as) {
 void _unprotect(_AddressSpace *as) {
 }
 
-void __am_get_cur_as(_Context *c) {
-  c->as = (vme_enable ? thiscpu->cur_as : &empty_as);
-}
-
-void __am_get_empty_as(_Context *c) {
-  c->as = &empty_as;
-}
-
 void __am_switch(_Context *c) {
   if (!vme_enable) return;
 
   _AddressSpace *as = c->as;
-  assert(as != NULL);
-  assert(thiscpu->cur_as != NULL);
   if (as == thiscpu->cur_as) return;
 
   PageMap *pp;
-  // munmap all mappings
-  list_foreach(pp, thiscpu->cur_as->ptr) {
-    if (pp->is_mapped) {
-      __am_shm_munmap(pp->va);
-      pp->is_mapped = false;
+  if (thiscpu->cur_as != NULL) {
+    // munmap all mappings
+    list_foreach(pp, thiscpu->cur_as->ptr) {
+      if (pp->is_mapped) {
+        __am_shm_munmap(pp->va);
+        pp->is_mapped = false;
+      }
     }
   }
 
-  // mmap all mappings
-  list_foreach(pp, as->ptr) {
-    assert(USER_SPACE.start <= pp->va && pp->va < USER_SPACE.end);
-    __am_shm_mmap(pp->va, pp->pa, pp->prot);
-    pp->is_mapped = true;
+  if (as != NULL) {
+    // mmap all mappings
+    list_foreach(pp, as->ptr) {
+      assert(USER_SPACE.start <= pp->va && pp->va < USER_SPACE.end);
+      __am_shm_mmap(pp->va, pp->pa, pp->prot);
+      pp->is_mapped = true;
+    }
   }
 
   thiscpu->cur_as = as;
@@ -76,6 +69,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert(USER_SPACE.start <= va && va < USER_SPACE.end);
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
+  assert(as != NULL);
   PageMap *pp;
   list_foreach(pp, as->ptr) {
     // can not remap
