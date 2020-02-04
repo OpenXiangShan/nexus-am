@@ -17,11 +17,13 @@ typedef struct PageMap {
 
 static _AddressSpace empty_as = { .ptr = NULL };
 static int vme_enable = 0;
+static void* (*pgalloc)(size_t) = NULL;
+static void (*pgfree)(void *) = NULL;
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
-  // we do not need to ask MM to get a page from OS,
-  // since we can call malloc() in native
   thiscpu->cur_as = &empty_as;
+  pgalloc = pgalloc_f;
+  pgfree = pgfree_f;
   vme_enable = 1;
   return 0;
 }
@@ -62,6 +64,7 @@ void __am_switch(_Context *c) {
 
   // mmap all mappings
   list_foreach(pp, as->ptr) {
+    assert(USER_SPACE.start <= pp->va && pp->va < USER_SPACE.end);
     __am_shm_mmap(pp->va, pp->pa, pp->prot);
     pp->is_mapped = true;
   }
@@ -70,6 +73,9 @@ void __am_switch(_Context *c) {
 }
 
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert(USER_SPACE.start <= va && va < USER_SPACE.end);
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
   PageMap *pp;
   list_foreach(pp, as->ptr) {
     // can not remap
@@ -82,7 +88,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
     }
   }
 
-  pp = malloc(sizeof(PageMap));
+  pp = pgalloc(PGSIZE); // this will waste memory, any better idea?
   pp->va = va;
   pp->pa = pa;
   pp->prot = prot;
