@@ -1,8 +1,5 @@
 uint8 *C;
-register uint8 cc;
 uint32 vadr;
-
-register uint8 zz;
 
 if (X1 >= 2) {
 	uint8 *S = PALRAM;
@@ -30,15 +27,16 @@ if (X1 >= 2) {
 	P += 8;
 }
 
-	zz = RefreshAddr & 0x1F;
-	C = vnapage[(RefreshAddr >> 10) & 3];
-	vadr = (C[RefreshAddr & 0x3ff] << 4) + vofs;				// Fetch name table byte.
+	vadr = (C0[RefreshAddr & 0x3ff] << 4) + vofs;				// Fetch name table byte.
 
-  cc = C[0x3c0 + (zz >> 2) + ((RefreshAddr & 0x380) >> 4)];	// Fetch attribute table byte.
-  cc = ((cc >> ((zz & 2) + ((RefreshAddr & 0x40) >> 4))) & 3);
+  if (RefreshAddr % 4 == 0) {
+    uint8 zz = RefreshAddr >> 2;
+    cc = (C0[0x3c0 | (zz & 0x7) | ((zz >> 2) & 0x38)] << 2) >> ((zz >> 2) & 0x4);	// Fetch attribute table byte.
+  }
+  cc2 = (cc >> (RefreshAddr & 0x2)) & 0xc;
 
 atlatch >>= 2;
-atlatch |= cc << 2;
+atlatch |= cc2;
 
 pshift[0] <<= 8;
 pshift[1] <<= 8;
@@ -54,7 +52,9 @@ pshift[1] <<= 8;
 		RENDER_LOGP(C + 8);
 	pshift[1] |= C[8];
 
-if ((RefreshAddr & 0x1f) == 0x1f)
+if ((RefreshAddr & 0x1f) == 0x1f) {
 	RefreshAddr ^= 0x41F;
+	C0 = vnapage[(RefreshAddr >> 10) & 3];
+}
 else
 	RefreshAddr++;

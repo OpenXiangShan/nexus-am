@@ -1112,6 +1112,13 @@ static void RefreshLine(int lastpixel) {
 	PALRAM[8] |= 64;
 	PALRAM[0xC] |= 64;
 
+  uint32 cc = 0;
+  uint8 cc2;
+  uint8 *C0 = vnapage[(RefreshAddr >> 10) & 3];
+  if (RefreshAddr % 4 != 0) {
+    uint8 zz = RefreshAddr >> 2;
+    cc = (C0[0x3c0 | (zz & 0x7) | ((zz >> 2) & 0x38)] << 2) >> ((zz >> 2) & 0x4);
+  }
   for (X1 = firsttile; X1 < lasttile; X1++) {
 #include "pputile.inc"
   }
