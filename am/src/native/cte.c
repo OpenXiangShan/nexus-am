@@ -19,7 +19,7 @@ void __am_irq_handle(_Context *c) {
   c->as = thiscpu->cur_as;
 
   _Context *ret = user_handler(thiscpu->ev, c);
-  if (ret == NULL) { ret = c; }
+  assert(ret != NULL);
 
   __am_switch(ret);
 
