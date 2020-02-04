@@ -108,9 +108,8 @@ static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
   setup_stack(thiscpu->ev.event, ucontext);
 }
 
-void __am_init_irq() {
-  _intr_write(0);
-
+// signal handlers are inherited across fork()
+static void install_signal_handler() {
   struct sigaction s;
   memset(&s, 0, sizeof(s));
   s.sa_sigaction = sig_handler;
@@ -121,12 +120,19 @@ void __am_init_irq() {
   assert(ret == 0);
   ret = sigaction(SIGUSR1, &s, NULL);
   assert(ret == 0);
+  ret = sigaction(SIGSEGV, &s, NULL);
+  assert(ret == 0);
+}
+
+// setitimer() are inherited across fork(), should be called again from children
+void __am_init_timer_irq() {
+  _intr_write(0);
 
   struct itimerval it = {};
   it.it_value.tv_sec = 0;
   it.it_value.tv_usec = 1000000 / TIMER_HZ;
   it.it_interval = it.it_value;
-  ret = setitimer(ITIMER_VIRTUAL, &it, NULL);
+  int ret = setitimer(ITIMER_VIRTUAL, &it, NULL);
   assert(ret == 0);
 }
 
@@ -134,17 +140,10 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   assert(sizeof(ucontext_t) < 1024);  // if this fails, allocate larger space in trap.S for ucontext
   assert(SYSCALL_INSTR_LEN == 7);
 
-  struct sigaction s;
-  memset(&s, 0, sizeof(s));
-  s.sa_sigaction = sig_handler;
-  s.sa_flags = SA_SIGINFO;
-  __am_get_intr_sigmask(&s.sa_mask);
-  int ret = sigaction(SIGSEGV, &s, NULL);
-  assert(ret == 0);
-
   user_handler = handler;
 
-  __am_init_irq();
+  install_signal_handler();
+  __am_init_timer_irq();
   return 0;
 }
 

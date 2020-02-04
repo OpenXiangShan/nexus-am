@@ -5,7 +5,7 @@ int _mpe_init(void (*entry)()) {
   for (int i = 1; i < _ncpu(); i++) {
     if (fork() == 0) {
       thiscpu->cpuid = i;
-      __am_init_irq();
+      __am_init_timer_irq();
       entry();
     }
   }
