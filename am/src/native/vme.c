@@ -100,7 +100,6 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
 }
 
 void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
-  assert(0);
   kstack.end -= RED_NONE_SIZE;
   _Context *c_on_stack = (_Context*)kstack.end - 1;
 
@@ -109,8 +108,6 @@ void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
   c->sti = 1;
   c->rflags = 0;
   c->as = as;
-  //c->esp = 0;  FIXME
+  //c->esp = 0;  FIXME: we leave the esp undefined
   c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
-
-  *c_on_stack = *c;
 }

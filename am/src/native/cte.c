@@ -21,14 +21,13 @@ void __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
 
   _Context *ret = user_handler(thiscpu->ev, c);
-  if (ret != NULL) {
-    c = ret;
-  }
+  if (ret == NULL) { ret = c; }
 
-  __am_switch(c);
+  __am_switch(ret);
 
   // the original context constructed on the stack
-  c = (void *)c->uc.uc_mcontext.gregs[REG_RDI];
+  c = (void *)ret->uc.uc_mcontext.gregs[REG_RDI];
+  *c = *ret;
   // interrupt flag, see trap.S
   c->uc.uc_mcontext.gregs[REG_RDI] = c->sti;
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
@@ -155,8 +154,6 @@ void _kcontext(_Context *c, _Area stack, void (*entry)(void *), void *arg) {
 
   c->rdi = (uintptr_t)arg;
   c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
-
-  *c_on_stack = *c;
 }
 
 void _yield() {
