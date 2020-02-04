@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "platform.h"
 
+#define MAX_CPU 16
 #define TRAP_PAGE_START (void *)0x100000
 #define PMEM_SIZE (128 * 1024 * 1024) // 128MB
 static int pmem_fd = 0;
@@ -13,6 +14,7 @@ static void *pmem = NULL;
 static ucontext_t uc_example = {};
 sigset_t __am_intr_sigmask = {};
 __am_cpu_t *__am_cpu_struct = NULL;
+int __am_ncpu = 0;
 
 int main(const char *args);
 
@@ -93,8 +95,14 @@ static void init_platform() {
   // disable interrupts by default
   _intr_write(0);
 
+  // save the context template
   getcontext(&uc_example);
   __am_get_intr_sigmask(&uc_example.uc_sigmask);
+
+  // set ncpu
+  char *smp = getenv("smp");
+  __am_ncpu = smp ? atoi(smp) : 1;
+  assert(0 < __am_ncpu && __am_ncpu <= MAX_CPU);
 
   const char *args = getenv("mainargs");
   exit(main(args ? args : "")); // call main here!

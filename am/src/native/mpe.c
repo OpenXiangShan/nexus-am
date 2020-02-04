@@ -1,9 +1,5 @@
-#include <stdlib.h>
 #include <stdatomic.h>
 #include "platform.h"
-
-#define MAX_SMP 16
-static int ncpu = 0;
 
 int _mpe_init(void (*entry)()) {
   for (int i = 1; i < _ncpu(); i++) {
@@ -21,13 +17,8 @@ int _mpe_init(void (*entry)()) {
 }
 
 int _ncpu() {
-  if (ncpu == 0) {
-    char *smp = getenv("smp");
-    ncpu = smp ? atoi(smp) : 1;
-    assert(0 < ncpu && ncpu <= MAX_SMP);
-  }
-
-  return ncpu;
+  extern int __am_ncpu;
+  return __am_ncpu;
 }
 
 int _cpu() {
