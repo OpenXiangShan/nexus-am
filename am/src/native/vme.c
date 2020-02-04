@@ -9,6 +9,7 @@ typedef struct PageMap {
   uintptr_t vpn;
   uintptr_t ppn;
   struct PageMap *next;
+  int prot;
   int is_mapped;
 } PageMap;
 
@@ -62,7 +63,7 @@ void __am_switch(_Context *c) {
 
   // mmap all mappings
   list_foreach(pp, as->ptr) {
-    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
+    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), pp->prot);
     pp->is_mapped = true;
   }
 
@@ -86,12 +87,13 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   pp = malloc(sizeof(PageMap));
   pp->vpn = vpn;
   pp->ppn = (uintptr_t)pa >> PGSHIFT;
+  pp->prot = prot;
   pp->next = as->ptr;
   as->ptr = pp;
 
   if (as == thiscpu->cur_as) {
     // enforce the map immediately
-    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
+    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), pp->prot);
     pp->is_mapped = true;
   }
   else {
