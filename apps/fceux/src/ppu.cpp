@@ -993,7 +993,6 @@ static int tofix = 0;
 
 static void ResetRL(uint8 *target) {
 	memset(target, 0xFF, 256);
-	InputScanlineHook(0, 0, 0, 0);
 	Plinef = target;
 	Pline = target;
 	firsttile = 0;
@@ -1072,12 +1071,6 @@ static void RefreshLine(int lastpixel) {
 	register uint8 *P = Pline;
 	int lasttile = lastpixel >> 3;
 	int numtiles;
-	static int norecurse = 0;	// Yeah, recursion would be bad.
-								// PPU_hook() functions can call
-								// mirroring/chr bank switching functions,
-								// which call FCEUPPU_LineUpdate, which call this
-								// function.
-	if (norecurse) return;
 
 	if (sphitx != 0x100 && !(PPU_status & 0x40)) {
 		if ((sphitx < (lastpixel - 16)) && !(sphitx < ((lasttile - 2) * 8)))
@@ -1098,11 +1091,9 @@ static void RefreshLine(int lastpixel) {
 
   vofs = ((PPU[0] & 0x10) << 8) | ((RefreshAddr >> 12) & 7);
 
+	uint8_t tem8 = READPAL(0) | 0x40;
 	if (!ScreenON && !SpriteON) {
-		uint32 tem;
-		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
-		tem |= 0x40404040;
-		FCEU_dwmemset(Pline, tem, numtiles * 8);
+		memset(Pline, tem8, numtiles * 8);
 		P += numtiles * 8;
 		Pline = P;
 
@@ -1110,12 +1101,7 @@ static void RefreshLine(int lastpixel) {
 
 		#define TOFIXNUM (272 - 0x4)
 		if (lastpixel >= TOFIXNUM && tofix) {
-			Fixit1();
 			tofix = 0;
-		}
-
-		if ((lastpixel - 16) >= 0) {
-			InputScanlineHook(Plinef, spork ? sprlinebuf : 0, linestartts, lasttile * 8 - 16);
 		}
 		return;
 	}
@@ -1130,7 +1116,6 @@ static void RefreshLine(int lastpixel) {
 #include "pputile.inc"
   }
 
-#undef vofs
 #undef RefreshAddr
 
 	//Reverse changes made before.
@@ -1141,17 +1126,12 @@ static void RefreshLine(int lastpixel) {
 
 	RefreshAddr = smorkus;
 	if (firsttile <= 2 && 2 < lasttile && !(PPU[1] & 2)) {
-		uint32 tem;
-		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
-		tem |= 0x40404040;
+		uint32 tem = tem8 | (tem8 << 8) | (tem8 << 16) | (tem8 << 24);
 		*(uint32*)Plinef = *(uint32*)(Plinef + 4) = tem;
 	}
 
 	if (!ScreenON) {
-		uint32 tem;
 		int tstart, tcount;
-		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
-		tem |= 0x40404040;
 
 		tcount = lasttile - firsttile;
 		tstart = firsttile - 2;
@@ -1160,7 +1140,7 @@ static void RefreshLine(int lastpixel) {
 			tstart = 0;
 		}
 		if (tcount > 0)
-			FCEU_dwmemset(Plinef + tstart * 8, tem, tcount * 8);
+			memset(Plinef + tstart * 8, tem8, tcount * 8);
 	}
 
 	if (lastpixel >= TOFIXNUM && tofix) {
@@ -1171,9 +1151,6 @@ static void RefreshLine(int lastpixel) {
 	//This only works right because of a hack earlier in this function.
 	CheckSpriteHit(lastpixel);
 
-	if ((lastpixel - 16) >= 0) {
-		InputScanlineHook(Plinef, spork ? sprlinebuf : 0, linestartts, lasttile * 8 - 16);
-	}
 	Pline = P;
 	firsttile = lasttile;
 }
@@ -1224,14 +1201,12 @@ static void DoLine(void) {
 	EndRL();
 
 	if (!renderbg) {// User asked to not display background data.
-		uint32 tem;
 		uint8 col;
 		if (gNoBGFillColor == 0xFF)
 			col = READPAL(0);
 		else col = gNoBGFillColor;
-		tem = col | (col << 8) | (col << 16) | (col << 24);
-		tem |= 0x40404040; 
-		FCEU_dwmemset(target, tem, 256);
+		uint8 tem8 = col | 0x40;
+		memset(target, tem8, 256);
 	}
 
 	if (SpriteON)
@@ -1458,7 +1433,7 @@ static void RefreshSprites(void) {
 	spork = 0;
 	if (!numsprites) return;
 
-	FCEU_dwmemset(sprlinebuf, 0x80808080, 256);
+	memset(sprlinebuf, 0x80, 256);
 	numsprites--;
 	spr = (SPRB*)SPRBUF + numsprites;
 
