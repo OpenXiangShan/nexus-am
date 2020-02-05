@@ -11,10 +11,10 @@ extern int key_p;
 static inline byte psg_io_read(word address) {
   static int const MAP[256] = {
     0, // On/Off
-    _KEY_G, // A
-    _KEY_H, // B
-    _KEY_T, // SELECT
-    _KEY_Y, // START
+    _KEY_J, // A
+    _KEY_K, // B
+    _KEY_U, // SELECT
+    _KEY_I, // START
     _KEY_W,
     _KEY_S,
     _KEY_A,
