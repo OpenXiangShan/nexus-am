@@ -218,19 +218,8 @@ void SetWriteHandler(int32 start, int32 end, writefunc func) {
 			BWrite[x] = func;
 }
 
-uint8 *RAM;
+uint8 RAM[0x800];
 
-//---------
-//windows might need to allocate these differently, so we have some special code
-
-static void AllocBuffers() {
-	RAM = (uint8*)FCEU_gmalloc(0x800);
-}
-
-static void FreeBuffers() {
-	FCEU_free(RAM);
-    RAM = NULL;
-}
 //------
 
 uint8 PAL = 0;
@@ -377,8 +366,6 @@ bool FCEUI_Initialize() {
 		return false;
 	}
 
-	AllocBuffers();
-
 	// Initialize some parts of the settings structure
 	//mbg 5/7/08 - I changed the ntsc settings to match pal.
 	//this is more for precision emulation, instead of entertainment, which is what fceux is all about nowadays
@@ -406,7 +393,6 @@ bool FCEUI_Initialize() {
 void FCEUI_Kill(void) {
 	FCEU_KillVirtualVideo();
 	FCEU_KillGenie();
-	FreeBuffers();
 }
 
 ///Emulates a single frame.

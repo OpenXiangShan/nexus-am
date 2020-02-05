@@ -54,8 +54,8 @@ static INLINE void WrMem(unsigned int A, uint8 V)
 static INLINE uint8 RdRAM(unsigned int A)
 {
   //bbit edited: this was changed so cheat substituion would work
-  return(_DB=ARead[A](A));
-  // return(_DB=RAM[A]);
+  //return(_DB=ARead[A](A));
+   return(_DB=RAM[A]);
 }
 
 static INLINE void WrRAM(unsigned int A, uint8 V)
