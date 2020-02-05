@@ -1,124 +1,117 @@
-#include <am.h>
-#include <stdlib.h>
-#include <klib.h>
-#include <signal.h>
+#include "platform.h"
+
+#define USER_SPACE (_Area) { .start = (void *)0x40000000ul, .end = (void *)0xc0000000ul }
 
 #define PGSIZE  4096
-#define PGSHIFT 12
 
 typedef struct PageMap {
-  uintptr_t vpn;
-  uintptr_t ppn;
+  void *va;
+  void *pa;
   struct PageMap *next;
+  int prot;
   int is_mapped;
 } PageMap;
 
 #define list_foreach(p, head) \
   for (p = head; p != NULL; p = p->next)
 
-void __am_shm_mmap(void *va, void *pa, int prot);
-void __am_shm_munmap(void *va);
-
 static int vme_enable = 0;
+static void* (*pgalloc)(size_t) = NULL;
+static void (*pgfree)(void *) = NULL;
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
-  // we do not need to ask MM to get a page from OS,
-  // since we can call malloc() in native
+  pgalloc = pgalloc_f;
+  pgfree = pgfree_f;
   vme_enable = 1;
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
+void _protect(_AddressSpace *as) {
+  assert(as != NULL);
   as->ptr = NULL;
   as->pgsize = PGSIZE;
-  return 0;
+  as->area = USER_SPACE;
 }
 
 void _unprotect(_AddressSpace *as) {
-}
-
-static _AddressSpace empty_as = { .ptr = NULL };
-static _AddressSpace *cur_as = &empty_as;
-
-void __am_get_cur_as(_Context *c) {
-  c->as = cur_as;
 }
 
 void __am_switch(_Context *c) {
   if (!vme_enable) return;
 
   _AddressSpace *as = c->as;
-  assert(as != NULL);
-  if (as == cur_as) return;
+  if (as == thiscpu->cur_as) return;
 
   PageMap *pp;
-  // munmap all mappings
-  list_foreach(pp, cur_as->ptr) {
-    if (pp->is_mapped) {
-      __am_shm_munmap((void *)(pp->vpn << PGSHIFT));
-      pp->is_mapped = false;
+  if (thiscpu->cur_as != NULL) {
+    // munmap all mappings
+    list_foreach(pp, thiscpu->cur_as->ptr) {
+      if (pp->is_mapped) {
+        __am_shm_munmap(pp->va);
+        pp->is_mapped = false;
+      }
     }
   }
 
-  // mmap all mappings
-  list_foreach(pp, as->ptr) {
-    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
-    pp->is_mapped = true;
+  if (as != NULL) {
+    // mmap all mappings
+    list_foreach(pp, as->ptr) {
+      assert(USER_SPACE.start <= pp->va && pp->va < USER_SPACE.end);
+      __am_shm_mmap(pp->va, pp->pa, pp->prot);
+      pp->is_mapped = true;
+    }
   }
 
-  cur_as = as;
+  thiscpu->cur_as = as;
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
-  uintptr_t vpn = (uintptr_t)va >> PGSHIFT;
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert(USER_SPACE.start <= va && va < USER_SPACE.end);
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
+  assert(as != NULL);
   PageMap *pp;
   list_foreach(pp, as->ptr) {
     // can not remap
     // Actually this is allowed according to the semantics of AM API,
     // but we do this to catch unexcepted behavior from Nanos-lite
-    if (pp->vpn == vpn) {
-      printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->vpn << PGSHIFT, pp->ppn << PGSHIFT);
-      assert(pp->ppn == ((uintptr_t)pa >> PGSHIFT));
-      return 0;
+    if (pp->va == va) {
+      printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->va, pp->pa);
+      assert(pp->pa == pa);
+      return;
     }
   }
 
-  pp = malloc(sizeof(PageMap));
-  pp->vpn = vpn;
-  pp->ppn = (uintptr_t)pa >> PGSHIFT;
+  pp = pgalloc(PGSIZE); // this will waste memory, any better idea?
+  pp->va = va;
+  pp->pa = pa;
+  pp->prot = prot;
   pp->next = as->ptr;
   as->ptr = pp;
 
-  if (as == cur_as) {
+  if (as == thiscpu->cur_as) {
     // enforce the map immediately
-    __am_shm_mmap((void *)(pp->vpn << PGSHIFT), (void *)(pp->ppn << PGSHIFT), 0);
+    __am_shm_mmap(pp->va, pp->pa, pp->prot);
     pp->is_mapped = true;
   }
   else {
     pp->is_mapped = false;
   }
-
-  return 0;
 }
 
-void __am_get_example_uc(_Context *r);
+void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
+  kstack.end -= RED_NONE_SIZE;
+  _Context *c_on_stack = (_Context*)kstack.end - 1;
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
-  ustack.end -= 1 * sizeof(uintptr_t);  // 1 = retaddr
-  uintptr_t ret = (uintptr_t)ustack.end;
-  *(uintptr_t *)ret = 0;
-
-  _Context *c = (_Context*)ustack.end - 1;
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
-  int ret2 = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
-  assert(ret2 == 0);
+  c->sti = 1;
   c->rflags = 0;
   c->as = as;
+  //c->esp = 0;  FIXME: we leave the esp undefined
+  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
+}
 
-  c->rdi = 0;
-  c->uc.uc_mcontext.gregs[REG_RSI] = ret; // ???
-  c->uc.uc_mcontext.gregs[REG_RDX] = ret; // ???
-
-  return c;
+int __am_in_userspace(void *addr) {
+  return vme_enable && (USER_SPACE.start <= addr) && (addr < USER_SPACE.end);
 }
