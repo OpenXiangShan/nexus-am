@@ -5,9 +5,7 @@
 # define __USE_GNU
 #endif
 
-#include <unistd.h>
 #include <ucontext.h>
-#include <sys/types.h>
 
 #define false 0
 #define true 1
@@ -20,10 +18,8 @@ struct _Context {
       void *as;
     };
   };
-  uintptr_t rax, r10, r11, rflags; // registers not preserved by getcontext()
-  uintptr_t rdi;
-  uintptr_t cause;
-  uintptr_t rip;
+  uintptr_t rax, r10, r11, rdi; // registers not preserved by getcontext()
+  uintptr_t sti, rflags, rip;   // saved by signal handler
 };
 
 #define GPR1 rax
