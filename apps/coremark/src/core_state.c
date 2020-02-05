@@ -1,21 +1,21 @@
 /*
 Author : Shay Gal-On, EEMBC
 
-This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009 
-All rights reserved.                            
+This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009
+All rights reserved.
 
 EEMBC CoreMark Software is a product of EEMBC and is provided under the terms of the
-CoreMark License that is distributed with the official EEMBC COREMARK Software release. 
-If you received this EEMBC CoreMark Software without the accompanying CoreMark License, 
-you must discontinue use and download the official release from www.coremark.org.  
+CoreMark License that is distributed with the official EEMBC COREMARK Software release.
+If you received this EEMBC CoreMark Software without the accompanying CoreMark License,
+you must discontinue use and download the official release from www.coremark.org.
 
-Also, if you are publicly displaying scores generated from the EEMBC CoreMark software, 
+Also, if you are publicly displaying scores generated from the EEMBC CoreMark software,
 make sure that you are in compliance with Run and Reporting rules specified in the accompanying readme.txt file.
 
-EEMBC 
+EEMBC
 4354 Town Center Blvd. Suite 114-200
-El Dorado Hills, CA, 95762 
-*/ 
+El Dorado Hills, CA, 95762
+*/
 #include "coremark.h"
 /* local functions */
 enum CORE_STATE core_state_transition( ee_u8 **instr , ee_u32 *transition_count);
@@ -23,13 +23,13 @@ enum CORE_STATE core_state_transition( ee_u8 **instr , ee_u32 *transition_count)
 /*
 Topic: Description
 	Simple state machines like this one are used in many embedded products.
-	
-	For more complex state machines, sometimes a state transition table implementation is used instead, 
+
+	For more complex state machines, sometimes a state transition table implementation is used instead,
 	trading speed of direct coding for ease of maintenance.
-	
+
 	Since the main goal of using a state machine in CoreMark is to excercise the switch/if behaviour,
-	we are using a small moore machine. 
-	
+	we are using a small moore machine.
+
 	In particular, this machine tests type of string input,
 	trying to determine whether the input is a number or something else.
 	(see core_state.png).
@@ -38,10 +38,10 @@ Topic: Description
 /* Function: core_bench_state
 	Benchmark function
 
-	Go over the input twice, once direct, and once after introducing some corruption. 
+	Go over the input twice, once direct, and once after introducing some corruption.
 */
-ee_u16 core_bench_state(ee_u32 blksize, ee_u8 *memblock, 
-		ee_s16 seed1, ee_s16 seed2, ee_s16 step, ee_u16 crc) 
+ee_u16 core_bench_state(ee_u32 blksize, ee_u8 *memblock,
+		ee_s16 seed1, ee_s16 seed2, ee_s16 step, ee_u16 crc)
 {
 	ee_u32 final_counts[NUM_CORE_STATES];
 	ee_u32 track_counts[NUM_CORE_STATES];
@@ -109,7 +109,7 @@ static ee_u8 *errpat[4]  ={(ee_u8 *)"T0.3e-1F",(ee_u8 *)"-T.T++Tq",(ee_u8 *)"1T3
 
 	Populate the input with several predetermined strings, interspersed.
 	Actual patterns chosen depend on the seed parameter.
-	
+
 	Note:
 	The seed parameter MUST be supplied from a source that cannot be determined at compile time
 */
@@ -177,7 +177,7 @@ static ee_u8 ee_isdigit(ee_u8 c) {
 	The state machine will continue scanning until either:
 	1 - an invalid input is detcted.
 	2 - a valid number has been detected.
-	
+
 	The input pointer is updated to point to the end of the token, and the end state is returned (either specific format determined or invalid).
 */
 

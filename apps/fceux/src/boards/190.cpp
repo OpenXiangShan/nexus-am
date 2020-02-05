@@ -78,7 +78,7 @@ void Mapper190_Init(CartInfo *info) {
 	SetupCartPRGMapping(0x10, WRAM, 0x2000, 1);
 
 	chrr[0] = chrr[1] = chrr[2] = chrr[3] = prgr = 0;
-	
+
 	AddExState(&prgr, 1, 0, "PRGR");
 	AddExState(chrr, 4, 0, "CHRR");
 	AddExState(WRAM, 0x2000, 0, "WRAM");

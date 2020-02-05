@@ -26,14 +26,14 @@
 #include "sound.h"
 #include "file.h"
 #include "utils/memory.h"
-		 
+
 #include "cart.h"
 #include "palette.h"
 #include "state.h"
 #include "video.h"
 #include "input.h"
 #include "driver.h"
-		 
+
 #define debug_loggingCD false
 
 #define VBlankON    (PPU[0] & 0x80)	//Generate VBlank NMI
@@ -2006,7 +2006,7 @@ int FCEUX_PPU_Loop(int skip) {
 
 		if (VBlankON) TriggerNMI();
 		int sltodo = PAL?70:20;
-		
+
 		//formerly: runppu(20 * (kLineTime) - delay);
 		for(int S=0;S<sltodo;S++)
 		{

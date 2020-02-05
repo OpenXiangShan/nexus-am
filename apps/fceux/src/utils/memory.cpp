@@ -28,10 +28,10 @@
 ///allocates the specified number of bytes. exits process if this fails
 void *FCEU_gmalloc(uint32 size)
 {
-	
+
  void *ret;
  ret=malloc(size);
- if(!ret)  
+ if(!ret)
  {
   FCEU_PrintError("Error allocating memory!  Doing a hard exit.");
   assert(0);

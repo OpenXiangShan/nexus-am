@@ -55,18 +55,18 @@ int InitBlitToHigh(int b, uint32 rmask, uint32 gmask, uint32 bmask, int efx, int
 {
   assert(b == 4);
 
-	Bpp=b;	
-	
+	Bpp=b;
+
 	if(Bpp<=1 || Bpp>4)
 		return(0);
-	
+
 	//allocate adequate room for 32bpp palette
 	palettetranslate=(uint32*)FCEU_dmalloc(256*4 + 512*4);
-	
+
 	if(!palettetranslate)
 		return(0);
-	
-	
+
+
 	CBM[0]=rmask;
 	CBM[1]=gmask;
 	CBM[2]=bmask;
@@ -84,10 +84,10 @@ void KillBlitToHigh(void)
 
 
 void SetPaletteBlitToHigh(uint8 *src)
-{ 
+{
 	int cshiftr[3];
 	int cshiftl[3];
-	
+
 	CalculateShift(CBM, cshiftr, cshiftl);
 
   assert(Bpp == 4);
@@ -116,7 +116,7 @@ void SetPaletteBlitToHigh(uint8 *src)
 u32 ModernDeemphColorMap(u8* src, u8* srcbuf, int xscale, int yscale)
 {
 	u8 pixel = *src;
-	
+
 	//look up the legacy translation
 	u32 color = palettetranslate[pixel];
 

@@ -31,7 +31,7 @@ void bench_sieve_run() {
     }
   }
   ans = 0;
-  for (int i = 2; i <= N; i ++) 
+  for (int i = 2; i <= N; i ++)
     if (get(i)) {
       ans ++;
     }

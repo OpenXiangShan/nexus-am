@@ -1,31 +1,31 @@
 /*
 Author : Shay Gal-On, EEMBC
 
-This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009 
-All rights reserved.                            
+This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009
+All rights reserved.
 
 EEMBC CoreMark Software is a product of EEMBC and is provided under the terms of the
-CoreMark License that is distributed with the official EEMBC COREMARK Software release. 
-If you received this EEMBC CoreMark Software without the accompanying CoreMark License, 
-you must discontinue use and download the official release from www.coremark.org.  
+CoreMark License that is distributed with the official EEMBC COREMARK Software release.
+If you received this EEMBC CoreMark Software without the accompanying CoreMark License,
+you must discontinue use and download the official release from www.coremark.org.
 
-Also, if you are publicly displaying scores generated from the EEMBC CoreMark software, 
+Also, if you are publicly displaying scores generated from the EEMBC CoreMark software,
 make sure that you are in compliance with Run and Reporting rules specified in the accompanying readme.txt file.
 
-EEMBC 
+EEMBC
 4354 Town Center Blvd. Suite 114-200
-El Dorado Hills, CA, 95762 
-*/ 
+El Dorado Hills, CA, 95762
+*/
 #include "coremark.h"
 /*
 Topic: Description
 	Matrix manipulation benchmark
-	
-	This very simple algorithm forms the basis of many more complex algorithms. 
-	
-	The tight inner loop is the focus of many optimizations (compiler as well as hardware based) 
-	and is thus relevant for embedded processing. 
-	
+
+	This very simple algorithm forms the basis of many more complex algorithms.
+
+	The tight inner loop is the focus of many optimizations (compiler as well as hardware based)
+	and is thus relevant for embedded processing.
+
 	The total available data space will be divided to 3 parts:
 	NxN Matrix A - initialized with small values (upper 3/4 of the bits all zero).
 	NxN Matrix B - initialized with medium values (upper half of the bits all zero).
@@ -75,7 +75,7 @@ void printmatC(MATRES *C, ee_u32 N, char *name) {
 /* Function: core_bench_matrix
 	Benchmark function
 
-	Iterate <matrix_test> N times, 
+	Iterate <matrix_test> N times,
 	changing the matrix values slightly by a constant amount each time.
 */
 ee_u16 core_bench_matrix(mat_params *p, ee_s16 seed, ee_u16 crc) {
@@ -101,11 +101,11 @@ ee_u16 core_bench_matrix(mat_params *p, ee_s16 seed, ee_u16 crc) {
 
 	Returns:
 	A CRC value that captures all results calculated in the function.
-	In particular, crc of the value calculated on the result matrix 
+	In particular, crc of the value calculated on the result matrix
 	after each step by <matrix_sum>.
 
 	Operation:
-	
+
 	1 - Add a constant value to all elements of a matrix.
 	2 - Multiply a matrix by a constant.
 	3 - Multiply a matrix by a vector.
@@ -142,7 +142,7 @@ ee_s16 matrix_test(ee_u32 N, MATRES *C, MATDAT *A, MATDAT *B, MATDAT val) {
 #if CORE_DEBUG
 	printmatC(C,N,"matrix_mul_matrix_bitextract");
 #endif
-	
+
 	matrix_add_const(N,A,-val); /* return matrix to initial value */
 	return crc;
 }
@@ -158,7 +158,7 @@ ee_s16 matrix_test(ee_u32 N, MATRES *C, MATDAT *A, MATDAT *B, MATDAT val) {
 
 	Returns:
 	Matrix dimensions.
-	
+
 	Note:
 	The seed parameter MUST be supplied from a source that cannot be determined at compile time
 */
@@ -173,7 +173,7 @@ ee_u32 core_init_matrix(ee_u32 blksize, void *memblk, ee_s32 seed, mat_params *p
 		seed=1;
 	while (j<blksize) {
 		i++;
-		j=i*i*2*4;		
+		j=i*i*2*4;
 	}
 	N=i-1;
 	A=(MATDAT *)align_mem(memblk);
@@ -207,10 +207,10 @@ ee_u32 core_init_matrix(ee_u32 blksize, void *memblk, ee_s32 seed, mat_params *p
 	Calculate a function that depends on the values of elements in the matrix.
 
 	For each element, accumulate into a temporary variable.
-	
-	As long as this value is under the parameter clipval, 
+
+	As long as this value is under the parameter clipval,
 	add 1 to the result if the element is bigger then the previous.
-	
+
 	Otherwise, reset the accumulator and add 10 to the result.
 */
 ee_s16 matrix_sum(ee_u32 N, MATRES *C, MATDAT clipval) {

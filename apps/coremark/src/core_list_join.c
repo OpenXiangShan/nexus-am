@@ -1,21 +1,21 @@
 /*
 Author : Shay Gal-On, EEMBC
 
-This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009 
-All rights reserved.                            
+This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009
+All rights reserved.
 
 EEMBC CoreMark Software is a product of EEMBC and is provided under the terms of the
-CoreMark License that is distributed with the official EEMBC COREMARK Software release. 
-If you received this EEMBC CoreMark Software without the accompanying CoreMark License, 
-you must discontinue use and download the official release from www.coremark.org.  
+CoreMark License that is distributed with the official EEMBC COREMARK Software release.
+If you received this EEMBC CoreMark Software without the accompanying CoreMark License,
+you must discontinue use and download the official release from www.coremark.org.
 
-Also, if you are publicly displaying scores generated from the EEMBC CoreMark software, 
+Also, if you are publicly displaying scores generated from the EEMBC CoreMark software,
 make sure that you are in compliance with Run and Reporting rules specified in the accompanying readme.txt file.
 
-EEMBC 
+EEMBC
 4354 Town Center Blvd. Suite 114-200
-El Dorado Hills, CA, 95762 
-*/ 
+El Dorado Hills, CA, 95762
+*/
 
 #include "coremark.h"
 /*
@@ -23,29 +23,29 @@ Topic: Description
 	Benchmark using a linked list.
 
 	Linked list is a common data structure used in many applications.
-	
+
 	For our purposes, this will excercise the memory units of the processor.
 	In particular, usage of the list pointers to find and alter data.
-	
+
 	We are not using Malloc since some platforms do not support this library.
-	
+
 	Instead, the memory block being passed in is used to create a list,
 	and the benchmark takes care not to add more items then can be
 	accomodated by the memory block. The porting layer will make sure
 	that we have a valid memory block.
-	
+
 	All operations are done in place, without using any extra memory.
-	
+
 	The list itself contains list pointers and pointers to data items.
 	Data items contain the following:
-	
+
 	idx - An index that captures the initial order of the list.
 	data - Variable data initialized based on the input parameters. The 16b are divided as follows:
 	o Upper 8b are backup of original data.
 	o Bit 7 indicates if the lower 7 bits are to be used as is or calculated.
 	o Bits 0-2 indicate type of operation to perform to get a 7b value.
 	o Bits 3-6 provide input for the operation.
-	
+
 */
 
 /* local functions */
@@ -88,7 +88,7 @@ ee_s16 calc_func(ee_s16 *pdata, core_results *res) {
 				break;
 		}
 		res->crc=crcu16(retval,res->crc);
-		retval &= 0x007f; 
+		retval &= 0x007f;
 		*pdata = (data & 0xff00) | 0x0080 | retval; /* cache the result */
 		return retval;
 	}
@@ -232,7 +232,7 @@ list_head *core_list_init(ee_u32 blksize, list_head *memblock, ee_s16 seed) {
 	info.idx=0x7fff;
 	info.data16=(ee_s16)0xffff;
 	core_list_insert_new(list,&info,&memblock,&datablock,memblock_end,datablock_end);
-	
+
 	/* then insert size items */
 	for (i=0; i<size; i++) {
 		ee_u16 datpat=((ee_u16)(seed^i) & 0xf);
@@ -246,7 +246,7 @@ list_head *core_list_init(ee_u32 blksize, list_head *memblock, ee_s16 seed) {
 	while (finder->next!=NULL) {
 		if (i<size/5) /* first 20% of the list in order */
 			finder->info->idx=i++;
-		else { 
+		else {
 			ee_u16 pat=(ee_u16)(i++ ^ seed); /* get a pseudo random number */
 			finder->info->idx=0x3fff & (((i & 0x07) << 8) | pat); /* make sure the mixed items end up after the ones in sequence */
 		}
@@ -282,21 +282,21 @@ list_head *core_list_init(ee_u32 blksize, list_head *memblock, ee_s16 seed) {
 list_head *core_list_insert_new(list_head *insert_point, list_data *info, list_head **memblock, list_data **datablock
 	, list_head *memblock_end, list_data *datablock_end) {
 	list_head *newitem;
-	
+
 	if ((*memblock+1) >= memblock_end)
 		return NULL;
 	if ((*datablock+1) >= datablock_end)
 		return NULL;
-		
+
 	newitem=*memblock;
 	(*memblock)++;
 	newitem->next=insert_point->next;
 	insert_point->next=newitem;
-	
+
 	newitem->info=*datablock;
 	(*datablock)++;
 	copy_info(newitem->info,info);
-	
+
 	return newitem;
 }
 
@@ -304,10 +304,10 @@ list_head *core_list_insert_new(list_head *insert_point, list_data *info, list_h
 	Remove an item from the list.
 
 	Operation:
-	For a singly linked list, remove by copying the data from the next item 
+	For a singly linked list, remove by copying the data from the next item
 	over to the current cell, and unlinking the next item.
 
-	Note: 
+	Note:
 	since there is always a fake item at the end of the list, no need to check for NULL.
 
 	Returns:
@@ -331,7 +331,7 @@ list_head *core_list_remove(list_head *item) {
 
 	Operation:
 	Since we want each iteration of the benchmark to be exactly the same,
-	we need to be able to undo a remove. 
+	we need to be able to undo a remove.
 	Link the removed item back into the list, and switch the info items.
 
 	Parameters:
@@ -340,7 +340,7 @@ list_head *core_list_remove(list_head *item) {
 
 	Returns:
 	The item that was linked back to the list.
-	
+
 */
 list_head *core_list_undo_remove(list_head *item_removed, list_head *item_modified) {
 	list_data *tmp;
@@ -406,7 +406,7 @@ list_head *core_list_reverse(list_head *list) {
 	Sort the list in place without recursion.
 
 	Description:
-	Use mergesort, as for linked list this is a realistic solution. 
+	Use mergesort, as for linked list this is a realistic solution.
 	Also, since this is aimed at embedded, care was taken to use iterative rather then recursive algorithm.
 	The sort can either return the list to original order (by idx) ,
 	or use the data item to invoke other other algorithms and change the order of the list.
@@ -418,7 +418,7 @@ list_head *core_list_reverse(list_head *list) {
 	Returns:
 	New head of the list.
 
-	Note: 
+	Note:
 	We have a special header for the list that will always be first,
 	but the algorithm could theoretically modify where the list starts.
 
@@ -480,7 +480,7 @@ list_head *core_list_mergesort(list_head *list, list_cmp cmp, core_results *res)
 			/* now p has stepped `insize' places along, and q has too */
 			p = q;
         }
-		
+
 	    tail->next = NULL;
 
         /* If we have done only one merge, we're finished. */

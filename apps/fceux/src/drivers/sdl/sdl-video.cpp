@@ -41,14 +41,14 @@ static int s_inited;
 #define NOFFSET	(s_clipSides ? 8 : 0)
 
 static int s_paletterefresh;
- 
+
 int
 KillVideo()
 {
 	// return failure if the video system was not initialized
 	if(s_inited == 0)
 		return -1;
-    
+
 	// if the rest of the system has been initialized, shut it down
 		// shut down the system that converts from 8 to 16/32 bpp
   KillBlitToHigh();
@@ -77,9 +77,9 @@ InitVideo(FCEUGI *gi)
 	s_tlines = s_erendline - s_srendline + 1;
 
 	s_inited = 1;
-    
+
 	FCEUI_SetShowFPS(true);
-    
+
 	s_paletterefresh = 1;
 
 	 // if using more than 8bpp, initialize the conversion routines

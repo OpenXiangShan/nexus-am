@@ -16,7 +16,7 @@ RefreshThrottleFPS()
 {
 	desired_fps = FCEUI_GetDesiredFPS();
 
-	Lasttime=0;   
+	Lasttime=0;
 	Nexttime=0;
 	InFrame=0;
 }
@@ -29,22 +29,22 @@ SpeedThrottle()
 {
 	uint64 time_left;
 	uint64 cur_time;
-    
+
 	if(!Lasttime)
 		Lasttime = uptime();
-    
+
 	if(!InFrame)
 	{
 		InFrame = 1;
 		Nexttime = Lasttime + 1000 / desired_fps;
 	}
-    
+
 	cur_time  = uptime();
 	if(cur_time >= Nexttime)
 		time_left = 0;
 	else
 		time_left = Nexttime - cur_time;
-    
+
 	if(time_left > 50)
 	{
 		time_left = 50;
@@ -53,11 +53,11 @@ SpeedThrottle()
 	}
 	else
 		InFrame = 0;
-    
+
   //delay
   while (uptime() - cur_time < time_left)
     ;
-    
+
 	if(!InFrame)
 	{
 		Lasttime = uptime();

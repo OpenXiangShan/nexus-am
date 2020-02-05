@@ -26,7 +26,7 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
     case _EVENT_YIELD:
       break;
     case _EVENT_IRQ_TIMER:
-    case _EVENT_IRQ_IODEV: 
+    case _EVENT_IRQ_IODEV:
       printf("==== interrupt (%s)  ===\n", ev.msg);
       break;
     case _EVENT_PAGEFAULT:

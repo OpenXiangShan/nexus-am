@@ -324,7 +324,7 @@ bool N_puzzle<N>::solvable() const {
   for ( int i = 0; i < N; ++i ) {
     for ( int j = 0; j < N; ++j ) {
       if ( puzzle[i][j] == 0 ) {
-        entries[N*i + j] = N*N; 
+        entries[N*i + j] = N*N;
       } else {
         entries[N*i + j] = puzzle[i][j];
       }

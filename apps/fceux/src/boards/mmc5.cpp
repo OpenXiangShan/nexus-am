@@ -130,7 +130,7 @@ uint8* MMC5BGVRAMADR(uint32 A)
 				return &BBANKS[(A) >> 10][(A)];
 			else if(mmc5ABMode == 0)
 				return &ABANKS[(A) >> 10][(A)];
-			else 
+			else
 				return &BBANKS[(A) >> 10][(A)];
 		}
 		else return &ABANKS[(A) >> 10][(A)];;
@@ -212,10 +212,10 @@ uint8 FASTCALL mmc5_PPURead(uint32 A)
 			}
 			else if(mmc5ABMode == 0)
 				return ABANKS[(A) >> 10][(A)];
-			else 
+			else
 				return BBANKS[(A) >> 10][(A)];
 		}
-		else 
+		else
 		{
 			if (ppuphase == PPUPHASE_BG && ScreenON)
 			{
@@ -254,7 +254,7 @@ uint8 FASTCALL mmc5_PPURead(uint32 A)
 				return ExRAM[A & 0x3FF];
 			}
 		}
-		
+
 		if (MMC5HackCHRMode == 1)
 		{
 			if((A&0x3FF)>=0x3C0)
@@ -264,9 +264,9 @@ uint8 FASTCALL mmc5_PPURead(uint32 A)
 				byte >>= 6;
 				byte *= 0x55;
 				return byte;
-			} 
+			}
 		}
-			
+
 		return vnapage[(A >> 10) & 0x3][A & 0x3FF];
 	}
 }
@@ -653,7 +653,7 @@ void MMC5Synco(void) {
 
 void MMC5_hb(int scanline) {
 	//zero 24-jul-2014 - revised for newer understanding, to fix metal slader glory credits. see r7371 in bizhawk
-	
+
 	int sl = scanline + 1;
 	int ppuon = (PPU[1] & 0x18);
 

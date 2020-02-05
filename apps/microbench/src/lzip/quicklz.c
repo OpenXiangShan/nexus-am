@@ -2,9 +2,9 @@
 // Copyright (C) 2006-2011 Lasse Mikkel Reinhold
 // lar@quicklz.com
 //
-// QuickLZ can be used for free under the GPL 1, 2 or 3 license (where anything 
-// released into public must be open source) or under a commercial license if such 
-// has been acquired (see http://www.quicklz.com/order.html). The commercial license 
+// QuickLZ can be used for free under the GPL 1, 2 or 3 license (where anything
+// released into public must be open source) or under a commercial license if such
+// has been acquired (see http://www.quicklz.com/order.html). The commercial license
 // does not cover derived or ported versions created by third parties under GPL.
 
 // 1.5.0 final
@@ -187,7 +187,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 	unsigned char *cword_ptr = destination;
 	unsigned char *dst = destination + CWORD_LEN;
 	ui32 cword_val = 1U << 31;
-	const unsigned char *last_matchstart = last_byte - UNCONDITIONAL_MATCHLEN - UNCOMPRESSED_END; 
+	const unsigned char *last_matchstart = last_byte - UNCONDITIONAL_MATCHLEN - UNCOMPRESSED_END;
 	ui32 fetch = 0;
 	unsigned int lits = 0;
 
@@ -195,7 +195,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 
 	if(src <= last_matchstart)
 		fetch = fast_read(src, 3);
-	
+
 	while(src <= last_matchstart)
 	{
 		if ((cword_val & 1) == 1)
@@ -249,7 +249,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 						{
 							size_t q = last_byte - UNCOMPRESSED_END - (src - 5) + 1;
 							size_t remaining = q > 255 ? 255 : q;
-							src++;	
+							src++;
 							while(*(o + (src - old_src)) == *src && (size_t)(src - old_src) < remaining)
 								src++;
 						}
@@ -260,7 +260,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 					{
 						fast_write((ui32)(matchlen - 2) | hash, dst, 2);
 						dst += 2;
-					} 
+					}
 					else
 					{
 						fast_write((ui32)(matchlen << 16) | hash, dst, 3);
@@ -287,7 +287,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 			unsigned char c;
 			size_t remaining = (last_byte - UNCOMPRESSED_END - src + 1) > 255 ? 255 : (last_byte - UNCOMPRESSED_END - src + 1);
 			(void)best_k;
-		
+
 
 			//hash = hashat(src);
 			fetch = fast_read(src, 3);
@@ -297,7 +297,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 
 			offset2 = state->hash[hash].offset[0];
 			if(offset2 < src - MINOFFSET && c > 0 && ((fast_read(offset2, 3) ^ fetch) & 0xffffff) == 0)
-			{	
+			{
 				matchlen = 3;
 				if(*(offset2 + matchlen) == *(src + matchlen))
 				{
@@ -316,7 +316,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 #elif QLZ_COMPRESSION_LEVEL == 2
 				if(*(src + matchlen) == *(o + matchlen)	&& ((fast_read(o, 3) ^ fetch) & 0xffffff) == 0 && o < src - MINOFFSET)
 #endif
-				{	
+				{
 					m = 3;
 					while(*(o + m) == *(src + m) && m < remaining)
 						m++;
@@ -344,7 +344,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 				size_t offset = src - o;
 
 				for(u = 1; u < matchlen; u++)
-				{	
+				{
 					hash = hashat(src + u);
 					c = state->hash_counter[hash]++;
 					state->hash[hash].offset[c & (QLZ_POINTERS - 1)] = src + u;
@@ -363,7 +363,7 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 					ui32 f = (ui32)((offset << 2) | 1);
 					fast_write(f, dst, 2);
 					dst += 2;
-				}		
+				}
 				else if (matchlen <= 18 && offset <= 1023)
 				{
 					ui32 f = ((matchlen - 3) << 2) | ((ui32)offset << 6) | 2;
@@ -396,10 +396,10 @@ static size_t qlz_compress_core(const unsigned char *source, unsigned char *dest
 			if(matchlen > 2)
 			{
 				cword_val = (cword_val >> 1) | (1U << 31);
-				src += matchlen;			
+				src += matchlen;
 
 				if (matchlen < 10)
-				{			
+				{
 					ui32 f = best_k | ((matchlen - 2) << 2) | (hash << 5);
 					fast_write(f, dst, 2);
 					dst += 2;
@@ -482,7 +482,7 @@ static size_t qlz_decompress_core(const unsigned char *source, unsigned char *de
 	(void) state;
 	(void) history;
 
-	for(;;) 
+	for(;;)
 	{
 		ui32 fetch;
 
@@ -522,8 +522,8 @@ static size_t qlz_decompress_core(const unsigned char *source, unsigned char *de
 			else
 			{
 				matchlen = *(src + 2);
-				src += 3;							
-			}	
+				src += 3;
+			}
 
 #elif QLZ_COMPRESSION_LEVEL == 2
 			ui32 hash;
@@ -541,8 +541,8 @@ static size_t qlz_decompress_core(const unsigned char *source, unsigned char *de
 			else
 			{
 				matchlen = *(src + 2);
-				src += 3;							
-			}	
+				src += 3;
+			}
 
 #elif QLZ_COMPRESSION_LEVEL == 3
 			ui32 offset;
@@ -580,7 +580,7 @@ static size_t qlz_decompress_core(const unsigned char *source, unsigned char *de
 
 			offset2 = dst - offset;
 #endif
-	
+
 #ifdef QLZ_MEMORY_SAFE
 			if(offset2 < history || offset2 > dst - MINOFFSET - 1)
 				return 0;
@@ -607,11 +607,11 @@ static size_t qlz_decompress_core(const unsigned char *source, unsigned char *de
 				dst += n;
 				src += n;
 #if QLZ_COMPRESSION_LEVEL <= 2
-				update_hash_upto(state, &last_hashed, dst - 3);		
+				update_hash_upto(state, &last_hashed, dst - 3);
 #endif
 			}
 			else
-			{			
+			{
 				while(dst <= last_destination_byte)
 				{
 					if (cword_val == 1)
@@ -708,7 +708,7 @@ size_t qlz_compress(const void *source, char *destination, size_t size, qlz_stat
 		fast_write((ui32)r, destination + 1, 4);
 		fast_write((ui32)size, destination + 5, 4);
 	}
-	
+
 	*destination |= (QLZ_COMPRESSION_LEVEL << 2);
 	*destination |= (1 << 6);
 	*destination |= ((QLZ_STREAMING_BUFFER == 0 ? 0 : (QLZ_STREAMING_BUFFER == 100000 ? 1 : (QLZ_STREAMING_BUFFER == 1000000 ? 2 : 3))) << 4);
@@ -724,7 +724,7 @@ size_t qlz_decompress(const char *source, void *destination, qlz_state_decompres
 	size_t dsiz = qlz_size_decompressed(source);
 
 #if QLZ_STREAMING_BUFFER > 0
-	if (state->stream_counter + qlz_size_decompressed(source) - 1 >= QLZ_STREAMING_BUFFER) 
+	if (state->stream_counter + qlz_size_decompressed(source) - 1 >= QLZ_STREAMING_BUFFER)
 #endif
 	{
 		if((*source & 1) == 1)

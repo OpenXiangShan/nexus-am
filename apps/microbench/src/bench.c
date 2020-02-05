@@ -121,7 +121,7 @@ int main(const char *args) {
   uint32_t t1 = uptime();
 
   bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
-  
+
   printf("==================================================\n");
   printf("MicroBench %s", pass ? "PASS" : "FAIL");
   if (setting_id == 2) {

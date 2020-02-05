@@ -94,7 +94,7 @@ static void Latch_Init(CartInfo *info, void (*proc)(void), uint8 init, uint16 ad
 			//	info->SaveGame[0] = WRAM + info->wram_size;
 			//	info->SaveGameLen[0] = info->battery_wram_size;
 			//}
-			
+
 			//this is more likely the only practical scenario
 			WRAMSIZE = 8192;
 			WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
@@ -119,7 +119,7 @@ static void Latch_Init(CartInfo *info, void (*proc)(void), uint8 init, uint16 ad
 			}
 			AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		}
-		
+
 	}
 	AddExState(&latche, 1, 0, "LATC");
 }

@@ -61,15 +61,15 @@ static uint8 conv_tbl[4][8] = {
 //*/
 /*
 static uint8 conv_tbl[64][4] = {
-	{ 0x40, 0x40, 0x40, 0x40 }, // 00  | A  - 40 41 42 43 44 45 46 47  
-	{ 0x41, 0x41, 0x41, 0x41 }, // 02  | B  - 48 49 4A 4B 4C 4D 4E 4F  
+	{ 0x40, 0x40, 0x40, 0x40 }, // 00  | A  - 40 41 42 43 44 45 46 47
+	{ 0x41, 0x41, 0x41, 0x41 }, // 02  | B  - 48 49 4A 4B 4C 4D 4E 4F
 	{ 0x42, 0x42, 0x42, 0x42 }, // 04  | C  - 50 51 52 53 54 55 56 57
 	{ 0x43, 0x43, 0x43, 0x43 }, // 06  | D  - 58 59 5A 5B 5C 5D 5E 5F
 	{ 0x44, 0x44, 0x44, 0x44 }, // 08  | E  - 60 61 62 63 64 65 66 67
 	{ 0x45, 0x45, 0x45, 0x45 }, // 0A  | F  - 68 69 6A 6B 6C 6D 6E 6F
-	{ 0x46, 0x46, 0x46, 0x46 }, // 0C  | G  - 70 71 72 73 74 75 76 77  
+	{ 0x46, 0x46, 0x46, 0x46 }, // 0C  | G  - 70 71 72 73 74 75 76 77
 	{ 0x47, 0x47, 0x47, 0x47 }, // 0E  | H  - 78 79 7A 7B 7C 7D 7E 7F
-	{ 0x40, 0x40, 0x40, 0x40 }, // 10  | 
+	{ 0x40, 0x40, 0x40, 0x40 }, // 10  |
 	{ 0x41, 0x41, 0x41, 0x41 }, // 12  +----------------------------
 	{ 0x42, 0x42, 0x42, 0x42 }, // 14  | A  A  A  A
 	{ 0x43, 0x43, 0x43, 0x43 }, // 16  | A  A  A  A
@@ -80,7 +80,7 @@ static uint8 conv_tbl[64][4] = {
 	{ 0x40, 0x40, 0x48, 0x44 }, // 20  | A  D  E  F
 	{ 0x41, 0x41, 0x49, 0x45 }, // 22  | A  G  H  G"
 	{ 0x42, 0x42, 0x4A, 0x46 }, // 24  +----------------------------
-	{ 0x43, 0x43, 0x4B, 0x47 }, // 26  | A' - 40 41 42 43 40 41 42 43  
+	{ 0x43, 0x43, 0x4B, 0x47 }, // 26  | A' - 40 41 42 43 40 41 42 43
 	{ 0x44, 0x40, 0x48, 0x44 }, // 28  | A" - 44 45 46 47 44 45 46 47
 	{ 0x45, 0x41, 0x49, 0x45 }, // 2A  | B' - 48 49 4A 4B 48 49 4A 4B
 	{ 0x46, 0x42, 0x4A, 0x46 }, // 2C  | G" - 74 75 76 77 74 75 76 77
@@ -186,7 +186,7 @@ static DECLFR(QTAiRead) {
 	uint8 tabl = conv_tbl[(regs[0xC] >> 5) & 3][(regs[0xD] & 0x7F) >> 4];
 	uint8 res1 = 0x40 | (tabl & 0x3F) | ((regs[0xD] >> 1) & 7) | ((regs[0xB] & 4) << 5);
 	uint8 res2 = ((regs[0xD] & 1) << 7) | ((regs[0xC] & 0x1F) << 2) | (regs[0xB] & 3);
-	
+
 	if (tabl & 0x40)
 		res1 &= 0xFB;
 	else if (tabl & 0x80)
@@ -256,7 +256,7 @@ void QTAi_Init(CartInfo *info) {
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;
 		// note, only extrnal cart's SRAM is battery backed, the the part on the main cartridge is just
-		// an additional work ram. so we may save only half here, but I forgot what part is saved lol, will 
+		// an additional work ram. so we may save only half here, but I forgot what part is saved lol, will
 		// find out later.
 		info->SaveGameLen[0] = WRAMSIZE;
 	}

@@ -483,7 +483,7 @@ extern int test; test++;
    temp=_tcount;
    _tcount=0;
    if(MapIRQHook) MapIRQHook(temp);
-   
+
    uint32 lastPC = _PC;
    _PC++;
    switch(b1)

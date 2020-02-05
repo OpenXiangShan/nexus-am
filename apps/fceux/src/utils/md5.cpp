@@ -6,7 +6,7 @@
 
 //Modified October 3, 2003, to remove testing code, and add include of "types.h".
 //Added simple MD5 to ASCII string conversion function.
-// -Xodnizel   
+// -Xodnizel
 
 #include "../types.h"
 #include "md5.h"
@@ -111,7 +111,7 @@ void md5_process( struct md5_context *ctx, uint8 data[64] )
     P( B, C, D, A, 12, 20, 0x8D2A4C8A );
 
 #undef F
-    
+
 #define F(x,y,z) (x ^ y ^ z)
 
     P( A, B, C, D,  5,  4, 0xFFFA3942 );

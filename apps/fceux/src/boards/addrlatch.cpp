@@ -360,7 +360,7 @@ static void M227Sync(void) {
 // but if I find some i'll definitly do this.
 
 	if ((latche & 0xF000) == 0xF000)
-		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);	
+		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
 	else
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
 

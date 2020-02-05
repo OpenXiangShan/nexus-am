@@ -417,10 +417,10 @@ static void CheckHInfo(void) {
 //in obscure mappers themselves which supports such
 //size
 //Cah4e3 25.10.19: iNES 2.0 attempts to cover all
-// boards including UNIF boards with non power 2 
-// total rom size (a lot of them with a couple of 
+// boards including UNIF boards with non power 2
+// total rom size (a lot of them with a couple of
 // roms different sizes (may vary a lot)
-// so we need either add here ALL ines 2.0 mappers 
+// so we need either add here ALL ines 2.0 mappers
 // with not power2 roms or change logic here
 // to something more unified for ines 2.0 specific
 static int not_power2[] =
@@ -711,7 +711,7 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 
 	if (FCEU_fread(&head, 1, 16, fp) != 16 || memcmp(&head, "NES\x1A", 4))
 		return 0;
-	
+
 	head.cleanup();
 
 	memset(&iNESCart, 0, sizeof(iNESCart));
@@ -730,7 +730,7 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	MapperNo = (head.ROM_type >> 4);
 	MapperNo |= (head.ROM_type2 & 0xF0);
 	if(iNES2) MapperNo |= ((head.ROM_type3 & 0x0F) << 8);
-	
+
 	if (head.ROM_type & 8) {
 		Mirroring = 2;
 	} else
@@ -738,7 +738,7 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 
 	int not_round_size = head.ROM_size;
 	if(iNES2) not_round_size |= ((head.Upper_ROM_VROM_size & 0x0F) << 8);
-	
+
 	if (!head.ROM_size && !iNES2)
 		ROM_size = 256;
 	else
@@ -826,7 +826,7 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	FCEU_printf(" Mirroring: %s\n", Mirroring == 2 ? "None (Four-screen)" : Mirroring ? "Vertical" : "Horizontal");
 	FCEU_printf(" Battery-backed: %s\n", (head.ROM_type & 2) ? "Yes" : "No");
 	FCEU_printf(" Trained: %s\n", (head.ROM_type & 4) ? "Yes" : "No");
-	if(iNES2) 
+	if(iNES2)
 	{
 		FCEU_printf(" NES2.0 Extensions\n");
 		FCEU_printf(" Sub Mapper #: %d\n", iNESCart.submapper);
@@ -936,7 +936,7 @@ static int iNES_Init(int num) {
 				UNIFchrrama = VROM;
 				if(CHRRAMSize == 0)
 				{
-					//probably a mistake. 
+					//probably a mistake.
 					//but (for chrram): "Use of $00 with no CHR ROM implies that the game is wired to map nametable memory in CHR space. The value $00 MUST NOT be used if a mapper isn't defined to allow this. "
 					//well, i'm not going to do that now. we'll save it for when it's needed
 					//"it's only mapper 218 and no other mappers"

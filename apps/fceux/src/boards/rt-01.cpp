@@ -21,7 +21,7 @@
  * A simple board with 16K PRG ROM + 2K CHR ROM with no mapper, hardwired mirroring
  * PRG EPROM has copy protected areas with "weak bits", which is tested at some
  * points of the program. Trying to simalate "weak bits" behaviour
- * 
+ *
  */
 
 #include "mapinc.h"
