@@ -294,7 +294,7 @@ FCEUGI *FCEUI_LoadGameVirtual(const char *name, int OverwriteVidMode, bool silen
 	// reset loaded game BEFORE it's loading.
 	ResetGameLoaded();
 	//file opened ok. start loading.
-	FCEU_printf("Loading %s...\n\n", fullname);
+	FCEU_printf("Loading ...\n\n");
 
 	FCEU_CloseGame();
 	GameInfo = (FCEUGI *)malloc(sizeof(FCEUGI));

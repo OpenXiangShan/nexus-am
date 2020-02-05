@@ -10,7 +10,7 @@ EMUFILE_FILE* FCEUD_UTF8_fstream(const char *n, const char *m);
 //mbg 7/23/06
 const char *FCEUD_GetCompilerString();
 
-#define FCEUI_printf FCEU_printf
+#define FCEUI_printf(msg) FCEU_printf(msg "\n")
 
 //Video interface
 void FCEUD_SetPalette(uint8 index, uint8 r, uint8 g, uint8 b);
