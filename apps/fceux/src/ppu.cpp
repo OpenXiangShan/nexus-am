@@ -69,14 +69,12 @@ static bool new_ppu_reset = false;
 
 int test = 0;
 
-template<typename T, int BITS>
+#define _BITS 8
 struct BITREVLUT {
-	T* lut;
+	uint8 lut [1 << _BITS];
 	BITREVLUT() {
-		int bits = BITS;
-		int n = 1 << BITS;
-//		lut = new T[n];
-		assert(0);
+		int bits = _BITS;
+		int n = 1 << _BITS;
 
 		int m = 1;
 		int a = n >> 1;
@@ -93,11 +91,10 @@ struct BITREVLUT {
 		}
 	}
 
-	T operator[](int index) {
+	uint8 operator[](int index) {
 		return lut[index];
 	}
-};
-BITREVLUT<uint8, 8> bitrevlut;
+} bitrevlut;
 
 struct PPUSTATUS {
 	int32 sl;
