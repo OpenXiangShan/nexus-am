@@ -52,7 +52,7 @@ void Mirror(uint8 value)
 
 
 static void Sync()
-{		
+{
 	int prglo = 0;
 	int prghi = 0;
 
@@ -174,11 +174,11 @@ static void M28Power(void)
 
 	//EXP
 	SetWriteHandler(0x5000,0x5FFF,WriteEXP);
-  
+
 	//PRG
 	SetWriteHandler(0x8000,0xFFFF,WritePRG);
 	SetReadHandler(0x8000,0xFFFF,CartBR);
-	
+
 	//WRAM
   SetReadHandler(0x6000,0x7FFF,CartBR);
   SetWriteHandler(0x6000,0x7FFF,CartBW);

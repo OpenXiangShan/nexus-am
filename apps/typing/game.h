@@ -47,7 +47,7 @@ NAME##_t NAME##_next(NAME##_t node); \
 void NAME##_remove(NAME##_t node); \
 void NAME##_insert(NAME##_t prev, NAME##_t next, NAME##_t obj); \
 NAME##_t NAME##_new(); \
-void NAME##_free(NAME##_t node); 
+void NAME##_free(NAME##_t node);
 
 /* list implementation */
 #define LINKLIST_IMPL(NAME, SIZE) \

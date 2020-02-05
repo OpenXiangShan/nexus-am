@@ -52,7 +52,7 @@ pal palette_unvarying[] = {
 };
 
 
-// Default palette 
+// Default palette
 pal palette[512] = {
 
         { 0x1D<<2, 0x1D<<2, 0x1D<<2 }, /* Value 0 */

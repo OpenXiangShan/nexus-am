@@ -28,13 +28,16 @@ THE SOFTWARE.
 
 void EMUFILE_FILE::open(const char* fname, const char* mode) {
   struct rom *cur = &roms[0];
+  int found = 0;
   for (int i = 1; i < nroms; i++) {
     if (strcmp(roms[i].name, fname) == 0) {
       cur = &roms[i];
+      found = 1;
     }
   }
 
-  printf("Using ROM: %s\n", cur->name);
+  if (found) { printf("Found ROM '%s'\n", fname); }
+  else { printf("ROM '%s' not found, using default ROM '%s'\n", fname, cur->name); }
 
   this->data = (u8 *)cur->body;
   this->filesize = (int)*(cur->size);

@@ -91,7 +91,7 @@ static uint8 g_keyState[256] = {};
 /**
 * Hook for transformer board
 */
-unsigned int *GetKeyboard(void)                                                     
+unsigned int *GetKeyboard(void)
 {
 	return (unsigned int*)(g_keyState);
 }

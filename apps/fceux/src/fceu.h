@@ -67,7 +67,7 @@ extern uint8 qtaintramreg;
 
 #define GAME_MEM_BLOCK_SIZE 131072
 
-extern  uint8  *RAM;            //shared memory modifications
+extern  uint8  RAM[];            //shared memory modifications
 extern int EmulationPaused;
 
 uint8 FCEU_ReadRomByte(uint32 i);

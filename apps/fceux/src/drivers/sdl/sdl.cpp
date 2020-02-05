@@ -58,7 +58,7 @@ int LoadGame(const char *path)
 	if(!DriverInitialize(GameInfo)) {
 		return(0);
 	}
-	
+
 	// set pal/ntsc
 	FCEUI_SetRegion(0);
 
@@ -219,7 +219,7 @@ int main(const char *romname)
 	if(error != 1) {
 		return -1;
 	}
-	
+
     // update the input devices
 	UpdateInput();
 
@@ -232,9 +232,9 @@ int main(const char *romname)
     DriverKill();
     return -1;
   }
-	
+
     int periodic_saves = 0;
-	
+
 	// loop playing the game
 	while(GameInfo)
 	{
@@ -281,7 +281,7 @@ void FCEUD_Message(const char *text)
 /**
 * Shows an error message in a message box.
 * (For now: prints to stderr.)
-* 
+*
 * If running in GTK mode, display a dialog message box of the error.
 *
 * @param errormsg Text of the error message.

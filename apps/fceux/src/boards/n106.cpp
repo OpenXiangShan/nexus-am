@@ -71,7 +71,7 @@ static void SyncMirror()
 	case 2: setmirror(MI_H); break;
 	case 3: setmirror(MI_0); break;
 	}
-	
+
 }
 
 static void SyncPRG(void) {

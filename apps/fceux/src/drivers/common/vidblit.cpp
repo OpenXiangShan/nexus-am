@@ -55,18 +55,18 @@ int InitBlitToHigh(int b, uint32 rmask, uint32 gmask, uint32 bmask, int efx, int
 {
   assert(b == 4);
 
-	Bpp=b;	
-	
+	Bpp=b;
+
 	if(Bpp<=1 || Bpp>4)
 		return(0);
-	
+
 	//allocate adequate room for 32bpp palette
 	palettetranslate=(uint32*)FCEU_dmalloc(256*4 + 512*4);
-	
+
 	if(!palettetranslate)
 		return(0);
-	
-	
+
+
 	CBM[0]=rmask;
 	CBM[1]=gmask;
 	CBM[2]=bmask;
@@ -84,10 +84,10 @@ void KillBlitToHigh(void)
 
 
 void SetPaletteBlitToHigh(uint8 *src)
-{ 
+{
 	int cshiftr[3];
 	int cshiftl[3];
-	
+
 	CalculateShift(CBM, cshiftr, cshiftl);
 
   assert(Bpp == 4);
@@ -116,7 +116,7 @@ void SetPaletteBlitToHigh(uint8 *src)
 u32 ModernDeemphColorMap(u8* src, u8* srcbuf, int xscale, int yscale)
 {
 	u8 pixel = *src;
-	
+
 	//look up the legacy translation
 	u32 color = palettetranslate[pixel];
 
@@ -142,14 +142,21 @@ void Blit8ToHigh(uint8 *src, uint8 *dest, int xr, int yr, int pitch, int xscale,
 	int x,y;
 
   assert(Bpp == 4);
+  uint32 * dest32 = (uint32 *)dest;
   int pinc=pitch-(xr<<2);
+  assert(xr % 8 == 0);
+  assert(pinc % 4 == 0);
   for(y=yr;y;y--,src+=256-xr) {
-    for(x=xr;x;x--) {
+    for(x=xr;x;x-=8) {
       //THE MAIN BLITTING CODEPATH (there may be others that are important)
-      *(uint32 *)dest = ModernDeemphColorMap(src,XBuf,1,1);
-      dest+=4;
-      src++;
+      //*(uint32 *)dest = ModernDeemphColorMap(src,XBuf,1,1);
+
+      //look up the legacy translation,
+      //do not support deemph palette to optimize performance
+#define macro() *dest32 ++ = palettetranslate[*src ++]
+      macro(); macro(); macro(); macro();
+      macro(); macro(); macro(); macro();
     }
-    dest+=pinc;
+    dest32+=(pinc / 4);
   }
 }

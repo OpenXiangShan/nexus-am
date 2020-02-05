@@ -13,8 +13,8 @@ static int MAP[256] = {
   _KEY_I, // START
   _KEY_W,
   _KEY_S,
-  _KEY_A, 
-  _KEY_D, 
+  _KEY_A,
+  _KEY_D,
   255,
 };
 

@@ -52,7 +52,7 @@ static void BMCHPxxCW(uint32 A, uint8 V)
 	} else {				// mmc3 banking
 		int base, mask;
 		if(EXPREGS[0]&1) {	// 128K mode
-			base=EXPREGS[2]&0x30; 
+			base=EXPREGS[2]&0x30;
 			mask=0x7F;
 		} else {			// 256K mode
 			base=EXPREGS[2]&0x20;

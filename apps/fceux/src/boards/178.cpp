@@ -158,7 +158,7 @@ static void M178SndClk(int a) {
 		if(lastclick && !click)
 			X6502_IRQBegin(FCEU_IQEXT);
 	}
-			
+
 //	if (pcm_enable) {
 //		pcm_latch -= a;
 //		if (pcm_latch <= 0) {

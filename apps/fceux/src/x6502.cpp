@@ -54,8 +54,8 @@ static INLINE void WrMem(unsigned int A, uint8 V)
 static INLINE uint8 RdRAM(unsigned int A)
 {
   //bbit edited: this was changed so cheat substituion would work
-  return(_DB=ARead[A](A));
-  // return(_DB=RAM[A]);
+  //return(_DB=ARead[A](A));
+   return(_DB=RAM[A]);
 }
 
 static INLINE void WrRAM(unsigned int A, uint8 V)
@@ -483,11 +483,16 @@ extern int test; test++;
    temp=_tcount;
    _tcount=0;
    if(MapIRQHook) MapIRQHook(temp);
-   
+
+   uint32 lastPC = _PC;
    _PC++;
    switch(b1)
    {
     #include "ops.inc"
+   }
+   if (lastPC == _PC) {
+     // spinning, just finish the run
+     _count = 0;
    }
   }
 }

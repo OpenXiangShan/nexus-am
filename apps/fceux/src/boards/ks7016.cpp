@@ -46,7 +46,7 @@ static void Sync(void) {
 static DECLFW(UNLKS7016Write) {
 	u16 mask = (A & 0x30);
 	switch(A & 0xD943) {
-	case 0xD943: {	
+	case 0xD943: {
 		if(mask == 0x30) {
 			preg = 8 | 3;				// or A, or no bus (all FF)
 		} else {

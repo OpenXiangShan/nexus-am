@@ -36,7 +36,7 @@ case 0x40:  /* RTI */
             _PC=POP();
             _PC|=POP()<<8;
             break;
-            
+
 case 0x60:  /* RTS */
             _PC=POP();
             _PC|=POP()<<8;
@@ -67,7 +67,7 @@ case 0x4C:
 	   _PC=npc;
 	  }
 	  break; /* JMP ABSOLUTE */
-case 0x6C: 
+case 0x6C:
 	   {
 	    uint32 tmp;
 	    GetAB(tmp);
@@ -336,8 +336,8 @@ case 0x8F: ST_AB(_A&_X);
 case 0x83: ST_IX(_A&_X);
 
 /* ARR - ARGH, MATEY! */
-case 0x6B: { 
-	     uint8 arrtmp; 
+case 0x6B: {
+	     uint8 arrtmp;
 	     LD_IM(AND;_P&=~V_FLAG;_P|=(_A^(_A>>1))&0x40;arrtmp=_A>>7;_A>>=1;_A|=(_P&C_FLAG)<<7;_P&=~C_FLAG;_P|=arrtmp;X_ZN(_A));
 	   }
 /* ASR */
@@ -347,7 +347,7 @@ case 0x4B: LD_IM(AND;LSRA);
    and found the constant to be OR with is $FF for NES */
 case 0xAB: LD_IM(_A|=0xFF;AND;_X=_A);
 
-/* AXS */ 
+/* AXS */
 case 0xCB: LD_IM(AXS);
 
 /* DCP */
@@ -474,11 +474,11 @@ case 0x9B: _S=_A&_X;ST_ABY(_S& (((A-_Y)>>8)+1) );
 
 /* TOP */
 case 0x0C: LD_AB(;);
-case 0x1C: 
-case 0x3C: 
-case 0x5C: 
-case 0x7C: 
-case 0xDC: 
+case 0x1C:
+case 0x3C:
+case 0x5C:
+case 0x7C:
+case 0xDC:
 case 0xFC: LD_ABX(;);
 
 /* XAA - BIG QUESTION MARK HERE */

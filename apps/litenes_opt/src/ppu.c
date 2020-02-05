@@ -544,14 +544,14 @@ inline byte ppu_io_read(word address)
         case 7:
         {
             byte data;
-            
+
             if (ppu.PPUADDR < 0x3F00) {
                 data = ppu_ram_read_fast(ppu.PPUADDR);
             }
             else {
                 data = ppu_ram_read(ppu.PPUADDR);
             }
-            
+
             if (ppu_2007_first_read) {
                 ppu_2007_first_read = false;
             }

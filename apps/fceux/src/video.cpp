@@ -57,7 +57,7 @@ int FCEU_InitVirtualVideo(void)
 	//256 bytes per scanline, * 240 scanline maximum, +16 for alignment,
 	if(XBuf)
 		return 1;
-	
+
 	XBuf = (u8*)FCEU_malloc(256 * 256 + 16);
 	XBackBuf = (u8*)FCEU_malloc(256 * 256 + 16);
 	XDBuf = (u8*)FCEU_malloc(256 * 256 + 16);

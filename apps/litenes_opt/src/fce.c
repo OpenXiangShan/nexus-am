@@ -42,7 +42,7 @@ int fce_load_rom(char *rom)
     mmc_id = ((fce_rom_header->rom_type & 0xF0) >> 4);
 
     int prg_size = fce_rom_header->prg_block_count * 0x4000;
-    
+
     byte *blk = romread(prg_size);
 
     if (mmc_id == 0 || mmc_id == 3) {
@@ -139,7 +139,7 @@ const uint32_t palette[64] = {
   0xFFFFFF, 0x84BFFF, 0xBBBBFF, 0xD0BBFF, 0xFFBFEA, 0xFFBFCC,
   0xFFC4B7, 0xFFCCAE, 0xFFD9A2, 0xCCE199, 0xAEEEB7, 0xAAF7EE,
   0xB3EEFF, 0xDDDDDD, 0x111111, 0x111111
-}; 
+};
 
 #ifdef STRETCH
 byte canvas[257][520];

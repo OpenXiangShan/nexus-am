@@ -26,14 +26,14 @@
 #include "sound.h"
 #include "file.h"
 #include "utils/memory.h"
-		 
+
 #include "cart.h"
 #include "palette.h"
 #include "state.h"
 #include "video.h"
 #include "input.h"
 #include "driver.h"
-		 
+
 #define debug_loggingCD false
 
 #define VBlankON    (PPU[0] & 0x80)	//Generate VBlank NMI
@@ -69,14 +69,12 @@ static bool new_ppu_reset = false;
 
 int test = 0;
 
-template<typename T, int BITS>
+#define _BITS 8
 struct BITREVLUT {
-	T* lut;
+	uint8 lut [1 << _BITS];
 	BITREVLUT() {
-		int bits = BITS;
-		int n = 1 << BITS;
-//		lut = new T[n];
-		assert(0);
+		int bits = _BITS;
+		int n = 1 << _BITS;
 
 		int m = 1;
 		int a = n >> 1;
@@ -93,11 +91,10 @@ struct BITREVLUT {
 		}
 	}
 
-	T operator[](int index) {
+	uint8 operator[](int index) {
 		return lut[index];
 	}
-};
-BITREVLUT<uint8, 8> bitrevlut;
+} bitrevlut;
 
 struct PPUSTATUS {
 	int32 sl;
@@ -373,6 +370,34 @@ uint8 NTARAM[0x800], PALRAM[0x20], SPRAM[0x100], SPRBUF[0x100];
 uint8 UPALRAM[0x03];//for 0x4/0x8/0xC addresses in palette, the ones in
 					//0x20 are 0 to not break fceu rendering.
 
+static uint16 PALcache[256];
+static int PALcache_outdate = 0;
+
+static void update_PALcache() {
+  if (!PALcache_outdate) return;
+  //Priority bits, needed for sprite emulation.
+  PALRAM[0] |= 64;
+  PALRAM[4] |= 64;
+  PALRAM[8] |= 64;
+  PALRAM[0xC] |= 64;
+
+  int x, y;
+  int i = 0;
+  for (x = 0; x < 16; x ++) {
+    for (y = 0; y < 16; y ++) {
+      PALcache[i ++] = (PALRAM[x] << 8) | PALRAM[y];
+    }
+  }
+
+  //Reverse changes made before.
+  PALRAM[0] &= 63;
+  PALRAM[4] &= 63;
+  PALRAM[8] &= 63;
+  PALRAM[0xC] &= 63;
+
+  PALcache_outdate = 0;
+}
+
 #define MMC5SPRVRAMADR(V)   &MMC5SPRVPage[(V) >> 10][(V)]
 #define VRAMADR(V)          &VPage[(V) >> 10][(V)]
 
@@ -439,11 +464,14 @@ inline void FFCEUX_PPUWrite_Default(uint32 A, uint8 V) {
 			if (!(tmp & 0xC)) {
 				PALRAM[0x00] = PALRAM[0x04] = PALRAM[0x08] = PALRAM[0x0C] = V & 0x3F;
 				PALRAM[0x10] = PALRAM[0x14] = PALRAM[0x18] = PALRAM[0x1C] = V & 0x3F;
+				PALcache_outdate = 1;
 			}
 			else
 				UPALRAM[((tmp & 0xC) >> 2) - 1] = V & 0x3F;
-		} else
+		} else {
 			PALRAM[tmp & 0x1F] = V & 0x3F;
+			PALcache_outdate = 1;
+    }
 	}
 }
 
@@ -957,12 +985,16 @@ static DECLFW(B2007) {
 			}
 		} else {
 			if (!(tmp & 3)) {
-				if (!(tmp & 0xC))
+				if (!(tmp & 0xC)) {
 					PALRAM[0x00] = PALRAM[0x04] = PALRAM[0x08] = PALRAM[0x0C] = V & 0x3F;
+					PALcache_outdate = 1;
+        }
 				else
 					UPALRAM[((tmp & 0xC) >> 2) - 1] = V & 0x3F;
-			} else
+			} else {
 				PALRAM[tmp & 0x1F] = V & 0x3F;
+				PALcache_outdate = 1;
+      }
 		}
 		if (INC32)
 			RefreshAddr += 32;
@@ -993,7 +1025,6 @@ static int tofix = 0;
 
 static void ResetRL(uint8 *target) {
 	memset(target, 0xFF, 256);
-	InputScanlineHook(0, 0, 0, 0);
 	Plinef = target;
 	Pline = target;
 	firsttile = 0;
@@ -1072,12 +1103,6 @@ static void RefreshLine(int lastpixel) {
 	register uint8 *P = Pline;
 	int lasttile = lastpixel >> 3;
 	int numtiles;
-	static int norecurse = 0;	// Yeah, recursion would be bad.
-								// PPU_hook() functions can call
-								// mirroring/chr bank switching functions,
-								// which call FCEUPPU_LineUpdate, which call this
-								// function.
-	if (norecurse) return;
 
 	if (sphitx != 0x100 && !(PPU_status & 0x40)) {
 		if ((sphitx < (lastpixel - 16)) && !(sphitx < ((lasttile - 2) * 8)))
@@ -1098,11 +1123,9 @@ static void RefreshLine(int lastpixel) {
 
   vofs = ((PPU[0] & 0x10) << 8) | ((RefreshAddr >> 12) & 7);
 
+	uint8_t tem8 = READPAL(0) | 0x40;
 	if (!ScreenON && !SpriteON) {
-		uint32 tem;
-		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
-		tem |= 0x40404040;
-		FCEU_dwmemset(Pline, tem, numtiles * 8);
+		memset(Pline, tem8, numtiles * 8);
 		P += numtiles * 8;
 		Pline = P;
 
@@ -1110,48 +1133,33 @@ static void RefreshLine(int lastpixel) {
 
 		#define TOFIXNUM (272 - 0x4)
 		if (lastpixel >= TOFIXNUM && tofix) {
-			Fixit1();
 			tofix = 0;
-		}
-
-		if ((lastpixel - 16) >= 0) {
-			InputScanlineHook(Plinef, spork ? sprlinebuf : 0, linestartts, lasttile * 8 - 16);
 		}
 		return;
 	}
 
-	//Priority bits, needed for sprite emulation.
-	PALRAM[0] |= 64;
-	PALRAM[4] |= 64;
-	PALRAM[8] |= 64;
-	PALRAM[0xC] |= 64;
-
+  update_PALcache();
+  uint32 cc = 0;
+  uint8 cc2;
+  uint8 *C0 = vnapage[(RefreshAddr >> 10) & 3];
+  if (RefreshAddr % 4 != 0) {
+    uint8 zz = RefreshAddr >> 2;
+    cc = (C0[0x3c0 | (zz & 0x7) | ((zz >> 2) & 0x38)] << 2) >> ((zz >> 2) & 0x4);
+  }
   for (X1 = firsttile; X1 < lasttile; X1++) {
 #include "pputile.inc"
   }
 
-#undef vofs
 #undef RefreshAddr
-
-	//Reverse changes made before.
-	PALRAM[0] &= 63;
-	PALRAM[4] &= 63;
-	PALRAM[8] &= 63;
-	PALRAM[0xC] &= 63;
 
 	RefreshAddr = smorkus;
 	if (firsttile <= 2 && 2 < lasttile && !(PPU[1] & 2)) {
-		uint32 tem;
-		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
-		tem |= 0x40404040;
+		uint32 tem = tem8 | (tem8 << 8) | (tem8 << 16) | (tem8 << 24);
 		*(uint32*)Plinef = *(uint32*)(Plinef + 4) = tem;
 	}
 
 	if (!ScreenON) {
-		uint32 tem;
 		int tstart, tcount;
-		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
-		tem |= 0x40404040;
 
 		tcount = lasttile - firsttile;
 		tstart = firsttile - 2;
@@ -1160,7 +1168,7 @@ static void RefreshLine(int lastpixel) {
 			tstart = 0;
 		}
 		if (tcount > 0)
-			FCEU_dwmemset(Plinef + tstart * 8, tem, tcount * 8);
+			memset(Plinef + tstart * 8, tem8, tcount * 8);
 	}
 
 	if (lastpixel >= TOFIXNUM && tofix) {
@@ -1171,9 +1179,6 @@ static void RefreshLine(int lastpixel) {
 	//This only works right because of a hack earlier in this function.
 	CheckSpriteHit(lastpixel);
 
-	if ((lastpixel - 16) >= 0) {
-		InputScanlineHook(Plinef, spork ? sprlinebuf : 0, linestartts, lasttile * 8 - 16);
-	}
 	Pline = P;
 	firsttile = lasttile;
 }
@@ -1215,8 +1220,8 @@ static void DoLine(void) {
 	}
 
 	int x;
-	uint8 *target = XBuf + ((scanline < 240 ? scanline : 240) << 8);
-	u8* dtarget = XDBuf + ((scanline < 240 ? scanline : 240) << 8);
+	uint32 *target = (uint32 *)(XBuf + ((scanline < 240 ? scanline : 240) << 8));
+	//u8* dtarget = XDBuf + ((scanline < 240 ? scanline : 240) << 8);
 
 	if (MMC5Hack) MMC5_hb(scanline);
 
@@ -1224,42 +1229,40 @@ static void DoLine(void) {
 	EndRL();
 
 	if (!renderbg) {// User asked to not display background data.
-		uint32 tem;
 		uint8 col;
 		if (gNoBGFillColor == 0xFF)
 			col = READPAL(0);
 		else col = gNoBGFillColor;
-		tem = col | (col << 8) | (col << 16) | (col << 24);
-		tem |= 0x40404040; 
-		FCEU_dwmemset(target, tem, 256);
+		uint8 tem8 = col | 0x40;
+		memset(target, tem8, 256);
 	}
 
 	if (SpriteON)
-		CopySprites(target);
+		CopySprites((uint8 *)target);
 
 	//greyscale handling (mask some bits off the color) ? ? ?
 	if (ScreenON || SpriteON)
 	{
 		if (PPU[1] & 0x01) {
 			for (x = 63; x >= 0; x--)
-				*(uint32*)&target[x << 2] = (*(uint32*)&target[x << 2]) & 0x30303030;
+				target[x] &= 0x30303030;
 		}
 	}
 
 	//some pathetic attempts at deemph
 	if ((PPU[1] >> 5) == 0x7) {
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = ((*(uint32*)&target[x << 2]) & 0x3f3f3f3f) | 0xc0c0c0c0;
+			target[x] |= 0xc0c0c0c0;
 	} else if (PPU[1] & 0xE0)
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = (*(uint32*)&target[x << 2]) | 0x40404040;
+			target[x] |= 0x40404040;
 	else
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = ((*(uint32*)&target[x << 2]) & 0x3f3f3f3f) | 0x80808080;
+			target[x] = (target[x] & 0x3f3f3f3f) | 0x80808080;
 
 	//write the actual deemph
-	for (x = 63; x >= 0; x--)
-		*(uint32*)&dtarget[x << 2] = ((PPU[1]>>5)<<0)|((PPU[1]>>5)<<8)|((PPU[1]>>5)<<16)|((PPU[1]>>5)<<24);
+	//for (x = 63; x >= 0; x--)
+	//	*(uint32*)&dtarget[x << 2] = ((PPU[1]>>5)<<0)|((PPU[1]>>5)<<8)|((PPU[1]>>5)<<16)|((PPU[1]>>5)<<24);
 
 	sphitx = 0x100;
 
@@ -1458,7 +1461,7 @@ static void RefreshSprites(void) {
 	spork = 0;
 	if (!numsprites) return;
 
-	FCEU_dwmemset(sprlinebuf, 0x80808080, 256);
+	memset(sprlinebuf, 0x80, 256);
 	numsprites--;
 	spr = (SPRB*)SPRBUF + numsprites;
 
@@ -2003,7 +2006,7 @@ int FCEUX_PPU_Loop(int skip) {
 
 		if (VBlankON) TriggerNMI();
 		int sltodo = PAL?70:20;
-		
+
 		//formerly: runppu(20 * (kLineTime) - delay);
 		for(int S=0;S<sltodo;S++)
 		{

@@ -138,6 +138,6 @@ typedef int64 s64;
 
 #define FCEU_printf printf
 #define FCEU_PrintError printf
-#define FCEU_DispMessage printf
+#define FCEU_DispMessage(msg) printf(msg "\n")
 
 #endif

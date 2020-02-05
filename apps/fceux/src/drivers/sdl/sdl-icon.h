@@ -1,7 +1,7 @@
 static const struct {
   unsigned int  	 width;
   unsigned int  	 height;
-  unsigned int  	 bytes_per_pixel; /* 3:RGB, 4:RGBA */ 
+  unsigned int  	 bytes_per_pixel; /* 3:RGB, 4:RGBA */
   uint8 	 pixel_data[32 * 32 * 3 + 1];
 } fceu_playicon = {
   32, 32, 3,

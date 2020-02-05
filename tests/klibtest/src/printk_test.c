@@ -37,7 +37,7 @@ void printk_test() {
   sprintf(dst,"%s", src);
   assert(0 == strcmp( dst, src));
 
-  //打印最大最小值0和各种随机值----d u x X p 
+  //打印最大最小值0和各种随机值----d u x X p
   //d u
   reset_src();
   printk("2147483647,-2147483648,0,102030,-1412505855,4294967295,0\n");
@@ -55,7 +55,7 @@ void printk_test() {
   //printk("%d\n",strlen("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n");
   assert(t==strlen("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n"));
   check_src("0, ffffffff, 80000000, abcdef01, ffff8000, 18e8e\n");
-  
+
   //p
   reset_src();
   printk("0x0, 0xffffffff, 0x80000000, 0xabcdef01, 0xffff8000, 0x18e8e\n");
@@ -84,7 +84,7 @@ void printk_test() {
   check_src("102030102030 102030  102030102030102030010203000102030102030102030102030 102030  +102030+102030 +102030  +102030\n");
 
 
-  
+
   /*这里往后是flag的测试
   printk(" -102030\n");
   printk("%*d\n",8,-102030);
