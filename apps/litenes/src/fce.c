@@ -219,23 +219,15 @@ void xmap_init() {
 #endif
 }
 
-#include "roms/gen/roms.h"
+extern unsigned char rom_mario_nes[];
 
-int main(const char *rom_name) {
+int main() {
   _ioe_init();
 
-  struct rom *rom = &roms[0];
-  for (int i = 1; i < nroms; i++) {
-    struct rom *cur = &roms[i];
-    if (strcmp(cur->name, rom_name) == 0) {
-      rom = cur;
-    }
-  }
-
-  printf("LiteNES ROM: %s\n", rom->name);
+  printf("LiteNES can only run Super Mario\n");
 
   xmap_init();
-  fce_load_rom(rom->body);
+  fce_load_rom((void *)rom_mario_nes);
   fce_init();
   fce_run();
   return 1;
