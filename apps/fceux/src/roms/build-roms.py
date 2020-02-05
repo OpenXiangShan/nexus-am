@@ -1,1 +1,0 @@
-../../../litenes/src/roms/build-roms.py

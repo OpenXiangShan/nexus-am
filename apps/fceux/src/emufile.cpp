@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 #ifdef __NO_FILE_SYSTEM__
 
-#include "roms/gen/roms.h"
+#include "roms.h" // from $(AM_HOME)/share/games/nes/gen/
 
 void EMUFILE_FILE::open(const char* fname, const char* mode) {
   struct rom *cur = &roms[0];
