@@ -1,17 +1,10 @@
 #include <stdint.h>
 #include <limits.h>
 #include <klib.h>
-
-#define FLAGNUM 4
+#include <klib-macros.h>
 
 #define PRINTABLE_CH " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 #define STRLEN(const_str) (sizeof(const_str) - 1) // sizeof counts the null byte
-
-#define concat_temp(x, y) x ## y
-#define concat(x, y) concat_temp(x, y)
-
-#define static_assert(const_cond) \
-  static char concat(_static_assert_, __LINE__) [(const_cond ? 1 : -1)] __attribute__((unused))
 
 #define ARRAY_DEF(type, name, smax, smin, umax) \
   static const type name [] = {0, smax / 17, smax, smin, smin + 1, umax / 17, smin / 17, umax}

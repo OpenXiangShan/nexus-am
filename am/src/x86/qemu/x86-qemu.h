@@ -15,9 +15,7 @@
 #ifndef __ASSEMBLER__
 
 #include <am.h>
-
-#define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
-#define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
+#include <klib-macros.h>
 
 struct kernel_stack {
   uint8_t stack[8192];
@@ -75,30 +73,6 @@ extern int __am_ncpu;
 extern struct cpu_local __am_cpuinfo[MAX_CPU];
 
 #define CPU (&__am_cpuinfo[_cpu()])
-#define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
-#define IN_RANGE(ptr, area) ((area).start <= (ptr) && (ptr) < (area).end)
-#define STRINGIFY(s) #s
-#define TOSTRING(s) STRINGIFY(s)
-static inline void *upcast(uint32_t ptr) {
-  return (void *)(uintptr_t)ptr;
-}
-
-static inline void puts(const char *s) {
-  for (; *s; s++)
-    _putc(*s);
-}
-
-#define panic_on(cond, s) \
-  do { \
-    if (cond) { \
-      puts("AM Panic: "); puts(s); \
-      puts(" @ " __FILE__ ":" TOSTRING(__LINE__) "  \n"); \
-      _halt(1); \
-    } \
-  } while (0)
-
-#define panic(s) panic_on(1, s)
 
 #define bug_on(cond) \
   do { \
