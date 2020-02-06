@@ -1,144 +1,219 @@
 #include "klib.h"
 #include <stdarg.h>
 
+#define true 1
+#define false 0
+
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
-char *printch(char ch, char **s, int *limit_n);
-int printdec(unsigned long dec, int base, int width, char abs, char flagc, char **s, int *limit_n);
-int vprintdec(unsigned long dec, int base, int width, char abs, char flagc, char **s, int count, int *limit_n);
-char *printstr(char *str, char **s, int *limit_n);
-void myputc(char c, char **s_h, int *limit_n) {
-  if (*s_h == 0)
-    _putc(c);
-  else if (*limit_n != 1) {
-    **s_h = c;
-    (*s_h)++;
-    (*limit_n)--;
+typedef struct {
+  struct {
+    union { int enable; int is_right; };
+    char ch;
+  } pad, sign;
+
+  char *out;
+  const char *end;
+  size_t nbyte;
+} format_t;
+
+static void putch(char c, int n, format_t *f) {
+  while (n --) {
+    if (f->out == NULL) _putc(c);
+    // do not output if we reach the given size of the buffer
+    else if (f->out != f->end) { *((f->out) ++) = c; }
+    f->nbyte ++;
   }
 }
 
-int vprintk(char *out, int limit, const char *fmt, va_list ap) {
-  unsigned int rewid = 0;
-  char **s_v = &out;
-  int *limit_n = &limit;
-  int vargint = 0;
-  unsigned long varguint = 0;
-  char *vargpch = 0;
-  char vargch = 0;
-  char flagc = ' ', abs = '+';
-  int base, width = -1;
+static void putstr(const char *s, int len, format_t *f) {
+  while (len --) putch(*s ++, 1, f);
+}
+
+#define FORMAT_FUN_DEF(name, base) \
+  static int name(char *revbuf, unsigned long long n) { \
+    char *p = revbuf; \
+    *(-- p) = '\0'; \
+    do { \
+      *(-- p) = "0123456789abcdef"[n % base]; \
+      n /= base; \
+    } while (n); \
+    return revbuf - p - 1;  /* exclude the null byte */ \
+  }
+
+FORMAT_FUN_DEF(format_oct, 8)
+FORMAT_FUN_DEF(format_dec, 10)
+FORMAT_FUN_DEF(format_hex, 16)
+
+static int format_integer(char *rev_buf, unsigned long long n, int base) {
+  switch (base) {
+    case 8:  return format_oct(rev_buf, n);
+    case 10: return format_dec(rev_buf, n);
+    case 16: return format_hex(rev_buf, n);
+  }
+  return 0;
+}
+
+enum { LEN_NONE, LEN_hh, LEN_h, LEN_l, LEN_ll };
+
+static int vsnprintf_internal(char *out, size_t size, const char *fmt, va_list ap) {
+  format_t f = {};
+  f.out = out;
+  f.end = (out && (size != 0) ? out + size : NULL);
+  f.nbyte = 0;
+
   const char *pfmt = fmt;
   while (*pfmt) {
-    if (*pfmt == '%') {
-      flagc = ' ';
-      width = -1;
-      abs = '+';
-    reswitch:
-      switch (*(++pfmt)) {
-      case '-':
-        flagc = '-';
-        goto reswitch;
-      case '0':
-        flagc = '0';
-        goto reswitch;
-      case ' ':
-        flagc = ' ';
-        goto reswitch;
-      case '+':
-        flagc = '+';
-        goto reswitch;
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        width = 0;
-        char ch;
-        while ((ch = *pfmt++) >= '0' && ch <= '9') {
+    char ch = *pfmt ++;
+    if (ch != '%') {
+      putch(ch, 1, &f);
+      continue;
+    }
+
+    char temp_buf[64];
+    char *temp_buf_end = temp_buf + sizeof(temp_buf);
+    unsigned long long varguint = 0;
+
+    f.pad.is_right = false; f.pad.ch = ' ';
+    f.sign.enable = false;
+    int width = 0;
+    int prec = 0;
+    int len_mod = LEN_NONE;
+    int is_signed = false;
+    int base = 0;
+    int conv_len = 0;
+    int width_pad_len = 0;
+    char *p_str;
+
+next_ch:
+    ch = *pfmt ++;
+reswitch:
+    switch (ch) {
+      // flag character
+      case '#': goto next_ch; // not implement
+      case '-': f.pad.is_right = true; f.pad.ch = ' '; goto next_ch;
+      case '0': if (!f.pad.is_right) f.pad.ch = '0'; goto next_ch;
+      case ' ': if (!(f.sign.enable && f.sign.ch == '+')) {
+                  f.sign.enable = true; f.sign.ch = ' ';
+                }
+                goto next_ch;
+      case '+': f.sign.enable = true; f.sign.ch = '+'; goto next_ch;
+
+      // field width
+      case '1': case '2': case '3': case '4': case '5':
+      case '6': case '7': case '8': case '9':
+        width = ch - '0';
+        while ((ch = *pfmt ++) >= '0' && ch <= '9') {
           width = width * 10 + ch - '0';
         }
-        pfmt -= 2;
-        goto reswitch;
-      case '*':
-        width = va_arg(ap, int);
-        goto reswitch;
-      case 'c':
-        vargch = va_arg(ap, int);
-        printch(vargch, s_v, limit_n);
-        rewid++;
-        break;
-      case '%':
-        printch('%', s_v, limit_n);
-        rewid++;
-        break;
-      case 'd':
-        vargint = va_arg(ap, int) & 0xffffffff;
-        base = 10;
-        if (vargint < 0) {
-          abs = '-';
-          varguint = -vargint;
-        } else {
-          varguint = vargint;
+        if (ch == '-') { width = -width; goto next_ch; }
+        else goto reswitch;
+
+      // presicion;
+      case '.':
+        while ((ch = *pfmt ++) >= '0' && ch <= '9') {
+          prec = prec * 10 + ch - '0';
         }
-        goto nump;
-      case 'u':
-        varguint = va_arg(ap, unsigned int) & 0xffffffff;
-        base = 10;
-        goto nump;
-      case 'x':
-      case 'X':
-        varguint = va_arg(ap, int) & 0xffffffff;
-        base = 16;
-        goto nump;
+        f.pad.ch = ' ';  // ignore '0' flag
+        goto reswitch;
+
+      // length modifier
+      case 'h':
+        if ((ch = *pfmt ++) == 'h') { len_mod = LEN_hh; goto next_ch; }
+        else { len_mod = LEN_h; goto reswitch; }
+      case 'l':
+        if ((ch = *pfmt ++) == 'l') { len_mod = LEN_ll; goto next_ch; }
+        else { len_mod = LEN_l; goto reswitch; }
+
+      // conversion specifier
+      case 'd': case 'i': is_signed = true; // fall through
+      case 'u': base = 10; goto read_arg;
+      case 'x': case 'X': base = 16; goto read_arg;
+      case 'o': base = 8; goto read_arg;
+
+read_arg:
+#define CASE(len_mod, actual_type, fetch_type) \
+  case len_mod: { \
+    signed actual_type s = (signed actual_type)va_arg(ap, signed fetch_type); \
+    if (is_signed && s < 0) { \
+      f.sign.ch = '-'; f.sign.enable = true; \
+      /* avoid overflow when performing negation with INT_MIN */ \
+      varguint = (unsigned actual_type)(-(s + 1)) + 1; \
+    } else varguint = (unsigned actual_type)s; \
+    break; \
+  }
+        switch (len_mod) {
+          CASE(LEN_hh, char, int)
+          CASE(LEN_h, short, int)
+          CASE(LEN_NONE, int, int)
+          CASE(LEN_l, long, long)
+          CASE(LEN_ll, long long, long long)
+        }
+print_num:;
+        int digit_len = format_integer(temp_buf_end, varguint, base);
+        char *p_digit = temp_buf_end - digit_len - 1;
+        int sign_len = (is_signed && f.sign.enable ? 1 : 0);
+        int prec_pad0_len = (prec > digit_len ? prec - digit_len : 0);
+        conv_len = sign_len + prec_pad0_len + digit_len;
+        width_pad_len = (width > conv_len ? width - conv_len : 0);
+
+        if (!f.pad.is_right && f.pad.ch == ' ') { putch(f.pad.ch, width_pad_len, &f); }
+        if (sign_len) putch(f.sign.ch, 1, &f);
+        if (!f.pad.is_right && f.pad.ch == '0') { putch(f.pad.ch, width_pad_len, &f); }
+        putch('0', prec_pad0_len, &f);
+        putstr(p_digit, digit_len, &f);
+        if (f.pad.is_right) { putch(f.pad.ch, width_pad_len, &f); }
+        break;
+
       case 'p':
-        myputc('0', s_v, limit_n);
-        myputc('x', s_v, limit_n);
-        varguint = (long)va_arg(ap, void *);
+        varguint = va_arg(ap, uintptr_t);
+        if (varguint == 0) { putstr("(nil)", 5, &f); break; }
+        putstr("0x", 2, &f);
         base = 16;
-        goto nump;
-      nump:
-        rewid += printdec(varguint, base, width, abs, flagc, s_v, limit_n);
-        break;
+        goto print_num;
+
+      case 'c':
+        conv_len = 1;
+        char c = (char)va_arg(ap, int);
+        p_str = &c;
+        goto print_str;
+
       case 's':
-        vargpch = va_arg(ap, char *);
-        printstr(vargpch, s_v, limit_n);
-        rewid += strlen(vargpch);
+        p_str = va_arg(ap, char *);
+        conv_len = (prec == 0 ? strlen(p_str) : prec);
+print_str:
+        width_pad_len = (width > conv_len ? width - conv_len : 0);
+        if (!f.pad.is_right) { putch(f.pad.ch, width_pad_len, &f); }
+        putstr(p_str, conv_len, &f);
+        if (f.pad.is_right) { putch(f.pad.ch, width_pad_len, &f); }
         break;
+
+      case '%': putch('%', 1, &f); break;
+
       default:;
-      }
-      pfmt++;
-    } else {
-      out = printch(*pfmt++, s_v, limit_n);
-      rewid++;
     }
   }
-  if (out != 0) {
-    printch('\0', s_v, limit_n);
-    // rewid++;结尾的\0不算在返回值中
-  }
-  return rewid;
+
+  if (f.out != NULL) { *f.out = '\0'; }
+  return f.nbyte;
 }
 
-int printk(const char *fmt, ...) {
+int printf(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int r = vprintk(0, 0, fmt, ap);
+  int r = vsnprintf_internal(NULL, 0, fmt, ap);
   va_end(ap);
   return r;
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
-  return vprintk(out, 0, fmt, ap);
+  return vsnprintf_internal(out, 0, fmt, ap);
 }
 
 int sprintf(char *out, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int r = vprintk(out, 0, fmt, ap);
+  int r = vsnprintf_internal(out, 0, fmt, ap);
   va_end(ap);
   return r;
 }
@@ -146,94 +221,9 @@ int sprintf(char *out, const char *fmt, ...) {
 int snprintf(char *out, size_t n, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int r = vprintk(out, n + 1, fmt, ap);
+  int r = vsnprintf_internal(out, n, fmt, ap);
   va_end(ap);
-  if (strlen(out) >= n)
-    *(out + n) = '\0';
   return r;
-}
-
-char *printch(char ch, char **s, int *limit_n) {
-  // if(s==0)_putc(ch);
-  // else *s++=ch;
-  myputc(ch, s, limit_n);
-  return *s;
-}
-
-int printdec(unsigned long dec, int base, int width, char abs, char flagc, char **s, int *limit_n) {
-  int rewid = 0, twid = width;
-  if (abs == '-')
-    rewid++;
-  if (dec == 0) {
-    // myputc('0',s);
-    // dec=-1;
-    rewid++;
-    twid--;
-  }
-  vprintdec(dec, base, twid, abs, flagc, s, 0, limit_n);
-  while (dec > 0) {
-    dec = dec / base;
-    rewid++;
-  }
-  if (width > 0 && rewid > width)
-    rewid = width;
-  return rewid;
-}
-int vprintdec(unsigned long dec, int base, int width, char abs, char flagc,
-              char **s, int count, int *limit_n) {
-  if (dec == 0) {
-    if (flagc != '-') {
-      width++;
-      if (abs == '-')
-        width--;
-      while (width-- > 1) {
-        if (flagc != '+') {
-          myputc(flagc, s, limit_n);
-        } else {
-          myputc(' ', s, limit_n);
-        }
-      }
-      if (flagc == '+')
-        myputc(abs, s, limit_n);
-      else if (abs == '-')
-        myputc('-', s, limit_n);
-      else {
-        if (width > 0)
-          myputc(flagc, s, limit_n);
-      }
-      // return width;
-    } else if (abs == '-') {
-      myputc('-', s, limit_n);
-      width--;
-    }
-    if (count == 0)
-      myputc('0', s, limit_n);
-    return width;
-  }
-  //_putc('0');
-  int re = 0; // vprintdec(dec/base,base,width-1,flagc,s+1);
-  re =
-      vprintdec(dec / base, base, width - 1, abs, flagc, s, count + 1, limit_n);
-  if (dec % base > 9)
-    myputc(dec % base + 'a' - 10, s, limit_n);
-  else
-    myputc((char)(dec % base + '0'), s, limit_n);
-  if (flagc == '-' && count == 0) {
-    while (re-- > 0)
-      myputc(' ', s, limit_n);
-  }
-  return re;
-}
-
-char *printstr(char *str, char **s, int *limit_n) {
-  while (*str) {
-    //_putc(*str);
-    // if(s==0)_putc(*str++);
-    // else*s++=*str++;
-    myputc(*str++, s, limit_n);
-  }
-  //*s++='\0';
-  return *s;
 }
 
 #endif
