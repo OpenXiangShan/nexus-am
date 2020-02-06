@@ -226,4 +226,8 @@ int snprintf(char *out, size_t n, const char *fmt, ...) {
   return r;
 }
 
+int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
+  return vsnprintf_internal(out, n, fmt, ap);
+}
+
 #endif
