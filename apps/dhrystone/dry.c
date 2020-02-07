@@ -352,6 +352,7 @@
 
 #include <am.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 #define Start_Timer() Begin_Time = uptime()
 #define Stop_Timer()  End_Time   = uptime()
@@ -383,8 +384,6 @@
 
 #define Null 0
                 /* Value of a Null pointer */
-#define true  1
-#define false 0
 
 typedef int     One_Thirty;
 typedef int     One_Fifty;

@@ -7,9 +7,6 @@
 
 #include <ucontext.h>
 
-#define false 0
-#define true 1
-
 struct _Context {
   union {
     uint8_t pad[1024];

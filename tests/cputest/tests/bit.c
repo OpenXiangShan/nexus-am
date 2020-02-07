@@ -1,7 +1,6 @@
 #include "trap.h"
 
 typedef unsigned char uint8_t;
-typedef char bool;
 __attribute__((noinline))
 bool getbit(void *buf, int offset){
 	int byte = offset >> 3;

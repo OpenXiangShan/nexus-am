@@ -12,6 +12,7 @@
 
 #include <am.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 /* Usage:
  *   my_list.h:
@@ -97,11 +98,6 @@ LINKLIST_DEF(fly)
 	int text;
 	int v;
 LINKLIST_DEF_FI(fly)
-
-typedef char bool;
-
-#define true         1
-#define false        0
 
 /* 按键相关 */
 void press_key(int scan_code);

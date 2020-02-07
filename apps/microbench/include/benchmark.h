@@ -3,6 +3,7 @@
 
 #include <am.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,9 +11,6 @@ extern "C" {
 
 #define MB * 1024 * 1024
 #define KB * 1024
-
-#define true 1
-#define false 0
 
 #define REF_CPU    "i7-7700K @ 4.20GHz"
 #define REF_SCORE  100000

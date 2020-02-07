@@ -3,6 +3,12 @@
 
 #include <am.h>
 
+#ifndef __cplusplus
+typedef uint8_t bool;
+#define false 0
+#define true 1
+#endif
+
 #define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 #define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
 

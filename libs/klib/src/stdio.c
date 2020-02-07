@@ -1,8 +1,6 @@
 #include "klib.h"
 #include <stdarg.h>
-
-#define true 1
-#define false 0
+#include <klib-macros.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
@@ -17,7 +15,7 @@ typedef struct {
   size_t nbyte;
 } format_t;
 
-static void putch(char c, int n, format_t *f) {
+static void __putch(char c, int n, format_t *f) {
   while (n --) {
     if (f->out == NULL) _putc(c);
     // do not output if we reach the given size of the buffer
@@ -26,8 +24,8 @@ static void putch(char c, int n, format_t *f) {
   }
 }
 
-static void putstr(const char *s, int len, format_t *f) {
-  while (len --) putch(*s ++, 1, f);
+static void __putstr(const char *s, int len, format_t *f) {
+  while (len --) __putch(*s ++, 1, f);
 }
 
 #define FORMAT_FUN_DEF(name, base) \
@@ -66,7 +64,7 @@ static int vsnprintf_internal(char *out, size_t size, const char *fmt, va_list a
   while (*pfmt) {
     char ch = *pfmt ++;
     if (ch != '%') {
-      putch(ch, 1, &f);
+      __putch(ch, 1, &f);
       continue;
     }
 
@@ -157,18 +155,18 @@ print_num:;
         conv_len = sign_len + prec_pad0_len + digit_len;
         width_pad_len = (width > conv_len ? width - conv_len : 0);
 
-        if (!f.pad.is_right && f.pad.ch == ' ') { putch(f.pad.ch, width_pad_len, &f); }
-        if (sign_len) putch(f.sign.ch, 1, &f);
-        if (!f.pad.is_right && f.pad.ch == '0') { putch(f.pad.ch, width_pad_len, &f); }
-        putch('0', prec_pad0_len, &f);
-        putstr(p_digit, digit_len, &f);
-        if (f.pad.is_right) { putch(f.pad.ch, width_pad_len, &f); }
+        if (!f.pad.is_right && f.pad.ch == ' ') { __putch(f.pad.ch, width_pad_len, &f); }
+        if (sign_len) __putch(f.sign.ch, 1, &f);
+        if (!f.pad.is_right && f.pad.ch == '0') { __putch(f.pad.ch, width_pad_len, &f); }
+        __putch('0', prec_pad0_len, &f);
+        __putstr(p_digit, digit_len, &f);
+        if (f.pad.is_right) { __putch(f.pad.ch, width_pad_len, &f); }
         break;
 
       case 'p':
         varguint = va_arg(ap, uintptr_t);
-        if (varguint == 0) { putstr("(nil)", 5, &f); break; }
-        putstr("0x", 2, &f);
+        if (varguint == 0) { __putstr("(nil)", 5, &f); break; }
+        __putstr("0x", 2, &f);
         base = 16;
         goto print_num;
 
@@ -183,12 +181,12 @@ print_num:;
         conv_len = (prec == 0 ? strlen(p_str) : prec);
 print_str:
         width_pad_len = (width > conv_len ? width - conv_len : 0);
-        if (!f.pad.is_right) { putch(f.pad.ch, width_pad_len, &f); }
-        putstr(p_str, conv_len, &f);
-        if (f.pad.is_right) { putch(f.pad.ch, width_pad_len, &f); }
+        if (!f.pad.is_right) { __putch(f.pad.ch, width_pad_len, &f); }
+        __putstr(p_str, conv_len, &f);
+        if (f.pad.is_right) { __putch(f.pad.ch, width_pad_len, &f); }
         break;
 
-      case '%': putch('%', 1, &f); break;
+      case '%': __putch('%', 1, &f); break;
 
       default:;
     }
