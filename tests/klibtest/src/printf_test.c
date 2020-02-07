@@ -138,7 +138,7 @@ static void test_full_format() {
   }
 }
 
-void printk_test() {
+void printf_test() {
   test("conversion specifier %c", test_c);
   test("conversion specifier %s", test_s);
   test("conversion specifier %d", test_d);
