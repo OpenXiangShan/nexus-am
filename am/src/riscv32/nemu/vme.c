@@ -11,11 +11,9 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
-  {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + PMEM_SIZE)},
-  {.start = (void*)MMIO_BASE,   .end = (void*)(MMIO_BASE + MMIO_SIZE)}
+  RANGE(0x80000000u, 0x80000000u + PMEM_SIZE),
+  RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
 };
-
-#define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
 
 static inline void set_satp(void *pdir) {
   asm volatile("csrw satp, %0" : : "r"(0x80000000 | ((uintptr_t)pdir >> 12)));
@@ -32,7 +30,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   }
 
   PTE *ptab = kptabs;
-  for (i = 0; i < NR_KSEG_MAP; i ++) {
+  for (i = 0; i < LENGTH(segments); i ++) {
     uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
     uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
     for (; pdir_idx < pdir_idx_end; pdir_idx ++) {

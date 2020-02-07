@@ -84,8 +84,7 @@ static void init_platform() {
   }
 
   // set up the AM heap
-  _heap.start = pmem;
-  _heap.end = pmem + PMEM_SIZE;
+  _heap = RANGE(pmem, pmem + PMEM_SIZE);
 
   // initialize sigmask for interrupts
   ret2 = sigemptyset(&__am_intr_sigmask);

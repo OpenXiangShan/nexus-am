@@ -8,7 +8,6 @@
 
 #define ARRAY_DEF(type, name, smax, smin, umax) \
   static const type name [] = {0, smax / 17, smax, smin, smin + 1, umax / 17, smin / 17, umax}
-#define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
 
 ARRAY_DEF(char, char_, SCHAR_MAX, SCHAR_MIN, UCHAR_MAX);
 ARRAY_DEF(short, short_, SHRT_MAX, SHRT_MIN, USHRT_MAX);
@@ -17,17 +16,13 @@ ARRAY_DEF(long, long_, LONG_MAX, LONG_MIN, ULONG_MAX);  // wordsize-dependent
 ARRAY_DEF(long long, longlong_, LLONG_MAX, LLONG_MIN, ULLONG_MAX);
 ARRAY_DEF(uintptr_t, ptr, INTPTR_MAX, INTPTR_MIN, UINTPTR_MAX);// wordsize-dependent
 
-static_assert(ARRAY_LEN(int_) == 8);
+static_assert(LENGTH(int_) == 8);
 #define TEST_FORMAT(conv, array) \
   conv " "  conv " "  conv " "  conv " "  conv " "  conv " "  conv " "  conv, \
   array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7]
 
 static char buf[1024];
 static char *p_buf = NULL;
-
-static void _puts(const char *s) {
-  while (*s) { _putc(*s ++); }
-}
 
 static void reset_buf() {
   for (int i = 0; i < sizeof(buf); i ++)
@@ -37,22 +32,22 @@ static void reset_buf() {
 
 static void check_buf(const char *ref) {
   if (0 != strcmp(ref, buf)) {
-    _puts("right: \"");
-    _puts(ref);
-    _puts("\"\n");
-    _puts("wrong: \"");
-    _puts(buf);
-    _puts("\"\n");
+    putstr("right: \"");
+    putstr(ref);
+    putstr("\"\n");
+    putstr("wrong: \"");
+    putstr(buf);
+    putstr("\"\n");
 
-    _puts("Test fail!\n");
+    putstr("Test fail!\n");
     _halt(1);
   }
 }
 
 static void test(const char *name, void (*fn)(void)) {
-  _puts("Testing '");
-  _puts(name);
-  _puts("'...\n");
+  putstr("Testing '");
+  putstr(name);
+  putstr("'...\n");
 
   reset_buf();
   fn();
@@ -121,16 +116,16 @@ static void test_full_format() {
   char format[32];
   int i, j, k, m, n;
   int idx = 0;
-  for (i = 0; i < ARRAY_LEN(flag); i ++) {
-    for (j = 0; j < ARRAY_LEN(width); j ++) {
-      for (k = 0; k < ARRAY_LEN(prec); k ++) {
-        for (m = 0; m < ARRAY_LEN(len); m ++) {
+  for (i = 0; i < LENGTH(flag); i ++) {
+    for (j = 0; j < LENGTH(width); j ++) {
+      for (k = 0; k < LENGTH(prec); k ++) {
+        for (m = 0; m < LENGTH(len); m ++) {
           for (n = 0; n < STRLEN(CONV); n ++) {
             sprintf(format, "%%%s%s%s%s%c", flag[i], width[j], prec[k], len[m], CONV[n]);
             reset_buf();
-            _puts("\tTesting format \"");
-            _puts(format);
-            _puts("\"\n");
+            putstr("\tTesting format \"");
+            putstr(format);
+            putstr("\"\n");
             sprintf(buf, format, 0xdead12ef);
             //printf("\"%s\",\n", buf);
             check_buf(full_format_ans[idx]);

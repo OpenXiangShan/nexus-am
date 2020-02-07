@@ -1,4 +1,5 @@
 #include "klib.h"
+#include <klib-macros.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 static unsigned long int next = 1;
@@ -35,7 +36,7 @@ void *malloc(size_t size) {
   }
 
   // aligning
-  size = (size + sizeof(uintptr_t) - 1) & ~(sizeof(uintptr_t) - 1);
+  size = ROUNDUP(size, sizeof(uintptr_t));
 
   if (head + size >= _heap.end) return NULL;
   printf("malloc: size = %d\n", size);

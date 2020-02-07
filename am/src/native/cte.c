@@ -7,6 +7,10 @@
 #define YIELD_INSTR_LEN ((sizeof(YIELD_INSTR)) / 5)  // sizeof() counts the '\0' byte
 #define SYSCALL_INSTR_LEN YIELD_INSTR_LEN
 
+// if this fails, allocate larger space in trap.S for ucontext
+static_assert(sizeof(ucontext_t) < 1024);
+static_assert(SYSCALL_INSTR_LEN == 7);
+
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
 void __am_asm_trap();
@@ -35,17 +39,14 @@ void __am_irq_handle(_Context *c) {
 }
 
 static void setup_stack(uintptr_t event, ucontext_t *c) {
-  uint8_t *rip = (uint8_t *)c->uc_mcontext.gregs[REG_RIP];
+  void *rip = (void *)c->uc_mcontext.gregs[REG_RIP];
   extern uint8_t _start, _etext;
-  void *sigprocmask_base = &sigprocmask;
-  // assume the virtual address space of user process is not above 0xffffffff
-  if (((event == _EVENT_IRQ_IODEV) || (event == _EVENT_IRQ_TIMER)) &&
-      !((rip >= &_start && rip < &_etext) ||
-        // Hack here: "+13" points to the instruction after syscall.
-        // This is the instruction which will trigger the pending signal
-        // if interrupt is enabled.
-        (rip == sigprocmask_base + 13) ||
-        (uintptr_t)rip < 0x100000000ul)) {
+  int signal_safe = IN_RANGE(rip, RANGE(&_start, &_etext)) || __am_in_userspace(rip) ||
+    // Hack here: "+13" points to the instruction after syscall. This is the
+    // instruction which will trigger the pending signal if interrupt is enabled.
+    (rip == (void *)&sigprocmask + 13);
+
+  if (((event == _EVENT_IRQ_IODEV) || (event == _EVENT_IRQ_TIMER)) && !signal_safe) {
     // Shared libraries contain code which are not reenterable.
     // If the signal comes when executing code in shared libraries,
     // the signal handler can not call any function which is not signal-safe,
@@ -137,9 +138,6 @@ void __am_init_timer_irq() {
 }
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
-  assert(sizeof(ucontext_t) < 1024);  // if this fails, allocate larger space in trap.S for ucontext
-  assert(SYSCALL_INSTR_LEN == 7);
-
   user_handler = handler;
 
   install_signal_handler();
