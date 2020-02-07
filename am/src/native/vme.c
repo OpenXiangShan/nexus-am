@@ -1,6 +1,6 @@
 #include "platform.h"
 
-#define USER_SPACE (_Area) { .start = (void *)0x40000000ul, .end = (void *)0xc0000000ul }
+#define USER_SPACE RANGE(0x40000000, 0xc0000000)
 
 #define PGSIZE  4096
 
@@ -56,7 +56,7 @@ void __am_switch(_Context *c) {
   if (as != NULL) {
     // mmap all mappings
     list_foreach(pp, as->ptr) {
-      assert(USER_SPACE.start <= pp->va && pp->va < USER_SPACE.end);
+      assert(IN_RANGE(pp->va, USER_SPACE));
       __am_shm_mmap(pp->va, pp->pa, pp->prot);
       pp->is_mapped = true;
     }
@@ -66,7 +66,7 @@ void __am_switch(_Context *c) {
 }
 
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
-  assert(USER_SPACE.start <= va && va < USER_SPACE.end);
+  assert(IN_RANGE(va, USER_SPACE));
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
   assert(as != NULL);
@@ -113,5 +113,5 @@ void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
 }
 
 int __am_in_userspace(void *addr) {
-  return vme_enable && (USER_SPACE.start <= addr) && (addr < USER_SPACE.end);
+  return vme_enable && IN_RANGE(addr, USER_SPACE);
 }

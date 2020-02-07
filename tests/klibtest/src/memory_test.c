@@ -19,7 +19,6 @@ static void check_equal(int st, int ed, int val) {
 
 static void check_sequence(int st, int ed, int initval) {
   for (int i = st; i < ed; i ++) {
-    //printk("data[%d]=%d,should be %d\n",i,data[i],initval + i - st + 1);
     assert(data[i] == initval + i - st + 1);
   }
 }

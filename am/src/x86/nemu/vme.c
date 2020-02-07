@@ -14,8 +14,6 @@ typedef uint32_t PDE;
 #define PDX(va)          (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
 #define PTX(va)          (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
 #define OFF(va)          ((uint32_t)(va) & 0xfff)
-#define ROUNDUP(a, sz)   ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
-#define ROUNDDOWN(a, sz) ((((uintptr_t)a)) & ~((sz)-1))
 #define PTE_ADDR(pte)    ((uint32_t)(pte) & ~0xfff)
 #define PGADDR(d, t, o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
@@ -27,11 +25,9 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
-  {.start = (void*)0,          .end = (void*)PMEM_SIZE},
-  {.start = (void*)MMIO_BASE,  .end = (void*)(MMIO_BASE + MMIO_SIZE)}
+  RANGE(0, PMEM_SIZE),
+  RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
 };
-
-#define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
@@ -45,7 +41,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   }
 
   PTE *ptab = kptabs;
-  for (i = 0; i < NR_KSEG_MAP; i ++) {
+  for (i = 0; i < LENGTH(segments); i ++) {
     uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
     uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
     for (; pdir_idx < pdir_idx_end; pdir_idx ++) {

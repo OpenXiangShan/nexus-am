@@ -4,14 +4,11 @@
 #include <am.h>
 #include <amdev.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 typedef uint8_t byte;
 typedef uint16_t word;
 typedef uint32_t dword;
-typedef int bool;
-
-#define true  1
-#define false 0
 
 // Binary Operations
 bool common_bit_set(long long value, byte position);

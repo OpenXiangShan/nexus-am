@@ -73,7 +73,7 @@ void vm_test() {
   printf("Code copied to %p (physical %p) execute\n", ptr, up1);
 
   static uint8_t kstk[4096];
-  _ucontext(&uctx, &prot, (_Area) { kstk, kstk + 4096 } , ptr);
+  _ucontext(&uctx, &prot, RANGE(kstk, kstk + 4096), ptr);
 
   _intr_write(1);
   while (1) ;

@@ -1,4 +1,5 @@
 #include "klib.h"
+#include <klib-macros.h>
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 static unsigned long int next = 1;
@@ -19,7 +20,8 @@ int abs(int x) {
 
 int atoi(const char* nptr) {
   int x = 0;
-  while (*nptr != '\0') {
+  while (*nptr == ' ') { nptr ++; }
+  while (*nptr >= '0' && *nptr <= '9') {
     x = x * 10 + *nptr - '0';
     nptr ++;
   }
@@ -34,7 +36,7 @@ void *malloc(size_t size) {
   }
 
   // aligning
-  size = (size + sizeof(uintptr_t) - 1) & ~(sizeof(uintptr_t) - 1);
+  size = ROUNDUP(size, sizeof(uintptr_t));
 
   if (head + size >= _heap.end) return NULL;
   printf("malloc: size = %d\n", size);

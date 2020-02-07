@@ -31,10 +31,10 @@ int __am_event_thread(void) {
       key_queue[key_r] = am_code;
       key_r = (key_r + 1) % KEY_QUEUE_LEN;
     }
-    return true;
+    return 1;
   }
 
-  return false;
+  return 0;
 }
 
 size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {

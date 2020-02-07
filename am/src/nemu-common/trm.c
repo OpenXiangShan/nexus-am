@@ -5,10 +5,7 @@ extern char _heap_start;
 extern char _heap_end;
 int main(const char *args);
 
-_Area _heap = {
-  .start = &_heap_start,
-  .end = &_heap_end,
-};
+_Area _heap = RANGE(&_heap_start, &_heap_end);
 
 void _putc(char ch) {
   outb(SERIAL_PORT, ch);

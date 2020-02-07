@@ -10,9 +10,6 @@ typedef union {
   int64_t val;
 } R64;
 
-#define true 1
-#define false 0
-
 static inline uint8_t  inb(uintptr_t addr) { return *(volatile uint8_t  *)addr; }
 static inline uint16_t inw(uintptr_t addr) { return *(volatile uint16_t *)addr; }
 static inline uint32_t inl(uintptr_t addr) { return *(volatile uint32_t *)addr; }

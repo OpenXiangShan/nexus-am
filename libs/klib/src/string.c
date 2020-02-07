@@ -170,14 +170,4 @@ int memcmp(const void* s1, const void* s2, size_t n){
   return (int)(*t1-*t2);
 }
 
-char *strchr(const char *s, int c) {
-  assert(0);
-  return NULL;
-}
-
-char *strrchr(const char *s, int c) {
-  assert(0);
-  return NULL;
-}
-
 #endif

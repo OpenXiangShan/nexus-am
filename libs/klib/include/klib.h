@@ -77,8 +77,6 @@ int sscanf(const char *str, const char *format, ...);
 
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 
-#define printk printf
-
 // assert.h
 #ifdef NDEBUG
   #define assert(ignore) ((void)0)
@@ -86,7 +84,7 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, co
   #define assert(cond) \
     do { \
       if (!(cond)) { \
-        printk("Assertion fail at %s:%d\n", __FILE__, __LINE__); \
+        printf("Assertion fail at %s:%d\n", __FILE__, __LINE__); \
         _halt(1); \
       } \
     } while (0)

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 // the size of red zone of the stack frame, see the amd64 ABI manual for details
 #define RED_NONE_SIZE 128
