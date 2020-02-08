@@ -15,21 +15,21 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
 void __am_asm_trap();
 void __am_ret_from_trap();
+void __am_kcontext_start();
 void __am_switch(_Context *c);
 int __am_in_userspace(void *addr);
+
+void __am_panic_on_return() { panic("should not reach here\n"); }
 
 void __am_irq_handle(_Context *c) {
   getcontext(&c->uc);
   c->as = thiscpu->cur_as;
 
-  _Context *ret = user_handler(thiscpu->ev, c);
-  assert(ret != NULL);
+  c = user_handler(thiscpu->ev, c);
+  assert(c != NULL);
 
-  __am_switch(ret);
+  __am_switch(c);
 
-  // the original context constructed on the stack
-  c = (void *)ret->uc.uc_mcontext.gregs[REG_RDI];
-  *c = *ret;
   // interrupt flag, see trap.S
   c->uc.uc_mcontext.gregs[REG_RDI] = c->sti;
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
@@ -145,22 +145,18 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
-void _kcontext(_Context *c, _Area stack, void (*entry)(void *), void *arg) {
-  // (rsp + 8) should be multiple of 16 when
-  // control is transfered to the function entry point.
-  // See amd64 ABI manual for more details
-  stack.end = (void *)(((uintptr_t)stack.end & ~15ul) - 8);
-  stack.end -= RED_NONE_SIZE;
-  _Context *c_on_stack = (_Context*)stack.end - 1;
+_Context* _kcontext(_Area stack, void (*entry)(void *), void *arg) {
+  _Context *c = (_Context*)stack.end - 1;
 
   __am_get_example_uc(c);
-  c->rip = (uintptr_t)entry;
+  c->rip = (uintptr_t)__am_kcontext_start;
   c->sti = 1;
   c->rflags = 0;
   c->as = NULL;
 
-  c->rdi = (uintptr_t)arg;
-  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
+  c->GPR1 = (uintptr_t)arg;
+  c->GPR2 = (uintptr_t)entry;
+  return c;
 }
 
 void _yield() {

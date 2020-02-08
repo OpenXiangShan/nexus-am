@@ -99,9 +99,8 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   }
 }
 
-void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
-  kstack.end -= RED_NONE_SIZE;
-  _Context *c_on_stack = (_Context*)kstack.end - 1;
+_Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context*)kstack.end - 1;
 
   __am_get_example_uc(c);
   c->rip = (uintptr_t)entry;
@@ -109,7 +108,8 @@ void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
   c->rflags = 0;
   c->as = as;
   //c->esp = 0;  FIXME: we leave the esp undefined
-  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
+
+  return c;
 }
 
 int __am_in_userspace(void *addr) {
