@@ -82,7 +82,7 @@ int  _vme_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
 void _protect(_AddressSpace *as);
 void _unprotect(_AddressSpace *as);
 void _map(_AddressSpace *as, void *va, void *pa, int prot);
-void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry);
+void _ucontext(void *ksp, _AddressSpace *as, void *entry);
 
 // ================= Multi-Processor Extension (MPE) =================
 

@@ -157,7 +157,8 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
 }
 
-void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry) {
+void _ucontext(void *ksp, _AddressSpace *as, void *entry) {
+  _Context *ctx = ksp - sizeof(_Context);
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
@@ -166,7 +167,7 @@ void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry) {
   ctx->rip    = (uintptr_t)entry;
   ctx->rflags = FL_IF;
   ctx->rsp    = (uintptr_t)uvm_area.end;
-  ctx->rsp0   = (uintptr_t)kstack.end;
+  ctx->rsp0   = (uintptr_t)ksp;
 #else
   ctx->cs     = USEL(SEG_UCODE);
   ctx->ds     = USEL(SEG_UDATA);
@@ -174,7 +175,7 @@ void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry) {
   ctx->eip    = (uintptr_t)entry;
   ctx->eflags = FL_IF;
   ctx->esp    = (uintptr_t)uvm_area.end;
-  ctx->esp0   = (uintptr_t)kstack.end;
+  ctx->esp0   = (uintptr_t)ksp;
 #endif
   ctx->uvm = as->ptr;
 }
