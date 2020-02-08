@@ -15,7 +15,7 @@ static GateDesc32 idt[NR_IRQ];
 IRQS(IRQHANDLE_DECL)
 void __am_irqall();
 
-static void __am_irq_handle_internal(struct trap_frame *tf) {
+void __am_irq_handle(struct trap_frame *tf) {
   _Context saved_ctx;
   _Event ev = {
     .event = _EVENT_NULL,
@@ -103,10 +103,6 @@ static void __am_irq_handle_internal(struct trap_frame *tf) {
   }
 
   __am_iret(ret_ctx);
-}
-
-void __am_irq_handle(struct trap_frame *tf) {
-  stack_switch_call(stack_top(&CPU->irq_stack), __am_irq_handle_internal, (uintptr_t)tf);
 }
 
 int _cte_init(_Context *(*handler)(_Event, _Context *)) {
