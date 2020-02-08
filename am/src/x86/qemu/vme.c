@@ -157,7 +157,8 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   ptwalk(as, (uintptr_t)va, PTE_W | PTE_U);
 }
 
-void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry) {
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *ctx = kstack.end - sizeof(_Context);
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
@@ -177,4 +178,6 @@ void _ucontext(_Context *ctx, _AddressSpace *as, _Area kstack, void *entry) {
   ctx->esp0   = (uintptr_t)kstack.end;
 #endif
   ctx->uvm = as->ptr;
+
+  return ctx;
 }

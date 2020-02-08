@@ -1,5 +1,12 @@
 #include "x86-qemu.h"
 
+.globl __am_kcontext_start
+__am_kcontext_start:
+  // eax = arg, ebx = entry
+  pushl %eax
+  pushl $__am_panic_on_return
+  jmpl *%ebx
+
 trap:
   cli
 
