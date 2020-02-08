@@ -101,14 +101,20 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
 
 _Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   _Context *c = (_Context*)kstack.end - 1;
-  assert(0);
 
   __am_get_example_uc(c);
+  c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)entry;
+  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)USER_SPACE.end;
+
+  int ret = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
+  assert(ret == 0);
   c->as = as;
+
+  c->ksp = (uintptr_t)kstack.end;
 
   return c;
 }
 
 int __am_in_userspace(void *addr) {
-  return vme_enable && IN_RANGE(addr, USER_SPACE);
+  return vme_enable && thiscpu->cur_as != NULL && IN_RANGE(addr, USER_SPACE);
 }

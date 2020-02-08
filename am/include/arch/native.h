@@ -8,6 +8,7 @@
 #include <ucontext.h>
 
 struct _Context {
+  uintptr_t ksp;
   void *as;
   ucontext_t uc;
   // skip the red zone of the stack frame, see the amd64 ABI manual for details

@@ -21,6 +21,7 @@ void __am_panic_on_return() { panic("should not reach here\n"); }
 
 static void irq_handle(_Context *c) {
   c->as = thiscpu->cur_as;
+  c->ksp = thiscpu->ksp;
 
   c = user_handler(thiscpu->ev, c);
   assert(c != NULL);
@@ -56,7 +57,8 @@ static void setup_stack(uintptr_t event, ucontext_t *uc) {
   else if (event == _EVENT_YIELD) { rip += YIELD_INSTR_LEN; }
   uc->uc_mcontext.gregs[REG_RIP] = (uintptr_t)rip;
 
-  _Context *c = (_Context *)uc->uc_mcontext.gregs[REG_RSP];
+  // switch to kernel stack if we were previously in user space
+  _Context *c = (void *)(__am_in_userspace(rip) ? thiscpu->ksp : uc->uc_mcontext.gregs[REG_RSP]);
   c --;
 
   // save the context on the stack
@@ -75,6 +77,7 @@ static void iret(ucontext_t *uc) {
   _Context *c = (void *)uc->uc_mcontext.gregs[REG_RAX];
   // restore the context
   *uc = c->uc;
+  thiscpu->ksp = c->ksp;
 }
 
 static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
