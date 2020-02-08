@@ -41,6 +41,15 @@ static void save_example_context() {
   assert(ret == 0);
 }
 
+static void setup_sigaltstack() {
+  stack_t ss;
+  ss.ss_sp = thiscpu->sigstack;
+  ss.ss_size = sizeof(thiscpu->sigstack);
+  ss.ss_flags = 0;
+  int ret = sigaltstack(&ss, NULL);
+  assert(ret == 0);
+}
+
 int main(const char *args);
 
 static void init_platform() __attribute__((constructor));
@@ -118,6 +127,9 @@ static void init_platform() {
   assert(ret2 == 0);
   ret2 = sigaddset(&__am_intr_sigmask, SIGUSR1);
   assert(ret2 == 0);
+
+  // setup alternative signal stack
+  setup_sigaltstack();
 
   // save the context template
   save_example_context();
