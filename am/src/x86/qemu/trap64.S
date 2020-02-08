@@ -1,5 +1,12 @@
 #include "x86-qemu.h"
 
+.globl _kcontext_start
+_kcontext_start:
+  popq %rcx  // entry
+  popq %rdi  // arg
+  pushq $__am_panic_on_return
+  jmpq *%rcx
+
 trap:
   cli
   subq  $48, %rsp

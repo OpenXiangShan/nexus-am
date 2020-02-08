@@ -1,5 +1,11 @@
 #include "x86-qemu.h"
 
+.globl _kcontext_start
+_kcontext_start:
+  popl %ecx  // entry
+  pushl $__am_panic_on_return
+  jmpl *%ecx
+
 trap:
   cli
 

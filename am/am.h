@@ -74,7 +74,7 @@ int  _cte_init(_Context *(*handler)(_Event ev, _Context *ctx));
 void _yield();
 int  _intr_read();
 void _intr_write(int enable);
-void _kcontext(_Context *ctx, _Area kstack, void (*entry)(void *), void *arg);
+void _kcontext(void *ksp);
 
 // ================= Virtual Memory Extension (VME) ==================
 

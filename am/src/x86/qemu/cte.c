@@ -14,6 +14,7 @@ static GateDesc32 idt[NR_IRQ];
 
 IRQS(IRQHANDLE_DECL)
 void __am_irqall();
+void _kcontext_start();
 
 void __am_irq_handle(struct trap_frame *tf) {
   _Context *saved_ctx = &tf->saved_context;
@@ -133,32 +134,24 @@ void _intr_write(int enable) {
   }
 }
 
-static void panic_on_return() { panic("kernel context returns"); }
+void __am_panic_on_return() { panic("kernel context returns"); }
 
-void _kcontext(_Context *ctx, _Area stack, void (*entry)(void *), void *arg) {
+void _kcontext(void *ksp) {
+  _Context *ctx = ksp - sizeof(_Context);
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
-#define sp rsp
-  ctx->rsp    = (uintptr_t)stack.end;
   ctx->cs     = KSEL(SEG_KCODE);
-  ctx->rip    = (uintptr_t)entry;
+  ctx->rip    = (uintptr_t)_kcontext_start;
   ctx->rflags = FL_IF;
-  ctx->rdi    = (uintptr_t)arg;
-  void *stk[] = { panic_on_return };
+  ctx->rsp    = (uintptr_t)ksp;
 #else
-#define sp esp
-  ctx->esp    = (uintptr_t)stack.end;
   ctx->ds     = KSEL(SEG_KDATA);
   ctx->cs     = KSEL(SEG_KCODE);
-  ctx->eip    = (uint32_t)entry;
+  ctx->eip    = (uintptr_t)_kcontext_start;
   ctx->eflags = FL_IF;
-  void *stk[] = { panic_on_return, arg };
+  ctx->esp    = (uintptr_t)ksp;
 #endif
-  ctx->sp -= sizeof(stk);
-  for (int i = 0; i < LENGTH(stk); i++) {
-    ((uintptr_t *)ctx->sp)[i] = (uintptr_t)stk[i];
-  }
 }
 
 void __am_percpu_initirq() {
