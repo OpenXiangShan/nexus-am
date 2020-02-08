@@ -2,10 +2,9 @@
 
 .globl _kcontext_start
 _kcontext_start:
-  popq %rcx  // entry
-  popq %rdi  // arg
+  // rdi = arg, rsi = entry
   pushq $__am_panic_on_return
-  jmpq *%rcx
+  jmpq *%rsi
 
 trap:
   cli

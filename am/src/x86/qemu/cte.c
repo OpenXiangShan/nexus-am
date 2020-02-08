@@ -136,22 +136,27 @@ void _intr_write(int enable) {
 
 void __am_panic_on_return() { panic("kernel context returns"); }
 
-void _kcontext(void *ksp) {
-  _Context *ctx = ksp - sizeof(_Context);
+_Context* _kcontext(_Area kstack, void (*entry)(void *), void *arg) {
+  _Context *ctx = kstack.end - sizeof(_Context);
   *ctx = (_Context) { 0 };
 
 #if __x86_64__
   ctx->cs     = KSEL(SEG_KCODE);
   ctx->rip    = (uintptr_t)_kcontext_start;
   ctx->rflags = FL_IF;
-  ctx->rsp    = (uintptr_t)ksp;
+  ctx->rsp    = (uintptr_t)kstack.end;
 #else
   ctx->ds     = KSEL(SEG_KDATA);
   ctx->cs     = KSEL(SEG_KCODE);
   ctx->eip    = (uintptr_t)_kcontext_start;
   ctx->eflags = FL_IF;
-  ctx->esp    = (uintptr_t)ksp;
+  ctx->esp    = (uintptr_t)kstack.end;
 #endif
+
+  ctx->GPR1 = (uintptr_t)arg;
+  ctx->GPR2 = (uintptr_t)entry;
+
+  return ctx;
 }
 
 void __am_percpu_initirq() {

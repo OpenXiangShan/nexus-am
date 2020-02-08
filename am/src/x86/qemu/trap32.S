@@ -2,9 +2,10 @@
 
 .globl _kcontext_start
 _kcontext_start:
-  popl %ecx  // entry
+  // eax = arg, ebx = entry
+  pushl %eax
   pushl $__am_panic_on_return
-  jmpl *%ecx
+  jmpl *%ebx
 
 trap:
   cli
