@@ -16,7 +16,7 @@ IRQS(IRQHANDLE_DECL)
 void __am_irqall();
 
 void __am_irq_handle(struct trap_frame *tf) {
-  _Context saved_ctx;
+  _Context *saved_ctx = &tf->saved_context;
   _Event ev = {
     .event = _EVENT_NULL,
     .cause = 0, .ref = 0,
@@ -24,25 +24,22 @@ void __am_irq_handle(struct trap_frame *tf) {
   };
 
 #if __x86_64
-  saved_ctx        = tf->saved_context;
-  saved_ctx.rip    = tf->rip;
-  saved_ctx.cs     = tf->cs;
-  saved_ctx.rflags = tf->rflags;
-  saved_ctx.rsp    = tf->rsp;
-  saved_ctx.rsp0   = CPU->tss.rsp0;
-  saved_ctx.ss     = tf->ss;
-  saved_ctx.uvm    = (void *)get_cr3();
+  saved_ctx->rip    = tf->rip;
+  saved_ctx->cs     = tf->cs;
+  saved_ctx->rflags = tf->rflags;
+  saved_ctx->rsp    = tf->rsp;
+  saved_ctx->rsp0   = CPU->tss.rsp0;
+  saved_ctx->ss     = tf->ss;
 #else
-  saved_ctx        = tf->saved_context;
-  saved_ctx.eip    = tf->eip;
-  saved_ctx.cs     = tf->cs;
-  saved_ctx.eflags = tf->eflags;
-  saved_ctx.esp0   = CPU->tss.esp0;
-  saved_ctx.ss3    = USEL(SEG_UDATA);
-  saved_ctx.uvm    = (void *)get_cr3();
+  saved_ctx->eip    = tf->eip;
+  saved_ctx->cs     = tf->cs;
+  saved_ctx->eflags = tf->eflags;
+  saved_ctx->esp0   = CPU->tss.esp0;
+  saved_ctx->ss3    = USEL(SEG_UDATA);
   // no ss/esp saved for DPL_KERNEL
-  saved_ctx.esp = (tf->cs & DPL_USER ? tf->esp : (uint32_t)(tf + 1) - 8);
+  saved_ctx->esp = (tf->cs & DPL_USER ? tf->esp : (uint32_t)(tf + 1) - 8);
 #endif
+  saved_ctx->uvm    = (void *)get_cr3();
 
   #define IRQ    T_IRQ0 +
   #define MSG(m) ev.msg = m;
@@ -89,7 +86,7 @@ void __am_irq_handle(struct trap_frame *tf) {
       break;
   }
 
-  _Context *ret_ctx = user_handler(ev, &saved_ctx);
+  _Context *ret_ctx = user_handler(ev, saved_ctx);
   panic_on(!ret_ctx, "returning to NULL context");
 
   if (ret_ctx->uvm) {
