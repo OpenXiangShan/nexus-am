@@ -108,13 +108,20 @@ static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
 
 // signal handlers are inherited across fork()
 static void install_signal_handler() {
+  stack_t ss;
+  ss.ss_size = SIGSTKSZ;
+  ss.ss_flags = 0;
+  ss.ss_sp = thiscpu->sigstack;
+  int ret = sigaltstack(&ss, NULL);
+  assert(ret == 0);
+
   struct sigaction s;
   memset(&s, 0, sizeof(s));
   s.sa_sigaction = sig_handler;
-  s.sa_flags = SA_SIGINFO | SA_RESTART;
+  s.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
   __am_get_intr_sigmask(&s.sa_mask);
 
-  int ret = sigaction(SIGVTALRM, &s, NULL);
+  ret = sigaction(SIGVTALRM, &s, NULL);
   assert(ret == 0);
   ret = sigaction(SIGUSR1, &s, NULL);
   assert(ret == 0);
