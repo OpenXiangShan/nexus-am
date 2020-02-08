@@ -101,13 +101,10 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
 
 _Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   _Context *c = (_Context*)kstack.end - 1;
+  assert(0);
 
   __am_get_example_uc(c);
-  c->rip = (uintptr_t)entry;
-  c->sti = 1;
-  c->rflags = 0;
   c->as = as;
-  //c->esp = 0;  FIXME: we leave the esp undefined
 
   return c;
 }

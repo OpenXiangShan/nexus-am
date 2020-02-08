@@ -8,23 +8,17 @@
 #include <ucontext.h>
 
 struct _Context {
-  union {
-    uint8_t pad[1024];
-    struct {
-      ucontext_t uc;
-      void *as;
-    };
-  };
-  uintptr_t rax, r10, r11, rdi; // registers not preserved by getcontext()
-  uintptr_t sti, rflags, rip;   // saved by signal handler
+  void *as;
+  ucontext_t uc;
+  // skip the red zone of the stack frame, see the amd64 ABI manual for details
   uint8_t redzone[128];
 };
 
-#define GPR1 rdi
+#define GPR1 uc.uc_mcontext.gregs[REG_RDI]
 #define GPR2 uc.uc_mcontext.gregs[REG_RSI]
 #define GPR3 uc.uc_mcontext.gregs[REG_RDX]
 #define GPR4 uc.uc_mcontext.gregs[REG_RCX]
-#define GPRx rax
+#define GPRx uc.uc_mcontext.gregs[REG_RAX]
 
 #undef __USE_GNU
 

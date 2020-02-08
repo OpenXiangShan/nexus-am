@@ -13,16 +13,13 @@ static_assert(SYSCALL_INSTR_LEN == 7);
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;
 
-void __am_asm_trap();
-void __am_ret_from_trap();
 void __am_kcontext_start();
 void __am_switch(_Context *c);
 int __am_in_userspace(void *addr);
 
 void __am_panic_on_return() { panic("should not reach here\n"); }
 
-void __am_irq_handle(_Context *c) {
-  getcontext(&c->uc);
+static void irq_handle(_Context *c) {
   c->as = thiscpu->cur_as;
 
   c = user_handler(thiscpu->ev, c);
@@ -30,12 +27,9 @@ void __am_irq_handle(_Context *c) {
 
   __am_switch(c);
 
-  // interrupt flag, see trap.S
-  c->uc.uc_mcontext.gregs[REG_RDI] = c->sti;
-  c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_ret_from_trap;
-  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)c + 1024;
-
-  setcontext(&c->uc);
+  // magic call to restore context
+  asm volatile("call *0x100010" : : "a" (c));
+  __am_panic_on_return();
 }
 
 static void setup_stack(uintptr_t event, ucontext_t *uc) {
@@ -60,19 +54,27 @@ static void setup_stack(uintptr_t event, ucontext_t *uc) {
   // skip the instructions causing SIGSEGV for syscall and yield
   if (event == _EVENT_SYSCALL) { rip += SYSCALL_INSTR_LEN; }
   else if (event == _EVENT_YIELD) { rip += YIELD_INSTR_LEN; }
+  uc->uc_mcontext.gregs[REG_RIP] = (uintptr_t)rip;
 
-  _Context *c = (_Context *)uc->uc_mcontext.gregs[REG_RSP] - 1;
-  c->rip = (uintptr_t)rip;
-  // rflags is not preserved by getcontext(), save it here
-  c->rflags = uc->uc_mcontext.gregs[REG_EFL];
-  c->sti = __am_is_sigmask_sti(&uc->uc_sigmask);
+  _Context *c = (_Context *)uc->uc_mcontext.gregs[REG_RSP];
+  c --;
+
+  // save the context on the stack
+  c->uc = *uc;
 
   // disable interrupt
   __am_get_intr_sigmask(&uc->uc_sigmask);
 
-  // construct the remaining part of the context at trap.S
-  uc->uc_mcontext.gregs[REG_RSP] = (uintptr_t)&c->sti;
-  uc->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_asm_trap;
+  // call irq_handle after returning from the signal handler
+  uc->uc_mcontext.gregs[REG_RDI] = (uintptr_t)c;
+  uc->uc_mcontext.gregs[REG_RIP] = (uintptr_t)irq_handle;
+  uc->uc_mcontext.gregs[REG_RSP] = (uintptr_t)c;
+}
+
+static void iret(ucontext_t *uc) {
+  _Context *c = (void *)uc->uc_mcontext.gregs[REG_RAX];
+  // restore the context
+  *uc = c->uc;
 }
 
 static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
@@ -86,6 +88,7 @@ static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
         switch ((uintptr_t)info->si_addr) {
           case 0x100000: thiscpu->ev.event = _EVENT_SYSCALL; break;
           case 0x100008: thiscpu->ev.event = _EVENT_YIELD; break;
+          case 0x100010: iret(ucontext); return;
         }
       }
       if (__am_in_userspace(info->si_addr)) {
@@ -153,9 +156,12 @@ _Context* _kcontext(_Area stack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)stack.end - 1;
 
   __am_get_example_uc(c);
-  c->rip = (uintptr_t)__am_kcontext_start;
-  c->sti = 1;
-  c->rflags = 0;
+  c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_kcontext_start;
+  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)stack.end;
+
+  int ret = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
+  assert(ret == 0);
+
   c->as = NULL;
 
   c->GPR1 = (uintptr_t)arg;
