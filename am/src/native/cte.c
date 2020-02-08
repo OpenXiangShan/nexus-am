@@ -38,8 +38,8 @@ void __am_irq_handle(_Context *c) {
   setcontext(&c->uc);
 }
 
-static void setup_stack(uintptr_t event, ucontext_t *c) {
-  void *rip = (void *)c->uc_mcontext.gregs[REG_RIP];
+static void setup_stack(uintptr_t event, ucontext_t *uc) {
+  void *rip = (void *)uc->uc_mcontext.gregs[REG_RIP];
   extern uint8_t _start, _etext;
   int signal_safe = IN_RANGE(rip, RANGE(&_start, &_etext)) || __am_in_userspace(rip) ||
     // Hack here: "+13" points to the instruction after syscall. This is the
@@ -61,21 +61,18 @@ static void setup_stack(uintptr_t event, ucontext_t *c) {
   if (event == _EVENT_SYSCALL) { rip += SYSCALL_INSTR_LEN; }
   else if (event == _EVENT_YIELD) { rip += YIELD_INSTR_LEN; }
 
-  // skip the red zone of the stack frame, see the amd64 ABI manual for details
-  uintptr_t rsp = c->uc_mcontext.gregs[REG_RSP] - RED_NONE_SIZE;
-
-#define PUSH(x) rsp -= sizeof(uintptr_t); *(uintptr_t *)rsp = (uintptr_t)(x)
-  PUSH(rip);
+  _Context *c = (_Context *)uc->uc_mcontext.gregs[REG_RSP] - 1;
+  c->rip = (uintptr_t)rip;
   // rflags is not preserved by getcontext(), save it here
-  PUSH(c->uc_mcontext.gregs[REG_EFL]);
-  uintptr_t sti = __am_is_sigmask_sti(&c->uc_sigmask);
-  PUSH(sti);
+  c->rflags = uc->uc_mcontext.gregs[REG_EFL];
+  c->sti = __am_is_sigmask_sti(&uc->uc_sigmask);
 
   // disable interrupt
-  __am_get_intr_sigmask(&c->uc_sigmask);
+  __am_get_intr_sigmask(&uc->uc_sigmask);
 
-  c->uc_mcontext.gregs[REG_RSP] = rsp;
-  c->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_asm_trap;
+  // construct the remaining part of the context at trap.S
+  uc->uc_mcontext.gregs[REG_RSP] = (uintptr_t)&c->sti;
+  uc->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_asm_trap;
 }
 
 static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
