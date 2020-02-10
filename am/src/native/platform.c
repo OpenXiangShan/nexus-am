@@ -7,6 +7,7 @@
 
 #define MAX_CPU 16
 #define TRAP_PAGE_START (void *)0x100000
+#define PMEM_START (void *)0x3000000  // for nanos-lite with vme disabled
 #define PMEM_SIZE (128 * 1024 * 1024) // 128MB
 static int pmem_fd = 0;
 static char pmem_shm_file[] = "/native-pmem-XXXXXX";
@@ -60,7 +61,8 @@ static void init_platform() {
   assert(pmem_fd != -1);
   assert(0 == ftruncate(pmem_fd, PMEM_SIZE));
 
-  pmem = mmap(NULL, PMEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED, pmem_fd, 0);
+  pmem = mmap(PMEM_START, PMEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
+      MAP_SHARED | MAP_FIXED, pmem_fd, 0);
   assert(_heap.start != (void *)-1);
 
   // allocate private per-cpu structure
