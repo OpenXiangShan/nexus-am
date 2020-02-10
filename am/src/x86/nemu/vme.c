@@ -101,15 +101,11 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   }
 }
 
-void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
-  /*
-  ustack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
-  uintptr_t *esp = ustack.end;
-  esp[1] = esp[2] = esp[3] = 0;
-  */
-
-  c->as = as;
+_Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context *)kstack.end - 1;
+  //c->as = as;
   c->cs = 0x8;
   c->eip = (uintptr_t)entry;
   c->eflags = 0x2 | FL_IF;
+  return c;
 }

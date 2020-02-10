@@ -53,15 +53,13 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
+void _protect(_AddressSpace *as) {
   PDE *updir = (PDE*)(pgalloc_usr(1));
   as->ptr = updir;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {
     updir[i] = kpdirs[i];
   }
-
-  return 0;
 }
 
 void _unprotect(_AddressSpace *as) {
@@ -79,7 +77,7 @@ void __am_switch(_Context *c) {
   }
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   PDE *pt = (PDE*)as->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_V)) {
@@ -89,12 +87,10 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
   if (!(*pte & PTE_V)) {
     *pte = PTE_V | PTE_R | PTE_W | PTE_X | ((uint32_t)pa >> PGSHFT << 10);
   }
-
-  return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
-  _Context *c = (_Context*)ustack.end - 1;
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context*)kstack.end - 1;
 
   c->as = as;
   c->epc = (uintptr_t)entry;

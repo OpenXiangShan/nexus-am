@@ -16,10 +16,8 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
+void _protect(_AddressSpace *as) {
   as->ptr = (PDE*)(pgalloc_usr(1));
-
-  return 0;
 }
 
 void _unprotect(_AddressSpace *as) {
@@ -40,7 +38,7 @@ void __am_switch(_Context *c) {
   }
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   PDE *pt = (PDE*)as->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_V)) {
@@ -63,21 +61,14 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
       asm volatile ("tlbwi");
     }
   }
-
-  return 0;
 }
 
 _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
-  #warning "TODO";
-  return NULL;
-  /*
-  _Context *c = (_Context*)ustack.end - 1;
-
+  _Context *c = (_Context*)kstack.end - 1;
   c->as = as;
   c->epc = (uintptr_t)entry;
   c->status = 0x1;
   return c;
-  */
 }
 
 void __am_tlb_refill() {

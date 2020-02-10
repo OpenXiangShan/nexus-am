@@ -63,14 +63,12 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
-void _kcontext(_Context *c, _Area stack, void (*entry)(void *), void *arg) {
-//  stack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
-//  uintptr_t *esp = stack.end;
-//  esp[1] = esp[2] = esp[3] = 0;
-
+_Context* _kcontext(_Area kstack, void (*entry)(void *), void *arg) {
+  _Context *c = (_Context *)kstack.end - 1;
   c->cs = 0x8;
   c->eip = (uintptr_t)entry;
   c->eflags = 0x2 | FL_IF;
+  return c;
 }
 
 void _yield() {
