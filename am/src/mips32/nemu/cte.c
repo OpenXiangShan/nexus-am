@@ -61,6 +61,7 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
 _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)kstack.end - 1;
   c->epc = (uintptr_t)entry;
+  c->GPR2 = (uintptr_t)arg; // a0
   return c;
 }
 

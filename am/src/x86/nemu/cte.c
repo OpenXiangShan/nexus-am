@@ -63,11 +63,15 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
+void __am_kcontext_start();
+
 _Context* _kcontext(_Area kstack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context *)kstack.end - 1;
   c->cs = 0x8;
-  c->eip = (uintptr_t)entry;
+  c->eip = (uintptr_t)__am_kcontext_start;
   c->eflags = 0x2 | FL_IF;
+  c->GPR1 = (uintptr_t)arg;
+  c->GPR2 = (uintptr_t)entry;
   return c;
 }
 

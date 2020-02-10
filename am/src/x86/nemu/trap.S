@@ -4,6 +4,11 @@
 .globl __am_irq0;        __am_irq0:  pushl $0;  pushl   $32; jmp __am_asm_trap
 .globl __am_vecnull;  __am_vecnull:  pushl $0;  pushl   $-1; jmp __am_asm_trap
 
+.globl __am_kcontext_start
+__am_kcontext_start:
+  pushl %eax
+  call *%ebx
+
 __am_asm_trap:
   pushal
 
