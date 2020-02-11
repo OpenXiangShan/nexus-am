@@ -99,19 +99,22 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   }
 }
 
-void _ucontext(_Context *c, _AddressSpace *as, _Area kstack, void *entry) {
-  kstack.end -= RED_NONE_SIZE;
-  _Context *c_on_stack = (_Context*)kstack.end - 1;
+_Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context*)kstack.end - 1;
 
   __am_get_example_uc(c);
-  c->rip = (uintptr_t)entry;
-  c->sti = 1;
-  c->rflags = 0;
+  c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)entry;
+  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)USER_SPACE.end;
+
+  int ret = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
+  assert(ret == 0);
   c->as = as;
-  //c->esp = 0;  FIXME: we leave the esp undefined
-  c->uc.uc_mcontext.gregs[REG_RDI] = (uintptr_t)c_on_stack; // used in __am_irq_handle()
+
+  c->ksp = (uintptr_t)kstack.end;
+
+  return c;
 }
 
 int __am_in_userspace(void *addr) {
-  return vme_enable && IN_RANGE(addr, USER_SPACE);
+  return vme_enable && thiscpu->cur_as != NULL && IN_RANGE(addr, USER_SPACE);
 }

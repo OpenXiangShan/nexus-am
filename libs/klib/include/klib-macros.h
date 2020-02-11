@@ -14,7 +14,7 @@ typedef uint8_t bool;
 
 #define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-#define RANGE(st, ed) (_Area) { .start = (void *)st, .end = (void *)ed }
+#define RANGE(st, ed) (_Area) { .start = (void *)(st), .end = (void *)(ed) }
 #define IN_RANGE(ptr, area) ((area).start <= (ptr) && (ptr) < (area).end)
 
 #define STRINGIFY(s) #s

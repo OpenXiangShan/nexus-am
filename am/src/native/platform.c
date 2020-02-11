@@ -16,6 +16,40 @@ sigset_t __am_intr_sigmask = {};
 __am_cpu_t *__am_cpu_struct = NULL;
 int __am_ncpu = 0;
 
+static void save_context_handler(int sig, siginfo_t *info, void *ucontext) {
+  memcpy(&uc_example, ucontext, sizeof(uc_example));
+}
+
+static void save_example_context() {
+  // getcontext() does not save segment registers. In the signal
+  // handler, restoring a context previously saved by getcontext()
+  // will trigger segmentation fault because of the invalid segment
+  // registers. So we save the example context during signal handling
+  // to get a context with everything valid.
+  struct sigaction s;
+  memset(&s, 0, sizeof(s));
+  s.sa_sigaction = save_context_handler;
+  s.sa_flags = SA_SIGINFO;
+  int ret = sigaction(SIGUSR1, &s, NULL);
+  assert(ret == 0);
+
+  raise(SIGUSR1);
+
+  s.sa_flags = 0;
+  s.sa_handler = SIG_DFL;
+  ret = sigaction(SIGUSR1, &s, NULL);
+  assert(ret == 0);
+}
+
+static void setup_sigaltstack() {
+  stack_t ss;
+  ss.ss_sp = thiscpu->sigstack;
+  ss.ss_size = sizeof(thiscpu->sigstack);
+  ss.ss_flags = 0;
+  int ret = sigaltstack(&ss, NULL);
+  assert(ret == 0);
+}
+
 int main(const char *args);
 
 static void init_platform() __attribute__((constructor));
@@ -94,12 +128,15 @@ static void init_platform() {
   ret2 = sigaddset(&__am_intr_sigmask, SIGUSR1);
   assert(ret2 == 0);
 
-  // disable interrupts by default
-  _intr_write(0);
+  // setup alternative signal stack
+  setup_sigaltstack();
 
   // save the context template
-  getcontext(&uc_example);
+  save_example_context();
   __am_get_intr_sigmask(&uc_example.uc_sigmask);
+
+  // disable interrupts by default
+  _intr_write(0);
 
   // set ncpu
   char *smp = getenv("smp");
