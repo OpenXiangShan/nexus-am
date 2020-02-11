@@ -1,2 +1,2 @@
 clean:
-	-rm gen/*.c gen/*.h
+	-rm -rf gen

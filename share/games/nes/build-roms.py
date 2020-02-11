@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 
 import os
+from pathlib import Path
 
 roms = []
+cwd = Path('.')
 
-for (root, dirs, files) in os.walk('rom'):
-  for f in files:
-    if f.endswith('.nes'):
-      name = f.split('.')[0]
-      if not os.path.exists('gen/%s.c' % (name)):
-        os.system('xxd -i "%s/%s" > "gen/%s.c"' % (root, f, name))
-      roms.append(name)
+(cwd / 'gen').mkdir(exist_ok=True)
 
-for (root, dirs, files) in os.walk('gen'):
-  for f in files:
-    if f.endswith('.c') and f.split('.')[0] not in roms:
-      os.remove('%s/%s' % (root, f))
+for f in cwd.glob('rom/*.nes'):
+  name = f.stem
+  if not (cwd / 'gen' / f'{name}.c').exists():
+    os.system(f'xxd -i "{f}" > gen/{name}.c')
+  roms.append(name)
+
+for f in cwd.glob('gen/*.c'):
+  if f.stem not in roms:
+    f.unlink()
 
 def h_file():
   for name in roms:
@@ -34,7 +35,6 @@ struct rom roms[] = {'''
   yield '};'
 
   yield 'int nroms = %d;' % (len(roms))
-
 
 with open('gen/roms.h', 'w') as fp:
   for line in h_file():
