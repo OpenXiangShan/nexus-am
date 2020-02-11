@@ -47,15 +47,28 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
 }
 
 uint8_t code[] = {
+#ifdef __ARCH_NATIVE
+  0x31, 0xc0,             // xor %eax, %eax
+  0x83, 0xc0, 0x01,       // add $1, %eax
+  0xff, 0x14, 0x25, 0x00, 0x00, 0x10, 0x00, // call *0x100000
+  0xeb, 0xf4,             // jmp 2
+#else
   0x31, 0xc0,             // xor %eax, %eax
   0x8d, 0xb6,             // lea 0(%esi), %esi
   0x00, 0x00, 0x00, 0x00,
   0x83, 0xc0, 0x01,       // add $1, %eax
   0xcd, 0x80,             // int $0x80
   0xeb, 0xf9,             // jmp 8
+#endif
+
 };
 
 void vm_test() {
+  if (!strncmp(__ISA__, "x86", 3) == 0 &&
+      !strcmp(__ISA__, "native") == 0) {
+    printf("Not supported architecture.\n");
+    return;
+  }
   _protect(&prot);
   printf("Protected address space: [%p, %p)\n", prot.area.start, prot.area.end);
 
@@ -72,5 +85,5 @@ void vm_test() {
   uctx = _ucontext(&prot, RANGE(stack, stack + sizeof(stack)), ptr);
 
   _intr_write(1);
-  while (1) ;
+  _yield();
 }
