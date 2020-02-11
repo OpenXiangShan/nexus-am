@@ -22,15 +22,22 @@ f(30) f(31)
 #define CP0_CAUSE  13
 #define CP0_EPC    14
 
+#define SWAP(r1, r2, t) move $t, $r1; move $r1, $r2; move $r2, $t;
+
 .set noat
 .globl __am_asm_trap
 __am_asm_trap:
-  move $k0, $sp
+  beqz $k0, in_kernel
+  SWAP(k0, sp, k1)
+
+in_kernel:
   addiu $sp, $sp, -CONTEXT_SIZE
 
   MAP(REGS, PUSH)
 
-  sw $k0, OFFSET_SP($sp)
+  sw $k0, OFFSET_SP($sp) # k0 = (from user ? usp : 0)
+  move $k0, $zero
+
   mflo $t0
   mfhi $t1
   mfc0 $t2, $CP0_CAUSE
@@ -68,6 +75,12 @@ __am_asm_trap:
 
   MAP(REGS, POP)
 
-  addiu $sp, $sp, CONTEXT_SIZE
+  lw $k0, OFFSET_SP($sp) # k0 = (from user ? usp : 0)
+  addiu $sp, $sp, CONTEXT_SIZE  # ksp
 
+  beqz $k0, return
+  # return to user
+  SWAP(k0, sp, k1)
+
+return:
   eret

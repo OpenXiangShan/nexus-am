@@ -17,8 +17,17 @@ void __am_vecnull();
 void __am_get_cur_as(_Context *c);
 void __am_switch(_Context *c);
 
+uintptr_t __am_ksp = 0;
+
 _Context* __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
+
+  if (__am_ksp != 0) {
+    // trap from user
+    memcpy(&c->irq, (void *)__am_ksp, 5 * sizeof(uintptr_t));
+    c->usp = __am_ksp + 5 * sizeof(uintptr_t);
+    __am_ksp = 0;
+  }
 
   _Context *next = c;
   if (user_handler) {
@@ -37,6 +46,11 @@ _Context* __am_irq_handle(_Context *c) {
   }
 
   __am_switch(next);
+
+  if (next->usp != 0) {
+    // return to user, set ksp for the next use
+    __am_ksp = (uintptr_t)(next + 1);
+  }
 
   return next;
 }
@@ -70,6 +84,7 @@ _Context* _kcontext(_Area kstack, void (*entry)(void *), void *arg) {
   c->cs = 0x8;
   c->eip = (uintptr_t)__am_kcontext_start;
   c->eflags = 0x2 | FL_IF;
+  c->usp = 0;
   c->GPR1 = (uintptr_t)arg;
   c->GPR2 = (uintptr_t)entry;
   return c;

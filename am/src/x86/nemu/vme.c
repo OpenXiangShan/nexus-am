@@ -107,5 +107,6 @@ _Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   c->cs = 0x8;
   c->eip = (uintptr_t)entry;
   c->eflags = 0x2 | FL_IF;
+  c->usp = (uintptr_t)kstack.end; // non-zero but should be used to safely construct context
   return c;
 }

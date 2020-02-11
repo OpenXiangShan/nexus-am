@@ -6,6 +6,7 @@ struct _Context {
   uintptr_t edi, esi, ebp, esp;
   uintptr_t ebx, edx, ecx, eax;      // Register saved by pushal
   int       irq;                     // # of irq
+  uintptr_t usp;
   uintptr_t eip, cs, eflags;         // Execution state before trap
 };
 

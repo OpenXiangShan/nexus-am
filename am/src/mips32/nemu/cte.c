@@ -52,6 +52,8 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   *(uint32_t *)0x80000000 = instr;  // TLB refill exception
   *(uint32_t *)(0x80000000 + 4) = 0;  // delay slot
 
+  asm volatile("move $k0, $zero");
+
   // register event handler
   user_handler = handler;
 
@@ -62,6 +64,7 @@ _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)kstack.end - 1;
   c->epc = (uintptr_t)entry;
   c->GPR2 = (uintptr_t)arg; // a0
+  c->gpr[29] = 0; // sp slot, used as usp
   return c;
 }
 

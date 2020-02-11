@@ -68,6 +68,7 @@ _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   c->as = as;
   c->epc = (uintptr_t)entry;
   c->status = 0x1;
+  c->gpr[29] = 1; // sp slot, used as usp, non-zero
   return c;
 }
 

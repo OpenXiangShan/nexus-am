@@ -39,6 +39,8 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   // initialize exception entry
   asm volatile("csrw stvec, %0" : : "r"(__am_asm_trap));
 
+  asm volatile("csrw sscratch, zero");
+
   // register event handler
   user_handler = handler;
 
@@ -51,6 +53,7 @@ _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg) {
   c->epc = (uintptr_t)entry;
   c->GPR2 = (uintptr_t)arg;
   c->status = 0x000c0100;
+  c->gpr[2] = 0; // sp slot, used as usp
   return c;
 }
 
