@@ -94,4 +94,5 @@ binary itselt, since these mappings are managed by Linux kernel. This is the oth
 
 ## MPE
 
-NOT IMPLEMENTED YET
+Each (virtual) processor is a Linux native process. Processors are forked upon `_mpe_init()`.
+Code, data, and `_heap` are mapped as shared memory maps across children processes.
