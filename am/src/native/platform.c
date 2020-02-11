@@ -55,7 +55,7 @@ int main(const char *args);
 static void init_platform() __attribute__((constructor));
 static void init_platform() {
   // create shared memory object and set up mapping to simulate the physical memory
-  mktemp(pmem_shm_file);
+  assert(mkstemp(pmem_shm_file) < 0);
   pmem_fd = shm_open(pmem_shm_file, O_RDWR | O_CREAT | O_EXCL, 0700);
   assert(pmem_fd != -1);
   assert(0 == ftruncate(pmem_fd, PMEM_SIZE));
