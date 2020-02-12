@@ -155,25 +155,17 @@ static void init_platform() {
   assert(__am_pgsize > 0 && __am_pgsize % sys_pgsz == 0);
 
   const char *args = getenv("mainargs");
-  exit(main(args ? args : "")); // call main here!
+  _halt(main(args ? args : "")); // call main here!
 }
 
-static void exit_platform() __attribute__((destructor));
-static void exit_platform() {
-  printf("%s\n", __func__);
-  kill(0, SIGKILL);
+void __am_exit_platform(int code) {
+  int ret = shm_unlink(pmem_shm_file);
+  printf("Unlink pmem_shm_file %s\n", (ret == 0 ? "successfully" : "fail"));
 
-  int ret = munmap(pmem, PMEM_SIZE);
-  assert(ret == 0);
-  close(pmem_fd);
-  ret = shm_unlink(pmem_shm_file);
-  assert(ret == 0);
-
-  ret = munmap(thiscpu, sizeof(*thiscpu));
-  assert(ret == 0);
-
-  ret = munmap(TRAP_PAGE_START, sys_pgsz);
-  assert(ret == 0);
+  // let Linux clean up other resource
+  extern int __am_mpe_init;
+  if (__am_mpe_init && _ncpu() > 1) kill(0, SIGKILL);
+  exit(code);
 }
 
 void __am_shm_mmap(void *va, void *pa, int prot) {

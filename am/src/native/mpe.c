@@ -1,7 +1,10 @@
 #include <stdatomic.h>
 #include "platform.h"
 
+int __am_mpe_init = 0;
+
 int _mpe_init(void (*entry)()) {
+  __am_mpe_init = 1;
   for (int i = 1; i < _ncpu(); i++) {
     if (fork() == 0) {
       thiscpu->cpuid = i;
