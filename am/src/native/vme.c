@@ -2,8 +2,6 @@
 
 #define USER_SPACE RANGE(0x40000000, 0xc0000000)
 
-#define PGSIZE  4096
-
 typedef struct PageMap {
   void *va;
   void *pa;
@@ -15,6 +13,7 @@ typedef struct PageMap {
 #define list_foreach(p, head) \
   for (p = head; p != NULL; p = p->next)
 
+extern int __am_pgsize;
 static int vme_enable = 0;
 static void* (*pgalloc)(size_t) = NULL;
 static void (*pgfree)(void *) = NULL;
@@ -29,7 +28,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 void _protect(_AddressSpace *as) {
   assert(as != NULL);
   as->ptr = NULL;
-  as->pgsize = PGSIZE;
+  as->pgsize = __am_pgsize;
   as->area = USER_SPACE;
 }
 
@@ -67,8 +66,8 @@ void __am_switch(_Context *c) {
 
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert(IN_RANGE(va, USER_SPACE));
-  assert((uintptr_t)va % PGSIZE == 0);
-  assert((uintptr_t)pa % PGSIZE == 0);
+  assert((uintptr_t)va % __am_pgsize == 0);
+  assert((uintptr_t)pa % __am_pgsize == 0);
   assert(as != NULL);
   PageMap *pp;
   list_foreach(pp, as->ptr) {
@@ -82,7 +81,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
     }
   }
 
-  pp = pgalloc(PGSIZE); // this will waste memory, any better idea?
+  pp = pgalloc(__am_pgsize); // this will waste memory, any better idea?
   pp->va = va;
   pp->pa = pa;
   pp->prot = prot;

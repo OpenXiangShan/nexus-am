@@ -33,6 +33,7 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
       break;
     case _EVENT_SYSCALL:
       _intr_write(1);
+      for (int volatile i = 0; i < 1000000; i++) ;
       printf("%d ", ctx->GPRx);
       break;
     default:
