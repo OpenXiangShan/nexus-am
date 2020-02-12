@@ -1,5 +1,6 @@
 #include <am.h>
 #include <nemu.h>
+#include <klib.h>
 #include "x86-nemu.h"
 
 typedef uint32_t PTE;
@@ -28,6 +29,8 @@ static _Area segments[] = {      // Kernel memory mappings
   RANGE(0, PMEM_SIZE),
   RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
 };
+
+#define USER_SPACE RANGE(0x40000000, 0xc0000000)
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
@@ -66,8 +69,10 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 void _protect(_AddressSpace *as) {
-  PDE *updir = (PDE*)(pgalloc_usr(1));
+  PDE *updir = (PDE*)(pgalloc_usr(PGSIZE));
   as->ptr = updir;
+  as->area = USER_SPACE;
+  as->pgsize = PGSIZE;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {
     updir[i] = kpdirs[i];
@@ -77,23 +82,21 @@ void _protect(_AddressSpace *as) {
 void _unprotect(_AddressSpace *as) {
 }
 
-static _AddressSpace *cur_as = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->as = cur_as;
+  c->cr3 = (vme_enable ? (void *)get_cr3() : NULL);
 }
 
 void __am_switch(_Context *c) {
-  if (vme_enable) {
-    set_cr3(c->as->ptr);
-    cur_as = c->as;
-  }
+  if (vme_enable && c->cr3 != NULL) { set_cr3(c->cr3); }
 }
 
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
   PDE *pt = (PDE*)as->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)pgalloc_usr(1);
+    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)pgalloc_usr(PGSIZE);
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
@@ -103,7 +106,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
 
 _Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   _Context *c = (_Context *)kstack.end - 1;
-  //c->as = as;
+  c->cr3 = as->ptr;
   c->cs = 0x8;
   c->eip = (uintptr_t)entry;
   c->eflags = 0x2 | FL_IF;

@@ -3,7 +3,7 @@
 
 struct _Context {
   union {
-    struct _AddressSpace *as;
+    void *as;
     uint32_t gpr[32];
   };
   uint32_t lo, hi;
