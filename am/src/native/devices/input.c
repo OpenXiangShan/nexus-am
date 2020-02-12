@@ -19,7 +19,7 @@ static int event_thread(void *args) {
   while (1) {
     SDL_WaitEvent(&event);
     switch (event.type) {
-      case SDL_QUIT: exit(0); break;
+      case SDL_QUIT: _halt(0);
       case SDL_KEYDOWN:
       case SDL_KEYUP:
         {
