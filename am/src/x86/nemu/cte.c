@@ -29,7 +29,6 @@ _Context* __am_irq_handle(_Context *c) {
     __am_ksp = 0;
   }
 
-  _Context *next = c;
   if (user_handler) {
     _Event ev = {0};
     switch (c->irq) {
@@ -39,20 +38,18 @@ _Context* __am_irq_handle(_Context *c) {
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    next = user_handler(ev, c);
-    if (next == NULL) {
-      next = c;
-    }
+    c = user_handler(ev, c);
+    assert(c != NULL);
   }
 
-  __am_switch(next);
+  __am_switch(c);
 
-  if (next->usp != 0) {
+  if (c->usp != 0) {
     // return to user, set ksp for the next use
-    __am_ksp = (uintptr_t)(next + 1);
+    __am_ksp = (uintptr_t)(c + 1);
   }
 
-  return next;
+  return c;
 }
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {

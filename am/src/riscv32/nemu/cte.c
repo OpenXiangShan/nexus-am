@@ -10,7 +10,6 @@ void __am_switch(_Context *c);
 _Context* __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
 
-  _Context *next = c;
   if (user_handler) {
     _Event ev = {0};
     switch (c->cause) {
@@ -22,15 +21,13 @@ _Context* __am_irq_handle(_Context *c) {
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    next = user_handler(ev, c);
-    if (next == NULL) {
-      next = c;
-    }
+    c = user_handler(ev, c);
+    assert(c != NULL);
   }
 
-  __am_switch(next);
+  __am_switch(c);
 
-  return next;
+  return c;
 }
 
 extern void __am_asm_trap(void);

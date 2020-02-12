@@ -11,7 +11,6 @@ void __am_tlb_refill(void);
 _Context* __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
 
-  _Context *next = c;
   if (user_handler) {
     _Event ev = {0};
     uint32_t ex_code = (c->cause >> 2) & 0x1f;
@@ -19,7 +18,7 @@ _Context* __am_irq_handle(_Context *c) {
     switch (ex_code) {
       case 0: ev.event = _EVENT_IRQ_TIMER; break;
       case 2:
-      case 3: __am_tlb_refill(); return next;
+      case 3: __am_tlb_refill(); return c;
       case 8:
         syscall_instr = *(uint32_t *)(c->epc);
         ev.event = ((syscall_instr >> 6) == 1) ? _EVENT_YIELD : _EVENT_SYSCALL;
@@ -28,15 +27,13 @@ _Context* __am_irq_handle(_Context *c) {
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    next = user_handler(ev, c);
-    if (next == NULL) {
-      next = c;
-    }
+    c = user_handler(ev, c);
+    assert(c != NULL);
   }
 
-  __am_switch(next);
+  __am_switch(c);
 
-  return next;
+  return c;
 }
 
 extern void __am_asm_trap(void);
