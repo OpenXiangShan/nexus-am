@@ -15,8 +15,16 @@ static _Area segments[] = {      // Kernel memory mappings
   RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
 };
 
+#define USER_SPACE RANGE(0x40000000, 0x80000000)
+
 static inline void set_satp(void *pdir) {
   asm volatile("csrw satp, %0" : : "r"(0x80000000 | ((uintptr_t)pdir >> 12)));
+}
+
+static inline uintptr_t get_satp() {
+  uintptr_t satp;
+  asm volatile("csrr %0, satp" : "=r"(satp));
+  return satp << 12;
 }
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
@@ -53,51 +61,50 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
-  PDE *updir = (PDE*)(pgalloc_usr(1));
+void _protect(_AddressSpace *as) {
+  PDE *updir = (PDE*)(pgalloc_usr(PGSIZE));
   as->ptr = updir;
+  as->area = USER_SPACE;
+  as->pgsize = PGSIZE;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {
     updir[i] = kpdirs[i];
   }
-
-  return 0;
 }
 
 void _unprotect(_AddressSpace *as) {
 }
 
-static _AddressSpace *cur_as = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->as = cur_as;
+  c->pdir = (vme_enable ? (void *)get_satp() : NULL);
 }
 
 void __am_switch(_Context *c) {
-  if (vme_enable) {
-    set_satp(c->as->ptr);
-    cur_as = c->as;
+  if (vme_enable && c->pdir != NULL) {
+    set_satp(c->pdir);
   }
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
   PDE *pt = (PDE*)as->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_V)) {
-    *pde = PTE_V | ((uint32_t)pgalloc_usr(1) >> PGSHFT << 10);
+    *pde = PTE_V | ((uint32_t)pgalloc_usr(PGSIZE) >> PGSHFT << 10);
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_V)) {
     *pte = PTE_V | PTE_R | PTE_W | PTE_X | ((uint32_t)pa >> PGSHFT << 10);
   }
-
-  return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
-  _Context *c = (_Context*)ustack.end - 1;
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context*)kstack.end - 1;
 
-  c->as = as;
+  c->pdir = as->ptr;
   c->epc = (uintptr_t)entry;
   c->status = 0x000c0120;
+  c->gpr[2] = 1; // sp slot, used as usp, non-zero is ok
   return c;
 }

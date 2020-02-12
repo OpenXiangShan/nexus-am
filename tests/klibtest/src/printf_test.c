@@ -3,6 +3,10 @@
 #include <klib.h>
 #include <klib-macros.h>
 
+#ifdef __LP64__
+#define TEST_LONGLONG
+#endif
+
 #define PRINTABLE_CH " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 #define STRLEN(const_str) (sizeof(const_str) - 1) // sizeof counts the null byte
 
@@ -13,7 +17,9 @@ ARRAY_DEF(char, char_, SCHAR_MAX, SCHAR_MIN, UCHAR_MAX);
 ARRAY_DEF(short, short_, SHRT_MAX, SHRT_MIN, USHRT_MAX);
 ARRAY_DEF(int, int_, INT_MAX, INT_MIN, UINT_MAX);
 ARRAY_DEF(long, long_, LONG_MAX, LONG_MIN, ULONG_MAX);  // wordsize-dependent
+#ifdef TEST_LONGLONG
 ARRAY_DEF(long long, longlong_, LLONG_MAX, LLONG_MIN, ULLONG_MAX);
+#endif
 ARRAY_DEF(uintptr_t, ptr, INTPTR_MAX, INTPTR_MIN, UINTPTR_MAX);// wordsize-dependent
 
 static_assert(LENGTH(int_) == 8);
@@ -99,8 +105,10 @@ INTEGER_TEST_DEF(test_sshort, "%hd", short_, "0 1927 32767 -32768 -32767 3855 -1
 INTEGER_TEST_DEF(test_ushort, "%hu", short_, "0 1927 32767 32768 32769 3855 63609 65535")
 INTEGER_TEST_DEF(test_slong, "%ld", long_, SLONG_REF)
 INTEGER_TEST_DEF(test_ulong, "%lu", long_, ULONG_REF)
+#ifdef TEST_LONGLONG
 INTEGER_TEST_DEF(test_slonglong, "%lld", longlong_, SINT64_REF)
 INTEGER_TEST_DEF(test_ulonglong, "%llu", longlong_, UINT64_REF)
+#endif
 
 static const char *full_format_ans[] = {
 #include "full-format-glibc.h"
@@ -153,8 +161,10 @@ void printf_test() {
   test("length modifier %hu" , test_ushort);
   test("length modifier %ld" , test_slong);
   test("length modifier %lu" , test_ulong);
+#ifdef TEST_LONGLONG
   test("length modifier %lld" , test_slonglong);
   test("length modifier %llu" , test_ulonglong);
+#endif
 
   test("full" , test_full_format);
 

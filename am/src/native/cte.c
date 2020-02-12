@@ -148,12 +148,12 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
-_Context* _kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Context *c = (_Context*)stack.end - 1;
+_Context* _kcontext(_Area kstack, void (*entry)(void *), void *arg) {
+  _Context *c = (_Context*)kstack.end - 1;
 
   __am_get_example_uc(c);
   c->uc.uc_mcontext.gregs[REG_RIP] = (uintptr_t)__am_kcontext_start;
-  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)stack.end;
+  c->uc.uc_mcontext.gregs[REG_RSP] = (uintptr_t)kstack.end;
 
   int ret = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret == 0);

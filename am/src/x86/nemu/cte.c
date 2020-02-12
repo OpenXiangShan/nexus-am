@@ -17,10 +17,18 @@ void __am_vecnull();
 void __am_get_cur_as(_Context *c);
 void __am_switch(_Context *c);
 
+uintptr_t __am_ksp = 0;
+
 _Context* __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
 
-  _Context *next = c;
+  if (__am_ksp != 0) {
+    // trap from user
+    memcpy(&c->irq, (void *)__am_ksp, 5 * sizeof(uintptr_t));
+    c->usp = __am_ksp + 5 * sizeof(uintptr_t);
+    __am_ksp = 0;
+  }
+
   if (user_handler) {
     _Event ev = {0};
     switch (c->irq) {
@@ -30,15 +38,18 @@ _Context* __am_irq_handle(_Context *c) {
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    next = user_handler(ev, c);
-    if (next == NULL) {
-      next = c;
-    }
+    c = user_handler(ev, c);
+    assert(c != NULL);
   }
 
-  __am_switch(next);
+  __am_switch(c);
 
-  return next;
+  if (c->usp != 0) {
+    // return to user, set ksp for the next use
+    __am_ksp = (uintptr_t)(c + 1);
+  }
+
+  return c;
 }
 
 int _cte_init(_Context*(*handler)(_Event, _Context*)) {
@@ -63,14 +74,18 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   return 0;
 }
 
-void _kcontext(_Context *c, _Area stack, void (*entry)(void *), void *arg) {
-//  stack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
-//  uintptr_t *esp = stack.end;
-//  esp[1] = esp[2] = esp[3] = 0;
+void __am_kcontext_start();
 
+_Context* _kcontext(_Area kstack, void (*entry)(void *), void *arg) {
+  _Context *c = (_Context *)kstack.end - 1;
+  c->cr3 = NULL;
   c->cs = 0x8;
-  c->eip = (uintptr_t)entry;
+  c->eip = (uintptr_t)__am_kcontext_start;
   c->eflags = 0x2 | FL_IF;
+  c->usp = 0;
+  c->GPR1 = (uintptr_t)arg;
+  c->GPR2 = (uintptr_t)entry;
+  return c;
 }
 
 void _yield() {
