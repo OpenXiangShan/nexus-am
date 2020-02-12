@@ -28,10 +28,10 @@ int
 SpeedThrottle()
 {
 	uint64 time_left;
-	uint64 cur_time;
+	uint64 cur_time = FCEUD_GetTime();
 
 	if(!Lasttime)
-		Lasttime = uptime();
+		Lasttime = cur_time;
 
 	if(!InFrame)
 	{
@@ -39,7 +39,6 @@ SpeedThrottle()
 		Nexttime = Lasttime + 1000 / desired_fps;
 	}
 
-	cur_time  = uptime();
 	if(cur_time >= Nexttime)
 		time_left = 0;
 	else
@@ -55,12 +54,13 @@ SpeedThrottle()
 		InFrame = 0;
 
   //delay
-  while (uptime() - cur_time < time_left)
+  uint64 now;
+  while ((now = FCEUD_GetTime()) - cur_time < time_left)
     ;
 
 	if(!InFrame)
 	{
-		Lasttime = uptime();
+		Lasttime = now;
 		return 0; /* Done waiting */
 	}
 	return 1; /* Must still wait some more */

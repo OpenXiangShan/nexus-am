@@ -105,15 +105,16 @@ static int boopcount = 0;
 
 void ShowFPS(void)
 {
-	static uint32_t tsc = 0;
+	static uint32 tsc = 0;
 	if(Show_FPS == false)
 		return;
-	uint32 da = FCEUD_GetTime() - boop[boopcount];
+	uint32 now = FCEUD_GetTime();
+	uint32 da = now - boop[boopcount];
 	int booplimit = PAL?50:60;
-	boop[boopcount] = FCEUD_GetTime();
+	boop[boopcount] = now;
 
-	if (uptime() - tsc > 1000) {
-		tsc = uptime();
+	if (now - tsc > 1000) {
+		tsc = now;
   	printf("fps = %d\n", booplimit * FCEUD_GetTimeFreq() / da);
 	}
 	// It's not averaging FPS over exactly 1 second, but it's close enough.
