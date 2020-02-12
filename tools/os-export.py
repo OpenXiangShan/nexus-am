@@ -29,11 +29,13 @@ WHITE_LIST = [
 BLACK_LIST = [
   r'/build/',
   r'/export/',
+  r'/tools/',
   r'/.git/',
   r'-navy',
   r'README.md',
   r'.DS_Store',
   r'games/nes/gen/',
+  r'tests/cputest/',
   r'klib/src/stdio.c',
   r'klib/src/stdlib.c',
   r'klib/src/string.c',
