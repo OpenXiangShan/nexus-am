@@ -13,9 +13,11 @@ static int pmem_fd = 0;
 static char pmem_shm_file[] = "/native-pmem-XXXXXX";
 static void *pmem = NULL;
 static ucontext_t uc_example = {};
+static int sys_pgsz;
 sigset_t __am_intr_sigmask = {};
 __am_cpu_t *__am_cpu_struct = NULL;
 int __am_ncpu = 0;
+int __am_pgsize;
 
 static void save_context_handler(int sig, siginfo_t *info, void *ucontext) {
   memcpy(&uc_example, ucontext, sizeof(uc_example));
@@ -74,7 +76,8 @@ static void init_platform() {
   thiscpu->cur_as = NULL;
 
   // create trap page to receive syscall and yield by SIGSEGV
-  void *ret = mmap(TRAP_PAGE_START, 4096, PROT_NONE,
+  sys_pgsz = sysconf(_SC_PAGESIZE);
+  void *ret = mmap(TRAP_PAGE_START, sys_pgsz, PROT_NONE,
       MAP_SHARED | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   assert(ret != (void *)-1);
 
@@ -142,9 +145,14 @@ static void init_platform() {
   _intr_write(0);
 
   // set ncpu
-  char *smp = getenv("smp");
+  const char *smp = getenv("smp");
   __am_ncpu = smp ? atoi(smp) : 1;
   assert(0 < __am_ncpu && __am_ncpu <= MAX_CPU);
+
+  // set pgsize
+  const char *pgsize = getenv("pgsize");
+  __am_pgsize = pgsize ? atoi(pgsize) : sys_pgsz;
+  assert(__am_pgsize > 0 && __am_pgsize % sys_pgsz == 0);
 
   const char *args = getenv("mainargs");
   _halt(main(args ? args : "")); // call main here!
@@ -167,13 +175,13 @@ void __am_shm_mmap(void *va, void *pa, int prot) {
   // all readable pages executable as well
   if (prot | _PROT_READ) mmap_prot |= PROT_READ | PROT_EXEC;
   if (prot | _PROT_WRITE) mmap_prot |= PROT_WRITE;
-  void *ret = mmap(va, 4096, PROT_READ | PROT_WRITE | PROT_EXEC,
+  void *ret = mmap(va, __am_pgsize, PROT_READ | PROT_WRITE | PROT_EXEC,
       MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)(pa - pmem));
   assert(ret != (void *)-1);
 }
 
 void __am_shm_munmap(void *va) {
-  int ret = munmap(va, 4096);
+  int ret = munmap(va, __am_pgsize);
   assert(ret == 0);
 }
 
