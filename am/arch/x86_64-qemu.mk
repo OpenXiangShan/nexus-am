@@ -17,8 +17,4 @@ image:
 
 run:
 	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=2 seek=1 conv=notrunc status=none
-	@qemu-system-x86_64 -serial stdio -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)
-
-debug:
-	@( echo -n $(mainargs); ) | dd if=/dev/stdin of=$(BINARY) bs=512 count=2 seek=1 conv=notrunc status=none
-	@qemu-system-x86_64 -D build/qemu.log -S -s -serial none -machine accel=kvm:tcg -smp "$(smp)" -drive format=raw,file=$(BINARY) -nographic # & pid=$$!; gdb -x x.gdb && kill -9 $$pid
+	@qemu-system-x86_64 -serial stdio -machine accel=tcg -smp "$(smp)" -drive format=raw,file=$(BINARY)

@@ -291,9 +291,9 @@ __umoddi3(du_int a, du_int b)
 // only use for linking
 
 int __clzsi2 (unsigned int a) {
-  assert(0);
+  _halt(1);
 }
 
 int __ctzsi2 (unsigned int a) {
-  assert(0);
+  _halt(1);
 }
