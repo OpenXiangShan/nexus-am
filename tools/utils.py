@@ -22,6 +22,7 @@ def export(white_list, black_list):
         white = list_filter(path_str, white_list)
         black = list_filter(path_str, black_list)
         if white and not black:
+          print('COPY', path)
           yield abspath, path
    
   try:

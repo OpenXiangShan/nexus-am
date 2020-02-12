@@ -28,8 +28,9 @@ WHITE_LIST = [
 
 BLACK_LIST = [
   r'/build/',
+  r'/export/',
+  r'/.git/',
   r'-navy',
-  r'.git',
   r'README.md',
   r'.DS_Store',
   r'games/nes/gen/',
