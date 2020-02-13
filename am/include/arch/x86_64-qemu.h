@@ -2,7 +2,7 @@
 #define __ARCH_H__
 
 struct _Context {
-  struct _AddressSpace *uvm;
+  void *uvm;
   uint64_t rax, rbx, rcx, rdx,
            rbp, rsi, rdi,
            r8, r9, r10, r11,
