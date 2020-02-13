@@ -73,7 +73,7 @@ static void init_platform() {
       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   assert(thiscpu != (void *)-1);
   thiscpu->cpuid = 0;
-  thiscpu->cur_as = NULL;
+  thiscpu->vm_head = NULL;
 
   // create trap page to receive syscall and yield by SIGSEGV
   sys_pgsz = sysconf(_SC_PAGESIZE);
