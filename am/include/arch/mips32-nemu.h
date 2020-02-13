@@ -3,7 +3,7 @@
 
 struct _Context {
   union {
-    void *as;
+    void *pdir;
     uint32_t gpr[32];
   };
   uint32_t lo, hi;

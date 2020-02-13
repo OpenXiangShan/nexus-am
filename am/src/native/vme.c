@@ -11,7 +11,7 @@ typedef struct PageMap {
 } PageMap;
 
 #define list_foreach(p, head) \
-  for (p = head; p != NULL; p = p->next)
+  for (p = ((PageMap *)(head))->next; p != NULL; p = p->next)
 
 extern int __am_pgsize;
 static int vme_enable = 0;
@@ -27,7 +27,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 
 void _protect(_AddressSpace *as) {
   assert(as != NULL);
-  as->ptr = NULL;
+  as->ptr = pgalloc(__am_pgsize); // used as head of the list
   as->pgsize = __am_pgsize;
   as->area = USER_SPACE;
 }
@@ -38,13 +38,13 @@ void _unprotect(_AddressSpace *as) {
 void __am_switch(_Context *c) {
   if (!vme_enable) return;
 
-  _AddressSpace *as = c->as;
-  if (as == thiscpu->cur_as) return;
+  PageMap *head = c->vm_head;
+  if (head == thiscpu->vm_head) return;
 
   PageMap *pp;
-  if (thiscpu->cur_as != NULL) {
+  if (thiscpu->vm_head != NULL) {
     // munmap all mappings
-    list_foreach(pp, thiscpu->cur_as->ptr) {
+    list_foreach(pp, thiscpu->vm_head) {
       if (pp->is_mapped) {
         __am_shm_munmap(pp->va);
         pp->is_mapped = false;
@@ -52,16 +52,16 @@ void __am_switch(_Context *c) {
     }
   }
 
-  if (as != NULL) {
+  if (head != NULL) {
     // mmap all mappings
-    list_foreach(pp, as->ptr) {
+    list_foreach(pp, head) {
       assert(IN_RANGE(pp->va, USER_SPACE));
       __am_shm_mmap(pp->va, pp->pa, pp->prot);
       pp->is_mapped = true;
     }
   }
 
-  thiscpu->cur_as = as;
+  thiscpu->vm_head = head;
 }
 
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
@@ -69,32 +69,29 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % __am_pgsize == 0);
   assert((uintptr_t)pa % __am_pgsize == 0);
   assert(as != NULL);
-  PageMap *pp;
-  list_foreach(pp, as->ptr) {
-    // can not remap
-    // Actually this is allowed according to the semantics of AM API,
-    // but we do this to catch unexcepted behavior from Nanos-lite
-    if (pp->va == va) {
-      printf("check remap: %p -> %p, but previously %p -> %p\n", va, pa, pp->va, pp->pa);
-      assert(pp->pa == pa);
-      return;
-    }
+  PageMap *pp = NULL;
+  PageMap *vm_head = as->ptr;
+  assert(vm_head != NULL);
+  list_foreach(pp, vm_head) {
+    if (pp->va == va) break;
   }
 
-  pp = pgalloc(__am_pgsize); // this will waste memory, any better idea?
+  if (pp == NULL) {
+    pp = pgalloc(__am_pgsize); // this will waste memory, any better idea?
+  }
   pp->va = va;
   pp->pa = pa;
   pp->prot = prot;
-  pp->next = as->ptr;
-  as->ptr = pp;
+  pp->is_mapped = false;
+  // add after to vm_head to keep vm_head unchanged,
+  // since vm_head is a key to describe an address space
+  pp->next = vm_head->next;
+  vm_head->next = pp;
 
-  if (as == thiscpu->cur_as) {
+  if (vm_head == thiscpu->vm_head) {
     // enforce the map immediately
     __am_shm_mmap(pp->va, pp->pa, pp->prot);
     pp->is_mapped = true;
-  }
-  else {
-    pp->is_mapped = false;
   }
 }
 
@@ -107,7 +104,7 @@ _Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
 
   int ret = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret == 0);
-  c->as = as;
+  c->vm_head = as->ptr;
 
   c->ksp = (uintptr_t)kstack.end;
 
@@ -115,5 +112,5 @@ _Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
 }
 
 int __am_in_userspace(void *addr) {
-  return vme_enable && thiscpu->cur_as != NULL && IN_RANGE(addr, USER_SPACE);
+  return vme_enable && thiscpu->vm_head != NULL && IN_RANGE(addr, USER_SPACE);
 }

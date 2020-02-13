@@ -26,17 +26,17 @@ void _protect(_AddressSpace *as) {
 void _unprotect(_AddressSpace *as) {
 }
 
-static void *cur_as = NULL;
+static PDE *cur_pdir = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->as = cur_as;
+  c->pdir = cur_pdir;
 }
 
 void __am_tlb_clear();
 void __am_switch(_Context *c) {
-  if (vme_enable && c->as != NULL) {
-    if (cur_as != c->as) {
+  if (vme_enable && c->pdir != NULL) {
+    if (cur_pdir != c->pdir) {
       __am_tlb_clear();
-      cur_as = c->as;
+      cur_pdir = c->pdir;
     }
   }
 }
@@ -44,8 +44,8 @@ void __am_switch(_Context *c) {
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
-  PDE *pt = (PDE*)as->ptr;
-  PDE *pde = &pt[PDX(va)];
+  PDE *pdir = (PDE*)as->ptr;
+  PDE *pde = &pdir[PDX(va)];
   if (!(*pde & PTE_V)) {
     *pde = PTE_V | (uint32_t)pgalloc_usr(PGSIZE);
   }
@@ -70,7 +70,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
 
 _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   _Context *c = (_Context*)kstack.end - 1;
-  c->as = as->ptr;
+  c->pdir = as->ptr;
   c->epc = (uintptr_t)entry;
   c->status = 0x1;
   c->gpr[29] = 1; // sp slot, used as usp, non-zero
@@ -82,12 +82,8 @@ void __am_tlb_refill() {
   asm volatile ("mfc0 %0, $10": "=r"(hi));
 
   uint32_t va = hi & ~0x1fff;
-  assert(cur_as != NULL);
-  PDE *pt = (PDE*)cur_as;
-  PDE *pde = &pt[PDX(va)];
-//  if (!(*pde & PTE_V)) {
-//    printf("hi = 0x%x, pt = 0x%x\n", hi, pt);
-//  }
+  assert(cur_pdir != NULL);
+  PDE *pde = &cur_pdir[PDX(va)];
   assert(*pde & PTE_V);
 
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];

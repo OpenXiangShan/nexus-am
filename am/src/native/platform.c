@@ -73,7 +73,7 @@ static void init_platform() {
       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   assert(thiscpu != (void *)-1);
   thiscpu->cpuid = 0;
-  thiscpu->cur_as = NULL;
+  thiscpu->vm_head = NULL;
 
   // create trap page to receive syscall and yield by SIGSEGV
   sys_pgsz = sysconf(_SC_PAGESIZE);
@@ -173,9 +173,9 @@ void __am_shm_mmap(void *va, void *pa, int prot) {
   int mmap_prot = PROT_NONE;
   // we do not support executable bit, so mark
   // all readable pages executable as well
-  if (prot | _PROT_READ) mmap_prot |= PROT_READ | PROT_EXEC;
-  if (prot | _PROT_WRITE) mmap_prot |= PROT_WRITE;
-  void *ret = mmap(va, __am_pgsize, PROT_READ | PROT_WRITE | PROT_EXEC,
+  if (prot & _PROT_READ) mmap_prot |= PROT_READ | PROT_EXEC;
+  if (prot & _PROT_WRITE) mmap_prot |= PROT_WRITE;
+  void *ret = mmap(va, __am_pgsize, mmap_prot,
       MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)(pa - pmem));
   assert(ret != (void *)-1);
 }

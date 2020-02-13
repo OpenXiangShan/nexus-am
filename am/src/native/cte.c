@@ -22,7 +22,7 @@ void __am_pmem_unprotect();
 void __am_panic_on_return() { panic("should not reach here\n"); }
 
 static void irq_handle(_Context *c) {
-  c->as = thiscpu->cur_as;
+  c->vm_head = thiscpu->vm_head;
   c->ksp = thiscpu->ksp;
 
   c = user_handler(thiscpu->ev, c);
@@ -169,7 +169,7 @@ _Context* _kcontext(_Area kstack, void (*entry)(void *), void *arg) {
   int ret = sigemptyset(&(c->uc.uc_sigmask)); // enable interrupt
   assert(ret == 0);
 
-  c->as = NULL;
+  c->vm_head = NULL;
 
   c->GPR1 = (uintptr_t)arg;
   c->GPR2 = (uintptr_t)entry;
