@@ -111,6 +111,11 @@ static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
         }
         thiscpu->ev.ref = (uintptr_t)info->si_addr;
       }
+
+      if (thiscpu->ev.event == _EVENT_ERROR) {
+        uintptr_t rip = ((ucontext_t *)ucontext)->uc_mcontext.gregs[REG_RIP];
+        printf("Unhandle SIGSEGV at rip = %p, badaddr = %p\n", rip, info->si_addr);
+      }
       break;
     default: assert(0);
   }
