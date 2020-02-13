@@ -59,7 +59,7 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
 
 _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg) {
   _Context *c = (_Context*)kstack.end - 1;
-  c->as = NULL;
+  c->pdir = NULL;
   c->epc = (uintptr_t)entry;
   c->GPR2 = (uintptr_t)arg; // a0
   c->gpr[29] = 0; // sp slot, used as usp
