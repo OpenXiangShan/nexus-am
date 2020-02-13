@@ -16,6 +16,8 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 void __am_kcontext_start();
 void __am_switch(_Context *c);
 int __am_in_userspace(void *addr);
+void __am_pmem_protect();
+void __am_pmem_unprotect();
 
 void __am_panic_on_return() { panic("should not reach here\n"); }
 
@@ -36,7 +38,8 @@ static void irq_handle(_Context *c) {
 static void setup_stack(uintptr_t event, ucontext_t *uc) {
   void *rip = (void *)uc->uc_mcontext.gregs[REG_RIP];
   extern uint8_t _start, _etext;
-  int signal_safe = IN_RANGE(rip, RANGE(&_start, &_etext)) || __am_in_userspace(rip) ||
+  int trap_from_user = __am_in_userspace(rip);
+  int signal_safe = IN_RANGE(rip, RANGE(&_start, &_etext)) || trap_from_user ||
     // Hack here: "+13" points to the instruction after syscall. This is the
     // instruction which will trigger the pending signal if interrupt is enabled.
     (rip == (void *)&sigprocmask + 13);
@@ -52,13 +55,15 @@ static void setup_stack(uintptr_t event, ucontext_t *uc) {
     return;
   }
 
+  if (trap_from_user) __am_pmem_unprotect();
+
   // skip the instructions causing SIGSEGV for syscall and yield
   if (event == _EVENT_SYSCALL) { rip += SYSCALL_INSTR_LEN; }
   else if (event == _EVENT_YIELD) { rip += YIELD_INSTR_LEN; }
   uc->uc_mcontext.gregs[REG_RIP] = (uintptr_t)rip;
 
   // switch to kernel stack if we were previously in user space
-  _Context *c = (void *)(__am_in_userspace(rip) ? thiscpu->ksp : uc->uc_mcontext.gregs[REG_RSP]);
+  _Context *c = (void *)(trap_from_user ? thiscpu->ksp : uc->uc_mcontext.gregs[REG_RSP]);
   c --;
 
   // save the context on the stack
@@ -78,6 +83,7 @@ static void iret(ucontext_t *uc) {
   // restore the context
   *uc = c->uc;
   thiscpu->ksp = c->ksp;
+  if (__am_in_userspace((void *)uc->uc_mcontext.gregs[REG_RIP])) __am_pmem_protect();
 }
 
 static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
@@ -104,6 +110,11 @@ static void sig_handler(int sig, siginfo_t *info, void *ucontext) {
           default: assert(0);
         }
         thiscpu->ev.ref = (uintptr_t)info->si_addr;
+      }
+
+      if (thiscpu->ev.event == _EVENT_ERROR) {
+        uintptr_t rip = ((ucontext_t *)ucontext)->uc_mcontext.gregs[REG_RIP];
+        printf("Unhandle SIGSEGV at rip = %p, badaddr = %p\n", rip, info->si_addr);
       }
       break;
     default: assert(0);
