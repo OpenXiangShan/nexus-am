@@ -167,9 +167,13 @@ FCEUD_Update(uint8 *XBuf,
  */
 EMUFILE_FILE* FCEUD_UTF8_fstream(const char *fn, const char *m)
 {
+#ifdef __NO_FILE_SYSTEM__
   EMUFILE_FILE *p = (EMUFILE_FILE*)malloc(sizeof(EMUFILE_FILE));
   p->open(fn, m);
   return p;
+#else
+  return new EMUFILE_FILE(fn, m);
+#endif
 }
 
 static void UpdateEMUCore()
@@ -206,9 +210,31 @@ int KillFCEUXonFrame = 0;
 /**
  * The main loop for the SDL.
  */
+#ifdef __NO_FILE_SYSTEM__
 int main(const char *romname)
+#else
+int main(int argc, char *argv[])
+#endif
 {
   _ioe_init();
+
+#ifndef __NO_FILE_SYSTEM__
+  const char *romname;
+  if (argc < 2) {
+    romname = "mario3.nes";
+    printf("No ROM specified. Deafult to %s\n", romname);
+  } else {
+    romname = argv[1];
+  }
+
+  static char fullpath[128];
+  if (romname[0] != '/') {
+    sprintf(fullpath, "/share/games/nes/%s", romname);
+    romname = fullpath;
+  }
+#endif
+
+  printf("ROM is %s\n", romname);
 
 	int error;
 
