@@ -39,6 +39,7 @@ int last_key_code(void) {
 #define KEYDOWN_MASK 0x8000
 bool keyboard_event() {
   int keycode = read_key();
+  if ((keycode & ~KEYDOWN_MASK) == _KEY_ESCAPE) _halt(0);
   if ((keycode & ~KEYDOWN_MASK) == _KEY_NONE) return false;
 
   if ((keycode & KEYDOWN_MASK) != 0) {
