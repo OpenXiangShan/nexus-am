@@ -51,7 +51,6 @@ struct cpu_local {
   TSS32 tss;
 #endif
   struct kernel_stack stack;
-  struct kernel_stack irq_stack;
 };
 
 #if __x86_64__
