@@ -12,7 +12,7 @@ void display_image(int i) {
 
 int main() {
   _ioe_init();
-  
+
   int i = 0;
   unsigned long last = 0;
   unsigned long current;

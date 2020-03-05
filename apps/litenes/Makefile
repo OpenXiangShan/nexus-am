@@ -1,8 +1,10 @@
 NAME := litenes
-SRCS := $(shell find -L ./src/ -name "*.c")
-ROMS := $(shell find -L ./src/ -name "*.nes")
-PREBUILD := src/roms/gen/roms.h
+
+ROM_PATH := $(AM_HOME)/share/games/nes
+ROM_SRC  := $(ROM_PATH)/gen/mario.c
+
+SRCS := $(shell find -L ./src/ -name "*.c") $(ROM_SRC)
 include $(AM_HOME)/Makefile.app
 
-src/roms/gen/roms.h: $(ROMS)
-	@cd src/roms && python3 build-roms.py
+$(ROM_SRC):
+	@make -C $(ROM_PATH)

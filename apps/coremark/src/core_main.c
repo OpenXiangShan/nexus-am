@@ -1,21 +1,21 @@
 /*
 Author : Shay Gal-On, EEMBC
 
-This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009 
-All rights reserved.                            
+This file is part of  EEMBC(R) and CoreMark(TM), which are Copyright (C) 2009
+All rights reserved.
 
 EEMBC CoreMark Software is a product of EEMBC and is provided under the terms of the
-CoreMark License that is distributed with the official EEMBC COREMARK Software release. 
-If you received this EEMBC CoreMark Software without the accompanying CoreMark License, 
-you must discontinue use and download the official release from www.coremark.org.  
+CoreMark License that is distributed with the official EEMBC COREMARK Software release.
+If you received this EEMBC CoreMark Software without the accompanying CoreMark License,
+you must discontinue use and download the official release from www.coremark.org.
 
-Also, if you are publicly displaying scores generated from the EEMBC CoreMark software, 
+Also, if you are publicly displaying scores generated from the EEMBC CoreMark software,
 make sure that you are in compliance with Run and Reporting rules specified in the accompanying readme.txt file.
 
-EEMBC 
+EEMBC
 4354 Town Center Blvd. Suite 114-200
-El Dorado Hills, CA, 95762 
-*/ 
+El Dorado Hills, CA, 95762
+*/
 /* File: core_main.c
 	This file contains the framework to acquire a block of memory, seed initial parameters, tun t he benchmark and report the results.
 */
@@ -144,7 +144,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 #elif (MEM_METHOD==MEM_MALLOC)
 	for (i=0 ; i<MULTITHREAD; i++) {
 		ee_s32 malloc_override=get_seed(7);
-		if (malloc_override != 0) 
+		if (malloc_override != 0)
 			results[i].size=malloc_override;
 		else
 			results[i].size=TOTAL_DATA_SIZE;
@@ -168,13 +168,13 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 #else
 #error "Please define a way to initialize a memory block."
 #endif
-	/* Data init */ 
+	/* Data init */
 	/* Find out how space much we have based on number of algorithms */
 	for (i=0; i<NUM_ALGORITHMS; i++) {
 		if ((1<<(ee_u32)i) & results[0].execs)
 			num_algorithms++;
 	}
-	for (i=0 ; i<MULTITHREAD; i++) 
+	for (i=0 ; i<MULTITHREAD; i++)
 		results[i].size=results[i].size/num_algorithms;
 	/* Assign pointers */
 	for (i=0; i<NUM_ALGORITHMS; i++) {
@@ -197,9 +197,9 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 			core_init_state(results[0].size,results[i].seed1,results[i].memblock[3]);
 		}
 	}
-	
+
 	/* automatically determine number of iterations if not set */
-	if (results[0].iterations==0) { 
+	if (results[0].iterations==0) {
 		secs_ret secs_passed=0;
 		ee_u32 divisor;
 		results[0].iterations=1;
@@ -240,7 +240,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	seedcrc=crc16(results[0].seed2,seedcrc);
 	seedcrc=crc16(results[0].seed3,seedcrc);
 	seedcrc=crc16(results[0].size,seedcrc);
-	
+
 	switch (seedcrc) { /* test known output for common seeds */
 		case 0x8a02: /* seed1=0, seed2=0, seed3=0x66, size 2000 per algorithm */
 			known_id=0;
@@ -269,7 +269,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	if (known_id>=0) {
 		for (i=0 ; i<default_num_contexts; i++) {
 			results[i].err=0;
-			if ((results[i].execs & ID_LIST) && 
+			if ((results[i].execs & ID_LIST) &&
 				(results[i].crclist!=list_known_crc[known_id])) {
 				ee_printf("[%u]ERROR! list crc 0x%04x - should be 0x%04x\n",i,results[i].crclist,list_known_crc[known_id]);
 				results[i].err++;
@@ -294,7 +294,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	ee_printf("Total time (ms)  : %f\n",time_in_secs(total_time));
 	if (time_in_secs(total_time) > 0)
 		ee_printf("Iterations/mSec  : %f\n",default_num_contexts*results[0].iterations/time_in_secs(total_time));
-#else 
+#else
 	ee_printf("Total time (ms)  : %d\n",time_in_secs(total_time));
 #endif
 	ee_printf("Iterations       : %d\n",(int)default_num_contexts*results[0].iterations);
@@ -305,15 +305,15 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	/* output for verification */
 	ee_printf("seedcrc          : 0x%04x\n",seedcrc);
 	if (results[0].execs & ID_LIST)
-		for (i=0 ; i<default_num_contexts; i++) 
+		for (i=0 ; i<default_num_contexts; i++)
 			ee_printf("[%d]crclist       : 0x%04x\n",i,results[i].crclist);
-	if (results[0].execs & ID_MATRIX) 
-		for (i=0 ; i<default_num_contexts; i++) 
+	if (results[0].execs & ID_MATRIX)
+		for (i=0 ; i<default_num_contexts; i++)
 			ee_printf("[%d]crcmatrix     : 0x%04x\n",i,results[i].crcmatrix);
 	if (results[0].execs & ID_STATE)
-		for (i=0 ; i<default_num_contexts; i++) 
+		for (i=0 ; i<default_num_contexts; i++)
 			ee_printf("[%d]crcstate      : 0x%04x\n",i,results[i].crcstate);
-	for (i=0 ; i<default_num_contexts; i++) 
+	for (i=0 ; i<default_num_contexts; i++)
 		ee_printf("[%d]crcfinal      : 0x%04x\n",i,results[i].crc);
   ee_printf("Finised in %d ms.\n", (int)total_time);
 	if (total_errors==0) {
@@ -327,13 +327,13 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 		ee_printf("Cannot validate operation for these seed values, please compare with results on a known platform.\n");
 
 #if (MEM_METHOD==MEM_MALLOC)
-	for (i=0 ; i<MULTITHREAD; i++) 
+	for (i=0 ; i<MULTITHREAD; i++)
 		portable_free(results[i].memblock[0]);
 #endif
 	/* And last call any target specific code for finalizing */
 	portable_fini(&(results[0].port));
 
-	return MAIN_RETURN_VAL;	
+	return MAIN_RETURN_VAL;
 }
 
 

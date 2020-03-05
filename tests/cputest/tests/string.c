@@ -1,7 +1,7 @@
 #include "trap.h"
 
 char *s[] = {
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
 	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 	", World!\n",

@@ -10,7 +10,6 @@ void __am_switch(_Context *c);
 _Context* __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
 
-  _Context *next = c;
   if (user_handler) {
     _Event ev = {0};
     switch (c->cause) {
@@ -22,15 +21,13 @@ _Context* __am_irq_handle(_Context *c) {
       default: ev.event = _EVENT_ERROR; break;
     }
 
-    next = user_handler(ev, c);
-    if (next == NULL) {
-      next = c;
-    }
+    c = user_handler(ev, c);
+    assert(c != NULL);
   }
 
-  __am_switch(next);
+  __am_switch(c);
 
-  return next;
+  return c;
 }
 
 extern void __am_asm_trap(void);
@@ -39,17 +36,22 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
   // initialize exception entry
   asm volatile("csrw stvec, %0" : : "r"(__am_asm_trap));
 
+  asm volatile("csrw sscratch, zero");
+
   // register event handler
   user_handler = handler;
 
   return 0;
 }
 
-_Context *_kcontext(_Area stack, void (*entry)(void *), void *arg) {
-  _Context *c = (_Context*)stack.end - 1;
+_Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg) {
+  _Context *c = (_Context*)kstack.end - 1;
 
+  c->pdir = NULL;
   c->epc = (uintptr_t)entry;
+  c->GPR2 = (uintptr_t)arg;
   c->status = 0x000c0100;
+  c->gpr[2] = 0; // sp slot, used as usp
   return c;
 }
 

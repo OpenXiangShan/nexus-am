@@ -20,20 +20,20 @@ int read_key() {
 }
 
 void draw_rect(uint32_t *pixels, int x, int y, int w, int h) {
-  _DEV_VIDEO_FBCTL_t ctl = (_DEV_VIDEO_FBCTL_t) {
+  _DEV_VIDEO_FBCTRL_t ctl = (_DEV_VIDEO_FBCTRL_t) {
     .pixels = pixels,
     .x = x, .y = y, .w = w, .h = h,
     .sync = 0,
   };
-  _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
+  _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTRL, &ctl, sizeof(ctl));
 }
 
 void draw_sync() {
-  _DEV_VIDEO_FBCTL_t ctl;
+  _DEV_VIDEO_FBCTRL_t ctl;
   ctl.pixels = NULL;
   ctl.x = ctl.y = ctl.w = ctl.h = 0;
   ctl.sync = 1;
-  _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
+  _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTRL, &ctl, sizeof(ctl));
 }
 
 int screen_width() {

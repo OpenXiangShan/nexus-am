@@ -1,61 +1,210 @@
 #include <sys/mman.h>
-#include <sys/stat.h>
+#include <sys/auxv.h>
 #include <fcntl.h>
+#include <elf.h>
 #include <stdlib.h>
-#include <klib.h>
+#include "platform.h"
 
-#define PMEM_SHM_FILE "/native-pmem"
+#define MAX_CPU 16
+#define TRAP_PAGE_START (void *)0x100000
+#define PMEM_START (void *)0x3000000  // for nanos-lite with vme disabled
 #define PMEM_SIZE (128 * 1024 * 1024) // 128MB
-#define PMEM_MAP_START (uintptr_t)0x100000
-#define PMEM_MAP_END   (uintptr_t)PMEM_SIZE
-#define PMEM_MAP_SIZE  (PMEM_MAP_END - PMEM_MAP_START)
-
 static int pmem_fd = 0;
+static char pmem_shm_file[] = "/native-pmem-XXXXXX";
+static void *pmem = NULL;
 static ucontext_t uc_example = {};
+static int sys_pgsz;
+sigset_t __am_intr_sigmask = {};
+__am_cpu_t *__am_cpu_struct = NULL;
+int __am_ncpu = 0;
+int __am_pgsize;
+
+static void save_context_handler(int sig, siginfo_t *info, void *ucontext) {
+  memcpy(&uc_example, ucontext, sizeof(uc_example));
+}
+
+static void save_example_context() {
+  // getcontext() does not save segment registers. In the signal
+  // handler, restoring a context previously saved by getcontext()
+  // will trigger segmentation fault because of the invalid segment
+  // registers. So we save the example context during signal handling
+  // to get a context with everything valid.
+  struct sigaction s;
+  memset(&s, 0, sizeof(s));
+  s.sa_sigaction = save_context_handler;
+  s.sa_flags = SA_SIGINFO;
+  int ret = sigaction(SIGUSR1, &s, NULL);
+  assert(ret == 0);
+
+  raise(SIGUSR1);
+
+  s.sa_flags = 0;
+  s.sa_handler = SIG_DFL;
+  ret = sigaction(SIGUSR1, &s, NULL);
+  assert(ret == 0);
+}
+
+static void setup_sigaltstack() {
+  stack_t ss;
+  ss.ss_sp = thiscpu->sigstack;
+  ss.ss_size = sizeof(thiscpu->sigstack);
+  ss.ss_flags = 0;
+  int ret = sigaltstack(&ss, NULL);
+  assert(ret == 0);
+}
 
 int main(const char *args);
 
 static void init_platform() __attribute__((constructor));
 static void init_platform() {
-  pmem_fd = shm_open(PMEM_SHM_FILE, O_RDWR | O_CREAT, 0700);
+  // create shared memory object and set up mapping to simulate the physical memory
+  assert(access("/", W_OK) != 0);
+  assert(mkstemp(pmem_shm_file) < 0);
+  pmem_fd = shm_open(pmem_shm_file, O_RDWR | O_CREAT | O_EXCL, 0700);
   assert(pmem_fd != -1);
   assert(0 == ftruncate(pmem_fd, PMEM_SIZE));
 
-  void *ret = mmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
-      MAP_SHARED | MAP_FIXED, pmem_fd, PMEM_MAP_START);
+  pmem = mmap(PMEM_START, PMEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
+      MAP_SHARED | MAP_FIXED, pmem_fd, 0);
+  assert(_heap.start != (void *)-1);
+
+  // allocate private per-cpu structure
+  thiscpu = mmap(NULL, sizeof(*thiscpu), PROT_READ | PROT_WRITE,
+      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  assert(thiscpu != (void *)-1);
+  thiscpu->cpuid = 0;
+  thiscpu->vm_head = NULL;
+
+  // create trap page to receive syscall and yield by SIGSEGV
+  sys_pgsz = sysconf(_SC_PAGESIZE);
+  void *ret = mmap(TRAP_PAGE_START, sys_pgsz, PROT_NONE,
+      MAP_SHARED | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
   assert(ret != (void *)-1);
 
-  _heap.start = (void *)(PMEM_MAP_START + 4096);  // this is to skip the trap entry
-  _heap.end = (void *)PMEM_MAP_END;
+  // remap writable sections as MAP_SHARED
+  Elf64_Phdr *phdr = (void *)getauxval(AT_PHDR);
+  int phnum = (int)getauxval(AT_PHNUM);
+  int i;
+  int ret2;
+  for (i = 0; i < phnum; i ++) {
+    if (phdr[i].p_type == PT_LOAD && (phdr[i].p_flags & PF_W)) {
+      // allocate temporary memory
+      extern char end;
+      void *vaddr = (void *)&end - phdr[i].p_memsz;
+      uintptr_t pad = (uintptr_t)vaddr & 0xfff;
+      void *vaddr_align = vaddr - pad;
+      uintptr_t size = phdr[i].p_memsz + pad;
+      void *temp_mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+      assert(temp_mem != (void *)-1);
 
-  getcontext(&uc_example);
+      // save data and bss sections
+      memcpy(temp_mem, vaddr_align, size);
+
+      // save the addresses of library functions which will be used after munamp()
+      // since calling the library functions requires accessing GOT, which will be unmapped
+      void *(*volatile mmap_libc)(void *, size_t, int, int, int, off_t) = &mmap;
+      void *(*volatile memcpy_libc)(void *, const void *, size_t) = &memcpy;
+
+      // unmap the data and bss sections
+      ret2 = munmap(vaddr_align, size);
+      assert(ret2 == 0);
+
+      // map the sections again with MAP_SHARED, which will be shared across fork()
+      ret = mmap_libc(vaddr_align, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+          MAP_SHARED | MAP_FIXED | MAP_ANONYMOUS, -1, 0);
+      assert(ret == vaddr_align);
+
+      // restore the data in the sections
+      memcpy_libc(vaddr_align, temp_mem, size);
+
+      // unmap the temporary memory
+      ret2 = munmap(temp_mem, size);
+      assert(ret2 == 0);
+    }
+  }
+
+  // set up the AM heap
+  _heap = RANGE(pmem, pmem + PMEM_SIZE);
+
+  // initialize sigmask for interrupts
+  ret2 = sigemptyset(&__am_intr_sigmask);
+  assert(ret2 == 0);
+  ret2 = sigaddset(&__am_intr_sigmask, SIGVTALRM);
+  assert(ret2 == 0);
+  ret2 = sigaddset(&__am_intr_sigmask, SIGUSR1);
+  assert(ret2 == 0);
+
+  // setup alternative signal stack
+  setup_sigaltstack();
+
+  // save the context template
+  save_example_context();
+  __am_get_intr_sigmask(&uc_example.uc_sigmask);
+
+  // disable interrupts by default
+  _intr_write(0);
+
+  // set ncpu
+  const char *smp = getenv("smp");
+  __am_ncpu = smp ? atoi(smp) : 1;
+  assert(0 < __am_ncpu && __am_ncpu <= MAX_CPU);
+
+  // set pgsize
+  const char *pgsize = getenv("pgsize");
+  __am_pgsize = pgsize ? atoi(pgsize) : sys_pgsz;
+  assert(__am_pgsize > 0 && __am_pgsize % sys_pgsz == 0);
 
   const char *args = getenv("mainargs");
-  exit(main(args ? args : "")); // call main here!
+  _halt(main(args ? args : "")); // call main here!
 }
 
-static void exit_platform() __attribute__((constructor));
-static void exit_platform() {
-  int ret = munmap((void *)PMEM_MAP_START, PMEM_MAP_SIZE);
-  assert(ret == 0);
-  close(pmem_fd);
-  ret = shm_unlink(PMEM_SHM_FILE);
-  assert(ret == 0);
+void __am_exit_platform(int code) {
+  int ret = shm_unlink(pmem_shm_file);
+  printf("Unlink pmem_shm_file %s\n", (ret == 0 ? "successfully" : "fail"));
+
+  // let Linux clean up other resource
+  extern int __am_mpe_init;
+  if (__am_mpe_init && _ncpu() > 1) kill(0, SIGKILL);
+  exit(code);
 }
 
 void __am_shm_mmap(void *va, void *pa, int prot) {
-  void *ret = mmap(va, 4096, PROT_READ | PROT_WRITE | PROT_EXEC,
-      MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)pa);
+  // translate AM prot to mmap prot
+  int mmap_prot = PROT_NONE;
+  // we do not support executable bit, so mark
+  // all readable pages executable as well
+  if (prot & _PROT_READ) mmap_prot |= PROT_READ | PROT_EXEC;
+  if (prot & _PROT_WRITE) mmap_prot |= PROT_WRITE;
+  void *ret = mmap(va, __am_pgsize, mmap_prot,
+      MAP_SHARED | MAP_FIXED, pmem_fd, (uintptr_t)(pa - pmem));
   assert(ret != (void *)-1);
 }
 
 void __am_shm_munmap(void *va) {
-  int ret = munmap(va, 4096);
+  int ret = munmap(va, __am_pgsize);
   assert(ret == 0);
 }
 
 void __am_get_example_uc(_Context *r) {
   memcpy(&r->uc, &uc_example, sizeof(uc_example));
+}
+
+void __am_get_intr_sigmask(sigset_t *s) {
+  memcpy(s, &__am_intr_sigmask, sizeof(__am_intr_sigmask));
+}
+
+int __am_is_sigmask_sti(sigset_t *s) {
+  return !sigismember(s, SIGVTALRM);
+}
+
+void __am_pmem_protect() {
+  int ret = mprotect(PMEM_START, PMEM_SIZE, PROT_NONE);
+  assert(ret == 0);
+}
+
+void __am_pmem_unprotect() {
+  int ret = mprotect(PMEM_START, PMEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);
+  assert(ret == 0);
 }
 
 // This dummy function will be called in trm.c.

@@ -121,12 +121,11 @@ void check_divu(uint32_t x, uint32_t y) {
 }
 
 int v[] = {0, 1, 2, 3, 0x7fffffff, 0x80000000, 0x80000001, 0xfffffffd, 0xfffffffe, 0xffffffff};
-#define NR_DATA(array) (sizeof(array) / sizeof(array[0]))
 
 int main() {
   int i, j;
-  for (i = 0; i < NR_DATA(v); i ++) {
-    for (j = 1; j < NR_DATA(v); j ++) {
+  for (i = 0; i < LENGTH(v); i ++) {
+    for (j = 1; j < LENGTH(v); j ++) {
       check_mul(v[i], v[j]);
       check_div(v[i], v[j]);
       check_divu(v[i], v[j]);

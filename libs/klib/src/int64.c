@@ -103,7 +103,7 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
             /* K X
              * ---
              * 0 0
-             */ 
+             */
             if (rem)
                 *rem = n.s.high % d.s.low;
             return n.s.high / d.s.low;
@@ -280,4 +280,20 @@ __umoddi3(du_int a, du_int b)
     du_int r;
     __udivmoddi4(a, b, &r);
     return r;
+}
+
+
+#include <klib.h>
+
+// for more details, refer to
+// https://gcc.gnu.org/onlinedocs/gccint/Integer-library-routines.html
+
+// only use for linking
+
+int __clzsi2 (unsigned int a) {
+  _halt(1);
+}
+
+int __ctzsi2 (unsigned int a) {
+  _halt(1);
 }

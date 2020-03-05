@@ -4,6 +4,7 @@
 *.a
 *.o
 *.d
+__pycache__
 *.pyc
 *.ini
 *.log

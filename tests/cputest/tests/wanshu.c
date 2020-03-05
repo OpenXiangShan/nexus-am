@@ -11,7 +11,7 @@ int main() {
 				sum += i;
 			}
 		}
-		
+
 		if(sum == n) {
 			nemu_assert(n == ans[k]);
 			k ++;

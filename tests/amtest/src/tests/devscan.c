@@ -26,14 +26,14 @@ static void video_test() {
   printf("Screen size: %d x %d\n", info.width, info.height);
   for (int x = 0; x < 100; x++)
     for (int y = 0; y < 100; y++) {
-      _DEV_VIDEO_FBCTL_t ctl;
+      _DEV_VIDEO_FBCTRL_t ctl;
       uint32_t pixel = 0x006a005f;
       ctl.x = info.width / 2 - 50 + x;
       ctl.y = info.height / 2 - 50 + y;
       ctl.w = ctl.h = 1;
       ctl.sync = 1;
       ctl.pixels = &pixel;
-      _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTL, &ctl, sizeof(ctl));
+      _io_write(_DEV_VIDEO, _DEVREG_VIDEO_FBCTRL, &ctl, sizeof(ctl));
     }
   printf("You should see a purple square on the screen.\n");
 }
@@ -59,6 +59,26 @@ static void pciconf_test() {
     }
 }
 
+static void storage_test() {
+  #define nbytes 512
+  static char buf[nbytes];
+  _DEV_STORAGE_INFO_t info;
+  _DEV_STORAGE_RDCTRL_t ctl;
+
+  _io_read(_DEV_STORAGE, _DEVREG_STORAGE_INFO, &info, sizeof(info));
+  printf("Storage: %d blocks of %d size. Show first 512 bytes\n", info.blkcnt, info.blksz);
+
+  ctl.buf = buf;
+  ctl.blkno = 0;
+  ctl.blkcnt = nbytes / info.blksz;
+  _io_write(_DEV_STORAGE, _DEVREG_STORAGE_RDCTRL, &ctl, sizeof(ctl));
+
+  for (uint32_t i = 0; i < nbytes; i += 2) {
+    printf("%02x%02x ", buf[i] & 0xff, buf[i+1] & 0xff);
+    if ((i+2) % 32 == 0) printf("\n");
+  }
+}
+
 uint32_t devices[] = {
   _DEV_INPUT, _DEV_TIMER, _DEV_VIDEO, _DEV_PCICONF,
 };
@@ -68,6 +88,7 @@ void devscan() {
   input_test();
   timer_test();
   video_test();
+  storage_test();
   pciconf_test();
   printf("Test End!\n");
   while (1);

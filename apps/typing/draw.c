@@ -32,13 +32,13 @@ void init_screen(void) {
   draw_sync();
 }
 
-char *itoa(int n)  {  
+char *itoa(int n)  {
   static char s[64];
   int i = sizeof(s) - 1;
   do {
-    s[--i] = n % 10 + '0';  
+    s[--i] = n % 10 + '0';
     n /= 10;
-  } while(n > 0);  
+  } while(n > 0);
   return &s[i];
 }
 

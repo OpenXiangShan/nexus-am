@@ -1,7 +1,22 @@
 #include <am.h>
-#include <x86.h>
 #include <nemu.h>
+#include <klib.h>
+#include "x86-nemu.h"
 
+typedef uint32_t PTE;
+typedef uint32_t PDE;
+
+#define NR_PDE         1024    // # directory entries per page directory
+#define NR_PTE         1024    // # PTEs per page table
+#define PGSHFT         12      // log2(PGSIZE)
+#define PTXSHFT        12      // Offset of PTX in a linear address
+#define PDXSHFT        22      // Offset of PDX in a linear address
+
+#define PDX(va)          (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
+#define PTX(va)          (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
+#define OFF(va)          ((uint32_t)(va) & 0xfff)
+#define PTE_ADDR(pte)    ((uint32_t)(pte) & ~0xfff)
+#define PGADDR(d, t, o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
 static PDE kpdirs[NR_PDE] PG_ALIGN = {};
@@ -11,11 +26,11 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
-  {.start = (void*)0,          .end = (void*)PMEM_SIZE},
-  {.start = (void*)MMIO_BASE,  .end = (void*)(MMIO_BASE + MMIO_SIZE)}
+  RANGE(0, PMEM_SIZE),
+  RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
 };
 
-#define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
+#define USER_SPACE RANGE(0x40000000, 0xc0000000)
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
@@ -29,7 +44,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   }
 
   PTE *ptab = kptabs;
-  for (i = 0; i < NR_KSEG_MAP; i ++) {
+  for (i = 0; i < LENGTH(segments); i ++) {
     uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
     uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
     for (; pdir_idx < pdir_idx_end; pdir_idx ++) {
@@ -53,57 +68,48 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
-  PDE *updir = (PDE*)(pgalloc_usr(1));
+void _protect(_AddressSpace *as) {
+  PDE *updir = (PDE*)(pgalloc_usr(PGSIZE));
   as->ptr = updir;
+  as->area = USER_SPACE;
+  as->pgsize = PGSIZE;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {
     updir[i] = kpdirs[i];
   }
-
-  return 0;
 }
 
 void _unprotect(_AddressSpace *as) {
 }
 
-static _AddressSpace *cur_as = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->as = cur_as;
+  c->cr3 = (vme_enable ? (void *)get_cr3() : NULL);
 }
 
 void __am_switch(_Context *c) {
-  if (vme_enable) {
-    set_cr3(c->as->ptr);
-    cur_as = c->as;
-  }
+  if (vme_enable && c->cr3 != NULL) { set_cr3(c->cr3); }
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
   PDE *pt = (PDE*)as->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_P)) {
-    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)pgalloc_usr(1);
+    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)pgalloc_usr(PGSIZE);
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_P)) {
     *pte = PTE_P | PTE_W | PTE_U | (uint32_t)pa;
   }
-
-  return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
-  ustack.end -= 4 * sizeof(uintptr_t);  // 4 = retaddr + argc + argv + envp
-  uintptr_t *esp = ustack.end;
-  esp[1] = esp[2] = esp[3] = 0;
-
-  _Context *c = (_Context*)ustack.end - 1;
-
-  c->as = as;
+_Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context *)kstack.end - 1;
+  c->cr3 = as->ptr;
   c->cs = 0x8;
   c->eip = (uintptr_t)entry;
   c->eflags = 0x2 | FL_IF;
+  c->usp = (uintptr_t)kstack.end; // non-zero but should be used to safely construct context
   return c;
-//  return NULL;
 }

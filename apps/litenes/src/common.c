@@ -1,5 +1,6 @@
-#include <common.h>
+#include "common.h"
 
+bool common_bit_set(long long value, byte position) { return value & (1L << position); }
 
 // I could do this through non-void methods with returns in one copy,
 // but this variant is slightly faster, and needs less typing in client code

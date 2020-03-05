@@ -22,7 +22,7 @@ class Updatable_heap {
     Step *pointer( T const & ) const;
 
   public:
-    void init(int m); 
+    void init(int m);
     ~Updatable_heap();
     T pop();
     void push( T const &, int );
@@ -123,7 +123,7 @@ void Updatable_heap<T>::percolate_down() {
       swap( n, 2*n + 1 );
       n = 2*n + 1;
     }
-  } 
+  }
 
   if ( 2*n == size() &&  heap[2*n]->weight() < heap[n]->weight() ) {
     swap( n, 2*n );

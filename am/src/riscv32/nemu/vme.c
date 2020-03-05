@@ -11,14 +11,20 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
-  {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + PMEM_SIZE)},
-  {.start = (void*)MMIO_BASE,   .end = (void*)(MMIO_BASE + MMIO_SIZE)}
+  RANGE(0x80000000u, 0x80000000u + PMEM_SIZE),
+  RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
 };
 
-#define NR_KSEG_MAP (sizeof(segments) / sizeof(segments[0]))
+#define USER_SPACE RANGE(0x40000000, 0x80000000)
 
 static inline void set_satp(void *pdir) {
   asm volatile("csrw satp, %0" : : "r"(0x80000000 | ((uintptr_t)pdir >> 12)));
+}
+
+static inline uintptr_t get_satp() {
+  uintptr_t satp;
+  asm volatile("csrr %0, satp" : "=r"(satp));
+  return satp << 12;
 }
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
@@ -32,7 +38,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   }
 
   PTE *ptab = kptabs;
-  for (i = 0; i < NR_KSEG_MAP; i ++) {
+  for (i = 0; i < LENGTH(segments); i ++) {
     uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
     uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
     for (; pdir_idx < pdir_idx_end; pdir_idx ++) {
@@ -55,51 +61,50 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
-  PDE *updir = (PDE*)(pgalloc_usr(1));
+void _protect(_AddressSpace *as) {
+  PDE *updir = (PDE*)(pgalloc_usr(PGSIZE));
   as->ptr = updir;
+  as->area = USER_SPACE;
+  as->pgsize = PGSIZE;
   // map kernel space
   for (int i = 0; i < NR_PDE; i ++) {
     updir[i] = kpdirs[i];
   }
-
-  return 0;
 }
 
 void _unprotect(_AddressSpace *as) {
 }
 
-static _AddressSpace *cur_as = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->as = cur_as;
+  c->pdir = (vme_enable ? (void *)get_satp() : NULL);
 }
 
 void __am_switch(_Context *c) {
-  if (vme_enable) {
-    set_satp(c->as->ptr);
-    cur_as = c->as;
+  if (vme_enable && c->pdir != NULL) {
+    set_satp(c->pdir);
   }
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
   PDE *pt = (PDE*)as->ptr;
   PDE *pde = &pt[PDX(va)];
   if (!(*pde & PTE_V)) {
-    *pde = PTE_V | ((uint32_t)pgalloc_usr(1) >> PGSHFT << 10);
+    *pde = PTE_V | ((uint32_t)pgalloc_usr(PGSIZE) >> PGSHFT << 10);
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_V)) {
     *pte = PTE_V | PTE_R | PTE_W | PTE_X | ((uint32_t)pa >> PGSHFT << 10);
   }
-
-  return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
-  _Context *c = (_Context*)ustack.end - 1;
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context*)kstack.end - 1;
 
-  c->as = as;
+  c->pdir = as->ptr;
   c->epc = (uintptr_t)entry;
   c->status = 0x000c0120;
+  c->gpr[2] = 1; // sp slot, used as usp, non-zero is ok
   return c;
 }

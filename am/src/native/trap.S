@@ -1,19 +1,10 @@
-.global __am_ret_from_trap
-.global __am_asm_trap
+.global __am_kcontext_start
+__am_kcontext_start:
+  // rdi = arg, rsi = entry
 
-__am_asm_trap:
-  # getcontext() does not preserve %rax, save it manually
-  pushq %rax
-  pushq %rdi
-  # must have sizeof(ucontect_t) < 1024
-  subq $1024, %rsp
-
-  movq %rsp, %rdi
-  call __am_irq_handle
-
-__am_ret_from_trap:
-
-  addq $1024, %rsp
-  popq %rdi
-  popq %rax
-  retq
+  // (rsp + 8) should be multiple of 16 when
+  // control is transfered to the function entry point.
+  // See amd64 ABI manual for more details
+  andq $0xfffffffffffffff0, %rsp
+  call *%rsi
+  call __am_panic_on_return
