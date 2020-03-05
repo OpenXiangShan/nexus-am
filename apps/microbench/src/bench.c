@@ -1,14 +1,12 @@
 #include <am.h>
 #include <benchmark.h>
 #include <limits.h>
+#include <klib-macros.h>
 
 Benchmark *current;
 Setting *setting;
 
 static char *hbrk;
-
-#define ARR_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
-#define ROUNDUP(a, sz) ((((uintptr_t)a)+(sz)-1) & ~((sz)-1))
 
 // The benchmark list
 
@@ -84,7 +82,7 @@ int main(const char *args) {
   int pass = 1;
   uint32_t t0 = uptime();
 
-  for (int i = 0; i < ARR_SIZE(benchmarks); i ++) {
+  for (int i = 0; i < LENGTH(benchmarks); i ++) {
     Benchmark *bench = &benchmarks[i];
     current = bench;
     setting = &bench->settings[setting_id];
@@ -120,8 +118,8 @@ int main(const char *args) {
   }
   uint32_t t1 = uptime();
 
-  bench_score /= sizeof(benchmarks) / sizeof(benchmarks[0]);
-  
+  bench_score /= LENGTH(benchmarks);
+
   printf("==================================================\n");
   printf("MicroBench %s", pass ? "PASS" : "FAIL");
   if (setting_id == 2) {

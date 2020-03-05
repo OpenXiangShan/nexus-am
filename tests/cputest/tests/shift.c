@@ -1,6 +1,4 @@
-
 #include "trap.h"
-#define ARR_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 unsigned test[] = {
 	0x12345678, 0x98765432, 0x0, 0xeffa1000, 0x7fffffff, 0x80000000, 0x33, 0xffffffff
@@ -22,15 +20,15 @@ unsigned srav_ans[] = {
 int main() {
 	unsigned i;
 
-	for(i = 0; i < ARR_SIZE(test); i ++) {
+	for(i = 0; i < LENGTH(test); i ++) {
 		nemu_assert((test[i] >> 7) == srl_ans[i]);
 	}
 
-	for(i = 0; i < ARR_SIZE(test); i ++) {
+	for(i = 0; i < LENGTH(test); i ++) {
 		nemu_assert((unsigned)((int)test[i] >> (i + 4)) == srav_ans[i]);
 	}
 
-	for(i = 0; i < ARR_SIZE(test); i ++) {
+	for(i = 0; i < LENGTH(test); i ++) {
 		nemu_assert((test[i] >> (i + 4)) == srlv_ans[i]);
 	}
 

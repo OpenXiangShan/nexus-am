@@ -1,6 +1,7 @@
 #include <am.h>
 #include <riscv32.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 static uint32_t mul(uint32_t a, uint32_t b, int sign, int hi) {
   if (a == 0x80000000 && b == 0x80000000) {

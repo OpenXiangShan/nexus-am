@@ -1,6 +1,6 @@
-#include <am.h>
 #include <amdev.h>
 #include <SDL2/SDL.h>
+#include "../platform.h"
 
 #define KEYDOWN_MASK 0x8000
 
@@ -19,8 +19,8 @@ static int event_thread(void *args) {
   while (1) {
     SDL_WaitEvent(&event);
     switch (event.type) {
-      case SDL_QUIT: _exit(0); break;
-      case SDL_KEYDOWN: 
+      case SDL_QUIT: _halt(0);
+      case SDL_KEYDOWN:
       case SDL_KEYUP:
         {
           SDL_Keysym k = event.key.keysym;
@@ -32,6 +32,7 @@ static int event_thread(void *args) {
             key_queue[key_r] = am_code;
             key_r = (key_r + 1) % KEY_QUEUE_LEN;
             SDL_UnlockMutex(key_queue_lock);
+            kill(getpid(), SIGUSR1);
           }
         }
         break;

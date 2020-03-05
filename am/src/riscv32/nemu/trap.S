@@ -12,7 +12,7 @@ f(30) f(31)
 #define PUSH(n) sw concat(x, n), (n * 4)(sp);
 #define POP(n)  lw concat(x, n), (n * 4)(sp);
 
-#define CONTEXT_SIZE ((31 + 4) * 4)
+#define CONTEXT_SIZE ((32 + 3) * 4)
 #define OFFSET_SP     ( 2 * 4)
 #define OFFSET_CAUSE  (32 * 4)
 #define OFFSET_STATUS (33 * 4)
@@ -20,12 +20,17 @@ f(30) f(31)
 
 .globl __am_asm_trap
 __am_asm_trap:
+  csrrw sp, sscratch, sp
+  bnez sp, save_context
+  # trap from kernel, restore the original sp
+  csrrw sp, sscratch, sp
+
+save_context:
   addi sp, sp, -CONTEXT_SIZE
 
   MAP(REGS, PUSH)
 
-  mv t0, sp
-  addi t0, t0, CONTEXT_SIZE
+  csrrw t0, sscratch, x0 # t0 = (from user ? usp : 0)
   sw t0, OFFSET_SP(sp)
 
   csrr t0, scause
@@ -50,4 +55,12 @@ __am_asm_trap:
 
   addi sp, sp, CONTEXT_SIZE
 
+  csrw sscratch, sp    # ksp
+  lw sp, (OFFSET_SP - CONTEXT_SIZE)(sp) # sp = (from user ? usp : 0)
+
+  bnez sp, return
+  # return to kernel
+  csrrw sp, sscratch, sp
+
+return:
   sret

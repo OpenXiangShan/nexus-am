@@ -24,6 +24,8 @@
 #define vsprintf my_vsprintf
 #define sprintf my_sprintf
 #define snprintf my_snprintf
+#define malloc my_malloc
+#define free my_free
 #endif
 
 #ifdef __cplusplus
@@ -41,19 +43,20 @@ int screen_width();
 int screen_height();
 
 // string.h
-void* memset(void* v, int c, size_t n);
-void* memcpy(void* dst, const void* src, size_t n);
-void* memmove(void* dst, const void* src, size_t n);
+void *memset(void* v, int c, size_t n);
+void *memcpy(void* dst, const void* src, size_t n);
+void *memmove(void* dst, const void* src, size_t n);
 int memcmp(const void* s1, const void* s2, size_t n);
 size_t strlen(const char* s);
-char* strcat(char* dst, const char* src);
-char* strcpy(char* dst, const char* src);
-char* strncpy(char* dst, const char* src, size_t n);
+char *strcat(char* dst, const char* src);
+char *strcpy(char* dst, const char* src);
+char *strncpy(char* dst, const char* src, size_t n);
 int strcmp(const char* s1, const char* s2);
 int strncmp(const char* s1, const char* s2, size_t n);
-char* strtok(char* s,const char* delim);
+char *strtok(char* s,const char* delim);
 char *strstr(const char *, const char *);
-const char *strchr(const char *s, int c);
+char *strchr(const char *s, int c);
+char *strrchr(const char *s, int c);
 
 // stdlib.h
 int atoi(const char* nptr);
@@ -61,6 +64,8 @@ int abs(int x);
 unsigned long time();
 void srand(unsigned int seed);
 int rand();
+void *malloc(size_t size);
+void free(void *ptr);
 
 // stdio.h
 int printf(const char* fmt, ...);
@@ -72,8 +77,6 @@ int sscanf(const char *str, const char *format, ...);
 
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 
-#define printk printf
-
 // assert.h
 #ifdef NDEBUG
   #define assert(ignore) ((void)0)
@@ -81,7 +84,7 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, co
   #define assert(cond) \
     do { \
       if (!(cond)) { \
-        printk("Assertion fail at %s:%d\n", __FILE__, __LINE__); \
+        printf("Assertion fail at %s:%d\n", __FILE__, __LINE__); \
         _halt(1); \
       } \
     } while (0)

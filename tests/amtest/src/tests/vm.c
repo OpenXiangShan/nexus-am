@@ -3,6 +3,7 @@
 static _Context *uctx;
 static _AddressSpace prot;
 static uintptr_t st = 0;
+static int first_trap = 1;
 
 void *simple_pgalloc(size_t size) {
   if (st == 0) { st = (uintptr_t)_heap.start; }
@@ -20,65 +21,70 @@ _Context* vm_handler(_Event ev, _Context *ctx) {
     case _EVENT_YIELD:
       break;
     case _EVENT_IRQ_TIMER:
-    case _EVENT_IRQ_IODEV: 
-      printf("==== interrupt (%s)  ===\n", ev.msg);
+    case _EVENT_IRQ_IODEV:
+      printf("==== interrupt (%s)  ====\n", ev.msg);
       break;
     case _EVENT_PAGEFAULT:
       printf("PF: %x %s%s%s\n",
         ev.ref,
-        (ev.cause & _PROT_NONE) ? "[not present]" : "",
-        (ev.cause & _PROT_READ) ? "[read fail]" : "",
-        (ev.cause & _PROT_WRITE) ? "[write fail]" : "");
+        (ev.cause & _PROT_NONE)  ? "[not present]" : "",
+        (ev.cause & _PROT_READ)  ? "[read fail]"   : "",
+        (ev.cause & _PROT_WRITE) ? "[write fail]"  : "");
       break;
     case _EVENT_SYSCALL:
-      printf("%d ", ctx->GPR1);
+      _intr_write(1);
+      for (int volatile i = 0; i < 1000000; i++) ;
+      printf("%d ", ctx->GPRx);
       break;
     default:
       assert(0);
   }
-
-  if (uctx) {
-    ctx = uctx;
-    uctx = NULL;
+  if (first_trap) {
+    first_trap = 0;
+    return uctx;
+  } else {
+    return ctx;
   }
-  return ctx;
 }
 
 uint8_t code[] = {
-  0x31, 0xc0, // xor %eax, %eax
-  0x8d, 0xb6, 0x00, 0x00, 0x00, 0x00, // lea 0(%esi), %esi
-  0x83, 0xc0, 0x01, // add $1, %eax
-//  0x90, 0x90, // nop, nop
-  0xcd, 0x80, // int $0x80
-  0xeb, 0xf9, // jmp 8
+#ifdef __ARCH_NATIVE
+  0x31, 0xc0,             // xor %eax, %eax
+  0x83, 0xc0, 0x01,       // add $1, %eax
+  0xff, 0x14, 0x25, 0x00, 0x00, 0x10, 0x00, // call *0x100000
+  0xeb, 0xf4,             // jmp 2
+#else
+  0x31, 0xc0,             // xor %eax, %eax
+  0x8d, 0xb6,             // lea 0(%esi), %esi
+  0x00, 0x00, 0x00, 0x00,
+  0x83, 0xc0, 0x01,       // add $1, %eax
+  0xcd, 0x80,             // int $0x80
+  0xeb, 0xf9,             // jmp 8
+#endif
+
 };
 
 void vm_test() {
-  if (strcmp(__ISA__, "x86") != 0) {
-    printf("VM test: only runs on x86.\n");
+  if (!strncmp(__ISA__, "x86", 3) == 0 &&
+      !strcmp(__ISA__, "native") == 0) {
+    printf("Not supported architecture.\n");
     return;
   }
   _protect(&prot);
+  printf("Protected address space: [%p, %p)\n", prot.area.start, prot.area.end);
 
   uint8_t *ptr = (void*)((uintptr_t)(prot.area.start) +
      ((uintptr_t)(prot.area.end) - (uintptr_t)(prot.area.start)) / 2);
 
-  int pgsz = 4096;
+  void *pg = simple_pgalloc(prot.pgsize);
+  memcpy(pg, code, sizeof(code));
 
-  void *up1 = simple_pgalloc(pgsz);
-  _map(&prot, ptr, up1, _PROT_WRITE);
+  _map(&prot, ptr, pg, _PROT_WRITE | _PROT_READ | _PROT_EXEC);
+  printf("Code copied to %p (physical %p) execute\n", ptr, pg);
 
-  memcpy(up1, code, sizeof(code));
-  printf("Code copied to %x execute\n", ptr);
-
-  static uint8_t kstk[4096];
-  _Area k = { .start = kstk, .end = kstk + 4096 };
-  _Area u = { .start = ptr + pgsz, .end = ptr + pgsz };
-
-  uctx = _ucontext(&prot, u, k, ptr, 0);
+  static uint8_t stack[4096];
+  uctx = _ucontext(&prot, RANGE(stack, stack + sizeof(stack)), ptr);
 
   _intr_write(1);
-  while (1) {
-    _yield();
-  }
+  _yield();
 }

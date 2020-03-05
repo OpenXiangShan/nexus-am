@@ -2,6 +2,7 @@
 #include <klib.h>
 #include <nemu.h>
 
+#define USER_SPACE RANGE(0x40000000, 0x80000000)
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
 static void* (*pgalloc_usr)(size_t) = NULL;
@@ -16,35 +17,37 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
-int _protect(_AddressSpace *as) {
-  as->ptr = (PDE*)(pgalloc_usr(1));
-
-  return 0;
+void _protect(_AddressSpace *as) {
+  as->ptr = (PDE*)(pgalloc_usr(PGSIZE));
+  as->pgsize = PGSIZE;
+  as->area = USER_SPACE;
 }
 
 void _unprotect(_AddressSpace *as) {
 }
 
-static _AddressSpace *cur_as = NULL;
+static PDE *cur_pdir = NULL;
 void __am_get_cur_as(_Context *c) {
-  c->as = cur_as;
+  c->pdir = cur_pdir;
 }
 
 void __am_tlb_clear();
 void __am_switch(_Context *c) {
-  if (vme_enable) {
-    if (cur_as != NULL && cur_as->ptr != c->as->ptr) {
+  if (vme_enable && c->pdir != NULL) {
+    if (cur_pdir != c->pdir) {
       __am_tlb_clear();
+      cur_pdir = c->pdir;
     }
-    cur_as = c->as;
   }
 }
 
-int _map(_AddressSpace *as, void *va, void *pa, int prot) {
-  PDE *pt = (PDE*)as->ptr;
-  PDE *pde = &pt[PDX(va)];
+void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
+  PDE *pdir = (PDE*)as->ptr;
+  PDE *pde = &pdir[PDX(va)];
   if (!(*pde & PTE_V)) {
-    *pde = PTE_V | (uint32_t)pgalloc_usr(1);
+    *pde = PTE_V | (uint32_t)pgalloc_usr(PGSIZE);
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_V)) {
@@ -63,16 +66,14 @@ int _map(_AddressSpace *as, void *va, void *pa, int prot) {
       asm volatile ("tlbwi");
     }
   }
-
-  return 0;
 }
 
-_Context *_ucontext(_AddressSpace *as, _Area ustack, _Area kstack, void *entry, void *args) {
-  _Context *c = (_Context*)ustack.end - 1;
-
-  c->as = as;
+_Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
+  _Context *c = (_Context*)kstack.end - 1;
+  c->pdir = as->ptr;
   c->epc = (uintptr_t)entry;
   c->status = 0x1;
+  c->gpr[29] = 1; // sp slot, used as usp, non-zero
   return c;
 }
 
@@ -81,11 +82,8 @@ void __am_tlb_refill() {
   asm volatile ("mfc0 %0, $10": "=r"(hi));
 
   uint32_t va = hi & ~0x1fff;
-  PDE *pt = (PDE*)cur_as->ptr;
-  PDE *pde = &pt[PDX(va)];
-//  if (!(*pde & PTE_V)) {
-//    printf("hi = 0x%x, pt = 0x%x\n", hi, pt);
-//  }
+  assert(cur_pdir != NULL);
+  PDE *pde = &cur_pdir[PDX(va)];
   assert(*pde & PTE_V);
 
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];

@@ -32,9 +32,7 @@ _Context* handler(_Event ev, _Context *ctx) {
   return current;
 }
 
-#define STACK(id) \
-  (_Area) { .start = &stacks[(id)    ][0], \
-            .end   = &stacks[(id) + 1][0], }
+#define STACK(id) RANGE(&stacks[(id)][0], &stacks[(id) + 1][0])
 
 int main(){
   printf("kcontext test started.\n");

@@ -12,6 +12,7 @@
 
 #include <am.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 /* Usage:
  *   my_list.h:
@@ -47,7 +48,7 @@ NAME##_t NAME##_next(NAME##_t node); \
 void NAME##_remove(NAME##_t node); \
 void NAME##_insert(NAME##_t prev, NAME##_t next, NAME##_t obj); \
 NAME##_t NAME##_new(); \
-void NAME##_free(NAME##_t node); 
+void NAME##_free(NAME##_t node);
 
 /* list implementation */
 #define LINKLIST_IMPL(NAME, SIZE) \
@@ -97,11 +98,6 @@ LINKLIST_DEF(fly)
 	int text;
 	int v;
 LINKLIST_DEF_FI(fly)
-
-typedef char bool;
-
-#define true         1
-#define false        0
 
 /* 按键相关 */
 void press_key(int scan_code);

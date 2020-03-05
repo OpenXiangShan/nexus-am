@@ -32,7 +32,7 @@ int main (){
 
     while (keyboard_event());
     while (update_keypress());
-     
+
     if (frames % (HZ / CHARACTER_PER_SECOND) == 0) {
       create_new_letter();
     }
@@ -74,7 +74,7 @@ void create_new_letter(){
     fly_insert(NULL,head,now);
     head = now;
   }
-  
+
   head->y = 0;
   head->x = rand() % (W / 8 - 2) * 8 + 8;
   head->v = (rand() % 1000)/(2000) + 1;
