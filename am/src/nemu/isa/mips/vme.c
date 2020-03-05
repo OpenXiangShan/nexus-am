@@ -1,6 +1,5 @@
-#include <mips32.h>
-#include <klib.h>
 #include <nemu.h>
+#include <klib.h>
 
 #define USER_SPACE RANGE(0x40000000, 0x80000000)
 #define PG_ALIGN __attribute((aligned(PGSIZE)))

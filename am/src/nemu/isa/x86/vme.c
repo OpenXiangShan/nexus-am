@@ -1,7 +1,6 @@
 #include <am.h>
 #include <nemu.h>
 #include <klib.h>
-#include "x86-nemu.h"
 
 typedef uint32_t PTE;
 typedef uint32_t PDE;
