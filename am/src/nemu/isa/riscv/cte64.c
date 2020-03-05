@@ -1,7 +1,5 @@
-// unmodified for cputest
-
 #include <am.h>
-#include <riscv64.h>
+#include <nemu.h>
 #include <klib.h>
 
 #define CLINT_MMIO 0xa2000000

@@ -1,5 +1,5 @@
-#ifndef __MIPS32_H__
-#define __MIPS32_H__
+#ifndef __MIPS_H__
+#define __MIPS_H__
 
 #ifndef __ASSEMBLER__
 

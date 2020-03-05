@@ -7,5 +7,5 @@ AM_SRCS += nemu/isa/x86/trm.c \
            nemu/isa/x86/vme.c \
            nemu/isa/x86/boot/start.S
 
-CFLAGS  += -mstringop-strategy=loop
+CFLAGS  += -mstringop-strategy=loop -DISA_H=\"x86.h\"
 LDFLAGS += -T $(AM_HOME)/am/src/nemu/isa/x86/boot/loader.ld

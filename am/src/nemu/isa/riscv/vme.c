@@ -1,75 +1,69 @@
-#include <riscv32.h>
 #include <nemu.h>
 #include <klib.h>
 
-#define PG_ALIGN __attribute((aligned(PGSIZE)))
-
-static PDE kpdirs[NR_PDE] PG_ALIGN = {};
-static PTE kptabs[(PMEM_SIZE + MMIO_SIZE) / PGSIZE] PG_ALIGN = {};
+static _AddressSpace kas; // Kernel address space
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
-static _Area segments[] = {      // Kernel memory mappings
-  RANGE(0x80000000u, 0x80000000u + PMEM_SIZE),
-  RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
+static const _Area segments[] = {      // Kernel memory mappings
+  RANGE(0x80000000, 0x80000000 + PMEM_SIZE),
+  RANGE(0xa1000000, 0xa1000000 + 0x1000),  // serial, rtc, screen, keyboard
+  RANGE(0xa0000000, 0xa0000000 + 0x80000), // vmem
+#if __riscv_xlen == 64
+  RANGE(0xa2000000, 0xa2000000 + 0x10000), // clint
+#endif
 };
 
+#if __riscv_xlen == 64
+#define USER_SPACE RANGE(0xc0000000, 0xf0000000)
+#define SATP_MODE (8ull << 60)
+#define PTW_CONFIG PTW_SV39
+#else
 #define USER_SPACE RANGE(0x40000000, 0x80000000)
+#define SATP_MODE 0x80000000
+#define PTW_CONFIG PTW_SV32
+#endif
 
 static inline void set_satp(void *pdir) {
-  asm volatile("csrw satp, %0" : : "r"(0x80000000 | ((uintptr_t)pdir >> 12)));
+  asm volatile("csrw satp, %0" : : "r"(SATP_MODE | PN(pdir)));
 }
 
 static inline uintptr_t get_satp() {
   uintptr_t satp;
   asm volatile("csrr %0, satp" : "=r"(satp));
-  return satp << 12;
+  return satp << 12;  // the mode bits will be shifted out
 }
 
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
-  // make all PDEs invalid
+  kas.ptr = pgalloc_f(PGSIZE);
+  // make all PTEs invalid
+  memset(kas.ptr, 0, PGSIZE);
+
   int i;
-  for (i = 0; i < NR_PDE; i ++) {
-    kpdirs[i] = 0;
-  }
-
-  PTE *ptab = kptabs;
   for (i = 0; i < LENGTH(segments); i ++) {
-    uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
-    uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
-    for (; pdir_idx < pdir_idx_end; pdir_idx ++) {
-      // fill PDE
-      kpdirs[pdir_idx] = ((uintptr_t)ptab >> PGSHFT << 10) | PTE_V;
-
-      // fill PTE
-      PTE pte = (PGADDR(pdir_idx, 0, 0) >> PGSHFT << 10) | PTE_V | PTE_R | PTE_W | PTE_X;
-      PTE pte_end = (PGADDR(pdir_idx + 1, 0, 0) >> PGSHFT << 10) | PTE_V | PTE_R | PTE_W | PTE_X;
-      for (; pte < pte_end; pte += (1 << 10)) {
-        *ptab = pte;
-        ptab ++;
-      }
+    void *va = segments[i].start;
+    for (; va < segments[i].end; va += PGSIZE) {
+      _map(&kas, va, va, 0);
     }
   }
 
-  set_satp(kpdirs);
+  set_satp(kas.ptr);
   vme_enable = 1;
 
   return 0;
 }
 
 void _protect(_AddressSpace *as) {
-  PDE *updir = (PDE*)(pgalloc_usr(PGSIZE));
+  PTE *updir = (PTE*)(pgalloc_usr(PGSIZE));
   as->ptr = updir;
   as->area = USER_SPACE;
   as->pgsize = PGSIZE;
   // map kernel space
-  for (int i = 0; i < NR_PDE; i ++) {
-    updir[i] = kpdirs[i];
-  }
+  memcpy(updir, kas.ptr, PGSIZE);
 }
 
 void _unprotect(_AddressSpace *as) {
@@ -88,14 +82,20 @@ void __am_switch(_Context *c) {
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
-  PDE *pt = (PDE*)as->ptr;
-  PDE *pde = &pt[PDX(va)];
-  if (!(*pde & PTE_V)) {
-    *pde = PTE_V | ((uint32_t)pgalloc_usr(PGSIZE) >> PGSHFT << 10);
+  PTE *pg_base = as->ptr;
+  PTE *pte;
+  int level;
+  for (level = PTW_CONFIG.ptw_level - 1; level >= 0; level --) {
+    pte = &pg_base[VPNi(PTW_CONFIG, (uintptr_t)va, level)];
+    pg_base = (PTE *)PTE_ADDR(*pte);
+    if (level != 0 && !(*pte & PTE_V)) {
+      pg_base = pgalloc_usr(PGSIZE);
+      *pte = PTE_V | (PN(pg_base) << 10);
+    }
   }
-  PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
+
   if (!(*pte & PTE_V)) {
-    *pte = PTE_V | PTE_R | PTE_W | PTE_X | ((uint32_t)pa >> PGSHFT << 10);
+    *pte = PTE_V | PTE_R | PTE_W | PTE_X | (PN(pa) << 10);
   }
 }
 
@@ -104,7 +104,12 @@ _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
 
   c->pdir = as->ptr;
   c->epc = (uintptr_t)entry;
+#if __riscv_xlen == 64
+  uintptr_t mprotect = MSTATUS_MXR | MSTATUS_SUM;
+  c->status = mprotect | MSTATUS_SPP(MODE_S) | MSTATUS_PIE(MODE_S);
+#else
   c->status = 0x000c0120;
+#endif
   c->gpr[2] = 1; // sp slot, used as usp, non-zero is ok
   return c;
 }
