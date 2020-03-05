@@ -1,5 +1,5 @@
 #include <am.h>
-#include <riscv32.h>
+#include <riscv64.h>
 #include <klib.h>
 
 extern char _heap_start;
@@ -8,7 +8,10 @@ int main(const char *args);
 void __am_init_uartlite(void);
 void __am_uartlite_putchar(char ch);
 
-_Area _heap = RANGE(&_heap_start, &_heap_end);
+_Area _heap = {
+  .start = &_heap_start,
+  .end = &_heap_end,
+};
 
 void _putc(char ch) {
   __am_uartlite_putchar(ch);

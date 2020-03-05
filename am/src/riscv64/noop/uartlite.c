@@ -1,4 +1,4 @@
-#include <riscv32.h>
+#include <riscv64.h>
 
 #define UARTLITE_MMIO 0x40600000
 #define UARTLITE_RX_FIFO  0x0

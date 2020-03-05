@@ -11,11 +11,11 @@
 # define nemu_trap(code) asm volatile ("move $v0, %0; .word 0xf0000000" : :"r"(code))
 #elif defined(__ISA_RISCV32__)
 # define nemu_trap(code) asm volatile("mv a0, %0; .word 0x0000006b" : :"r"(code))
+#elif defined(__ISA_RISCV64__)
+# define nemu_trap(code) asm volatile("mv a0, %0; .word 0x0000006b" : :"r"(code))
 #elif
 # error unsupported ISA __ISA__
 #endif
-
-#define ARGSROM_ADDR  0xa2000000
 
 #ifdef __ARCH_X86_NEMU
 # define SERIAL_PORT  0x3f8
@@ -27,6 +27,12 @@
 #elif defined(__ARCH_RISCV32_NOOP)
 # define KBD_ADDR     0x40900000
 # define RTC_ADDR     0x40700000
+# define SCREEN_ADDR  0x40800000
+# define SYNC_ADDR    0x40800004
+# define FB_ADDR      0x40000000
+#elif defined(__ARCH_RISCV64_NOOP)
+# define KBD_ADDR     0x40900000
+# define RTC_ADDR     0x4070bff8
 # define SCREEN_ADDR  0x40800000
 # define SYNC_ADDR    0x40800004
 # define FB_ADDR      0x40000000

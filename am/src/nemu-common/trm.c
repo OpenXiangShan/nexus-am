@@ -19,6 +19,7 @@ void _halt(int code) {
 }
 
 void _trm_init() {
-  int ret = main((const char *)ARGSROM_ADDR);
+  extern const char __am_mainargs;
+  int ret = main(&__am_mainargs);
   _halt(ret);
 }
