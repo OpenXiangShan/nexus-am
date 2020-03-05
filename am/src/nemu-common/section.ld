@@ -4,9 +4,6 @@ SECTIONS {
   . = ORIGIN(ram);
   .text : {
     *(entry)
-    . = ALIGN(0x1000);
-    _mainargs = .;
-    . = . + 0x1000;
     *(.text)
   }
   etext = .;

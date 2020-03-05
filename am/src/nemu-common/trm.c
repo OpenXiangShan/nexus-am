@@ -19,8 +19,7 @@ void _halt(int code) {
 }
 
 void _trm_init() {
-  extern const char _mainargs;
-  //const char *mainargs = &_start - 0x100000;
-  int ret = main(&_mainargs);
+  extern const char __am_mainargs;
+  int ret = main(&__am_mainargs);
   _halt(ret);
 }

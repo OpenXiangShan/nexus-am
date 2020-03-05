@@ -1,4 +1,5 @@
 AM_SRCS := nemu-common/trm.c \
+           nemu-common/mainargs.S \
            nemu-common/ioe.c \
            nemu-common/nemu-input.c \
            nemu-common/nemu-timer.c \
@@ -9,13 +10,13 @@ AM_SRCS := nemu-common/trm.c \
            dummy/mpe.c \
            $(ISA)/nemu/boot/start.S
 
+ASFLAGS += -DMAINARGS=\"$(mainargs)\"
+.PHONY: $(AM_HOME)/am/src/nemu-common/mainargs.S
+
 LDFLAGS += -L $(AM_HOME)/am/src/nemu-common
 LDFLAGS += -T $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
 
-ifdef mainargs
-MAINARGS = --mainargs=$(mainargs)
-endif
-NEMU_ARGS = --batch $(MAINARGS) --log=$(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin
+NEMU_ARGS = --batch --log=$(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin
 
 image:
 	@echo + LD "->" $(BINARY_REL).elf
