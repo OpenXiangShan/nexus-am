@@ -1,5 +1,4 @@
-#include <am.h>
-#include <mips32.h>
+#include <nemu.h>
 #include <klib.h>
 
 static _Context* (*user_handler)(_Event, _Context*) = NULL;

@@ -1,20 +1,16 @@
-AM_SRCS := nemu-common/trm.c \
-           nemu-common/mainargs.S \
-           nemu-common/ioe.c \
-           nemu-common/nemu-input.c \
-           nemu-common/nemu-timer.c \
-           nemu-common/nemu-video.c \
-           $(ISA)/nemu/cte.c \
-           $(ISA)/nemu/trap.S \
-           $(ISA)/nemu/vme.c \
+AM_SRCS += nemu/common/trm.c \
+           nemu/common/mainargs.S \
+           nemu/common/ioe.c \
+           nemu/common/input.c \
+           nemu/common/timer.c \
+           nemu/common/video.c \
            dummy/mpe.c \
-           $(ISA)/nemu/boot/start.S
 
+CFLAGS  += -I$(AM_HOME)/am/src/nemu/include
 ASFLAGS += -DMAINARGS=\"$(mainargs)\"
-.PHONY: $(AM_HOME)/am/src/nemu-common/mainargs.S
+.PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S
 
-LDFLAGS += -L $(AM_HOME)/am/src/nemu-common
-LDFLAGS += -T $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
+LDFLAGS += -L $(AM_HOME)/am/src/nemu/ldscript
 
 NEMU_ARGS = --batch --log=$(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin
 

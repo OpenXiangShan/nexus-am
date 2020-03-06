@@ -1,5 +1,5 @@
-#ifndef __RISCV64_H__
-#define __RISCV64_H__
+#ifndef __RISCV_H__
+#define __RISCV_H__
 
 #ifndef __ASSEMBLER__
 
@@ -9,9 +9,6 @@ typedef union {
   struct { uint32_t lo, hi; };
   int64_t val;
 } R64;
-
-#define true 1
-#define false 0
 
 static inline uint8_t  inb(uintptr_t addr) { return *(volatile uint8_t  *)addr; }
 static inline uint16_t inw(uintptr_t addr) { return *(volatile uint16_t *)addr; }
@@ -38,26 +35,12 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTE_X 0x08
 #define PTE_U 0x10
 
-typedef uintptr_t PTE;
-#define NR_PTE    512     // # PTEs per page table
-#define PGSHFT    12      // log2(PGSIZE)
-#define PN(addr)    ((uint64_t)(addr) >> PGSHFT)
-#define OFF(va)     ((uint64_t)(va) & (PGSIZE - 1))
-
-// Sv39 page walk
-#define PTW_LEVEL 3
-#define PTE_SIZE 8
-#define VPNMASK 0x1ff
-// Offset of VPNi in a virtual address
-static inline uintptr_t VPNiSHFT(int i) {
-  return (PGSHFT) + 9 * i;
-}
-static inline uintptr_t VPNi(uintptr_t va, int i) {
-  return (va >> VPNiSHFT(i)) & VPNMASK;
-}
-
 // Address in page table entry
-#define PTE_ADDR(pte)   (((uint64_t)(pte) & ~0x3ff) << 2)
+#define PTE_ADDR(pte)   (((uintptr_t)(pte) & ~0x3ff) << 2)
+
+#define PTW_SV32 ((ptw_config) { .ptw_level = 2, .vpn_width = 10 })
+#define PTW_SV39 ((ptw_config) { .ptw_level = 3, .vpn_width = 9  })
+#define PTW_SV48 ((ptw_config) { .ptw_level = 4, .vpn_width = 9  })
 
 #endif
 
