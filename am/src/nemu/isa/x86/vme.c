@@ -25,8 +25,7 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static _Area segments[] = {      // Kernel memory mappings
-  RANGE(0, PMEM_SIZE),
-  RANGE(MMIO_BASE, MMIO_BASE + MMIO_SIZE),
+  NEMU_PADDR_SPACE,
 };
 
 #define USER_SPACE RANGE(0x40000000, 0xc0000000)

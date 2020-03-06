@@ -33,10 +33,16 @@
 # define FB_ADDR      0xa0000000
 #endif
 
-#define PMEM_SIZE (128 * 1024 * 1024)
 #define PGSIZE    4096
 
 #define MMIO_BASE 0xa0000000
 #define MMIO_SIZE 0x10000000
+
+extern char _pmem_start, _pmem_end;
+
+#define NEMU_PADDR_SPACE \
+  RANGE(&_pmem_start, &_pmem_end), \
+  RANGE(0xa0000000, 0xa0000000 + 0x80000), /* vmem */ \
+  RANGE(0xa1000000, 0xa1000000 + 0x1000)   /* serial, rtc, screen, keyboard */
 
 #endif

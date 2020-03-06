@@ -7,9 +7,7 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static const _Area segments[] = {      // Kernel memory mappings
-  RANGE(0x80000000, 0x80000000 + PMEM_SIZE),
-  RANGE(0xa1000000, 0xa1000000 + 0x1000),  // serial, rtc, screen, keyboard
-  RANGE(0xa0000000, 0xa0000000 + 0x80000), // vmem
+  NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64
   RANGE(0xa2000000, 0xa2000000 + 0x10000), // clint
 #endif
@@ -85,10 +83,11 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   PTE *pg_base = as->ptr;
   PTE *pte;
   int level;
-  for (level = PTW_CONFIG.ptw_level - 1; level >= 0; level --) {
+  for (level = PTW_CONFIG.ptw_level - 1; ; level --) {
     pte = &pg_base[VPNi(PTW_CONFIG, (uintptr_t)va, level)];
     pg_base = (PTE *)PTE_ADDR(*pte);
-    if (level != 0 && !(*pte & PTE_V)) {
+    if (level == 0) break;
+    if (!(*pte & PTE_V)) {
       pg_base = pgalloc_usr(PGSIZE);
       *pte = PTE_V | (PN(pg_base) << 10);
     }

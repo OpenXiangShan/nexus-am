@@ -1,13 +1,13 @@
 #include <am.h>
+#include <nemu.h>
 #include <klib-macros.h>
 
 // common part of TMR
 
 extern char _heap_start;
-extern char _heap_end;
 int main(const char *args);
 
-_Area _heap = RANGE(&_heap_start, &_heap_end);
+_Area _heap = RANGE(&_heap_start, &_pmem_end);
 
 void _trm_init() {
   extern const char __am_mainargs;
