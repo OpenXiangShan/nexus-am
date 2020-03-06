@@ -35,32 +35,12 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTE_X 0x08
 #define PTE_U 0x10
 
-typedef uintptr_t PTE;
-#define PGSHFT    12      // log2(PGSIZE)
-#define PN(addr)    ((uintptr_t)(addr) >> PGSHFT)
-#define OFF(va)     ((uintptr_t)(va) & (PGSIZE - 1))
-
 // Address in page table entry
 #define PTE_ADDR(pte)   (((uintptr_t)(pte) & ~0x3ff) << 2)
-
-typedef struct {
-  int ptw_level;
-  int vpn_width;
-} ptw_config;
 
 #define PTW_SV32 ((ptw_config) { .ptw_level = 2, .vpn_width = 10 })
 #define PTW_SV39 ((ptw_config) { .ptw_level = 3, .vpn_width = 9  })
 #define PTW_SV48 ((ptw_config) { .ptw_level = 4, .vpn_width = 9  })
-
-// Offset of VPN[i] in a virtual address
-static inline int VPNiSHFT(const ptw_config c, int i) {
-  return (PGSHFT) + c.vpn_width * i;
-}
-// Extract the VPN[i] field in a virtual address
-static inline uintptr_t VPNi(const ptw_config c, uintptr_t va, int i) {
-  uintptr_t vpn_mask = (1 << c.vpn_width) - 1;
-  return (va >> VPNiSHFT(c, i)) & vpn_mask;
-}
 
 #endif
 

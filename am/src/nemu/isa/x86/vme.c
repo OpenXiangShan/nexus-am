@@ -2,24 +2,9 @@
 #include <nemu.h>
 #include <klib.h>
 
-typedef uint32_t PTE;
-typedef uint32_t PDE;
+#define PTE_ADDR(pte)    ((uintptr_t)(pte) & ~0xfff)
 
-#define NR_PDE         1024    // # directory entries per page directory
-#define NR_PTE         1024    // # PTEs per page table
-#define PGSHFT         12      // log2(PGSIZE)
-#define PTXSHFT        12      // Offset of PTX in a linear address
-#define PDXSHFT        22      // Offset of PDX in a linear address
-
-#define PDX(va)          (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
-#define PTX(va)          (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
-#define OFF(va)          ((uint32_t)(va) & 0xfff)
-#define PTE_ADDR(pte)    ((uint32_t)(pte) & ~0xfff)
-#define PGADDR(d, t, o)  ((uint32_t)((d) << PDXSHFT | (t) << PTXSHFT | (o)))
-#define PG_ALIGN __attribute((aligned(PGSIZE)))
-
-static PDE kpdirs[NR_PDE] PG_ALIGN = {};
-static PTE kptabs[(PMEM_SIZE + MMIO_SIZE) / PGSIZE] PG_ALIGN = {};
+static _AddressSpace kas; // Kernel address space
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
@@ -34,32 +19,19 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
+  kas.ptr = pgalloc_f(PGSIZE);
+  // make all PTEs invalid
+  memset(kas.ptr, 0, PGSIZE);
+
   int i;
-
-  // make all PDEs invalid
-  for (i = 0; i < NR_PDE; i ++) {
-    kpdirs[i] = 0;
-  }
-
-  PTE *ptab = kptabs;
   for (i = 0; i < LENGTH(segments); i ++) {
-    uint32_t pdir_idx = (uintptr_t)segments[i].start / (PGSIZE * NR_PTE);
-    uint32_t pdir_idx_end = (uintptr_t)segments[i].end / (PGSIZE * NR_PTE);
-    for (; pdir_idx < pdir_idx_end; pdir_idx ++) {
-      // fill PDE
-      kpdirs[pdir_idx] = (uintptr_t)ptab | PTE_P;
-
-      // fill PTE
-      PTE pte = PGADDR(pdir_idx, 0, 0) | PTE_P;
-      PTE pte_end = PGADDR(pdir_idx + 1, 0, 0) | PTE_P;
-      for (; pte < pte_end; pte += PGSIZE) {
-        *ptab = pte;
-        ptab ++;
-      }
+    void *va = segments[i].start;
+    for (; va < segments[i].end; va += PGSIZE) {
+      _map(&kas, va, va, 0);
     }
   }
 
-  set_cr3(kpdirs);
+  set_cr3(kas.ptr);
   set_cr0(get_cr0() | CR0_PG);
   vme_enable = 1;
 
@@ -67,14 +39,12 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 void _protect(_AddressSpace *as) {
-  PDE *updir = (PDE*)(pgalloc_usr(PGSIZE));
+  PTE *updir = (PTE*)(pgalloc_usr(PGSIZE));
   as->ptr = updir;
   as->area = USER_SPACE;
   as->pgsize = PGSIZE;
   // map kernel space
-  for (int i = 0; i < NR_PDE; i ++) {
-    updir[i] = kpdirs[i];
-  }
+  memcpy(updir, kas.ptr, PGSIZE);
 }
 
 void _unprotect(_AddressSpace *as) {
@@ -88,17 +58,26 @@ void __am_switch(_Context *c) {
   if (vme_enable && c->cr3 != NULL) { set_cr3(c->cr3); }
 }
 
+#define PTW_CONFIG ((ptw_config) { .ptw_level = 2, .vpn_width = 10 })
+
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
-  PDE *pt = (PDE*)as->ptr;
-  PDE *pde = &pt[PDX(va)];
-  if (!(*pde & PTE_P)) {
-    *pde = PTE_P | PTE_W | PTE_U | (uint32_t)pgalloc_usr(PGSIZE);
+  PTE *pg_base = as->ptr;
+  PTE *pte;
+  int level;
+  for (level = PTW_CONFIG.ptw_level - 1; ; level --) {
+    pte = &pg_base[VPNi(PTW_CONFIG, (uintptr_t)va, level)];
+    pg_base = (PTE *)PTE_ADDR(*pte);
+    if (level == 0) break;
+    if (!(*pte & PTE_P)) {
+      pg_base = pgalloc_usr(PGSIZE);
+      *pte = PTE_P | PTE_W | PTE_U | (uintptr_t)pg_base;
+    }
   }
-  PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
+
   if (!(*pte & PTE_P)) {
-    *pte = PTE_P | PTE_W | PTE_U | (uint32_t)pa;
+    *pte = PTE_P | PTE_W | PTE_U | (uintptr_t)pa;
   }
 }
 

@@ -17,7 +17,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 void _protect(_AddressSpace *as) {
-  as->ptr = (PDE*)(pgalloc_usr(PGSIZE));
+  as->ptr = (PTE*)(pgalloc_usr(PGSIZE));
   as->pgsize = PGSIZE;
   as->area = USER_SPACE;
 }
@@ -25,7 +25,7 @@ void _protect(_AddressSpace *as) {
 void _unprotect(_AddressSpace *as) {
 }
 
-static PDE *cur_pdir = NULL;
+static PTE *cur_pdir = NULL;
 void __am_get_cur_as(_Context *c) {
   c->pdir = cur_pdir;
 }
@@ -43,8 +43,8 @@ void __am_switch(_Context *c) {
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
-  PDE *pdir = (PDE*)as->ptr;
-  PDE *pde = &pdir[PDX(va)];
+  PTE *pdir = (PTE*)as->ptr;
+  PTE *pde = &pdir[PDX(va)];
   if (!(*pde & PTE_V)) {
     *pde = PTE_V | (uint32_t)pgalloc_usr(PGSIZE);
   }
@@ -82,7 +82,7 @@ void __am_tlb_refill() {
 
   uint32_t va = hi & ~0x1fff;
   assert(cur_pdir != NULL);
-  PDE *pde = &cur_pdir[PDX(va)];
+  PTE *pde = &cur_pdir[PDX(va)];
   assert(*pde & PTE_V);
 
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
