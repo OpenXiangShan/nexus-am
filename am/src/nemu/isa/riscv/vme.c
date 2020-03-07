@@ -35,6 +35,9 @@ static const _Area segments[] = {      // Kernel memory mappings
 
 static inline void set_satp(void *pdir) {
   asm volatile("csrw satp, %0" : : "r"(SATP_MODE | PN(pdir)));
+#if __riscv_xlen == 64
+  asm volatile("sfence.vma");
+#endif
 }
 
 static inline uintptr_t get_satp() {
