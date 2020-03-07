@@ -15,14 +15,17 @@ static _Area segments[] = {      // Kernel memory mappings
 
 #define USER_SPACE RANGE(0x40000000, 0xc0000000)
 
+static inline void *new_page() {
+  void *p = pgalloc_usr(PGSIZE);
+  memset(p, 0, PGSIZE);
+  return p;
+}
+
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
-  kas.ptr = pgalloc_f(PGSIZE);
-  // make all PTEs invalid
-  memset(kas.ptr, 0, PGSIZE);
-
+  kas.ptr = new_page();
   int i;
   for (i = 0; i < LENGTH(segments); i ++) {
     void *va = segments[i].start;
@@ -39,7 +42,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 void _protect(_AddressSpace *as) {
-  PTE *updir = (PTE*)(pgalloc_usr(PGSIZE));
+  PTE *updir = new_page();
   as->ptr = updir;
   as->area = USER_SPACE;
   as->pgsize = PGSIZE;
@@ -71,7 +74,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
     pg_base = (PTE *)PTE_ADDR(*pte);
     if (level == 0) break;
     if (!(*pte & PTE_P)) {
-      pg_base = pgalloc_usr(PGSIZE);
+      pg_base = new_page();
       *pte = PTE_P | PTE_W | PTE_U | (uintptr_t)pg_base;
     }
   }
