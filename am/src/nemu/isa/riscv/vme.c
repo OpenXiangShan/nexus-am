@@ -6,10 +6,20 @@ static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
+#define RANGE_LEN(start, len) RANGE((start), (start + len))
+
 static const _Area segments[] = {      // Kernel memory mappings
+#ifdef __ARCH_RISCV64_NOOP
+  RANGE_LEN(0x80000000, 0x8000000), // PMEM
+  RANGE_LEN(0x40600000, 0x1000),    // uart
+  RANGE_LEN(0x48000000, 0x10000),    // clint/timer
+  RANGE_LEN(0x41000000, 0x400000),  // vmem
+  RANGE_LEN(0x40800000, 0x1000),  // vmem
+#else
   NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64
-  RANGE(0xa2000000, 0xa2000000 + 0x10000), // clint
+  RANGE_LEN(0xa2000000, 0x10000), // clint
+#endif
 #endif
 };
 
@@ -25,6 +35,9 @@ static const _Area segments[] = {      // Kernel memory mappings
 
 static inline void set_satp(void *pdir) {
   asm volatile("csrw satp, %0" : : "r"(SATP_MODE | PN(pdir)));
+#if __riscv_xlen == 64
+  asm volatile("sfence.vma");
+#endif
 }
 
 static inline uintptr_t get_satp() {
@@ -33,14 +46,17 @@ static inline uintptr_t get_satp() {
   return satp << 12;  // the mode bits will be shifted out
 }
 
+static inline void *new_page() {
+  void *p = pgalloc_usr(PGSIZE);
+  memset(p, 0, PGSIZE);
+  return p;
+}
+
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
-  kas.ptr = pgalloc_f(PGSIZE);
-  // make all PTEs invalid
-  memset(kas.ptr, 0, PGSIZE);
-
+  kas.ptr = new_page();
   int i;
   for (i = 0; i < LENGTH(segments); i ++) {
     void *va = segments[i].start;
@@ -56,7 +72,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 void _protect(_AddressSpace *as) {
-  PTE *updir = (PTE*)(pgalloc_usr(PGSIZE));
+  PTE *updir = new_page();
   as->ptr = updir;
   as->area = USER_SPACE;
   as->pgsize = PGSIZE;
@@ -88,7 +104,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
     pg_base = (PTE *)PTE_ADDR(*pte);
     if (level == 0) break;
     if (!(*pte & PTE_V)) {
-      pg_base = pgalloc_usr(PGSIZE);
+      pg_base = new_page();
       *pte = PTE_V | (PN(pg_base) << 10);
     }
   }

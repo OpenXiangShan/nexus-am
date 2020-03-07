@@ -8,6 +8,12 @@ static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
+static inline void *new_page() {
+  void *p = pgalloc_usr(PGSIZE);
+  memset(p, 0, PGSIZE);
+  return p;
+}
+
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
@@ -17,7 +23,7 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 void _protect(_AddressSpace *as) {
-  as->ptr = (PTE*)(pgalloc_usr(PGSIZE));
+  as->ptr = new_page();
   as->pgsize = PGSIZE;
   as->area = USER_SPACE;
 }
@@ -46,7 +52,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   PTE *pdir = (PTE*)as->ptr;
   PTE *pde = &pdir[PDX(va)];
   if (!(*pde & PTE_V)) {
-    *pde = PTE_V | (uint32_t)pgalloc_usr(PGSIZE);
+    *pde = PTE_V | (uintptr_t)new_page();
   }
   PTE *pte = &((PTE*)PTE_ADDR(*pde))[PTX(va)];
   if (!(*pte & PTE_V)) {

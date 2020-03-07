@@ -40,8 +40,9 @@ size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
         timestamp = uptime();
       } else {
         int _k = __am_uartlite_getchar();
+        if (_k == 255) _k = 0;
         assert(_k < 128 && _k >= 0);
-        int key = am_keycode[_k];
+        int key = (_k == -1 ? _KEY_NONE : am_keycode[_k]);
         if (key == _KEY_NONE) {
           if (last_key != _KEY_NONE) {
             unsigned long now = uptime();

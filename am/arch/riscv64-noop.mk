@@ -1,21 +1,25 @@
 include $(AM_HOME)/am/arch/isa/riscv64.mk
 
-AM_SRCS := $(ISA)/noop/trm.c \
-           $(ISA)/noop/uartlite.c \
-           $(ISA)/noop/perf.c \
-           $(ISA)/noop/cte.c \
-           $(ISA)/noop/trap.S \
-           $(ISA)/noop/instr.c \
-           $(ISA)/noop/vme.c \
-           nemu-common/ioe.c \
-           $(ISA)/noop/input.c \
-           nemu-common/nemu-timer.c \
-           nemu-common/nemu-video.c \
+AM_SRCS := noop/isa/riscv/trm.c \
+           noop/isa/riscv/perf.c \
+           noop/common/uartlite.c \
+           nemu/isa/riscv/cte.c \
+           nemu/isa/riscv/trap.S \
+           nemu/isa/riscv/cte64.c \
+           nemu/isa/riscv/mtime.S \
+           nemu/isa/riscv/vme.c \
+           nemu/common/ioe.c \
+           noop/common/input.c \
+           noop/common/timer.c \
+           nemu/common/video.c \
+           noop/isa/riscv/instr.c \
            dummy/mpe.c \
-           $(ISA)/nemu/boot/start.S
+           nemu/isa/riscv/boot/start.S
 
-LDFLAGS += -L $(AM_HOME)/am/src/nemu-common
-LDFLAGS += -T $(AM_HOME)/am/src/$(ISA)/nemu/boot/loader.ld
+CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -DISA_H=\"riscv.h\"
+
+LDFLAGS += -L $(AM_HOME)/am/src/nemu/ldscript
+LDFLAGS += -T $(AM_HOME)/am/src/nemu/isa/riscv/boot/loader64.ld
 
 image:
 	@echo + LD "->" $(BINARY_REL).elf

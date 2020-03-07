@@ -1,14 +1,17 @@
 #include <am.h>
-#include <riscv32.h>
+#include <riscv.h>
 #include <klib.h>
 
 extern char _heap_start;
-extern char _heap_end;
+extern char _pmem_end;
 int main(const char *args);
 void __am_init_uartlite(void);
 void __am_uartlite_putchar(char ch);
 
-_Area _heap = RANGE(&_heap_start, &_heap_end);
+_Area _heap = {
+  .start = &_heap_start,
+  .end = &_pmem_end,
+};
 
 void _putc(char ch) {
   __am_uartlite_putchar(ch);
@@ -26,7 +29,7 @@ void _halt(int code) {
 
 void _trm_init() {
   __am_init_uartlite();
-  extern const char _mainargs;
-  int ret = main(&_mainargs);
+  const char *mainargs = "";
+  int ret = main(mainargs);
   _halt(ret);
 }

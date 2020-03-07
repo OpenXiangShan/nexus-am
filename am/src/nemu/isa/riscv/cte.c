@@ -7,13 +7,21 @@ static _Context* (*user_handler)(_Event, _Context*) = NULL;
 void __am_get_cur_as(_Context *c);
 void __am_switch(_Context *c);
 
+#define INTR_BIT (1ul << (sizeof(uintptr_t) * 8 - 1))
+
 _Context* __am_irq_handle(_Context *c) {
   __am_get_cur_as(c);
 
   if (user_handler) {
     _Event ev = {0};
     switch (c->scause) {
-      case 0x80000005: ev.event = _EVENT_IRQ_TIMER; break;
+#if __riscv_xlen == 64
+      // SSIP, which is set at mtime.S
+      case 0x1 | INTR_BIT: asm volatile ("csrwi sip, 0");
+#else
+      case 0x5 | INTR_BIT:
+#endif
+        ev.event = _EVENT_IRQ_TIMER; break;
       case 9:
         ev.event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
         c->sepc += 4;
@@ -26,6 +34,10 @@ _Context* __am_irq_handle(_Context *c) {
   }
 
   __am_switch(c);
+
+#if __riscv_xlen == 64
+  asm volatile("fence.i");
+#endif
 
   return c;
 }
@@ -40,6 +52,11 @@ int _cte_init(_Context*(*handler)(_Event, _Context*)) {
 
   // register event handler
   user_handler = handler;
+
+#if __riscv_xlen == 64
+  extern void __am_init_cte64();
+  __am_init_cte64();
+#endif
 
   return 0;
 }
