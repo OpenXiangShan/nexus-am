@@ -29,7 +29,7 @@ void _halt(int code) {
 
 void _trm_init() {
   __am_init_uartlite();
-  const char *mainargs = "";
-  int ret = main(mainargs);
+  extern const char __am_mainargs;
+  int ret = main(&__am_mainargs);
   _halt(ret);
 }
