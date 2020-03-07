@@ -1,8 +1,14 @@
 #include <riscv.h>
 
+#ifdef __ARCH_RISCV64_NOOP
+#define CLINT_MMIO 0x48000000
+#define TIME_INC 0x80000
+#else
 #define CLINT_MMIO 0xa2000000
-#define CLINT_MTIMECMP (CLINT_MMIO + 0x4000)
 #define TIME_INC 0x800
+#endif
+
+#define CLINT_MTIMECMP (CLINT_MMIO + 0x4000)
 
 extern void __am_timervec(void);
 

@@ -1,6 +1,8 @@
 #include <am.h>
-#include <riscv64.h>
+#include <riscv.h>
 #include <klib.h>
+#include <klib-macros.h>
+
 //TODO: have not done riscv64 software mul/div
 static uint32_t mul(uint32_t a, uint32_t b, int sign, int hi) {
   if (a == 0x80000000 && b == 0x80000000) {
@@ -83,7 +85,7 @@ int __am_illegal_instr(_Context *c) {
     };
     uint32_t val;
   } instr;
-  instr.val = *(uint32_t *)(c->mepc);
+  instr.val = *(uint32_t *)(c->sepc);
 
   if (instr.opcode == 0x33 && instr.func2 == 1) {
     // M extension
@@ -99,7 +101,7 @@ int __am_illegal_instr(_Context *c) {
     }
   }
 
-  printf("invalid instruction at pc = %x\n", c->mepc);
+  printf("invalid instruction at pc = %x\n", c->sepc);
   _halt(1);
   return false;
 }
