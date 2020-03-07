@@ -6,9 +6,9 @@ struct _Context {
     void *pdir;
     uint64_t gpr[32];
   };
-  uint64_t cause;
-  uint64_t status;
-  uint64_t epc;
+  uint64_t mcause;
+  uint64_t mstatus;
+  uint64_t mepc;
 };
 
 #define GPR1 gpr[17] // a7

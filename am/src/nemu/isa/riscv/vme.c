@@ -102,13 +102,8 @@ _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
   _Context *c = (_Context*)kstack.end - 1;
 
   c->pdir = as->ptr;
-  c->epc = (uintptr_t)entry;
-#if __riscv_xlen == 64
-  uintptr_t mprotect = MSTATUS_MXR | MSTATUS_SUM;
-  c->status = mprotect | MSTATUS_SPP(MODE_S) | MSTATUS_PIE(MODE_S);
-#else
-  c->status = 0x000c0120;
-#endif
+  c->sepc = (uintptr_t)entry;
+  c->sstatus = MSTATUS_SPP(MODE_S) | MSTATUS_PIE(MODE_S);
   c->gpr[2] = 1; // sp slot, used as usp, non-zero is ok
   return c;
 }

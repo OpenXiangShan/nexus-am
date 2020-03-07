@@ -110,6 +110,7 @@ static void KeyboardCommands ()
     int keydown = (key & KEYDOWN_MASK) != 0;
     assert(keycode < 256);
     g_keyState[keycode] = keydown;
+    if (keycode == _KEY_ESCAPE) _halt(0);
   } while (keycode != _KEY_NONE);
 
 	// Toggle throttling

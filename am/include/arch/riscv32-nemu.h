@@ -4,11 +4,11 @@
 struct _Context {
   union {
     void *pdir;
-    uint32_t gpr[32];
+    uintptr_t gpr[32];
   };
-  uint32_t cause;
-  uint32_t status;
-  uint32_t epc;
+  uintptr_t scause;
+  uintptr_t sstatus;
+  uintptr_t sepc;
 };
 
 #define GPR1 gpr[17] // a7
