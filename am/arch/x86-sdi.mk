@@ -7,6 +7,8 @@ AM_SRCS += sdi/trm.c \
            nemu/common/input.c \
            nemu/common/timer.c \
            nemu/common/video.c \
+           dummy/cte.c \
+           dummy/vme.c \
            dummy/mpe.c \
 
 CFLAGS  += -mstringop-strategy=loop -I$(AM_HOME)/am/src/sdi/include
