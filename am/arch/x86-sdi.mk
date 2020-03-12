@@ -28,7 +28,10 @@ image:
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
 
 run:
-	$(MAKE) -C $(NEMU_HOME) ISA=$(ISA) run ARGS="$(NEMU_ARGS)"
+	$(MAKE) -C $(NEMU_HOME) ISA=riscv64 ENGINE=sdi-exec run ARGS="--batch $(BINARY).bin" &
+	( while ps -p $$PPID >/dev/null ; do sleep 1 ; done ; pkill -9 -f riscv64-nemu-sdi-exec ) &
+	sleep 3 # wait for riscv64-nemu-sdi-exec to start
+	$(MAKE) -C $(NEMU_HOME) ISA=$(ISA) ENGINE=sdi-tran run ARGS="$(NEMU_ARGS)"
 
 gdb: image
-	$(MAKE) -C $(NEMU_HOME) ISA=$(ISA) gdb ARGS="$(NEMU_ARGS)"
+	$(MAKE) -C $(NEMU_HOME) ISA=$(ISA) ENGINE=sdi-tran gdb ARGS="$(NEMU_ARGS)"
