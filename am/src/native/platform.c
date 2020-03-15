@@ -1,6 +1,6 @@
+#define _GNU_SOURCE
 #include <sys/mman.h>
 #include <sys/auxv.h>
-#include <fcntl.h>
 #include <elf.h>
 #include <stdlib.h>
 #include "platform.h"
@@ -10,7 +10,6 @@
 #define PMEM_START (void *)0x3000000  // for nanos-lite with vme disabled
 #define PMEM_SIZE (128 * 1024 * 1024) // 128MB
 static int pmem_fd = 0;
-static char pmem_shm_file[] = "/native-pmem-XXXXXX";
 static void *pmem = NULL;
 static ucontext_t uc_example = {};
 static int sys_pgsz;
@@ -57,10 +56,8 @@ int main(const char *args);
 
 static void init_platform() __attribute__((constructor));
 static void init_platform() {
-  // create shared memory object and set up mapping to simulate the physical memory
-  assert(access("/", W_OK) != 0);
-  assert(mkstemp(pmem_shm_file) < 0);
-  pmem_fd = shm_open(pmem_shm_file, O_RDWR | O_CREAT | O_EXCL, 0700);
+  // create memory object and set up mapping to simulate the physical memory
+  pmem_fd = memfd_create("pmem", 0);
   assert(pmem_fd != -1);
   assert(0 == ftruncate(pmem_fd, PMEM_SIZE));
 
@@ -159,16 +156,13 @@ static void init_platform() {
 }
 
 void __am_exit_platform(int code) {
-  int ret = shm_unlink(pmem_shm_file);
-  printf("Unlink pmem_shm_file %s\n", (ret == 0 ? "successfully" : "fail"));
-
   // let Linux clean up other resource
   extern int __am_mpe_init;
   if (__am_mpe_init && _ncpu() > 1) kill(0, SIGKILL);
   exit(code);
 }
 
-void __am_shm_mmap(void *va, void *pa, int prot) {
+void __am_pmem_map(void *va, void *pa, int prot) {
   // translate AM prot to mmap prot
   int mmap_prot = PROT_NONE;
   // we do not support executable bit, so mark
@@ -180,7 +174,7 @@ void __am_shm_mmap(void *va, void *pa, int prot) {
   assert(ret != (void *)-1);
 }
 
-void __am_shm_munmap(void *va) {
+void __am_pmem_unmap(void *va) {
   int ret = munmap(va, __am_pgsize);
   assert(ret == 0);
 }

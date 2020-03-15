@@ -46,7 +46,7 @@ void __am_switch(_Context *c) {
     // munmap all mappings
     list_foreach(pp, thiscpu->vm_head) {
       if (pp->is_mapped) {
-        __am_shm_munmap(pp->va);
+        __am_pmem_unmap(pp->va);
         pp->is_mapped = false;
       }
     }
@@ -56,7 +56,7 @@ void __am_switch(_Context *c) {
     // mmap all mappings
     list_foreach(pp, head) {
       assert(IN_RANGE(pp->va, USER_SPACE));
-      __am_shm_mmap(pp->va, pp->pa, pp->prot);
+      __am_pmem_map(pp->va, pp->pa, pp->prot);
       pp->is_mapped = true;
     }
   }
@@ -90,7 +90,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
 
   if (vm_head == thiscpu->vm_head) {
     // enforce the map immediately
-    __am_shm_mmap(pp->va, pp->pa, pp->prot);
+    __am_pmem_map(pp->va, pp->pa, pp->prot);
     pp->is_mapped = true;
   }
 }
