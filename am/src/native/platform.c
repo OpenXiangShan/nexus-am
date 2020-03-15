@@ -66,7 +66,7 @@ static void init_platform() {
 
   pmem = mmap(PMEM_START, PMEM_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
       MAP_SHARED | MAP_FIXED, pmem_fd, 0);
-  assert(_heap.start != (void *)-1);
+  assert(pmem != (void *)-1);
 
   // allocate private per-cpu structure
   thiscpu = mmap(NULL, sizeof(*thiscpu), PROT_READ | PROT_WRITE,
