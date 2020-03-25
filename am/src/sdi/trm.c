@@ -20,6 +20,17 @@ void _putc(char ch) {
 
 void _halt(int code) {
   printf("Exit with code = %d\n", code);
+
+#if defined(__ISA_X86__)
+  asm volatile (".byte 0xd6" : :"a"(code));
+#elif defined(__ISA_MIPS32__)
+  asm volatile ("move $v0, %0; .word 0xf0000000" : :"r"(code));
+#elif defined(__ISA_RISCV32__)
+  asm volatile("mv a0, %0; .word 0x0000006b" : :"r"(code));
+#else
+#error unsupport ISA
+#endif
+
   printf("Spinning\n");
   while (1);
 }
