@@ -41,7 +41,7 @@ save_context:
   MAP(REGS, PUSH)
 
   csrrw t0, sscratch, x0 # t0 = (from user ? usp : 0)
-  sw t0, OFFSET_SP(sp)
+  STORE t0, OFFSET_SP(sp)
 
   csrr t0, scause
   csrr t1, sstatus
