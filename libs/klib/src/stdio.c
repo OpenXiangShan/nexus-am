@@ -28,8 +28,8 @@ static void __putstr(const char *s, int len, format_t *f) {
   while (len --) __putch(*s ++, 1, f);
 }
 
-#define FORMAT_FUN_DEF(name, base) \
-  static int name(char *revbuf, unsigned long long n) { \
+#define FORMAT_FUN_DEF(name, type, base) \
+  static int name(char *revbuf, type n) { \
     char *p = revbuf; \
     *(-- p) = '\0'; \
     do { \
@@ -39,15 +39,27 @@ static void __putstr(const char *s, int len, format_t *f) {
     return revbuf - p - 1;  /* exclude the null byte */ \
   }
 
-FORMAT_FUN_DEF(format_oct, 8)
-FORMAT_FUN_DEF(format_dec, 10)
-FORMAT_FUN_DEF(format_hex, 16)
+FORMAT_FUN_DEF(format_oct32, uint32_t, 8)
+FORMAT_FUN_DEF(format_dec32, uint32_t, 10)
+FORMAT_FUN_DEF(format_hex32, uint32_t, 16)
+FORMAT_FUN_DEF(format_oct64, uint64_t, 8)
+FORMAT_FUN_DEF(format_dec64, uint64_t, 10)
+FORMAT_FUN_DEF(format_hex64, uint64_t, 16)
 
-static int format_integer(char *rev_buf, unsigned long long n, int base) {
+static int format_int32(char *rev_buf, unsigned long long n, int base) {
   switch (base) {
-    case 8:  return format_oct(rev_buf, n);
-    case 10: return format_dec(rev_buf, n);
-    case 16: return format_hex(rev_buf, n);
+    case 8:  return format_oct32(rev_buf, n);
+    case 10: return format_dec32(rev_buf, n);
+    case 16: return format_hex32(rev_buf, n);
+  }
+  return 0;
+}
+
+static int format_int64(char *rev_buf, unsigned long long n, int base) {
+  switch (base) {
+    case 8:  return format_oct64(rev_buf, n);
+    case 10: return format_dec64(rev_buf, n);
+    case 16: return format_hex64(rev_buf, n);
   }
   return 0;
 }
@@ -70,7 +82,14 @@ static int vsnprintf_internal(char *out, size_t size, const char *fmt, va_list a
 
     char temp_buf[64];
     char *temp_buf_end = temp_buf + sizeof(temp_buf);
-    unsigned long long varguint = 0;
+    uint32_t varguint32 = 0;
+    uint64_t varguint64 = 0;
+    int is_64bit = false;
+#ifdef __LP64__
+#define vargulong varguint64
+#else
+#define vargulong varguint32
+#endif
 
     f.pad.is_right = false; f.pad.ch = ' ';
     f.sign.enable = false;
@@ -130,9 +149,10 @@ reswitch:
       case 'o': base = 8; goto read_arg;
 
 read_arg:
-#define CASE(len_mod, actual_type, fetch_type) \
+#define CASE(len_mod, actual_type, fetch_type, varguint) \
   case len_mod: { \
     signed actual_type s = (signed actual_type)va_arg(ap, signed fetch_type); \
+    is_64bit = (sizeof(varguint) == 8); \
     if (is_signed && s < 0) { \
       f.sign.ch = '-'; f.sign.enable = true; \
       /* avoid overflow when performing negation with INT_MIN */ \
@@ -141,14 +161,15 @@ read_arg:
     break; \
   }
         switch (len_mod) {
-          CASE(LEN_hh, char, int)
-          CASE(LEN_h, short, int)
-          CASE(LEN_NONE, int, int)
-          CASE(LEN_l, long, long)
-          CASE(LEN_ll, long long, long long)
+          CASE(LEN_hh, char, int, varguint32)
+          CASE(LEN_h, short, int, varguint32)
+          CASE(LEN_NONE, int, int, varguint32)
+          CASE(LEN_l, long, long, vargulong)
+          CASE(LEN_ll, long long, long long, varguint64)
         }
 print_num:;
-        int digit_len = format_integer(temp_buf_end, varguint, base);
+        int digit_len = (is_64bit ? format_int64(temp_buf_end, varguint64, base) :
+            format_int32(temp_buf_end, varguint32, base));
         char *p_digit = temp_buf_end - digit_len - 1;
         int sign_len = (is_signed && f.sign.enable ? 1 : 0);
         int prec_pad0_len = (prec > digit_len ? prec - digit_len : 0);
@@ -164,10 +185,11 @@ print_num:;
         break;
 
       case 'p':
-        varguint = va_arg(ap, uintptr_t);
-        if (varguint == 0) { __putstr("(nil)", 5, &f); break; }
+        vargulong = va_arg(ap, uintptr_t);
+        if (vargulong == 0) { __putstr("(nil)", 5, &f); break; }
         __putstr("0x", 2, &f);
         base = 16;
+        is_64bit = (sizeof(vargulong) == 8);
         goto print_num;
 
       case 'c':
