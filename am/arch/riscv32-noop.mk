@@ -1,4 +1,4 @@
-include $(AM_HOME)/am/arch/isa/riscv64.mk
+include $(AM_HOME)/am/arch/isa/riscv32.mk
 
 AM_SRCS := noop/isa/riscv/trm.c \
            nemu/common/mainargs.S \
@@ -6,8 +6,6 @@ AM_SRCS := noop/isa/riscv/trm.c \
            noop/common/uartlite.c \
            nemu/isa/riscv/cte.c \
            nemu/isa/riscv/trap.S \
-           nemu/isa/riscv/cte64.c \
-           nemu/isa/riscv/mtime.S \
            nemu/isa/riscv/vme.c \
            nemu/common/ioe.c \
            noop/common/input.c \
@@ -23,7 +21,7 @@ ASFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S
 
 LDFLAGS += -L $(AM_HOME)/am/src/nemu/ldscript
-LDFLAGS += -T $(AM_HOME)/am/src/nemu/isa/riscv/boot/loader64.ld
+LDFLAGS += -T $(AM_HOME)/am/src/noop/isa/riscv/boot/loader.ld
 
 image:
 	@echo + LD "->" $(BINARY_REL).elf
@@ -33,4 +31,4 @@ image:
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
 
 run:
-	$(MAKE) -C $(NOOP_HOME) emu IMAGE="$(BINARY).bin" DATAWIDTH=64
+	$(MAKE) -C $(NOOP_HOME) emu IMAGE="$(BINARY).bin" DATAWIDTH=32

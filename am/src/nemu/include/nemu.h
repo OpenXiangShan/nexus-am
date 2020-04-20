@@ -12,13 +12,7 @@
 # define SCREEN_ADDR  0x100
 # define SYNC_ADDR    0x104
 # define FB_ADDR      0xa0000000
-#elif defined(__ARCH_RISCV32_NOOP)
-# define KBD_ADDR     0x40900000
-# define RTC_ADDR     0x40700000
-# define SCREEN_ADDR  0x40800000
-# define SYNC_ADDR    0x40800004
-# define FB_ADDR      0x40000000
-#elif defined(__ARCH_RISCV64_NOOP)
+#elif defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP)
 # define KBD_ADDR     0x40900000
 # define RTC_ADDR     0x4800bff8
 # define SCREEN_ADDR  0x40800000
