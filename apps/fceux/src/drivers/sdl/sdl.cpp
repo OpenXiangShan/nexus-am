@@ -34,6 +34,8 @@ int gametype = 0;
 int pal_emulation;
 int dendy;
 
+bool swapDuty;
+
 // global configuration object
 //Config *g_config;
 
@@ -122,6 +124,9 @@ DriverInitialize(FCEUGI *gi)
 {
 	if(InitVideo(gi) < 0) return 0;
 	inited|=4;
+
+  if(InitSound())
+    inited|=1;
 
 	eoptions &= ~EO_FOURSCORE;
 

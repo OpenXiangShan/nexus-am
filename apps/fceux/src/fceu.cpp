@@ -450,7 +450,7 @@ void FCEUI_CloseGame(void) {
 void ResetNES(void) {
 	if (!GameInfo) return;
 	GameInterface(GI_RESETM2);
-	//FCEUSND_Reset();
+	FCEUSND_Reset();
 	FCEUPPU_Reset();
 	X6502_Reset();
 
@@ -488,7 +488,7 @@ void PowerNES(void) {
 	SetWriteHandler(0x800, 0x1FFF, BRAMH);	//hack for a small speed boost.
 
 	InitializeInput();
-	//FCEUSND_Power();
+	FCEUSND_Power();
 	FCEUPPU_Power();
 
 	//Have the external game hardware "powered" after the internal NES stuff.  Needed for the NSF code and VS System code.
@@ -525,6 +525,7 @@ void FCEU_ResetVidSys(void) {
 	normalscanlines = (dendy ? 290 : 240)+newppu; // use flag as number!
 	totalscanlines = normalscanlines + (overclock_enabled ? postrenderscanlines : 0);
 	FCEUPPU_SetVideoSystem(w || dendy);
+  SetSoundVariables();
 }
 
 FCEUS FSettings;
