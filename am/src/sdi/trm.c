@@ -25,7 +25,7 @@ void _halt(int code) {
   asm volatile (".byte 0xd6" : :"a"(code));
 #elif defined(__ISA_MIPS32__)
   asm volatile ("move $v0, %0; .word 0xf0000000" : :"r"(code));
-#elif defined(__ISA_RISCV32__)
+#elif defined(__ISA_RISCV32__) || defined(__ISA_RISCV64__)
   asm volatile("mv a0, %0; .word 0x0000006b" : :"r"(code));
 #else
 #error unsupport ISA
