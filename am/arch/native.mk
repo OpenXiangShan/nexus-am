@@ -8,6 +8,7 @@ AM_SRCS := native/trm.c \
            native/devices/input.c \
            native/devices/timer.c \
            native/devices/video.c \
+           native/devices/audio.c \
 
 CFLAGS  += -fpie
 ASFLAGS += -fpie -pie
