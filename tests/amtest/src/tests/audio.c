@@ -3,7 +3,7 @@
 
 void audio_test() {
   _DEV_AUDIO_INIT_t init;
-  init.freq = 44100;
+  init.freq = 8000;
   init.channels = 1;
   init.samples = 1024;
   init.bufsize = 8192;
