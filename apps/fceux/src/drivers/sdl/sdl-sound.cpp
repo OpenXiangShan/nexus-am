@@ -24,47 +24,7 @@
 #include "sdl.h"
 #include <amdev.h>
 
-//#include "../common/configSys.h"
-#include "../../utils/memory.h"
-
-//extern Config *g_config;
-
-static volatile int *s_Buffer = 0;
 static unsigned int s_BufferSize;
-static unsigned int s_BufferRead;
-static unsigned int s_BufferWrite;
-static volatile unsigned int s_BufferIn;
-
-//static int s_mute = 0;
-
-
-/**
- * Callback from the SDL to get and play audio data.
- */
-#if 0
-  static void
-fillaudio(void *udata,
-    uint8 *stream,
-    int len)
-{
-  int16 *tmps = (int16*)stream;
-  len >>= 1;
-  while(len) {
-    int16 sample = 0;
-    if(s_BufferIn) {
-      sample = s_Buffer[s_BufferRead];
-      s_BufferRead = (s_BufferRead + 1) % s_BufferSize;
-      s_BufferIn--;
-    } else {
-      sample = 0;
-    }
-
-    *tmps = sample;
-    tmps++;
-    len--;
-  }
-}
-#endif
 
 /**
  * Initialize the audio subsystem.
@@ -73,7 +33,6 @@ fillaudio(void *udata,
 InitSound()
 {
   int soundrate = 44100;
-  int soundbufsize = 128;
   int soundvolume = 150;
   int soundtrianglevolume = 256;
   int soundsquare1volume = 256;
@@ -82,35 +41,10 @@ InitSound()
   int soundpcmvolume = 256;
   int soundq = 1;
 
-#if 0
-  spec.freq = soundrate;
-  spec.format = AUDIO_S16SYS;
-  spec.channels = 1;
-  spec.samples = 512;
-  spec.callback = fillaudio;
-  spec.userdata = 0;
-#endif
+  _DEV_AUDIO_SBSTAT_t audio;
+  _io_read(_DEV_AUDIO, _DEVREG_AUDIO_SBSTAT, &audio, sizeof(audio));
+  s_BufferSize = audio.bufsize / sizeof(int16_t);
 
-  s_BufferSize = soundbufsize * soundrate / 1000;
-
-  // For safety, set a bare minimum:
-  //if (s_BufferSize < spec.samples * 2)
-  //s_BufferSize = spec.samples * 2;
-
-  s_Buffer = (int *)FCEU_dmalloc(sizeof(int) * s_BufferSize);
-  if (!s_Buffer)
-    return 0;
-  s_BufferRead = s_BufferWrite = s_BufferIn = 0;
-
-#if 0
-  if(SDL_OpenAudio(&spec, 0) < 0)
-  {
-    puts(SDL_GetError());
-    KillSound();
-    return 0;
-  }
-  SDL_PauseAudio(0);
-#endif
 
   FCEUI_SetSoundVolume(soundvolume);
   FCEUI_SetSoundQuality(soundq);
@@ -139,7 +73,10 @@ GetMaxSound(void)
   uint32
 GetWriteSound(void)
 {
-  return(s_BufferSize - s_BufferIn);
+  _DEV_AUDIO_SBSTAT_t audio;
+  _io_read(_DEV_AUDIO, _DEVREG_AUDIO_SBSTAT, &audio, sizeof(audio));
+  audio.count /= sizeof(int16_t);
+  return s_BufferSize - audio.count;
 }
 
 /**
@@ -151,38 +88,24 @@ WriteSound(int32 *buf,
 {
   extern int EmulationPaused;
   if (EmulationPaused == 0) {
+    // FECUX stores each PCM sample as 32-bit data,
+    // but it sets the audio type with AUDIO_S16SYS,
+    // so we should transform the `buf` into a 16-bit
+    // buffer before feeding it to the audio device
+    int16_t *buf16 = (int16_t *)malloc(sizeof(buf16[0]) * Count);
+    assert(buf16);
+    int i;
+    for (i = 0; i < Count; i ++) {
+      buf16[i] = buf[i];
+    }
+
     _DEV_AUDIO_SBCTRL_t audio;
-    audio.stream = (uint8_t *)buf;
+    audio.stream = (uint8_t *)buf16;
     audio.wait = 1;
-    uint32_t audio_len = Count * sizeof(buf[0]);
-    uint32_t nplay = 0;
-    while (nplay < audio_len) {
-      audio.len = (audio_len - nplay > 4096 ? 4096 : audio_len - nplay);
-      _io_write(_DEV_AUDIO, _DEVREG_AUDIO_SBCTRL, &audio, sizeof(audio));
-      audio.stream += audio.len;
-      nplay += audio.len;
-    }
+    audio.len = Count * sizeof(buf16[0]);
+    _io_write(_DEV_AUDIO, _DEVREG_AUDIO_SBCTRL, &audio, sizeof(audio));
+    free(buf16);
   }
-
-#if 0
-  while(Count)
-  {
-    while(s_BufferIn == s_BufferSize)
-    {
-      SDL_Delay(1);
-    }
-
-    s_Buffer[s_BufferWrite] = *buf;
-    Count--;
-    s_BufferWrite = (s_BufferWrite + 1) % s_BufferSize;
-
-    SDL_LockAudio();
-    s_BufferIn++;
-    SDL_UnlockAudio();
-
-    buf++;
-  }
-#endif
 }
 
 /**
@@ -201,12 +124,6 @@ SilenceSound(int n)
 KillSound(void)
 {
   FCEUI_Sound(0);
-  //SDL_CloseAudio();
-  //SDL_QuitSubSystem(SDL_INIT_AUDIO);
-  if(s_Buffer) {
-    free((void *)s_Buffer);
-    s_Buffer = 0;
-  }
   return 0;
 }
 
@@ -218,34 +135,6 @@ KillSound(void)
   void
 FCEUD_SoundVolumeAdjust(int n)
 {
-#if 0
-  int soundvolume;
-  g_config->getOption("SDL.Sound.Volume", &soundvolume);
-
-  switch(n) {
-    case -1:
-      soundvolume -= 10;
-      if(soundvolume < 0) {
-        soundvolume = 0;
-      }
-      break;
-    case 0:
-      soundvolume = 100;
-      break;
-    case 1:
-      soundvolume += 10;
-      if(soundvolume > 150) {
-        soundvolume = 150;
-      }
-      break;
-  }
-
-  s_mute = 0;
-  FCEUI_SetSoundVolume(soundvolume);
-  g_config->setOption("SDL.Sound.Volume", soundvolume);
-
-  printf("Sound volume %d.\n", soundvolume);
-#endif
 }
 
 /**
@@ -254,18 +143,4 @@ FCEUD_SoundVolumeAdjust(int n)
   void
 FCEUD_SoundToggle(void)
 {
-#if 0
-  if(s_mute) {
-    int soundvolume;
-    g_config->getOption("SDL.SoundVolume", &soundvolume);
-
-    s_mute = 0;
-    FCEUI_SetSoundVolume(soundvolume);
-    FCEU_DispMessage("Sound mute off.");
-  } else {
-    s_mute = 1;
-    FCEUI_SetSoundVolume(0);
-    FCEU_DispMessage("Sound mute on.");
-  }
-#endif
 }

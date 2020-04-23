@@ -23,7 +23,7 @@
 
 #include "fceu.h"
 #include "sound.h"
-//#include "filter.h"
+#include "filter.h"
 #include "state.h"
 //#include "wave.h"
 //#include "debug.h"
@@ -1003,7 +1003,6 @@ void SetNESSoundMap(void)
   SetReadHandler(0x4015,0x4015,StatusRead);
 }
 
-#if 0
 static int32 inbuf=0;
 int FlushEmulateSound(void)
 {
@@ -1075,11 +1074,10 @@ nosoundo:
   }
   inbuf=end;
 
-  FCEU_WriteWaveData(WaveFinal, end); /* This function will just return
-                                         if sound recording is off. */
+  //FCEU_WriteWaveData(WaveFinal, end); /* This function will just return
+  //                                       if sound recording is off. */
   return(end);
 }
-#endif
 
 #if 0
 int GetSoundBuffer(int32 **W)
@@ -1186,7 +1184,6 @@ void FCEUSND_Power(void)
   LoadDMCPeriod(DMCFormat&0xF);
 }
 
-
 void SetSoundVariables(void)
 {
   int x;
@@ -1232,7 +1229,7 @@ void SetSoundVariables(void)
     return;
   }
 
-  //MakeFilters(FSettings.SndRate);
+  MakeFilters(FSettings.SndRate);
 
   if(GameExpSound.RChange)
     GameExpSound.RChange();

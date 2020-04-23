@@ -154,8 +154,41 @@ FCEUD_Update(uint8 *XBuf,
 			 int32 *Buffer,
 			 int Count)
 {
-	// apply frame scaling to Count
+	int ocount = Count;
 	if(Count) {
+		int32 can=GetWriteSound();
+		static int uflow=0;
+		int32 tmpcan;
+
+		// don't underflow when scaling fps
+		if(can >= (int)GetMaxSound()) uflow=1;	/* Go into massive underflow mode. */
+
+		if(can > Count) can=Count;
+		else uflow=0;
+
+    WriteSound(Buffer,can);
+
+		//if(uflow) puts("Underflow");
+		tmpcan = GetWriteSound();
+		// don't underflow when scaling fps
+		if((tmpcan < Count*9/10) && !uflow) {
+			if(XBuf && (inited&4) && !(NoWaiting & 2))
+				BlitScreen(XBuf);
+			Buffer+=can;
+			Count-=can;
+			if(Count) {
+				if(NoWaiting) {
+					can=GetWriteSound();
+					if(Count>can) Count=can;
+          WriteSound(Buffer,Count);
+				} else {
+					while(Count>0) {
+            WriteSound(Buffer,(Count<ocount) ? Count : ocount);
+						Count -= ocount;
+					}
+				}
+			}
+		} //else puts("Skipped");
 	} else {
 		if(!NoWaiting && (!(eoptions&EO_NOTHROTTLE) || FCEUI_EmulationPaused())) {
       while (SpeedThrottle()) { FCEUD_UpdateInput(); }

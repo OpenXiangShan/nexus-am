@@ -484,16 +484,18 @@ extern int test; test++;
    _tcount=0;
    if(MapIRQHook) MapIRQHook(temp);
 
-   uint32 lastPC = _PC;
+   if (!overclocking)
+    FCEU_SoundCPUHook(temp);
+   //uint32 lastPC = _PC;
    _PC++;
    switch(b1)
    {
     #include "ops.inc"
    }
-   if (lastPC == _PC) {
-     // spinning, just finish the run
-     _count = 0;
-   }
+   //if (lastPC == _PC) {
+   //  // spinning, just finish the run
+   //  _count = 0;
+   //}
   }
 }
 
