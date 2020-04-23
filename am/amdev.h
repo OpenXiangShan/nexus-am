@@ -38,6 +38,7 @@ _AM_DEVREG(STORAGE, INFO,   1, uint32_t blksz, blkcnt);
 _AM_DEVREG(STORAGE, RDCTRL, 2, void *buf; uint32_t blkno, blkcnt);
 _AM_DEVREG(STORAGE, WRCTRL, 3, void *buf; uint32_t blkno, blkcnt);
 _AM_DEVREG(AUDIO,   SBCTRL, 1, uint8_t *stream; int len, wait);
+_AM_DEVREG(AUDIO,   SBSTAT, 2, int bufsize, count);
 #define _DEVREG_PCICONF(bus, slot, func, offset) \
   ((uint32_t)(   1) << 31) | ((uint32_t)( bus) << 16) | \
   ((uint32_t)(slot) << 11) | ((uint32_t)(func) <<  8) | (offset)
