@@ -24,6 +24,7 @@
 #include "sdl.h"
 #include <amdev.h>
 
+// unit: 16-bit
 static unsigned int s_BufferSize;
 
 /**
@@ -32,19 +33,27 @@ static unsigned int s_BufferSize;
   int
 InitSound()
 {
-  int soundrate = 44100;
-  int soundvolume = 150;
-  int soundtrianglevolume = 256;
-  int soundsquare1volume = 256;
-  int soundsquare2volume = 256;
-  int soundnoisevolume = 256;
-  int soundpcmvolume = 256;
-  int soundq = 1;
+  const int soundrate = 44100;
+  const int soundbufsize = 128;
+  const int soundvolume = 150;
+  const int soundtrianglevolume = 256;
+  const int soundsquare1volume = 256;
+  const int soundsquare2volume = 256;
+  const int soundnoisevolume = 256;
+  const int soundpcmvolume = 256;
+  const int soundq = 1;
 
-  _DEV_AUDIO_SBSTAT_t audio;
-  _io_read(_DEV_AUDIO, _DEVREG_AUDIO_SBSTAT, &audio, sizeof(audio));
-  s_BufferSize = audio.bufsize / sizeof(int16_t);
-
+  _DEV_AUDIO_INIT_t init;
+  init.freq = 44100;
+  init.channels = 1;
+  init.samples = 512;
+  init.bufsize = soundbufsize * soundrate / 1000;
+  if (init.bufsize < init.samples * 2) {
+    init.bufsize = init.samples * 2;
+  }
+  s_BufferSize = init.bufsize;
+  init.bufsize *= sizeof(int16_t);
+  _io_write(_DEV_AUDIO, _DEVREG_AUDIO_INIT, &init, sizeof(init));
 
   FCEUI_SetSoundVolume(soundvolume);
   FCEUI_SetSoundQuality(soundq);
