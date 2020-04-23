@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 #include <klib.h>
 
-#define SBUF_SIZE 65536
+#define SBUF_SIZE 22576 //65536
 static uint8_t sbuf [SBUF_SIZE] = {};
 static int head = 0, tail = 0;
 static volatile int count = 0;
@@ -52,8 +52,7 @@ void __am_audio_init() {
   s.samples = 512;
   s.callback = audio_play;
   s.userdata = NULL;
-
-  SDL_OpenAudio(&s, 0);
+  SDL_OpenAudio(&s, NULL);
   SDL_PauseAudio(0);
 }
 
