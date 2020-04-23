@@ -61,7 +61,10 @@ size_t __am_audio_write(uintptr_t reg, void *buf, size_t size) {
   switch (reg) {
     case _DEVREG_AUDIO_SBCTRL: {
       _DEV_AUDIO_SBCTRL_t *ctl = (_DEV_AUDIO_SBCTRL_t *)buf;
-      if (ctl->wait) while (count > 0);
+      if (ctl->wait) {
+        assert(ctl->len <= SBUF_SIZE);
+        while (SBUF_SIZE - count < ctl->len);
+      }
       ctl->len = audio_write(ctl->stream, ctl->len);
       return size;
     }
