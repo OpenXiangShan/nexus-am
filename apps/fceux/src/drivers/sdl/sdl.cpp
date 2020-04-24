@@ -11,12 +11,7 @@
 #include "sdl-video.h"
 
 #include "../../types.h"
-
-#ifdef __ISA_NATIVE__
-#define NR_FRAMESKIP 0
-#else
-#define NR_FRAMESKIP 2
-#endif
+#include "../../config.h"
 
 int isloaded;
 
@@ -33,6 +28,8 @@ int gametype = 0;
 
 int pal_emulation;
 int dendy;
+
+bool swapDuty;
 
 // global configuration object
 //Config *g_config;
@@ -123,6 +120,9 @@ DriverInitialize(FCEUGI *gi)
 	if(InitVideo(gi) < 0) return 0;
 	inited|=4;
 
+  if(InitSound())
+    inited|=1;
+
 	eoptions &= ~EO_FOURSCORE;
 
 	InitInputInterface();
@@ -149,8 +149,53 @@ FCEUD_Update(uint8 *XBuf,
 			 int32 *Buffer,
 			 int Count)
 {
-	// apply frame scaling to Count
+	int ocount = Count;
 	if(Count) {
+		int32 can=GetWriteSound();
+		static int uflow=0;
+		int32 tmpcan;
+
+		// don't underflow when scaling fps
+		if(can >= (int)GetMaxSound()) uflow=1;	/* Go into massive underflow mode. */
+
+		if(can > Count) can=Count;
+		else uflow=0;
+
+    WriteSound(Buffer,can);
+
+		//if(uflow) puts("Underflow");
+		tmpcan = GetWriteSound();
+		// don't underflow when scaling fps
+		if((tmpcan < Count*9/10) && !uflow) {
+			if(XBuf && (inited&4) && !(NoWaiting & 2))
+				BlitScreen(XBuf);
+			Buffer+=can;
+			Count-=can;
+			if(Count) {
+				if(NoWaiting) {
+					can=GetWriteSound();
+					if(Count>can) Count=can;
+          WriteSound(Buffer,Count);
+				} else {
+					while(Count>0) {
+            WriteSound(Buffer,(Count<ocount) ? Count : ocount);
+						Count -= ocount;
+					}
+				}
+			}
+		} //else puts("Skipped");
+    // Fceux believes that audio buffer underflow only occurs with a network
+    // play, but NEMU runs too slow, which may also underflow the audio buffer.
+    // So we should add back the following code to handle such underflow.
+    // Note that we remove "&& FCEUDnetplay" in the condition.
+		else if(!NoWaiting && (uflow || tmpcan >= (Count * 9 / 5))) {
+			if(Count > tmpcan) Count=tmpcan;
+			while(tmpcan > 0) {
+				//	printf("Overwrite: %d\n", (Count <= tmpcan)?Count : tmpcan);
+				WriteSound(Buffer, (Count <= tmpcan)?Count : tmpcan);
+				tmpcan -= Count;
+			}
+		}
 	} else {
 		if(!NoWaiting && (!(eoptions&EO_NOTHROTTLE) || FCEUI_EmulationPaused())) {
       while (SpeedThrottle()) { FCEUD_UpdateInput(); }

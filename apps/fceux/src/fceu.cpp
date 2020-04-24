@@ -400,6 +400,7 @@ void FCEUI_Kill(void) {
 ///Skip may be passed in, if FRAMESKIP is #defined, to cause this to emulate more than one frame
 void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
 	//skip initiates frame skip if 1, or frame skip and sound skip if 2
+  int ssize;
 
 	if (frameAdvanceRequested)
 	{
@@ -421,6 +422,8 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 			// emulator is paused
 			memcpy(XBuf, XBackBuf, 256*256);
 			*pXBuf = XBuf;
+      *SoundBuf = WaveFinal;
+      *SoundBufSize = 0;
 			return;
 		}
 	}
@@ -429,11 +432,20 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 
 	FCEUPPU_Loop(skip);
 
+  if (skip != 2) ssize = FlushEmulateSound();  //If skip = 2 we are skipping sound processing
+
 	timestampbase += timestamp;
 	timestamp = 0;
 	soundtimestamp = 0;
 
 	*pXBuf = skip ? 0 : XBuf;
+  if (skip == 2) { //If skip = 2, then bypass sound
+    *SoundBuf = 0;
+    *SoundBufSize = 0;
+  } else {
+    *SoundBuf = WaveFinal;
+    *SoundBufSize = ssize;
+  }
 
 	if ((EmulationPaused & EMULATIONPAUSED_FA) && (!frameAdvanceLagSkip))
 	//Lots of conditions here.  EmulationPaused & EMULATIONPAUSED_FA must be true.  In addition frameAdvanceLagSkip or lagFlag must be false
@@ -450,7 +462,7 @@ void FCEUI_CloseGame(void) {
 void ResetNES(void) {
 	if (!GameInfo) return;
 	GameInterface(GI_RESETM2);
-	//FCEUSND_Reset();
+	FCEUSND_Reset();
 	FCEUPPU_Reset();
 	X6502_Reset();
 
@@ -488,7 +500,7 @@ void PowerNES(void) {
 	SetWriteHandler(0x800, 0x1FFF, BRAMH);	//hack for a small speed boost.
 
 	InitializeInput();
-	//FCEUSND_Power();
+	FCEUSND_Power();
 	FCEUPPU_Power();
 
 	//Have the external game hardware "powered" after the internal NES stuff.  Needed for the NSF code and VS System code.
@@ -525,6 +537,7 @@ void FCEU_ResetVidSys(void) {
 	normalscanlines = (dendy ? 290 : 240)+newppu; // use flag as number!
 	totalscanlines = normalscanlines + (overclock_enabled ? postrenderscanlines : 0);
 	FCEUPPU_SetVideoSystem(w || dendy);
+  SetSoundVariables();
 }
 
 FCEUS FSettings;
