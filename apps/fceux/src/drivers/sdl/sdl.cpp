@@ -11,12 +11,7 @@
 #include "sdl-video.h"
 
 #include "../../types.h"
-
-#ifdef __ISA_NATIVE__
-#define NR_FRAMESKIP 0
-#else
-#define NR_FRAMESKIP 2
-#endif
+#include "../../config.h"
 
 int isloaded;
 

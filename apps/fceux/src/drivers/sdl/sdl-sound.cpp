@@ -23,6 +23,7 @@
 
 #include "sdl.h"
 #include <amdev.h>
+#include "../../config.h"
 
 // unit: 16-bit
 static unsigned int s_BufferSize;
@@ -33,7 +34,17 @@ static unsigned int s_BufferSize;
   int
 InitSound()
 {
+#if SOUND_CONFIG == SOUND_NONE
+  return 1;
+#endif
+
+#if SOUND_CONFIG == SOUND_HQ
   const int soundrate = 44100;
+  const int soundq = 1;
+#else
+  const int soundrate = 11025;
+  const int soundq = 0;
+#endif
   const int soundbufsize = 128;
   const int soundvolume = 150;
   const int soundtrianglevolume = 256;
@@ -41,10 +52,9 @@ InitSound()
   const int soundsquare2volume = 256;
   const int soundnoisevolume = 256;
   const int soundpcmvolume = 256;
-  const int soundq = 1;
 
   _DEV_AUDIO_INIT_t init;
-  init.freq = 44100;
+  init.freq = soundrate;
   init.channels = 1;
   init.samples = 512;
   init.bufsize = soundbufsize * soundrate / 1000;

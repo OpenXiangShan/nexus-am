@@ -25,6 +25,7 @@
 #include "sound.h"
 #include "filter.h"
 #include "state.h"
+#include "config.h"
 //#include "wave.h"
 //#include "debug.h"
 
@@ -516,6 +517,10 @@ static INLINE void DMCDMA(void)
 
 void FCEU_SoundCPUHook(int cycles)
 {
+#if SOUND_CONFIG != SOUND_HQ
+  return;
+#endif
+
   fhcnt-=cycles*48;
   if(fhcnt<=0)
   {
@@ -1007,6 +1012,10 @@ void SetNESSoundMap(void)
 static int32 inbuf=0;
 int FlushEmulateSound(void)
 {
+#if SOUND_CONFIG == SOUND_NONE
+  return 0;
+#endif
+
   int x;
   int32 end,left;
 
