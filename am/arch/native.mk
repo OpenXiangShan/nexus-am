@@ -19,3 +19,6 @@ image:
 
 run:
 	$(BINARY)
+
+gdb:
+	gdb -ex "handle SIGUSR1 SIGSEGV noprint nostop" $(BINARY)
