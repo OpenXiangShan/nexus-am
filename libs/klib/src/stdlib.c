@@ -28,24 +28,30 @@ int atoi(const char* nptr) {
   return x;
 }
 
+static struct {
+  void *ptr;
+  uintptr_t size;
+} last = { .ptr = NULL, .size = 0 };
+
 void *malloc(size_t size) {
-  static void *head = NULL;
-  if (head == NULL) {
-    head = _heap.start;
-    printf("heap start = %x\n", head);
+  if (last.ptr == NULL) {
+    last.ptr = _heap.start;
+    printf("heap start = %x\n", last.ptr);
   }
 
   // aligning
   size = ROUNDUP(size, sizeof(uintptr_t));
 
-  if (head + size >= _heap.end) return NULL;
-  printf("malloc: size = %d\n", size);
-  void *ret = head;
-  head += size;
+  // skip the region allocated by the last call
+  last.ptr += last.size;
+  if (last.ptr + size >= _heap.end) return NULL;
+  void *ret = last.ptr;
+  last.size = size;
   return ret;
 }
 
 void free(void *ptr) {
+  if (ptr == last.ptr) last.size = 0;
 }
 
 #endif
