@@ -189,6 +189,18 @@ FCEUD_Update(uint8 *XBuf,
 				}
 			}
 		} //else puts("Skipped");
+    // Fceux believes that audio buffer underflow only occurs with a network
+    // play, but NEMU runs too slow, which may also underflow the audio buffer.
+    // So we should add back the following code to handle such underflow.
+    // Note that we remove "&& FCEUDnetplay" in the condition.
+		else if(!NoWaiting && (uflow || tmpcan >= (Count * 9 / 5))) {
+			if(Count > tmpcan) Count=tmpcan;
+			while(tmpcan > 0) {
+				//	printf("Overwrite: %d\n", (Count <= tmpcan)?Count : tmpcan);
+				WriteSound(Buffer, (Count <= tmpcan)?Count : tmpcan);
+				tmpcan -= Count;
+			}
+		}
 	} else {
 		if(!NoWaiting && (!(eoptions&EO_NOTHROTTLE) || FCEUI_EmulationPaused())) {
       while (SpeedThrottle()) { FCEUD_UpdateInput(); }
