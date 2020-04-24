@@ -556,8 +556,9 @@ void RDoPCM(void)
 {
   uint32 V; //mbg merge 7/17/06 made uint32
 
+  uint32_t val = (((RawDALatch<<16)/256) * FSettings.PCMVolume)&(~0xFFFF);
   for(V=ChannelBC[4];V<SOUNDTS;V++)
-    WaveHi[V]+=(((RawDALatch<<16)/256) * FSettings.PCMVolume)&(~0xFFFF); // TODO get rid of floating calculations to binary. set log volume scaling.
+    WaveHi[V]+=val;
   ChannelBC[4]=SOUNDTS;
 }
 
