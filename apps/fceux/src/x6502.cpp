@@ -486,16 +486,17 @@ extern int test; test++;
 
    if (!overclocking)
     FCEU_SoundCPUHook(temp);
-   //uint32 lastPC = _PC;
+
+   uint32 lastPC = _PC;
    _PC++;
    switch(b1)
    {
     #include "ops.inc"
    }
-   //if (lastPC == _PC) {
-   //  // spinning, just finish the run
-   //  _count = 0;
-   //}
+   if (lastPC == _PC && _count > 0) {
+     // spinning, just finish the run
+     ADDCYC(_count / 48);
+   }
   }
 }
 
