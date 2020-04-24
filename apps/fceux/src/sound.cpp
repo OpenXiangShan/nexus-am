@@ -1196,13 +1196,15 @@ void SetSoundVariables(void)
     wlookup1[0]=0;
     for(x=1;x<32;x++)
     {
-      wlookup1[x]=(double)16*16*16*4*95.52/((double)8128/(double)x+100);
+      //wlookup1[x]=(double)16*16*16*4*95.52/((double)8128/(double)x+100);
+      wlookup1[x]=1565000 * x / (8128 + 100 * x);
       if(!FSettings.soundq) wlookup1[x]>>=4;
     }
     wlookup2[0]=0;
     for(x=1;x<203;x++)
     {
-      wlookup2[x]=(double)16*16*16*4*163.67/((double)24329/(double)x+100);
+      //wlookup2[x]=(double)16*16*16*4*163.67/((double)24329/(double)x+100);
+      wlookup2[x]=2681569 * x / (24329 + 100 * x);
       if(!FSettings.soundq) wlookup2[x]>>=4;
     }
     if(FSettings.soundq>=1)
@@ -1234,13 +1236,15 @@ void SetSoundVariables(void)
   if(GameExpSound.RChange)
     GameExpSound.RChange();
 
-  nesincsize=(int64)(((int64)1<<17)*(double)(PAL?PAL_CPU:NTSC_CPU)/(FSettings.SndRate * 16));
+  //nesincsize=(int64)(((int64)1<<17)*(double)(PAL?PAL_CPU:NTSC_CPU)/(FSettings.SndRate * 16));
+  nesincsize=(PAL ? 3405019392u : (dendy ? 3632020412u : 3665454545u))/(FSettings.SndRate / 4);
   memset(sqacc,0,sizeof(sqacc));
   memset(ChannelBC,0,sizeof(ChannelBC));
 
   LoadDMCPeriod(DMCFormat&0xF);  // For changing from PAL to NTSC
 
-  soundtsinc=(uint32)((uint64)(PAL?(long double)PAL_CPU*65536:(long double)NTSC_CPU*65536)/(FSettings.SndRate * 16));
+  //soundtsinc=(uint32)((uint64)(PAL?(long double)PAL_CPU*65536:(long double)NTSC_CPU*65536)/(FSettings.SndRate * 16));
+  soundtsinc=nesincsize / 2;
 }
 
 void FCEUI_Sound(int Rate)
