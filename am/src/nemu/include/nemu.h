@@ -12,6 +12,13 @@
 # define SCREEN_ADDR  0x100
 # define SYNC_ADDR    0x104
 # define FB_ADDR      0xa0000000
+# define AUDIO_FREQ_ADDR      0x200
+# define AUDIO_CHANNELS_ADDR  0x204
+# define AUDIO_SAMPLES_ADDR   0x208
+# define AUDIO_SBUF_SIZE_ADDR 0x20c
+# define AUDIO_INIT_ADDR      0x210
+# define AUDIO_COUNT_ADDR     0x214
+# define AUDIO_SBUF_ADDR      0xa0800000
 #elif defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP)
 # define KBD_ADDR     0x40900000
 # define RTC_ADDR     0x4800bff8
@@ -25,6 +32,13 @@
 # define SCREEN_ADDR  0xa1000100
 # define SYNC_ADDR    0xa1000104
 # define FB_ADDR      0xa0000000
+# define AUDIO_FREQ_ADDR      0xa1000200
+# define AUDIO_CHANNELS_ADDR  0xa1000204
+# define AUDIO_SAMPLES_ADDR   0xa1000208
+# define AUDIO_SBUF_SIZE_ADDR 0xa100020c
+# define AUDIO_INIT_ADDR      0xa1000210
+# define AUDIO_COUNT_ADDR     0xa1000214
+# define AUDIO_SBUF_ADDR      0xa0800000
 #endif
 
 #define MMIO_BASE 0xa0000000

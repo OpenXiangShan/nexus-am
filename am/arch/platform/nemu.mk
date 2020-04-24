@@ -4,6 +4,7 @@ AM_SRCS += nemu/common/trm.c \
            nemu/common/input.c \
            nemu/common/timer.c \
            nemu/common/video.c \
+           nemu/common/audio.c \
            dummy/mpe.c \
 
 CFLAGS  += -I$(AM_HOME)/am/src/nemu/include
