@@ -18,7 +18,7 @@
 	Define to 1 if the platform supports floating point.
 */
 #ifndef HAS_FLOAT 
-#define HAS_FLOAT 0
+#define HAS_FLOAT 1
 #endif
 /* Configuration : HAS_TIME_H
 	Define to 1 if platform has the time.h header file,
