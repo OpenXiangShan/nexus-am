@@ -39,7 +39,8 @@ size_t __am_input_read(uintptr_t reg, void *buf, size_t size) {
         last_release = 0;
         timestamp = uptime();
       } else {
-        int _k = __am_uartlite_getchar();
+        int _k = (int8_t)__am_uartlite_getchar();
+        if (_k == -1) _k = 0;
         assert(_k < 128 && _k >= 0);
         int key = am_keycode[_k];
         if (key == _KEY_NONE) {

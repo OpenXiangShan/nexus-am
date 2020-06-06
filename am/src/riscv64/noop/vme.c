@@ -12,7 +12,7 @@ static int vme_enable = 0;
 static _Area segments[] = {      // Kernel memory mappings
   {.start = (void*)0x80000000u, .end = (void*)(0x80000000u + 0x3000000)}, //PMEM_SIZE)},
   {.start = (void*)0x40600000u, .end = (void*)(0x40600000u + 0x1000)},   // uart
-  {.start = (void*)0x40700000u, .end = (void*)(0x40700000u + 0x1000)},   // clint/timer
+  {.start = (void*)0x48000000u, .end = (void*)(0x48000000u + 0x10000)},   // clint/timer
   {.start = (void*)0x40000000u, .end = (void*)(0x40000000u + 0x400000)}, // vmem
   {.start = (void*)0x40800000u, .end = (void*)(0x40800000u + 0x1000)}    // vga ctrl
 };
