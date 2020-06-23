@@ -1,4 +1,4 @@
-CROSS_COMPILE := riscv-none-embed-
+CROSS_COMPILE := riscv64-linux-gnu-
 COMMON_FLAGS  := -fno-pic -march=rv64gc -mabi=lp64d -mcmodel=medany
 CFLAGS        += $(COMMON_FLAGS) -static
 ASFLAGS       += $(COMMON_FLAGS) -O0
