@@ -1,6 +1,6 @@
 include $(AM_HOME)/am/arch/isa/riscv64.mk
 
-CFLAGS += -march=rv64imc
+CFLAGS += -march=rv64imfd
 
 AM_SRCS := $(ISA)/noop/trm.c \
            $(ISA)/noop/uartlite.c \
