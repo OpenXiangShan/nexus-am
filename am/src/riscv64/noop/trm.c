@@ -28,7 +28,7 @@ void _halt(int code) {
 }
 
 void _trm_init() {
-  __am_init_uartlite();
+  //__am_init_uartlite();
   extern const char _mainargs;
   int ret = main(&_mainargs);
   _halt(ret);
