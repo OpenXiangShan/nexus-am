@@ -45,7 +45,6 @@ InitSound()
   const int soundrate = 11025;
   const int soundq = 0;
 #endif
-  const int soundbufsize = 128;
   const int soundvolume = 150;
   const int soundtrianglevolume = 256;
   const int soundsquare1volume = 256;
@@ -53,6 +52,8 @@ InitSound()
   const int soundnoisevolume = 256;
   const int soundpcmvolume = 256;
 
+#if SOUND_CONFIG != SOUND_NONE
+  const int soundbufsize = 128;
   _DEV_AUDIO_INIT_t init;
   init.freq = soundrate;
   init.channels = 1;
@@ -64,6 +65,7 @@ InitSound()
   s_BufferSize = init.bufsize;
   init.bufsize *= sizeof(int16_t);
   _io_write(_DEV_AUDIO, _DEVREG_AUDIO_INIT, &init, sizeof(init));
+#endif
 
   FCEUI_SetSoundVolume(soundvolume);
   FCEUI_SetSoundQuality(soundq);
@@ -92,10 +94,14 @@ GetMaxSound(void)
   uint32
 GetWriteSound(void)
 {
+#if SOUND_CONFIG != SOUND_NONE
   _DEV_AUDIO_SBSTAT_t audio;
   _io_read(_DEV_AUDIO, _DEVREG_AUDIO_SBSTAT, &audio, sizeof(audio));
   audio.count /= sizeof(int16_t);
   return s_BufferSize - audio.count;
+#else
+  return 0;
+#endif
 }
 
 /**
@@ -105,6 +111,7 @@ GetWriteSound(void)
 WriteSound(int32 *buf,
     int Count)
 {
+#if SOUND_CONFIG != SOUND_NONE
   extern int EmulationPaused;
   if (EmulationPaused == 0) {
     // FECUX stores each PCM sample as 32-bit data,
@@ -125,6 +132,7 @@ WriteSound(int32 *buf,
     _io_write(_DEV_AUDIO, _DEVREG_AUDIO_SBCTRL, &audio, sizeof(audio));
     free(buf16);
   }
+#endif
 }
 
 /**

@@ -8,7 +8,7 @@
 #if defined(__PLATFORM_NEMU__)
 # define NR_FRAMESKIP 1
 # define SOUND_CONFIG SOUND_LQ
-#elif defined(__PLATFORM_NOOP__)
+#elif defined(__PLATFORM_NOOP__) || defined(__PLATFORM_SDI__) || defined(__PLATFORM_NAVY__)
 # define NR_FRAMESKIP 2
 # define SOUND_CONFIG SOUND_NONE
 #else
