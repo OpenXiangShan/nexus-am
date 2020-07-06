@@ -20,11 +20,11 @@
 # define AUDIO_COUNT_ADDR     0x214
 # define AUDIO_SBUF_ADDR      0xa0800000
 #elif defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP)
-# define KBD_ADDR     0x40900000
-# define RTC_ADDR     0x4800bff8
-# define SCREEN_ADDR  0x40800000
-# define SYNC_ADDR    0x40800004
-# define FB_ADDR      0x41000000
+//# define KBD_ADDR     0x40900000
+# define RTC_ADDR     0x3800bff8
+# define SCREEN_ADDR  0x40001000
+# define SYNC_ADDR    0x40001004
+# define FB_ADDR      0x50000000
 #else
 # define SERIAL_PORT  0xa10003f8
 # define KBD_ADDR     0xa1000060

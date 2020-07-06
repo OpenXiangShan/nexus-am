@@ -2,6 +2,7 @@ AM_SRCS := navy/trm.c \
            navy/ioe.c \
            navy/dev/input.c \
            navy/dev/timer.c \
+           dummy/audio.c \
            navy/dev/video.c
 
 NAVY_MAKEFILE = Makefile.navy

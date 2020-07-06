@@ -13,6 +13,7 @@ AM_SRCS := noop/isa/riscv/trm.c \
            noop/common/input.c \
            noop/common/timer.c \
            nemu/common/video.c \
+           dummy/audio.c \
            noop/isa/riscv/instr.c \
            dummy/mpe.c \
            nemu/isa/riscv/boot/start.S
