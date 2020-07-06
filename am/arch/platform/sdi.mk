@@ -4,6 +4,7 @@ AM_SRCS += sdi/trm.c \
            nemu/common/input.c \
            nemu/common/timer.c \
            nemu/common/video.c \
+           dummy/audio.c \
            dummy/cte.c \
            dummy/vme.c \
            dummy/mpe.c \
