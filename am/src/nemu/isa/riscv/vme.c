@@ -1,6 +1,8 @@
 #include <nemu.h>
 #include <klib.h>
 
+#define CLINT_MMIO (RTC_ADDR - 0xbff8)
+
 static _AddressSpace kas; // Kernel address space
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
@@ -12,9 +14,9 @@ static const _Area segments[] = {      // Kernel memory mappings
 #ifdef __ARCH_RISCV64_NOOP
   RANGE_LEN(0x80000000, 0x8000000), // PMEM
   RANGE_LEN(0x40600000, 0x1000),    // uart
-  RANGE_LEN(0x48000000, 0x10000),    // clint/timer
-  RANGE_LEN(0x41000000, 0x400000),  // vmem
-  RANGE_LEN(0x40800000, 0x1000),  // vmem
+  RANGE_LEN(CLINT_MMIO, 0x10000),   // clint/timer
+  RANGE_LEN(FB_ADDR,    0x400000),  // vmem
+  RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
 #else
   NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64
