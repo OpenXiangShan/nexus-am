@@ -1,0 +1,24 @@
+#include <am.h>
+#include <amdev.h>
+
+#define W 320
+#define H 240
+
+size_t __am_video_read(uintptr_t reg, void *buf, size_t size) {
+  switch (reg) {
+    case _DEVREG_VIDEO_INFO: {
+      _DEV_VIDEO_INFO_t *info = (_DEV_VIDEO_INFO_t *)buf;
+      info->width = W;
+      info->height = H;
+      return sizeof(_DEV_VIDEO_INFO_t);
+    }
+  }
+  return 0;
+}
+
+size_t __am_video_write(uintptr_t reg, void *buf, size_t size) {
+  return 0;
+}
+
+void __am_vga_init() {
+}
