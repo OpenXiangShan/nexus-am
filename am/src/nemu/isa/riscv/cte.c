@@ -81,4 +81,6 @@ int _intr_read() {
 }
 
 void _intr_write(int enable) {
+	if (enable) asm volatile("csrs sstatus, 0x2");
+	else asm volatile("csrc sstatus, 0x2");
 }
