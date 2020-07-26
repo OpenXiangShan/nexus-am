@@ -129,7 +129,7 @@ int main(const char *args) {
     printf("\n");
   }
   printf("Total time: %d ms\n", t1 - t0);
-  return 0;
+  return !pass;
 }
 
 // Libraries
