@@ -318,8 +318,9 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
   ee_printf("Finised in %d ms.\n", (int)total_time);
 	if (total_errors==0) {
     ee_printf("==================================================\n");
-	  ee_printf("CoreMark PASS       %d Marks\n", 2921400 / time_in_secs(total_time) * ITERATIONS / 1000);
-	  ee_printf("                vs. 100000 Marks (i7-7700K @ 4.20GHz)\n");
+	  ee_printf("CoreMark Iterations/Sec %d\n", 
+        default_num_contexts * ITERATIONS * 1000 / time_in_secs(total_time)
+      );
   }
 	if (total_errors>0)
 		ee_printf("Errors detected\n");
