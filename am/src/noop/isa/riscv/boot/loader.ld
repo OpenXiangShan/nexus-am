@@ -1,7 +1,7 @@
-pmem_base = 0x80000000;
+pmem_base = 0x800a0000;
 
 MEMORY {
-  ram (rwxa) : ORIGIN = 0x80000000, LENGTH = 128M
+  ram (rwxa) : ORIGIN = 0x800a0000, LENGTH = 128M
 }
 
 INCLUDE "section.ld"

@@ -24,7 +24,7 @@ ASFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S
 
 LDFLAGS += -L $(AM_HOME)/am/src/nemu/ldscript
-LDFLAGS += -T $(AM_HOME)/am/src/nemu/isa/riscv/boot/loader64.ld
+LDFLAGS += -T $(AM_HOME)/am/src/noop/isa/riscv/boot/loader.ld
 
 image:
 	@echo + LD "->" $(BINARY_REL).elf
