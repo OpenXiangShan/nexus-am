@@ -86,7 +86,8 @@
  *          per array.
  */
 #ifndef STREAM_ARRAY_SIZE
-#   define STREAM_ARRAY_SIZE	2097152
+// #   define STREAM_ARRAY_SIZE	2097152
+#   define STREAM_ARRAY_SIZE	65536
 #endif
 
 /*  2) STREAM runs each kernel "NTIMES" times and reports the *best* result
@@ -98,6 +99,9 @@
  *      NTIMES can also be set on the compile line without changing the source
  *         code using, for example, "-DNTIMES=7".
  */
+
+#   define NTIMES	3
+
 #ifdef NTIMES
 #if NTIMES<=1
 #   define NTIMES	10
