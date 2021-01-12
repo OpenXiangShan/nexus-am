@@ -7,6 +7,7 @@
 
 #include <am.h>
 #include <stdarg.h>
+#include "printf.h"
 
 //#define __NATIVE_USE_KLIB__
 
@@ -67,13 +68,13 @@ int rand();
 void *malloc(size_t size);
 void free(void *ptr);
 
-// stdio.h
-int printf(const char* fmt, ...);
-int sprintf(char* out, const char* format, ...);
-int snprintf(char* s, size_t n, const char* format, ...);
-int vsprintf(char *str, const char *format, va_list ap);
-int vsnprintf(char *str, size_t size, const char *format, va_list ap);
-int sscanf(const char *str, const char *format, ...);
+// in "printf.h"
+// int printf(const char* fmt, ...);
+// int sprintf(char* out, const char* format, ...);
+// int snprintf(char* s, size_t n, const char* format, ...);
+// int vsprintf(char *str, const char *format, va_list ap);
+// int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+// int sscanf(const char *str, const char *format, ...);
 
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 
