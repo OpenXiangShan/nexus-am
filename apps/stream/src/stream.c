@@ -189,7 +189,7 @@ static double	bytes[4] = {
     3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE
     };
 
-extern double mysecond();
+extern double myMicroSecond();
 extern void checkSTREAMresults();
 #ifdef TUNED
 extern void tuned_STREAM_Copy();
@@ -257,10 +257,10 @@ main()
 	quantum = 1;
     }
 
-    t = mysecond();
+    t = myMicroSecond();
     for (j = 0; j < STREAM_ARRAY_SIZE; j++)
 		a[j] = 2.0E0 * a[j];
-    t = 1.0E6 * (mysecond() - t);
+    t = 1.0E6 * (myMicroSecond() - t);
 
     printf("Each test below will take on the order"
 	" of %d microseconds.\n", (int) t  );
@@ -280,41 +280,41 @@ main()
     scalar = 3.0;
     for (k=0; k<NTIMES; k++)
 	{
-	times[0][k] = mysecond();
+	times[0][k] = myMicroSecond();
 #ifdef TUNED
         tuned_STREAM_Copy();
 #else
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j];
 #endif
-	times[0][k] = mysecond() - times[0][k];
+	times[0][k] = myMicroSecond() - times[0][k];
 	
-	times[1][k] = mysecond();
+	times[1][k] = myMicroSecond();
 #ifdef TUNED
         tuned_STREAM_Scale(scalar);
 #else
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    b[j] = scalar*c[j];
 #endif
-	times[1][k] = mysecond() - times[1][k];
+	times[1][k] = myMicroSecond() - times[1][k];
 	
-	times[2][k] = mysecond();
+	times[2][k] = myMicroSecond();
 #ifdef TUNED
         tuned_STREAM_Add();
 #else
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j]+b[j];
 #endif
-	times[2][k] = mysecond() - times[2][k];
+	times[2][k] = myMicroSecond() - times[2][k];
 	
-	times[3][k] = mysecond();
+	times[3][k] = myMicroSecond();
 #ifdef TUNED
         tuned_STREAM_Triad(scalar);
 #else
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    a[j] = b[j]+scalar*c[j];
 #endif
-	times[3][k] = mysecond() - times[3][k];
+	times[3][k] = myMicroSecond() - times[3][k];
 	}
 
     /*	--- SUMMARY --- */
@@ -334,7 +334,7 @@ main()
 		avgtime[j] = avgtime[j]/(double)(NTIMES-1);
 
 		printf("%s%12.1f  %11.6f  %11.6f  %11.6f\n", label[j],
-	       1.0E-06 * bytes[j]/mintime[j],
+	       bytes[j]/mintime[j],
 	       avgtime[j],
 	       mintime[j],
 	       maxtime[j]);
@@ -359,8 +359,8 @@ checktick()
 /*  Collect a sequence of M unique time values from the system. */
 
     for (i = 0; i < M; i++) {
-	t1 = mysecond();
-	while( ((t2=mysecond()) - t1) < 1.0E-6 )
+	t1 = myMicroSecond();
+	while( ((t2=myMicroSecond()) - t1) < 1.0E-6 )
 	    ;
 	timesfound[i] = t1 = t2;
 	}
@@ -385,7 +385,7 @@ checktick()
 /* A gettimeofday routine to give access to the wall
    clock timer on most UNIX-like systems.  */
 
-double mysecond()
+double myMicroSecond()
 {
 	/*
         struct timeval tp;

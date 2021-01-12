@@ -4,8 +4,13 @@
 #include <klib.h>
 
 static unsigned long boot_time = 0;
+// during simulation:
+// XiangShan RTC timer ticks every 100 cycles
+// assume XiangShan runs at 2GHz
+// clock time is 0.05us
+// we divide it by 20, we get a clock with 1us granularity
 static inline uint32_t read_time(void) {
-  return ind(RTC_ADDR) / 1000;  // unit: ms
+  return ind(RTC_ADDR) / 20;  // unit: us
 }
 
 size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
