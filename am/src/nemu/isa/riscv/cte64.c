@@ -33,16 +33,23 @@ static void init_timer() {
   outd(CLINT_MTIMECMP, 0);
 }
 
+static void init_eip() {
+  // enable machine external interrupt (mie.meip and mstatus.mie)
+  asm volatile("csrs mie, %0" : : "r"(1 << 11));
+  asm volatile("csrs mstatus, %0" : : "r"(1 << 3));
+}
+
 void __am_init_cte64() {
-  // set delegation
+  // set delegation (do not deleg illegal instruction exception)
   asm volatile("csrw mideleg, %0" : : "r"(0xffff));
-  asm volatile("csrw medeleg, %0" : : "r"(0xffff));
+  asm volatile("csrw medeleg, %0" : : "r"(0xfffb));
 
   // set PMP to access all memory in S-mode
   asm volatile("csrw pmpaddr0, %0" : : "r"(-1));
   asm volatile("csrw pmpcfg0, %0" : : "r"(31));
 
   init_timer();
+  init_eip();
 
   // enter S-mode
   uintptr_t status = MSTATUS_SPP(MODE_S);

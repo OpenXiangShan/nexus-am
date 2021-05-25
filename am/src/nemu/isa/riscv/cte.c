@@ -22,6 +22,10 @@ _Context* __am_irq_handle(_Context *c) {
       case 0x5 | INTR_BIT:
 #endif
         ev.event = _EVENT_IRQ_TIMER; break;
+      // SEIP, which is set at mtime.S
+      case 0x9 | INTR_BIT:
+        asm volatile ("csrwi sip, 0");
+        ev.event = _EVENT_IRQ_IODEV; break;
       case 9:
         ev.event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
         c->sepc += 4;
