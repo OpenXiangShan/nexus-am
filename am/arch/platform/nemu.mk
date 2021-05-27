@@ -17,7 +17,7 @@ NEMU_ARGS = --batch --log=$(shell dirname $(BINARY))/nemu-log.txt $(BINARY).bin
 
 image:
 	@echo + LD "->" $(BINARY_REL).elf
-	@$(LD) $(LDFLAGS) --gc-sections -o $(BINARY).elf $(LINK_FILES)
+	$(LD) $(LDFLAGS) --gc-sections -o $(BINARY).elf $(LINK_FILES)
 	@$(OBJDUMP) -d $(BINARY).elf > $(BINARY).txt
 	@echo + OBJCOPY "->" $(BINARY_REL).bin
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin

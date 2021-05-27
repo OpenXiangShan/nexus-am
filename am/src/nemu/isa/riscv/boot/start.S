@@ -10,4 +10,6 @@ _start:
   li a0, MSTATUS_FS & (MSTATUS_FS >> 1)
   csrs mstatus, a0
   csrwi fcsr, 0
-  jal _trm_init
+  //jal main
+  jal INIT_START_TEST
+  
