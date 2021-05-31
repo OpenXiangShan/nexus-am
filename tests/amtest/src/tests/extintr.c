@@ -67,7 +67,15 @@ void external_intr() {
     should_claim = (rand() % MAX_EXT_INTR) + PLIC_EXT_INTR_OFFSET;
     WRITE_WORD(PLIC_ENABLE + (should_claim / 32) * 4, (1UL << (should_claim % 32)));
     SET_INTR(should_claim - PLIC_EXT_INTR_OFFSET);
-    while (should_claim != -1);
+    int counter = 0;
+    while (should_claim != -1 && counter < 100) {
+      counter++;
+    }
+    if (should_claim != -1) {
+      printf("external interrupt is not triggered!\n");
+      _halt(1);
+    }
   }
   printf("external interrupt test passed!!!\n");
 }
+
