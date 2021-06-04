@@ -34,4 +34,4 @@ image:
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(BINARY).elf $(BINARY).bin
 
 run:
-	$(MAKE) -C $(NOOP_HOME) emu IMAGE="$(BINARY).bin" DATAWIDTH=64
+	$(MAKE) -C $(NOOP_HOME) emu-run IMAGE="$(BINARY).bin" DATAWIDTH=64
