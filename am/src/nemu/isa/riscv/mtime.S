@@ -38,7 +38,7 @@ is_ext:
         csrc mie, a3
         # raise a supervisor external interrupt
         li a3, 0x200
-        csrs sip, a3
+        csrs mip, a3
 
         j end_of_intr
 

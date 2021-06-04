@@ -24,10 +24,13 @@
 #define PLIC_CLAIM             (PLIC_BASE_ADDR + 0x200004UL)
 #define PLIC_EXT_INTR_OFFSET   2
 
+#define MAX_EXT_INTR 150
+
 static volatile uint32_t should_claim = -1;
 
 void do_ext_intr() {
   uint32_t claim = READ_WORD(PLIC_CLAIM);
+  printf("ext_intr: claim %d should_claim %d\n", claim, should_claim);
   if (claim) {
     assert(claim == should_claim);
     CLEAR_INTR(claim - 1);
@@ -56,15 +59,25 @@ _Context *external_trap(_Event ev, _Context *ctx) {
   return ctx;
 }
 
+static void plic_intr_init()
+{
+  // TODO: fix init plic priority logic
+  for (int i = 1; i <= MAX_EXT_INTR; i++)
+    WRITE_WORD(PLIC_BASE_ADDR + i*sizeof(uint32_t), 0xffffffff);
+}
+
 void external_intr() {
   // enable supervisor external interrupts
   asm volatile("csrs sie, %0" : : "r"((1 << 9)));
   asm volatile("csrs sstatus, 2");
+  plic_intr_init();
   // trigger interrupts
   const uint32_t MAX_RAND_ITER = 500;
-  const uint32_t MAX_EXT_INTR = 150;
+  int r = 0;
   for (int i = 0; i < MAX_RAND_ITER; i++) {
-    should_claim = (rand() % MAX_EXT_INTR) + PLIC_EXT_INTR_OFFSET;
+    // int r = rand();
+    should_claim = (r % MAX_EXT_INTR) + PLIC_EXT_INTR_OFFSET;
+    printf("should_claim %d, setting intr\n", should_claim);
     WRITE_WORD(PLIC_ENABLE + (should_claim / 32) * 4, (1UL << (should_claim % 32)));
     SET_INTR(should_claim - PLIC_EXT_INTR_OFFSET);
     int counter = 0;
@@ -75,6 +88,7 @@ void external_intr() {
       printf("external interrupt is not triggered!\n");
       _halt(1);
     }
+    r++;
   }
   printf("external interrupt test passed!!!\n");
 }
