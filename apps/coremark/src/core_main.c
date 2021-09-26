@@ -319,7 +319,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	if (total_errors==0) {
     ee_printf("==================================================\n");
 	  ee_printf("CoreMark Iterations/Sec %d\n", 
-        default_num_contexts * ITERATIONS * 1000 / time_in_secs(total_time)
+        default_num_contexts * ITERATIONS * 1000 * 1000 / time_in_secs(total_time)
       );
   }
 	if (total_errors>0)

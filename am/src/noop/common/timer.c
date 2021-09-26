@@ -5,7 +5,7 @@
 
 static unsigned long boot_time = 0;
 static inline uint32_t read_time(void) {
-  return ind(RTC_ADDR) / 1000;  // unit: ms
+  return ind(RTC_ADDR);  // unit: us
 }
 
 size_t __am_timer_read(uintptr_t reg, void *buf, size_t size) {
