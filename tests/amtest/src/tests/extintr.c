@@ -19,9 +19,11 @@
 #define SET_INTR(i)      WRITE_WORD(INTR_REG_INDEX(i), SET_BIT(READ_INTR_REG(INTR_REG_INDEX(i)), INTR_REG_OFFSET(i)))
 
 #define PLIC_BASE_ADDR         (0x3c000000UL)
+#define PLIC_PRIORITY          (PLIC_BASE_ADDR + 0x4UL)
 #define PLIC_PENDING           (PLIC_BASE_ADDR + 0x1000UL)
 #define PLIC_ENABLE            (PLIC_BASE_ADDR + 0x2000UL)
 #define PLIC_CLAIM             (PLIC_BASE_ADDR + 0x200004UL)
+// External interrupts start with index PLIC_EXT_INTR_OFFSET
 #define PLIC_EXT_INTR_OFFSET   2
 
 #define MAX_EXT_INTR 150
@@ -30,18 +32,26 @@ static volatile uint32_t should_claim = -1;
 
 void do_ext_intr() {
   uint32_t claim = READ_WORD(PLIC_CLAIM);
-  printf("ext_intr: claim %d should_claim %d\n", claim, should_claim);
+  // printf("DO_EXT_INTR: claim %d should_claim %d\n", claim, should_claim);
   if (claim) {
-    assert(claim == should_claim);
-    CLEAR_INTR(claim - 1);
+    if (claim != should_claim) {
+      printf("ERROR: is the external interrupt bit in PLIC cleared correctly?\n");
+      assert(0);
+    }
+    CLEAR_INTR(claim - PLIC_EXT_INTR_OFFSET);
     WRITE_WORD(PLIC_CLAIM, claim);
+    if (READ_WORD(PLIC_CLAIM) != 0) {
+      printf("ERROR: do you clear the external interrupt source correctly?\n");
+      assert(0);
+    }
     should_claim = -1;
     // simply write to mie to trigger an illegal instruction exception
     // m mode will set mie to enable meip
     asm volatile("csrs mie, 0");
   }
   else {
-    read_key();
+    printf("ERROR: no claim?\n");
+    _halt(1);
   }
 }
 
@@ -59,11 +69,9 @@ _Context *external_trap(_Event ev, _Context *ctx) {
   return ctx;
 }
 
-static void plic_intr_init()
-{
-  // TODO: fix init plic priority logic
-  for (int i = 1; i <= MAX_EXT_INTR; i++)
-    WRITE_WORD(PLIC_BASE_ADDR + i*sizeof(uint32_t), 0xffffffff);
+static void plic_intr_init() {
+  for (int i = 0; i < MAX_EXT_INTR; i++)
+    WRITE_WORD(PLIC_PRIORITY + i * sizeof(uint32_t), 0x1);
 }
 
 void external_intr() {
@@ -72,12 +80,10 @@ void external_intr() {
   asm volatile("csrs sstatus, 2");
   plic_intr_init();
   // trigger interrupts
-  const uint32_t MAX_RAND_ITER = 500;
-  int r = 0;
+  const uint32_t MAX_RAND_ITER = 1000;
   for (int i = 0; i < MAX_RAND_ITER; i++) {
-    // int r = rand();
-    should_claim = (r % MAX_EXT_INTR) + PLIC_EXT_INTR_OFFSET;
-    printf("should_claim %d, setting intr\n", should_claim);
+    should_claim = (rand() % MAX_EXT_INTR) + PLIC_EXT_INTR_OFFSET;
+    // printf("should_claim %d, setting intr\n", should_claim);
     WRITE_WORD(PLIC_ENABLE + (should_claim / 32) * 4, (1UL << (should_claim % 32)));
     SET_INTR(should_claim - PLIC_EXT_INTR_OFFSET);
     int counter = 0;
@@ -85,10 +91,9 @@ void external_intr() {
       counter++;
     }
     if (should_claim != -1) {
-      printf("external interrupt is not triggered!\n");
+      printf("external interrupt %d is not triggered!\n", should_claim);
       _halt(1);
     }
-    r++;
   }
   printf("external interrupt test passed!!!\n");
 }

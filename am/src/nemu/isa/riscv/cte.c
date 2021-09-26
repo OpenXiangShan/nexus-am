@@ -24,6 +24,8 @@ _Context* __am_irq_handle(_Context *c) {
         ev.event = _EVENT_IRQ_TIMER; break;
       // SEIP, which is set at mtime.S
       case 0x9 | INTR_BIT:
+        // WARNING: this has no effect since in S mode only SSIP can be cleared.
+        // It's not deleted because we want to test sip write mask.
         asm volatile ("csrwi sip, 0");
         ev.event = _EVENT_IRQ_IODEV; break;
       case 9:
