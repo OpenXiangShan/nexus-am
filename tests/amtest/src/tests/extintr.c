@@ -22,11 +22,13 @@
 #define PLIC_PRIORITY          (PLIC_BASE_ADDR + 0x4UL)
 #define PLIC_PENDING           (PLIC_BASE_ADDR + 0x1000UL)
 #define PLIC_ENABLE            (PLIC_BASE_ADDR + 0x2000UL)
+#define PLIC_THRESHOLD         (PLIC_BASE_ADDR + 0x200000UL)
 #define PLIC_CLAIM             (PLIC_BASE_ADDR + 0x200004UL)
 // External interrupts start with index PLIC_EXT_INTR_OFFSET
 #define PLIC_EXT_INTR_OFFSET   2
 
-#define MAX_EXT_INTR 150
+#define MAX_EXTERNAL_INTR 150
+#define MAX_INTERNAL_INTR 10
 
 static volatile uint32_t should_claim = -1;
 
@@ -70,8 +72,10 @@ _Context *external_trap(_Event ev, _Context *ctx) {
 }
 
 static void plic_intr_init() {
-  for (int i = 0; i < MAX_EXT_INTR; i++)
+  for (int i = 0; i < MAX_EXTERNAL_INTR + MAX_INTERNAL_INTR; i++) {
     WRITE_WORD(PLIC_PRIORITY + i * sizeof(uint32_t), 0x1);
+  }
+  WRITE_WORD(PLIC_THRESHOLD, 0x0);
 }
 
 void external_intr() {
@@ -82,7 +86,7 @@ void external_intr() {
   // trigger interrupts
   const uint32_t MAX_RAND_ITER = 1000;
   for (int i = 0; i < MAX_RAND_ITER; i++) {
-    should_claim = (rand() % MAX_EXT_INTR) + PLIC_EXT_INTR_OFFSET;
+    should_claim = (rand() % MAX_EXTERNAL_INTR) + PLIC_EXT_INTR_OFFSET;
     // printf("should_claim %d, setting intr\n", should_claim);
     WRITE_WORD(PLIC_ENABLE + (should_claim / 32) * 4, (1UL << (should_claim % 32)));
     SET_INTR(should_claim - PLIC_EXT_INTR_OFFSET);
