@@ -34,9 +34,9 @@ static void init_timer() {
 }
 
 static void init_eip() {
-  // enable machine external interrupt (mie.meip and mstatus.mie)
-  asm volatile("csrs mie, %0" : : "r"(1 << 11));
-  asm volatile("csrs mstatus, %0" : : "r"(1 << 3));
+  // disable machine external interrupt (mie.meie and mstatus.mie)
+  asm volatile("csrc mie, %0" : : "r"(1 << 11));
+  asm volatile("csrc mstatus, %0" : : "r"(1 << 3));
 }
 
 void __am_init_cte64() {
