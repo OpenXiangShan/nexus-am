@@ -8,10 +8,13 @@
 
 #define INTR_GEN_ADDR          (0x40070000UL)
 #define INTR_REG_WIDTH         32
-#define INTR_REG_NUM           8
 #define INTR_REG_ADDR(i)       ((INTR_GEN_ADDR) + ((i) << 2))
 #define INTR_REG_INDEX(i)      INTR_REG_ADDR(((i) / INTR_REG_WIDTH))
 #define INTR_REG_OFFSET(i)     ((i) % INTR_REG_WIDTH)
+
+#define INTR_RANDOM            (0x40070008UL)
+#define INTR_RANDOM_ADDR(i)    ((INTR_RANDOM) + ((i) << 2))
+#define INTR_RANDOM_MASK       (0x40070010UL)
 
 #define READ_INTR_REG(i)  READ_WORD(INTR_REG_ADDR(i))
 #define READ_INTR(i)     EXTRACT_BIT(READ_INTR_REG(INTR_REG_INDEX(i)), INTR_REG_OFFSET(i))
@@ -21,11 +24,11 @@
 #define CONTEXT_M 0
 #define CONTEXT_S 1
 #define PLIC_BASE_ADDR         (0x3c000000UL)
-#define PLIC_PRIORITY       (PLIC_BASE_ADDR + 0x4UL)
+#define PLIC_PRIORITY          (PLIC_BASE_ADDR + 0x4UL)
 #define PLIC_PENDING           (PLIC_BASE_ADDR + 0x1000UL)
-#define PLIC_ENABLE(c)            (PLIC_BASE_ADDR + 0x2000UL + c*0x80UL)
-#define PLIC_THRESHOLD(c)         (PLIC_BASE_ADDR + 0x200000UL + c*0x1000UL)
-#define PLIC_CLAIM(c)             (PLIC_BASE_ADDR + 0x200004UL + c*0x1000UL)
+#define PLIC_ENABLE(c)         (PLIC_BASE_ADDR + 0x2000UL + c*0x80UL)
+#define PLIC_THRESHOLD(c)      (PLIC_BASE_ADDR + 0x200000UL + c*0x1000UL)
+#define PLIC_CLAIM(c)          (PLIC_BASE_ADDR + 0x200004UL + c*0x1000UL)
 // External interrupts start with index PLIC_EXT_INTR_OFFSET
 #define PLIC_EXT_INTR_OFFSET   1
 
@@ -39,8 +42,11 @@
 #define SSIE 1
 
 static volatile uint32_t should_claim = -1;
+static volatile bool random_claim = false;
 static volatile bool should_trigger = false;
 static volatile int current_context = CONTEXT_M;
+static volatile uint32_t claim_count[MAX_EXTERNAL_INTR + MAX_INTERNAL_INTR] = {0};
+static volatile uint32_t claim_count_all = 0;
 
 void s2m() {
   // simply write to mie to trigger an illegal instruction exception
@@ -61,13 +67,15 @@ void do_ext_intr() {
   uint32_t claim = READ_WORD(PLIC_CLAIM(current_context));
   // printf("DO_EXT_INTR: claim %d should_claim %d\n", claim, should_claim);
   if (claim) {
-    if (claim != should_claim) {
+    if (!random_claim && claim != should_claim) {
       printf("ERROR: is the external interrupt bit in PLIC cleared correctly?\n");
       assert(0);
     }
+    claim_count[claim]++;
+    claim_count_all++;
     CLEAR_INTR(claim - PLIC_EXT_INTR_OFFSET);
     WRITE_WORD(PLIC_CLAIM(current_context), claim);
-    if (READ_WORD(PLIC_CLAIM(current_context)) != 0) {
+    if (!random_claim && READ_WORD(PLIC_CLAIM(current_context)) != 0) {
       printf("ERROR: do you clear the external interrupt source correctly?\n");
       assert(0);
     }
@@ -142,6 +150,22 @@ void external_trigger(bool shall_trigger, int context) {
   printf("current test finishes\n");
 }
 
+void random_trigger() {
+  should_trigger = true;
+  current_context = CONTEXT_S;
+  random_claim = true;
+  claim_count_all = 0;
+  WRITE_WORD(INTR_RANDOM_MASK, 0xfff);
+  for (int i = 0; i < (MAX_EXTERNAL_INTR + 31) / 32; i++) {
+    WRITE_WORD(INTR_RANDOM_ADDR(i), 0xffffffff);
+  }
+  for (int i = 0; i < (MAX_EXTERNAL_INTR + 32) / 32; i++) {
+    WRITE_WORD(PLIC_ENABLE(CONTEXT_S) + i * 4, 0xffffffff);
+  }
+  while (claim_count_all < 200);
+  printf("random test finishes\n");
+}
+
 void external_intr() {
 
   /** four stage test:
@@ -171,6 +195,12 @@ void external_intr() {
   // external_trigger(true, CONTEXT_M);
   // external_trigger(false, CONTEXT_S);
 
+  plic_intr_init();
+  random_trigger();
+
+  // for (int i = 0; i < MAX_EXTERNAL_INTR + MAX_INTERNAL_INTR; i++) {
+  //   printf("claim_count[%d] = %lu\n", i, claim_count[i]);
+  // }
   printf("external interrupt test passed!!!\n");
 }
 
