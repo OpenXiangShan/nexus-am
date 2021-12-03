@@ -21,3 +21,14 @@ void hello_intr() {
     _yield();
   }
 }
+
+void hello_n(int n);
+void hello_intr_n(int n) {
+  printf("Hello, AM World @ " __ISA__ "\n");
+  printf("  t = timer, d = device, y = yield\n");
+  _intr_write(1);
+  for (volatile int i = 0; i < n; i++) {
+    hello_n(i);
+    _yield();
+  }
+}

@@ -162,6 +162,8 @@ void random_trigger() {
   for (int i = 0; i < (MAX_EXTERNAL_INTR + 32) / 32; i++) {
     WRITE_WORD(PLIC_ENABLE(CONTEXT_S) + i * 4, 0xffffffff);
   }
+  void hello_intr_n(int n);
+  hello_intr_n(30);
   while (claim_count_all < 200);
   printf("random test finishes\n");
 }
