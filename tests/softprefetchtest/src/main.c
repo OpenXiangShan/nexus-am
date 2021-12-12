@@ -1,11 +1,7 @@
-#include <aliastest.h>
-
-void map_kernel_page() {
-
-}
+#include <softprefetch.h>
 
 int main() {
-    printf("Alias test shall pass when difftest gives no error\n");
+    printf("Soft prefetch test shall pass when difftest gives no error\n");
     do_init();
     return 0;
 }
