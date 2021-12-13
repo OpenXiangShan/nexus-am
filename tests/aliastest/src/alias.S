@@ -16,6 +16,16 @@
 
 .global do_init
 do_init:
+
+  la t0, 1f;
+  csrw mtvec, t0;
+  /* Set up a PMP to permit all accesses */
+  li t0, (1 << (31 + (__riscv_xlen / 64) * (53 - 31))) - 1;
+  csrw pmpaddr0, t0;
+  li t0, PMP_NAPOT | PMP_R | PMP_W | PMP_X;
+  csrw pmpcfg0, t0;
+  .align 2;
+
   # Set up intermediate page tables
 
   la t0, page_table_3
@@ -59,6 +69,8 @@ do_init:
 
   la a2, 1f
   csrwi mepc, 0
+  li a1, (MSTATUS_MPP * PRV_S)
+  csrc mstatus, a1
   li a1, ((MSTATUS_MPP & ~(MSTATUS_MPP<<1)) * PRV_S)
   csrs mstatus, a1
   mret
