@@ -1,15 +1,3 @@
-# See LICENSE for license details.
-
-#*****************************************************************************
-# icache-alias.S
-#-----------------------------------------------------------------------------
-#
-# Test that instruction memory appears to be physically addressed, i.e.,
-# that disagreements in the low-order VPN and PPN bits don't cause the
-# wrong instruction to be fetched.  It also tests that changing a page
-# mapping takes effect without executing FENCE.I.
-#
-
 #include "encoding.h"
 
 #define TESTNUM gp
