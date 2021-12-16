@@ -318,10 +318,6 @@ dcache_tag_case2:
 # Test 5: dcache ecc read/write
 #-----------------------------------------------------------------------------
 
-# TODO
-
-j icache_tag_case1
-
 # write 0x3 to dcache index 1 way 1 bank 1 data ecc, then read it
 dcache_ecc_case1:
   # write data cache using cache op
@@ -374,6 +370,60 @@ dcache_ecc_case1:
   li a2, 1
   bne a1, a2, failure
   csrr a1, cop_data_ecc
+  li a2, 0x3
+  bne a1, a2, failure
+
+# write 0x3 to dcache index 1 way 1 bank 1 tag ecc, then read it
+dcache_ecc_case2:
+  # reset cache op csrs
+  jal clear_cop_csrs
+
+  # prepare cache op ctrl info
+  li a0, 0x3
+  csrw cop_tag_ecc, a0
+  li a2, COP_ID_DCACHE
+  csrw cop_level, a2
+  li a2, 0x1
+  csrw cop_way, a2
+  li a2, 0x1
+  csrw cop_index, a2
+
+  # send cache op request
+  li a2, COP_WRITE_TAG_ECC
+  csrw cop_op, a2
+
+  # wait for cache op response
+  jal wait_until_cop_finish_or_timeout
+
+  # check cache op result
+  csrr a1, cop_finish
+  li a2, 1
+  bne a1, a2, failure
+
+  # read data cache tag using cache op
+  # reset cache op csrs
+  jal clear_cop_csrs
+
+  # prepare cache op ctrl info
+  li a2, COP_ID_DCACHE
+  csrw cop_level, a2
+  li a2, 0x1
+  csrw cop_way, a2
+  li a2, 0x1
+  csrw cop_index, a2
+
+  # send cache op request
+  li a2, COP_READ_TAG_ECC
+  csrw cop_op, a2
+
+  # wait for cache op response
+  jal wait_until_cop_finish_or_timeout
+
+  # check cache op result
+  csrr a1, cop_finish
+  li a2, 1
+  bne a1, a2, failure
+  csrr a1, cop_tag_ecc
   li a2, 0x3
   bne a1, a2, failure
 
