@@ -8,12 +8,14 @@ void case_passed() {
 
 void success() {
     printf("Cache op test passed.\n");
-    while(1);
+    asm("li a0, 0\n");
+    asm(".word 0x0000006b\n");
 }
 
 void failure() {
     printf("Cache op test failed\n");
-    while(1);
+    asm("li a0, 1\n");
+    asm(".word 0x0000006b\n");
 }
 
 int main() {
