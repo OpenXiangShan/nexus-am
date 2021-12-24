@@ -49,23 +49,23 @@ for i in range(0, TEST_SIZE):
     instr = random.choice(instructions)
     rd = str(random.randrange(32))
     rs1 = str(random.randrange(32))
-    rs2 = str(random.randrange(32))
-    shamt32 = str(random.randrange(32))
-    shamt64 = str(random.randrange(64))
 
     fout.write(instr + ' ' + rd + ' ' + rs1)
 
     if instr in two_reg:
         fout.write('\n')
     elif instr in three_reg_i32:
+        shamt32 = str(random.randrange(32))
         fout.write(' ' + shamt32 + '\n')
     elif instr in three_reg_i64:
+        shamt64 = str(random.randrange(64))
         fout.write(' ' + shamt64 + '\n')
     elif instr == 'gorci':
         fout.write(' 7\n')
     elif instr == 'grevi':
         fout.write(' 56\n')
     else:
+        rs2 = str(random.randrange(32))
         fout.write(' ' + rs2 + '\n')
 
 fout.write('    mv a0, x0\n')
