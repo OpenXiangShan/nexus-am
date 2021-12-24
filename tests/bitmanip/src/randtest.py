@@ -40,17 +40,26 @@ fout.write('START_RAMDOM_TEST:\n')
 
 TEST_SIZE = 10 ** 8    
 
-# initial
-for r in range(1,32):
-    rand_data = hex(random.randrange(2 ** 64))
-    fout.write('li x' + str(r) + ',' + str(rand_data) + '\n')
+def randinit_reg(r):
+    if r != 0:
+        rand_data = hex(random.randrange(2 ** 64))
+        fout.write('li x' + str(r) + ',' + str(rand_data) + '\n')
+    return
 
 for i in range(0, TEST_SIZE):
     instr = random.choice(instructions)
-    rd = str(random.randrange(31) + 1)  # skip x0
-    rs1 = str(random.randrange(32))
+    rd = random.randrange(31) + 1  # skip x0
+    rs1 = random.randrange(32)
+    randinit_reg(rs1)
 
-    fout.write(instr + ' ' + rd + ' ' + rs1)
+    if instr in three_reg:
+        rs2 = str(random.randrange(32))
+        randinit_reg(rs2)
+        fout.write(instr + ' ' + str(rd) + ' ' + str(rs1))
+        fout.write(' ' + str(rs2) + '\n')
+        continue
+
+    fout.write(instr + ' ' + str(rd) + ' ' + str(rs1))
 
     if instr in two_reg:
         fout.write('\n')
@@ -64,9 +73,6 @@ for i in range(0, TEST_SIZE):
         fout.write(' 7\n')
     elif instr == 'grevi':
         fout.write(' 56\n')
-    else:
-        rs2 = str(random.randrange(32))
-        fout.write(' ' + rs2 + '\n')
 
 fout.write('    mv a0, x0\n')
 fout.write('    .int 0x0000006b\n')
