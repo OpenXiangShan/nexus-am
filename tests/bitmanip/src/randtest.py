@@ -47,7 +47,7 @@ for r in range(1,32):
 
 for i in range(0, TEST_SIZE):
     instr = random.choice(instructions)
-    rd = str(random.randrange(32))
+    rd = str(random.randrange(31) + 1)  # skip x0
     rs1 = str(random.randrange(32))
 
     fout.write(instr + ' ' + rd + ' ' + rs1)
