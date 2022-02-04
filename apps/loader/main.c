@@ -81,7 +81,7 @@ int a[10] = {};
 uint32_t* code = (uint32_t *)0x80000000;
 
 void test(uint8_t *image) {
-  //printf("copy code...\n");
+  printf("copy code...\n");
   memcpy(code, image, 7776);
 
 #ifdef __ISA_RISCV64__
@@ -89,7 +89,7 @@ void test(uint8_t *image) {
 #endif
 
   void (*f)(void) = (void *)code;
-  //printf("jump to  code...\n");
+  printf("jump to  code...\n");
   f();
   //printf("ret = %d\n", ret);
 }
