@@ -3,6 +3,7 @@
 import argparse
 import random
 import subprocess
+import time
 from multiprocessing import Process, Queue
 
 # Generate riscv-bitmanip assembly code
@@ -100,7 +101,7 @@ def compile_asm(target_name):
     for command in commands:
         proc = subprocess.Popen(command.split(" "), stdout=subprocess.DEVNULL, stderr=None)
         while proc.poll() is None:
-            pass
+            time.sleep(5)
         if proc.returncode:
             print("Fail:", command)
 
