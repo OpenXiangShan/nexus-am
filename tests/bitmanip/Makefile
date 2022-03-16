@@ -1,3 +1,3 @@
 NAME := bitmanip
-SRCS := $(shell find -L ./src/ -name "*.S")
+SRCS := ./src/$(NAME).S
 include $(AM_HOME)/Makefile.app
