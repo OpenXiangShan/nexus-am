@@ -83,36 +83,47 @@ def generate_asm(out, test_size):
     fout.write('    .int 0x0000006b\n')
     fout.close()
 
-def compile_asm(target_name):
-    run_cmd = ["make", "ARCH=riscv64-xs", "-C", "..", f"NAME={target_name}"]
-    proc = subprocess.Popen(run_cmd, stdout=subprocess.DEVNULL, stderr=None)
-    while proc.poll() is None:
-        pass
+def get_compile_asm_cmd(target):
+    test_cmd = ["make", "ARCH=riscv64-noop", "-C", "..", f"NAME={target}", "-B", "-n"]
+    proc = subprocess.Popen(test_cmd, stdout=subprocess.PIPE)
+    out, _ = proc.communicate()
+    commands = []
+    for line in out.decode().split("\n"):
+        if line.strip().startswith("riscv64") and target in line:
+            commands.append(line.strip())
+    if proc.returncode:
+        print("Fail:", test_cmd)
+    return commands
 
-def do_generate(case_size, case_queue, output, do_compile, compile_queue):
+def compile_asm(target_name):
+    commands = get_compile_asm_cmd(target_name)
+    for command in commands:
+        proc = subprocess.Popen(command.split(" "), stdout=subprocess.DEVNULL, stderr=None)
+        while proc.poll() is None:
+            pass
+        if proc.returncode:
+            print("Fail:", command)
+
+def do_generate(case_size, case_queue, output, do_compile):
     while not case_queue.empty():
         case_index = case_queue.get()
         prefix = f"_{case_index}" if case_index > 0 else ""
         target_name = f"{output}{prefix}"
         generate_asm(target_name, case_size)
         if do_compile:
-            compile_queue.put(target_name)
+            compile_asm(target_name)
 
 def main(case_size, num_cases, num_jobs, output, do_compile):
-    case_queue, compile_queue = Queue(), Queue()
+    case_queue = Queue()
     for i in range(num_cases):
         case_queue.put(i)
     process_list = []
     for _ in range(num_jobs):
-        p = Process(target=do_generate, args=(case_size, case_queue, output, do_compile, compile_queue))
+        p = Process(target=do_generate, args=(case_size, case_queue, output, do_compile))
         p.start()
         process_list.append(p)
     for p in process_list:
         p.join()
-    while not compile_queue.empty():
-        target = compile_queue.get()
-        print(f"Compiling {target} ...")
-        compile_asm(target)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="random bitmanip tests generator")
