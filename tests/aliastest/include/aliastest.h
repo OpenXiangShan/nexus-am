@@ -6,6 +6,7 @@
 #include <klib-macros.h>
 #include <encoding.h>
 
-void do_init();
+void do_alias_init();
+void do_alias_jit_init();
 
 #endif

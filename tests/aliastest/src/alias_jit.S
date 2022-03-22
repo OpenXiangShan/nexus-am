@@ -2,8 +2,8 @@
 
 #define TESTNUM gp
 
-.global do_alias_init
-do_alias_init:
+.global do_alias_jit_init
+do_alias_jit_init:
 
   la t0, 1f;
   csrw mtvec, t0;
@@ -53,10 +53,26 @@ do_alias_init:
   csrw sptbr, a1
   sfence.vma
 
+  # Write code to code_page
+
+  la t0, data_page
+  la t1, 0x000025b7
+  sw t1, (t0)
+  la t1, 0x0005a503
+  sw t1, 4(t0)
+  la t1, 0x12000073
+  sw t1, 8(t0)
+  la t1, 0x0000051b
+  sw t1, 12(t0)
+  la t1, 0x0000006b
+  sw t1, 16(t0)
+  sfence.vma
+
   # Enter supervisor mode and make sure correct page is accessed
 
   la a2, 1f
-  csrwi mepc, 0
+  la t3, 0x1000
+  csrw mepc, t3
   li a1, (MSTATUS_MPP * PRV_S)
   csrc mstatus, a1
   li a1, ((MSTATUS_MPP & ~(MSTATUS_MPP<<1)) * PRV_S)
@@ -64,8 +80,8 @@ do_alias_init:
   mret
 
   .align 2
-  .global mtvec_handler
-mtvec_handler:
+  .global mtvec_handler_jit
+mtvec_handler_jit:
   csrr t0, mcause
   add t0, t0, -CAUSE_STORE_PAGE_FAULT
   bnez t0, fail
