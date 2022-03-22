@@ -56,15 +56,15 @@ do_alias_jit_init:
   # Write code to code_page
 
   la t0, data_page
-  la t1, 0x000025b7
+  la t1, 0x000025b7 # la a1, 0x2000
   sw t1, (t0)
-  la t1, 0x0005a503
+  la t1, 0x0005a503 # lw a0, 0(a1)
   sw t1, 4(t0)
-  la t1, 0x12000073
+  la t1, 0x12000073 # sfence.vma
   sw t1, 8(t0)
-  la t1, 0x0000051b
+  la t1, 0x0000051b # la a0, 0x0
   sw t1, 12(t0)
-  la t1, 0x0000006b
+  la t1, 0x0000006b # _halt
   sw t1, 16(t0)
   sfence.vma
 
