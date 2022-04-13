@@ -48,8 +48,8 @@ void __am_init_cte64() {
   asm volatile("csrw pmpaddr0, %0" : : "r"(-1));
   asm volatile("csrw pmpcfg0, %0" : : "r"(31));
 
-  init_timer();
-  init_eip();
+  //init_timer();
+  //init_eip();
 
   // enter S-mode
   uintptr_t status = MSTATUS_SPP(MODE_S);
