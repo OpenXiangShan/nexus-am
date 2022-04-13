@@ -1,6 +1,6 @@
 NAME = flash-loader
 SRCS = main.c image.S
-ELF_PATH = /nfs/home/share/xs-workloads/linux-4.18-hello/bbl.bin
+ELF_PATH = ./image/coremark-riscv64-xs.bin
 ASFLAGS += -DELF_PATH=\"$(ELF_PATH)\"
 
 image.S: $(ELF_PATH)
