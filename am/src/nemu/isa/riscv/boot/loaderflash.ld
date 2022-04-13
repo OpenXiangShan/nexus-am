@@ -1,46 +1,54 @@
 MEMORY {
-  flash (rxa) : ORIGIN = 0x10000000, LENGTH = 16M
-  ram (rwxa) : ORIGIN = 0x80000000, LENGTH = 64M
+  FLASH (rxa) : ORIGIN = 0x10000000, LENGTH = 16M
+  RAM (rwxa) : ORIGIN = 0x80000000, LENGTH = 64M
 }
-
-/*
-PHDRS {
-  ram PT_LOAD;
-}
-  */
 
 ENTRY(_start)
 
 SECTIONS {
-  . = ORIGIN(flash);
-  .text : {
+  .text : 
+  {
     *(entry)
     _mainargs = .;
     *(.text)
-  }
+  } >FLASH
   etext = .;
   _etext = .;
-  .rodata : {
+  
+  .rodata : 
+  {
     *(.rodata*)
-  }
+  } >FLASH
 
-  /*. = ORIGIN(ram); */
-  .data : {
+  .data : 
+  {
+    sdata = .;
     *(.data)
-  } /*> ram :ram */
-  edata = .;
+    *(.sdata)
+    edata = .;
+  } >RAM AT > FLASH
   _data = .;
-  .bss : {
-	_bss_start = .;
+  _sidata = LOADADDR(.data);
+  
+  .bss : 
+  {
+    _bss_start = .;
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } /*> ram : ram */
+    _bss_end   = .;
+  } >RAM AT > FLASH
+  _sibss = LOADADDR(.bss);
   end = .;
   _end = .;
 
-  . = ALIGN(0x1000);
-  _stack_pointer = . + - ORIGIN(flash) + ORIGIN(ram) + 0x8000;
-  _heap_start = _stack_pointer;
-  _heap_end = ORIGIN(ram) + LENGTH(ram);
+  ram_start = .;
+
+  . = ORIGIN(RAM);
+  _stack_top = ALIGN(0x1000);
+  . = _stack_top + 0x8000;
+  _stack_pointer = .;
+  end = .;
+  _end = .;
+  _heap_start = ALIGN(0x1000);
 }

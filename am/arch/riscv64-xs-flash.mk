@@ -1,6 +1,6 @@
 include $(AM_HOME)/am/arch/isa/riscv64.mk
 
-AM_SRCS := noop/isa/riscv/trm.c \
+AM_SRCS := noop/isa/riscv/trm_flash.c \
            nemu/common/mainargs.S \
            noop/isa/riscv/perf.c \
            noop/common/uartlite.c \
@@ -13,7 +13,7 @@ AM_SRCS := noop/isa/riscv/trm.c \
            dummy/audio.c \
            noop/isa/riscv/instr.c \
            dummy/mpe.c \
-           nemu/isa/riscv/boot/start.S
+           nemu/isa/riscv/boot/start_flash.S
 
 CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -DISA_H=\"riscv.h\"
 
