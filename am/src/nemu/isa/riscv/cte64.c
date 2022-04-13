@@ -34,9 +34,9 @@ static void init_timer() {
 }
 
 static void init_eip() {
-  // disable machine external interrupt (mie.meie and mstatus.mie)
-  asm volatile("csrc mie, %0" : : "r"(1 << 11));
-  asm volatile("csrc mstatus, %0" : : "r"(1 << 3));
+  // enable machine external interrupt (mie.meip and mstatus.mie)
+  asm volatile("csrs mie, %0" : : "r"(1 << 11));
+  asm volatile("csrs mstatus, %0" : : "r"(1 << 3));
 }
 
 void __am_init_cte64() {
@@ -48,8 +48,8 @@ void __am_init_cte64() {
   asm volatile("csrw pmpaddr0, %0" : : "r"(-1));
   asm volatile("csrw pmpcfg0, %0" : : "r"(31));
 
-  //init_timer();
-  //init_eip();
+  init_timer();
+  init_eip();
 
   // enter S-mode
   uintptr_t status = MSTATUS_SPP(MODE_S);
