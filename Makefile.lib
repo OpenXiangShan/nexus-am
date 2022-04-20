@@ -15,10 +15,12 @@ CFLAGS  += -fdata-sections -ffunction-sections -fno-builtin
 ## Paste in "Makefile.compile" here
 include $(AM_HOME)/Makefile.compile
 
+AR       = $(CROSS_COMPILE)ar
+
 ## Compliation rule for objects -> .a (using ar)
 $(ARCHIVE): $(OBJS)
 	@echo + AR "->" $(shell realpath $@ --relative-to .)
-	@ar rcs $(ARCHIVE) $(OBJS)
+	@$(AR) rcs $(ARCHIVE) $(OBJS)
 
 clean: 
 	rm -rf $(LIB_DIR)/build/
