@@ -44,6 +44,16 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 
 #define MAX_CPU 2
 
+#define INTERRUPT_CAUSE_SIZE 16
+#define EXCEPTION_CAUSE_SIZE 16
+
+#define SCAUSE_MASK 0x7fff
+// Interrupt
+#define SCAUSE_SSIP 0x1
+#define SCAUSE_STIP 0x5
+#define SCAUSE_SEIP 0x9
+// Exception
+#define SCAUSE_SECALL 0x9
 #endif
 
 #endif

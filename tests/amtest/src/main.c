@@ -16,10 +16,11 @@ static const char *tests[256] = {
 };
 
 int main(const char *args) {
-  switch (args[0]) {
+  char arg = 'e';
+  switch (arg) {
     CASE('h', hello);
     CASE('i', hello_intr, IOE, CTE(simple_trap));
-    CASE('e', external_intr, IOE, CTE(external_trap));
+    CASE('e', external_intr, IOE, REEH(external_trap));
     CASE('d', devscan, IOE);
     CASE('m', finalize, PRE_MPE(args[1]), MPE(mp_print));
     CASE('t', rtc_test, IOE);
