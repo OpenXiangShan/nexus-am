@@ -40,7 +40,7 @@ _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
   // It's not deleted because we want to test sip write mask.
   asm volatile ("csrwi sip, 0");
   ev->event = _EVENT_IRQ_IODEV;
-  printf("inside irq SSIP handler\n");
+  // printf("inside irq SSIP handler\n");
   if (custom_external_handler != NULL)
     custom_external_handler(*ev, c);
   return c;
@@ -49,6 +49,8 @@ _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
 _Context* __am_irq_SECALL_handler(_Event *ev, _Context *c) {
   ev->event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
   c->sepc += 4;
+  //if (ev->event == _EVENT_YIELD)
+  //  printf("SECALL: is YIELD\n");
   if (custom_secall_handler != NULL) {
     custom_secall_handler(*ev, c);
   }
@@ -61,14 +63,14 @@ _Context* __am_irq_handle(_Context *c) {
 
   _Event ev = {0};
   uintptr_t scause_code = c->scause & SCAUSE_MASK;
-  printf("am irq triggered %llx\n", c->scause);
+  // printf("am irq triggered %llx\n", c->scause);
   if (c->scause & INTR_BIT) {
     assert(scause_code < INTERRUPT_CAUSE_SIZE);
-    printf("is an interrupt\n");
+    // printf("is an interrupt\n");
     interrupt_handler[scause_code](&ev, c);
   } else {
     assert(scause_code < EXCEPTION_CAUSE_SIZE);
-    printf("is an exception\n");
+    // printf("is an exception\n");
     exception_handler[scause_code](&ev, c);
   }
 
