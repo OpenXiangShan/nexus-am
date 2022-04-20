@@ -9,6 +9,10 @@
 #include ISA_H // "x86.h", "mips32.h", ...
 
 extern int __am_ncpu;
+// timer related driver functions
+void init_timer();
+void enable_timer();
+void set_timer_inc(uintptr_t inc);
 
 #endif
 

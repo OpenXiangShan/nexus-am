@@ -16,6 +16,7 @@ AM_SRCS := noop/isa/riscv/trm.c \
            dummy/audio.c \
            noop/isa/riscv/instr.c \
            xs/isa/riscv/mpe.c \
+           xs/isa/riscv/clint.c \
            nemu/isa/riscv/boot/start.S
 
 CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\"
