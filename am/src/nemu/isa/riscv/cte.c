@@ -23,19 +23,24 @@ _Context* __am_irq_default_handler(_Event *ev, _Context *c) {
   return c;
 }
 _Context* __am_irq_STIP_handler(_Event *ev, _Context *c) {
-#if __riscv_xle == 64
+#if __riscv_xlen == 64
   asm volatile ("csrwi sip, 0");
 #endif
+  printf("inside irq STIP handler\n");
   ev->event = _EVENT_IRQ_TIMER;
-  if (custom_timer_handler != NULL)
+  if (custom_timer_handler != NULL) {
+    printf("dive into custom timer handler");
     custom_timer_handler(*ev, c);
+  }
+    
   return c;
 }
-_Context* __am_irq_SSIP_handler(_Event *ev, _Context *c) {
+_Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
   // WARNING: this has no effect since in S mode only SSIP can be cleared.
   // It's not deleted because we want to test sip write mask.
   asm volatile ("csrwi sip, 0");
   ev->event = _EVENT_IRQ_IODEV;
+  printf("inside irq SSIP handler\n");
   if (custom_external_handler != NULL)
     custom_external_handler(*ev, c);
   return c;
@@ -56,12 +61,14 @@ _Context* __am_irq_handle(_Context *c) {
 
   _Event ev = {0};
   uintptr_t scause_code = c->scause & SCAUSE_MASK;
-  printf("am irq triggered\n");
+  printf("am irq triggered %llx\n", c->scause);
   if (c->scause & INTR_BIT) {
     assert(scause_code < INTERRUPT_CAUSE_SIZE);
+    printf("is an interrupt\n");
     interrupt_handler[scause_code](&ev, c);
   } else {
     assert(scause_code < EXCEPTION_CAUSE_SIZE);
+    printf("is an exception\n");
     exception_handler[scause_code](&ev, c);
   }
 
@@ -114,6 +121,7 @@ int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
   // cte init handler has no effect for now
 
 #if __riscv_xlen == 64
+  // printf("CTE64 inited\n");
   extern void __am_init_cte64();
   __am_init_cte64();
 #endif
@@ -129,7 +137,7 @@ int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
 #else
   interrupt_handler[SCAUSE_STIP] = __am_irq_STIP_handler;
 #endif
-  interrupt_handler[SCAUSE_SEIP] = __am_irq_SSIP_handler;
+  interrupt_handler[SCAUSE_SEIP] = __am_irq_SEIP_handler;
   exception_handler[SCAUSE_SECALL] = __am_irq_SECALL_handler;
 
   return 0;
