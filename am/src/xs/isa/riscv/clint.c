@@ -32,3 +32,8 @@ void enable_timer() {
   // set machine timer interrupt
   asm volatile("csrs mie, %0" : : "r"((1 << 7) | (1 << 1)));
 }
+
+void disable_timer() {
+  // unset machine timer interrupt
+  asm volatile("csrc mie, %0" : : "r"((1 << 7) | (1 << 1)));
+}

@@ -11,6 +11,10 @@ static void init_machine_exception() {
 
 extern void init_timer();
 extern void enable_timer();
+extern void init_pmp(); 
+extern void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8_t lock, uint8_t permission);
+extern void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, bool lock, uint8_t permission);
+#include <pmp.h>
 
 static void init_eip() {
   // enable machine external interrupt (mie.meip and mstatus.mie)
@@ -24,8 +28,16 @@ void __am_init_cte64() {
   asm volatile("csrw medeleg, %0" : : "r"(0xfffb));
 
   // set PMP to access all memory in S-mode
-  asm volatile("csrw pmpaddr0, %0" : : "r"(-1));
-  asm volatile("csrw pmpcfg0, %0" : : "r"(31));
+  asm volatile("csrw pmpaddr8, %0" : : "r"(-1));
+  asm volatile("csrw pmpcfg2, %0" : : "r"(31));
+  #include <printf.h>
+
+  // protect 0x90000000 + 0x10000000 for test purpose
+  enable_pmp(1, 0x90000000, 0x10000, 0, 0);
+  printf("pmp NA inited\n");
+  // protect 0xb00000000 + 0x100
+  enable_pmp_TOR(4, 0xb0000000, 0x100, 0, 0);
+  printf("pmp TOR inited\n");
 
   init_machine_exception();
   init_timer();

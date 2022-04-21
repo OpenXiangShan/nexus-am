@@ -63,7 +63,7 @@ _Context* __am_irq_handle(_Context *c) {
 
   _Event ev = {0};
   uintptr_t scause_code = c->scause & SCAUSE_MASK;
-  // printf("am irq triggered %llx\n", c->scause);
+  printf("am irq triggered %llx\n", c->scause);
   if (c->scause & INTR_BIT) {
     assert(scause_code < INTERRUPT_CAUSE_SIZE);
     // printf("is an interrupt\n");
