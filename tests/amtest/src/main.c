@@ -21,7 +21,7 @@ int main(const char *args) {
     CASE('i', hello_intr, IOE, CTE(simple_trap));
     CASE('e', external_intr, IOE, CTE(external_trap));
     CASE('d', devscan, IOE);
-    CASE('m', mp_print, MPE);
+    CASE('m', finalize, PRE_MPE(args[1]), MPE(mp_print));
     CASE('t', rtc_test, IOE);
     CASE('k', keyboard_test, IOE);
     CASE('v', video_test, IOE);
@@ -36,5 +36,5 @@ int main(const char *args) {
         }
       }
   }
-  return 0;
+  return 1;
 }
