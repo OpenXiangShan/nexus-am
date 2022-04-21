@@ -42,6 +42,8 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTW_SV39 ((ptw_config) { .ptw_level = 3, .vpn_width = 9  })
 #define PTW_SV48 ((ptw_config) { .ptw_level = 4, .vpn_width = 9  })
 
+#define MAX_CPU 2
+
 #endif
 
 #endif

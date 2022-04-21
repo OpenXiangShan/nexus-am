@@ -14,6 +14,8 @@ extern "C" {
 #endif
 
 // ================= Supplement MPE =================
+void _mpe_setncpu(char arg);
+void _mpe_wakeup(int cpu);
 intptr_t _atomic_add(volatile intptr_t *addr, intptr_t adder);
 
 #ifdef __cplusplus
