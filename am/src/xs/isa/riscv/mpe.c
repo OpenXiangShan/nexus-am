@@ -5,6 +5,7 @@ int __am_ncpu = 1;  // One core by default
 void _mpe_setncpu(char arg) {
   __am_ncpu = arg ? atoi(&arg) : 1;
   assert(0 < __am_ncpu && __am_ncpu <= MAX_CPU);
+  return;
 }
 
 void _mpe_wakeup(int cpu) {
@@ -47,5 +48,29 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
 }
 
 intptr_t _atomic_add(volatile intptr_t *addr, intptr_t adder) {
-  return 0;
+  intptr_t result;
+  asm volatile(
+    "amoadd.d %0, %1, (%2);"
+    : "=r"(result)
+    : "r"(adder), "r"(addr)
+  );
+  return result;
+}
+
+void barrier() {
+  static volatile intptr_t sense = 0;
+  static volatile intptr_t count = 0;
+  static __thread intptr_t threadsense;
+
+  asm volatile("fence;");
+
+  threadsense = !threadsense;
+  if (_atomic_add(&count, 1) == _ncpu()-1) {
+    count = 0;
+    sense = threadsense;
+  }
+  else while(sense != threadsense)
+    ;
+
+  asm volatile("fence;");
 }

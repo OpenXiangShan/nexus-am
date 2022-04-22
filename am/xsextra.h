@@ -17,6 +17,7 @@ extern "C" {
 void _mpe_setncpu(char arg);
 void _mpe_wakeup(int cpu);
 intptr_t _atomic_add(volatile intptr_t *addr, intptr_t adder);
+void barrier();
 
 #ifdef __cplusplus
 }
