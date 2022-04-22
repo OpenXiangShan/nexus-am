@@ -69,7 +69,7 @@ void sv39_test() {
 }
 
 int main(const char *args) {
-  char arg = 's';
+  char arg = 'e';
   switch (arg) {
     CASE('h', hello);
     CASE('i', hello_intr, IOE, CTE(simple_trap), REEH(simple_trap), RCEH(simple_trap));
