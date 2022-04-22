@@ -15,8 +15,27 @@ static const char *tests[256] = {
   ['p'] = "x86 virtual memory test",
 };
 
+#define PMP_3
+
+void pmp_test() {
+  printf("start pmp test\n");
+  #ifdef PMP_1
+  volatile int *a = (int *)(0x90000040UL);
+  *a = 1; // should trigger a fault
+  #endif
+  #ifdef PMP_2
+  int *b = (int *)(0xa0000000UL);
+  *b = 1; // should not trigger a fault
+  #endif
+  #ifdef PMP_3
+  int *c = (int *)(0xb00000040UL);
+  *c = 1; // should trigger a fault
+  #endif
+  asm volatile("ebreak");
+}
+
 int main(const char *args) {
-  char arg = 'i';
+  char arg = 'c';
   switch (arg) {
     CASE('h', hello);
     CASE('i', hello_intr, IOE, CTE(simple_trap), REEH(simple_trap), RCEH(simple_trap));
@@ -28,6 +47,7 @@ int main(const char *args) {
     CASE('v', video_test, IOE);
     CASE('a', audio_test, IOE);
     CASE('p', vm_test, CTE(vm_handler), VME(simple_pgalloc, simple_pgfree));
+    CASE('c', pmp_test, CTE(simple_trap));
     case 'H':
     default:
       printf("Usage: make run mainargs=*\n");
