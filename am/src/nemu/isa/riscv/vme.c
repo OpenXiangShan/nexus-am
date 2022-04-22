@@ -3,7 +3,7 @@
 
 #define CLINT_MMIO (RTC_ADDR - 0xbff8)
 
-static _AddressSpace kas; // Kernel address space
+_AddressSpace kas; // Kernel address space
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
@@ -11,12 +11,14 @@ static int vme_enable = 0;
 #define RANGE_LEN(start, len) RANGE((start), (start + len))
 
 static const _Area segments[] = {      // Kernel memory mappings
-#ifdef __ARCH_RISCV64_NOOP
-  RANGE_LEN(0x80000000, 0x8000000), // PMEM
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV64_XS)
+  RANGE_LEN(0x80000000, 0x30000), // PMEM
+  RANGE_LEN(0xc0000000, 0x100000), // page table
   RANGE_LEN(0x40600000, 0x1000),    // uart
   RANGE_LEN(CLINT_MMIO, 0x10000),   // clint/timer
-  RANGE_LEN(FB_ADDR,    0x400000),  // vmem
-  RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
+  // RANGE_LEN(FB_ADDR,    0x400000),  // vmem
+  // RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
+  // RANGE_LEN(0x3c000000, 0x400000),  // PLIC
 #else
   NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64
@@ -62,8 +64,9 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   int i;
   for (i = 0; i < LENGTH(segments); i ++) {
     void *va = segments[i].start;
+    printf("va start %llx, end %llx\n", segments[i].start, segments[i].end);
     for (; va < segments[i].end; va += PGSIZE) {
-      _map(&kas, va, va, 0);
+      _map(&kas, va, va, PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
     }
   }
 
@@ -112,7 +115,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   }
 
   if (!(*pte & PTE_V)) {
-    *pte = PTE_V | PTE_R | PTE_W | PTE_X | (PN(pa) << 10);
+    *pte = PTE_V | prot | (PN(pa) << 10);
   }
 }
 

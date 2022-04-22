@@ -34,8 +34,42 @@ void pmp_test() {
   asm volatile("ebreak");
 }
 
+
+static char *sv39_alloc_base = (char *)(0xc0000000UL);
+static uintptr_t sv39_alloced_size = 0;
+void* sv39_pgalloc(size_t pg_size) {
+  assert(pg_size == 0x1000);
+  printf("sv39 pgalloc called\n");
+  void *ret = (void *)(sv39_alloc_base + sv39_alloced_size);
+  sv39_alloced_size += pg_size;
+  return ret;
+}
+void sv39_pgfree(void *ptr) {
+  return ;
+}
+extern _AddressSpace kas;
+#include <riscv.h>
+void sv39_test() {
+  printf("start sv39 test\n");
+  _vme_init(sv39_pgalloc, sv39_pgfree);
+  printf("sv39 setup done\n");
+  _map(&kas, (void *)0x900000000UL, (void *)0x80020000, PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0xa00000000UL, (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0xb00000000UL, (void *)0x80020000, PTE_A | PTE_D);
+  printf("memory map done\n");
+  char *w_ptr = (char *)(0xa00000000UL);
+  char *r_ptr = (char *)(0x900000000UL);
+  char *fault_ptr = (char *)(0xb00000000UL);
+  *w_ptr = 'a';
+  printf("sv39 data written\n");
+  assert(*r_ptr == 'a');
+  printf("triggering fault\n");
+  *fault_ptr = 'b';
+  printf("should not reach here!\n");
+}
+
 int main(const char *args) {
-  char arg = 'c';
+  char arg = 's';
   switch (arg) {
     CASE('h', hello);
     CASE('i', hello_intr, IOE, CTE(simple_trap), REEH(simple_trap), RCEH(simple_trap));
@@ -48,6 +82,7 @@ int main(const char *args) {
     CASE('a', audio_test, IOE);
     CASE('p', vm_test, CTE(vm_handler), VME(simple_pgalloc, simple_pgfree));
     CASE('c', pmp_test, CTE(simple_trap));
+    CASE('s', sv39_test, IOE, CTE(simple_trap));
     case 'H':
     default:
       printf("Usage: make run mainargs=*\n");

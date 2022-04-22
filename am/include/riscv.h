@@ -34,7 +34,8 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTE_W 0x04
 #define PTE_X 0x08
 #define PTE_U 0x10
-
+#define PTE_A 0x40
+#define PTE_D 0x80
 // Address in page table entry
 #define PTE_ADDR(pte)   (((uintptr_t)(pte) & ~0x3ff) << 2)
 

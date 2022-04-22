@@ -16,7 +16,7 @@ _Context* (*interrupt_handler[INTERRUPT_CAUSE_SIZE])(_Event *ev, _Context *c);
 _Context* (*exception_handler[EXCEPTION_CAUSE_SIZE])(_Event *ev, _Context *c);
 
 _Context* __am_irq_default_handler(_Event *ev, _Context *c) {
-  printf("unregisted irq detected, scause=%d\n", c->scause);
+  printf("unregisted irq detected, scause=%d, sepc=%llx\n", c->scause, c->sepc);
   ev->event = _EVENT_ERROR;
   _halt(2);
   // should never reach here

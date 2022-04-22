@@ -32,7 +32,7 @@ void __am_init_cte64() {
   asm volatile("csrw pmpcfg2, %0" : : "r"(31));
   #include <printf.h>
 
-  // protect 0x90000000 + 0x10000000 for test purpose
+  // protect 0x90000000 + 0x10000 for test purpose
   enable_pmp(1, 0x90000000, 0x10000, 0, 0);
   printf("pmp NA inited\n");
   // protect 0xb00000000 + 0x100
