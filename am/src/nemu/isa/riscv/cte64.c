@@ -1,6 +1,6 @@
 #include <riscv.h>
 #include <nemu.h>
-
+// #include <printf.h>
 extern void __am_timervec(void);
 
 static void init_machine_exception() {
@@ -28,16 +28,16 @@ void __am_init_cte64() {
   asm volatile("csrw medeleg, %0" : : "r"(0xfffb));
 
   // set PMP to access all memory in S-mode
-  asm volatile("csrw pmpaddr8, %0" : : "r"(-1));
-  asm volatile("csrw pmpcfg2, %0" : : "r"(31));
-  #include <printf.h>
-
+  // asm volatile("csrw pmpaddr8, %0" : : "r"(-1));
+  // asm volatile("csrw pmpcfg2, %0" : : "r"(31));
+  
+  init_pmp();
   // protect 0x90000000 + 0x10000 for test purpose
   enable_pmp(1, 0x90000000, 0x10000, 0, 0);
-  printf("pmp NA inited\n");
+  // printf("pmp NA inited\n");
   // protect 0xb00000000 + 0x100
   enable_pmp_TOR(4, 0xb0000000, 0x100, 0, 0);
-  printf("pmp TOR inited\n");
+  //printf("pmp TOR inited\n");
 
   init_machine_exception();
   init_timer();

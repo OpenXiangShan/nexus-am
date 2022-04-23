@@ -12,13 +12,13 @@ static int vme_enable = 0;
 
 static const _Area segments[] = {      // Kernel memory mappings
 #if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV64_XS)
-  RANGE_LEN(0x80000000, 0x30000), // PMEM
-  RANGE_LEN(0xc0000000, 0x100000), // page table
+  RANGE_LEN(0x80000000, 0x8000000), // PMEM
   RANGE_LEN(0x40600000, 0x1000),    // uart
   RANGE_LEN(CLINT_MMIO, 0x10000),   // clint/timer
-  // RANGE_LEN(FB_ADDR,    0x400000),  // vmem
-  // RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
-  // RANGE_LEN(0x3c000000, 0x400000),  // PLIC
+  RANGE_LEN(FB_ADDR,    0x400000),  // vmem
+  RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
+  RANGE_LEN(0x3c000000, 0x4000000),  // PLIC
+  // RANGE_LEN(0xc0000000, 0x100000), // page table test allocates from this position
 #else
   NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64

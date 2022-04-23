@@ -111,6 +111,18 @@ void custom_handler_reg(uintptr_t code, _Context*(*handler)(_Event, _Context*)) 
       break;
     default:
       printf("Unrecognized code, custom handler reg ignored\n");
+      _halt(2);
+  }
+}
+
+void irq_handler_reg(uintptr_t code, _Context*(*handler)(_Event*, _Context*)) {
+  uintptr_t offset = (code << 1) >> 1;
+  if (INTR_BIT & code) {
+    assert(offset < INTERRUPT_CAUSE_SIZE);
+    interrupt_handler[offset] = handler;
+  } else {
+    assert(offset < EXCEPTION_CAUSE_SIZE);
+    exception_handler[offset] = handler;
   }
 }
 

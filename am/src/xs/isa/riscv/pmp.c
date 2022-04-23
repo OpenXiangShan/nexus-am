@@ -172,6 +172,10 @@ void init_pmp() {
   for (int i = 0; i < PMP_COUNT; i++) {
     csr_write_num(PMPADDR_BASE + i, -1L);
   }
+  // set PMP to access all memory in S-mode
+  // asm volatile("csrw pmpaddr8, %0" : : "r"(-1));
+  asm volatile("csrw pmpcfg2, %0" : : "r"(31));
+
   asm volatile("sfence.vma");
 }
 
@@ -189,11 +193,10 @@ void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8
   uintptr_t set_content = permission | (lock << 7) | (pmp_size == 4 ? 2 : 3) << 3;
   uintptr_t cfg_offset = pmp_reg > 7 ? 2 : 0;
   uintptr_t cfg_shift = pmp_reg & 0x7;
-  printf("addr %llx, cfg offset %d, shift %d, set_content %d\n", pmp_addr, cfg_offset, cfg_shift, set_content);
+  // printf("addr %llx, cfg offset %d, shift %d, set_content %d\n", pmp_addr, cfg_offset, cfg_shift, set_content);
   csr_set_num(PMPCFG_BASE + cfg_offset, set_content << (cfg_shift * 8));
   asm volatile("sfence.vma");
 }
-#include <printf.h>
 void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, bool lock, uint8_t permission) {
     // similar interface but different implementation
     // pmp reg and pmp reg + 1 will be used
@@ -202,13 +205,13 @@ void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, b
     if (pmp_reg) {
       csr_write_num(PMPADDR_BASE + pmp_reg - 1, pmp_addr >> 2);
     }
-    printf("finished writing ADDR\n");
+    // printf("finished writing ADDR\n");
     uintptr_t set_content = permission | (lock << 7) | (1 << 3);
     uintptr_t cfg_offset = pmp_reg > 7 ? 2 : 0;
     uintptr_t cfg_shift = pmp_reg & 0x7;
-    printf("addr %llx, cfg offset %d, shift %d, set_content %d\n", pmp_addr, cfg_offset, cfg_shift, set_content);
+    // printf("addr %llx, cfg offset %d, shift %d, set_content %d\n", pmp_addr, cfg_offset, cfg_shift, set_content);
     csr_set_num(PMPCFG_BASE + cfg_offset, set_content << (cfg_shift * 8));
-    printf("finished writing CFG\n");
+    // printf("finished writing CFG\n");
     asm volatile("sfence.vma");
 }
 

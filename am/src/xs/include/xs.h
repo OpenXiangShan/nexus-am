@@ -14,6 +14,12 @@ void init_timer();
 void enable_timer();
 void set_timer_inc(uintptr_t inc);
 
+// PMP related driver functions
+void init_pmp();
+void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8_t lock, uint8_t permission);
+void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, bool lock, uint8_t permission);
+void disable_pmp(uintptr_t pmp_reg);
+
 // plic related driver functions
 uint32_t plic_get_claim(uint32_t current_context);
 void plic_clear_intr(uint32_t claim);
