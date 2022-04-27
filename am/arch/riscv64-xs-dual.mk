@@ -16,9 +16,12 @@ AM_SRCS := noop/isa/riscv/trm.c \
            dummy/audio.c \
            noop/isa/riscv/instr.c \
            xs/isa/riscv/mpe.c \
+           xs/isa/riscv/clint.c \
+           xs/isa/riscv/pmp.c \
+           xs/isa/riscv/plic.c \
            xs/isa/riscv/boot/start_dual.S
 
-CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\"
+CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\" -DDUAL_CORE
 
 ASFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S

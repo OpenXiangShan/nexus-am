@@ -19,12 +19,14 @@ void _mpe_wakeup(int cpu) {
 }
 
 static void init_tls() {
+#ifdef DUAL_CORE
   register void* thread_pointer asm("tp");
   extern char _tdata_begin, _tdata_end, _tbss_end;
   size_t tdata_size = &_tdata_end - &_tdata_begin;
   memcpy(thread_pointer, &_tdata_begin, tdata_size);
   size_t tbss_size = &_tbss_end - &_tdata_end;
   memset(thread_pointer + tdata_size, 0, tbss_size);
+#endif
 }
 
 int _mpe_init(void (*entry)()) {

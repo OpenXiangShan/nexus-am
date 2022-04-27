@@ -1,7 +1,7 @@
 #include <amtest.h>
 
 /*
- * Two build mp test, try `make ARCH=riscv64-xs-dual mainargs='m2'`
+ * To build mp test, try `make ARCH=riscv64-xs-dual mainargs='m2'`
  */
 
 static volatile intptr_t sum = 0;
