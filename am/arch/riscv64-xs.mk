@@ -1,20 +1,20 @@
 include $(AM_HOME)/am/arch/isa/riscv64.mk
 
-AM_SRCS := noop/isa/riscv/trm.c \
-           nemu/common/mainargs.S \
-           noop/isa/riscv/perf.c \
-           noop/common/uartlite.c \
-           nemu/isa/riscv/cte.c \
-           nemu/isa/riscv/trap.S \
-           nemu/isa/riscv/cte64.c \
-           nemu/isa/riscv/mtime.S \
-           nemu/isa/riscv/vme.c \
-           nemu/common/ioe.c \
-           noop/common/input.c \
-           noop/common/timer.c \
-           nemu/common/video.c \
-           dummy/audio.c \
-           noop/isa/riscv/instr.c \
+AM_SRCS := xs/isa/riscv/trm.c \
+           xs/common/mainargs.S \
+           xs/isa/riscv/perf.c \
+           xs/common/uartlite.c \
+           xs/isa/riscv/cte.c \
+           xs/isa/riscv/trap.S \
+           xs/isa/riscv/cte64.c \
+           xs/isa/riscv/mtime.S \
+           xs/isa/riscv/vme.c \
+           xs/common/ioe.c \
+           xs/common/input.c \
+           xs/common/timer.c \
+           xs/common/video.c \
+           xs/common/audio.c \
+           xs/isa/riscv/instr.c \
            xs/isa/riscv/mpe.c \
            xs/isa/riscv/clint.c \
            xs/isa/riscv/pmp.c \
