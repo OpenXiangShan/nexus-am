@@ -14,6 +14,25 @@
 extern "C" {
 #endif
 
+// =============== Supplement L1Cache ===============
+
+uintptr_t _l1cache_op_read(int op_idx);
+uintptr_t _l1cache_data_read(int data_idx);
+void _l1cache_op_write(int op_idx, int val);
+void _l1cache_data_write(int data_idx, int val);
+
+// ============== Supplement L2/3Cache ==============
+
+void _l3cache_tag(int tag);
+void _l3cache_set(int set);
+void _l3cache_cmd(int cmd);
+
+// ================= Supplement PMA =================
+uintptr_t _pma_get_addr(int addr_idx);
+uintptr_t _pma_get_cfg(int cfg_idx);
+void _pma_set_addr(int addr_idx, int val);
+void _pma_set_cfg(int cfg_idx, int val);
+
 // ================= Supplement MPE =================
 void _mpe_setncpu(char arg);
 void _mpe_wakeup(int cpu);
