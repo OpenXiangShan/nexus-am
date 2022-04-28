@@ -54,6 +54,10 @@ void s2m() {
   asm volatile("csrs mie, 0");
 }
 
+void do_wfi() {
+  asm volatile("wfi");
+}
+
 // void m2s() {
 //   asm volatile("csrw mepc, ra; li ra, MSTATUS_MPP; csrc mstatus, ra;");
 //   asm volatile("li ra, MSTATUS_MPP&(MSTATUS_MPP>>1); csrs mstatus, ra; mret");
@@ -61,7 +65,7 @@ void s2m() {
 
 void do_ext_intr() {
   if (!should_trigger) {
-    // printf("should not trigger\n");
+    printf("should not trigger\n");
     _halt(2);
   }
   uint32_t claim = READ_WORD(PLIC_CLAIM(current_context));
@@ -129,9 +133,14 @@ void external_trigger(bool shall_trigger, int context) {
     // printf("interation:%d should_claim %d, setting intr\n", i, should_claim);
     WRITE_WORD(PLIC_ENABLE(current_context) + (should_claim / 32) * 4, (1UL << (should_claim % 32)));
     SET_INTR(should_claim - PLIC_EXT_INTR_OFFSET);
-    int counter = 0;
-    while (should_claim != -1 && counter < 100) {
-      counter++;
+    if (shall_trigger) {
+      do_wfi();
+    }
+    else {
+      int counter = 0;
+      while (should_claim != -1 && counter < 100) {
+        counter++;
+      }
     }
     if (should_trigger) {
       if (should_claim != -1) {
