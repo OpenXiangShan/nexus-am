@@ -55,7 +55,12 @@ static inline void *new_page() {
   memset(p, 0, PGSIZE);
   return p;
 }
-
+/*
+ * Virtual Memory initialize
+ * pgalloc_f: pointer of page table memory allocater, must return page-aligned address
+ * pgfree_f: pointer page table memory free function
+ * return 0 if success
+ */
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
@@ -76,6 +81,9 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
+/*
+ * copy page table
+ */
 void _protect(_AddressSpace *as) {
   PTE *updir = new_page();
   as->ptr = updir;
@@ -87,17 +95,23 @@ void _protect(_AddressSpace *as) {
 
 void _unprotect(_AddressSpace *as) {
 }
-
+/*
+ * get current satp
+ */
 void __am_get_cur_as(_Context *c) {
   c->pdir = (vme_enable ? (void *)get_satp() : NULL);
 }
-
+/*
+ * switch page table to the given context
+ */
 void __am_switch(_Context *c) {
   if (vme_enable && c->pdir != NULL) {
     set_satp(c->pdir);
   }
 }
-
+/*
+ * map va to pa with prot permission with page table root as
+ */
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);

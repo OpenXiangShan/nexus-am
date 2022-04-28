@@ -7,7 +7,15 @@
 
 // Hence, when the PMP settings are modified, M-mode software must synchronize the PMP settings with the virtual memory system and any PMP or address-translation caches. This is accomplished by executing an SFENCE.VMA instruction with rs1=x0 and rs2=x0, after the PMP CSRs are written.
 
+// Note that csr utility functions are derived from OpenSBI under BSD 2-clause license
 
+/*
+ * CSR read function
+ * Note that inline assembly does not allow dynamic csr address
+ * we implement by defining cases for all possible addresses
+ * csr_num: the address of csr to be read
+ * return value: given csr value
+ */
 unsigned long csr_read_num(int csr_num)
 {
 #define switchcase_csr_read(__csr_num, __val)		\
@@ -51,6 +59,10 @@ unsigned long csr_read_num(int csr_num)
 #undef switchcase_csr_read
 }
 
+/*
+ * CSR write function
+ * csr_num: the address of csr, val: the value to be written
+ */
 void csr_write_num(int csr_num, unsigned long val)
 {
 #define switchcase_csr_write(__csr_num, __val)		\
@@ -89,6 +101,11 @@ void csr_write_num(int csr_num, unsigned long val)
 #undef switchcase_csr_write_2
 #undef switchcase_csr_write
 }
+
+/*
+ * CSR set function
+ * csr_num: the address of csr, val: value that will be set, 0 bits are ignored
+ */
 void csr_set_num(int csr_num, unsigned long val)
 {
 #define switchcase_csr_set(__csr_num, __val)		\
@@ -128,6 +145,10 @@ void csr_set_num(int csr_num, unsigned long val)
 #undef switchcase_csr_set
 }
 
+/*
+ * CSR clear function
+ * csr_num: the address of csr to be cleared, val: the value to be cleared, 0 bits are ignored
+ */
 void csr_clear_num(int csr_num, unsigned long val)
 {
 #define switchcase_csr_clear(__csr_num, __val)		\
@@ -167,6 +188,13 @@ void csr_clear_num(int csr_num, unsigned long val)
 #undef switchcase_csr_clear
 }
 
+/*
+ * PMP initialize function
+ * must be called under MACHINE mode
+ * set all pmpaddr registers to 0xffff_ffff_ffff_ffff
+ * set pmpcfg8 to NAPOT mode such that by default we allow all memory access from S mode
+ */
+
 void init_pmp() {
   // set all addr registers to disable possible access fault
   for (int i = 0; i < PMP_COUNT; i++) {
@@ -178,7 +206,15 @@ void init_pmp() {
 
   asm volatile("sfence.vma");
 }
-
+/*
+ * PMP enable function (NAPOT)
+ * pmp_reg: PMP register pairs to be used, ranging from 0 to 15 for XS
+ * pmp_addr: starting position to be protected
+ * pmp_size: total size to be protected, must be power of 2
+ * lock: once set, given PMP registers cannot be reconfigured until core reset
+ * permission: R/W/X
+ * must be called under MACHINE mode
+ */
 void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8_t lock, uint8_t permission) {
   // by default using NAPOT
   assert((pmp_size & (pmp_size - 1)) == 0); // must be power of 2
@@ -197,6 +233,16 @@ void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8
   csr_set_num(PMPCFG_BASE + cfg_offset, set_content << (cfg_shift * 8));
   asm volatile("sfence.vma");
 }
+/*
+ * PMP enable function (TOR)
+ * use two consecutive pmpaddr registers to hold the range
+ * pmp_reg: lower PMP register, pmp_reg + 1 will also be set
+ * pmp_addr: starting position to be protected
+ * pmp_size: total size to be protected
+ * lock: once set, given PMP registers cannot be reconfigured until core reset
+ * permission: R/W/X
+ * must be called under MACHINE mode
+ */
 void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, bool lock, uint8_t permission) {
     // similar interface but different implementation
     // pmp reg and pmp reg + 1 will be used
@@ -215,6 +261,11 @@ void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, b
     asm volatile("sfence.vma");
 }
 
+/*
+ * PMP disable function
+ * disable by setting corresponding pmpaddr to 0xffff_ffff_ffff_ffff
+ * must be called under MACHINE mode
+ */
 void disable_pmp(uintptr_t pmp_reg) {
   // just set pmp addr to max
   csr_write_num(PMPADDR_BASE + pmp_reg, -1L);
