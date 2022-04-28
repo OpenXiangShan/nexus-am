@@ -147,7 +147,7 @@ void external_trigger(bool shall_trigger, int context) {
       plic_clear_claim(current_context, claim); // WRITE_WORD(PLIC_CLAIM(current_context), claim);
     }
 
-    plic_enable(current_context, origin_claim); // WRITE_WORD(PLIC_ENABLE(current_context) + (origin_claim / 32) * 4, 0);
+    plic_disable(current_context, origin_claim); // WRITE_WORD(PLIC_ENABLE(current_context) + (origin_claim / 32) * 4, 0);
   }
   printf("current test finishes\n");
 }
@@ -186,10 +186,10 @@ void external_intr() {
 
   // trigger interrupts
   // s-mode
-  printf("s-mode & external interrupt from context-s(1)\n");
-  external_trigger(true, CONTEXT_S);
+  // printf("s-mode & external interrupt from context-s(1)\n");
+  // external_trigger(true, CONTEXT_S);
   printf("s-mode & external interrupt from context-m(0)\n");
-  external_trigger(false, CONTEXT_M);
+  external_trigger(true, CONTEXT_M);
 
   // M-mode external inter is not finishec
   // s2m(); // turn to m-mode

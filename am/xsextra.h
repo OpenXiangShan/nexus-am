@@ -45,6 +45,7 @@ void plic_clear_intr(uint32_t claim);
 void plic_clear_claim(uint32_t current_context, uint32_t claim);
 void plic_set_priority(uint32_t intr, uint32_t priority);
 void plic_enable(uint32_t current_context, uint32_t intr);
+void plic_disable(uint32_t current_context, uint32_t intr);
 void plic_disable_word(uint32_t current_context, uint32_t intr);
 void plic_set_threshold(uint32_t current_context, uint32_t threshold);
 void plic_set_intr(uint32_t intr);

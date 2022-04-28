@@ -83,6 +83,14 @@ void plic_enable(uint32_t current_context, uint32_t intr) {
   WRITE_WORD(PLIC_ENABLE(current_context) + (intr / 32) * 4, origin);
 }
 
+void plic_disable(uint32_t current_context, uint32_t intr) {
+  // must read first to avoid unset other sources
+  uint32_t origin = READ_WORD(PLIC_ENABLE(current_context) + (intr / 32) * 4);
+  origin ^= 1UL << (intr % 32);
+  WRITE_WORD(PLIC_ENABLE(current_context) + (intr / 32) * 4, origin);
+}
+
+
 /*
  * PLIC interrupt disable function
  * PLIC interrupt is clusterd by 32-bit word, disable them efficiently by clearing the whole word
