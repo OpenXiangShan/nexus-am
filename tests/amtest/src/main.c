@@ -32,6 +32,7 @@ int main(const char *args) {
     CASE('p', vm_test, CTE(vm_handler), VME(simple_pgalloc, simple_pgfree));
     CASE('c', pmp_test, CTE(simple_trap));
     CASE('s', sv39_test, IOE, CTE(simple_trap));
+    CASE('b', cache_test);
     case 'H':
     default:
       printf("Usage: make run mainargs=*\n");
