@@ -83,7 +83,7 @@ void do_ext_intr() {
     should_claim = -1;
     // simply write to mie to trigger an illegal instruction exception
     // m mode will set mie to enable meip
-    // asm volatile("csrs mie, 0");
+    asm volatile("csrs mie, 0");
   }
   else {
     printf("ERROR: no claim?\n");
@@ -207,4 +207,3 @@ void external_intr() {
   // }
   printf("external interrupt test passed!!!\n");
 }
-
