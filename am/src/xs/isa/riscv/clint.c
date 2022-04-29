@@ -21,6 +21,8 @@ ClintInfo timer_handle;
 /*
  * Note that timer interrupt is always triggered under machine mode
  * Machine mode interrupt handler redirects timer interrupt to supervisor
+ * intr test in amtest should be able to detect CLINT timer interrupt
+ * i.e. you may use intr test to check if CLINT works
  */
 
 /*

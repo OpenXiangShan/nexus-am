@@ -39,6 +39,12 @@
 #define SEIE 9
 #define MSIE 3
 #define SSIE 1
+
+/*
+ * Driver for PLIC
+ * extintr test in amtest use these functions, which may serve as a functional verification
+ */
+
 /*
  * PLIC claim read function
  * return the claim number of current context

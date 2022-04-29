@@ -3,9 +3,15 @@
 #include <klib.h>
 /*
  * Note that PMP should only be set on machine mode
+ * pmp test in amtest call these functions, thus they may serve as a functional verification
  */
 
-// Hence, when the PMP settings are modified, M-mode software must synchronize the PMP settings with the virtual memory system and any PMP or address-translation caches. This is accomplished by executing an SFENCE.VMA instruction with rs1=x0 and rs2=x0, after the PMP CSRs are written.
+/* 
+ * Hence, when the PMP settings are modified, M-mode software must synchronize the 
+ * PMP settings with the virtual memory system and any PMP or address-translation
+ * caches. This is accomplished by executing an SFENCE.VMA instruction with rs1=x0 
+ * and rs2=x0, after the PMP CSRs are written.
+ */
 
 // Note that csr utility functions are derived from OpenSBI under BSD 2-clause license
 

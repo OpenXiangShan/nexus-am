@@ -6,6 +6,7 @@ static const char *tests[256] = {
   ['h'] = "hello",
   ['H'] = "display this help message",
   ['i'] = "interrupt/yield test",
+  ['e'] = "external interrupt (PLIC) test",
   ['d'] = "scan devices",
   ['m'] = "multiprocessor test",
   ['t'] = "real-time clock test",
@@ -13,6 +14,8 @@ static const char *tests[256] = {
   ['v'] = "display test",
   ['a'] = "audio test",
   ['p'] = "x86 virtual memory test",
+  ['c'] = "risc-v physical memory protection test",
+  ['s'] = "risc-v virtual memory test",
 };
 
 int main(const char *args) {

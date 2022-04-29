@@ -18,7 +18,7 @@ static const _Area segments[] = {      // Kernel memory mappings
   RANGE_LEN(FB_ADDR,    0x400000),  // vmem
   RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
   RANGE_LEN(0x3c000000, 0x4000000),  // PLIC
-  // RANGE_LEN(0xc0000000, 0x100000), // page table test allocates from this position
+  RANGE_LEN(0xc0000000, 0x100000), // page table test allocates from this position
 #else
   NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64
@@ -111,6 +111,7 @@ void __am_switch(_Context *c) {
 }
 /*
  * map va to pa with prot permission with page table root as
+ * Note that RISC-V allow hardware to fault when A and D bit is not set
  */
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
