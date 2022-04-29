@@ -26,13 +26,15 @@ _Context* __am_irq_STIP_handler(_Event *ev, _Context *c) {
 #if __riscv_xlen == 64
   asm volatile ("csrwi sip, 0");
 #endif
-  // printf("inside irq STIP handler\n");
+  printf("inside irq STIP handler\n");
   ev->event = _EVENT_IRQ_TIMER;
   if (custom_timer_handler != NULL) {
-    // printf("dive into custom timer handler");
+    printf("dive into custom timer handler");
     custom_timer_handler(*ev, c);
   }
-  
+  // machine mode will clear stip
+  asm volatile("csrs mie, 0");
+  // printf("STIP handler finished\n");
   return c;
 }
 _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
@@ -51,7 +53,7 @@ _Context* __am_irq_SECALL_handler(_Event *ev, _Context *c) {
   c->sepc += 4;
   //if (ev->event == _EVENT_YIELD)
   //  printf("SECALL: is YIELD\n");
-  // printf("Inside secall handler\n");
+  printf("Inside secall handler\n");
   if (custom_secall_handler != NULL) {
     custom_secall_handler(*ev, c);
   }
