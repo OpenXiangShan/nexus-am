@@ -38,7 +38,7 @@ uintptr_t _pma_get_cfg(int cfg_idx) {
     return cfg;
 }
 
-void _pma_set_addr(int addr_idx, int val) {
+void _pma_set_addr(int addr_idx, uintptr_t val) {
     switch(addr_idx){
         case 0: asm volatile("csrw pmpaddr0, %0" : : "r"(val)); break;
         case 1: asm volatile("csrw pmpaddr1, %0" : : "r"(val)); break;
@@ -60,7 +60,7 @@ void _pma_set_addr(int addr_idx, int val) {
     }
 }
 
-void _pma_set_cfg(int cfg_idx, int val) {
+void _pma_set_cfg(int cfg_idx, uintptr_t val) {
     switch(cfg_idx){
         case 0: asm volatile("csrw pmpcfg0, %0" : : "r"(val)); break;
         case 1: asm volatile("csrw pmpcfg1, %0" : : "r"(val)); break;

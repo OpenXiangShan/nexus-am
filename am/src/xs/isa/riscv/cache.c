@@ -39,7 +39,7 @@ uintptr_t _l1cache_data_read(int data_idx) {
     return data;
 }
 
-void _l1cache_op_write(int op_idx, int val) {
+void _l1cache_op_write(int op_idx, uintptr_t val) {
     switch(op_idx){
         case 0: asm volatile("csrw 0x5C5, %0" : : "r"(val)); break;    //cop_op
         case 1: asm volatile("csrw 0x5C6, %0" : : "r"(val)); break;    //cop_finish
@@ -57,7 +57,7 @@ void _l1cache_op_write(int op_idx, int val) {
     }
 }
 
-void _l1cache_data_write(int data_idx, int val) {
+void _l1cache_data_write(int data_idx, uintptr_t val) {
     switch(data_idx){
         case 0: asm volatile("csrw 0x5D1, %0" : : "r"(val)); break;    //cop_data_0
         case 1: asm volatile("csrw 0x5D2, %0" : : "r"(val)); break;    //cop_data_1
