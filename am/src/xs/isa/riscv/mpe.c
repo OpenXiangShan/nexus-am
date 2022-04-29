@@ -68,7 +68,7 @@ intptr_t _atomic_add(volatile intptr_t *addr, intptr_t adder) {
   return result;
 }
 
-void barrier() {
+void _barrier() {
   static volatile intptr_t sense = 0;
   static volatile intptr_t count = 0;
   static __thread intptr_t threadsense;

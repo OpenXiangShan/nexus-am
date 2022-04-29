@@ -37,7 +37,7 @@ void _pma_set_cfg(int cfg_idx, int val);
 void _mpe_setncpu(char arg);
 void _mpe_wakeup(int cpu);
 intptr_t _atomic_add(volatile intptr_t *addr, intptr_t adder);
-void barrier();
+void _barrier();
 
 // ================== PLIC driver ===================
 uint32_t plic_get_claim(uint32_t current_context);

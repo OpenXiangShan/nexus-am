@@ -22,7 +22,7 @@ void mp_print() {
 }
 
 void finalize() {
-  barrier();
+  _barrier();
   while (_atomic_xchg(&print_lock, 1) == 1);
   printf("sum = %d atomic_sum = %d\n", sum, atomic_sum);
   printf("Finalize CPU ID: %d\n", _cpu());
