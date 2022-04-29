@@ -1,5 +1,10 @@
 #include <amtest.h>
 
+/*
+ * Note that to be able to run this test, PMP should be set up before AM jump to supervisor
+ * You may find related initialzation code in __am_init_cte64()
+ */
+
 #define PMP_1
 
 void pmp_test() {

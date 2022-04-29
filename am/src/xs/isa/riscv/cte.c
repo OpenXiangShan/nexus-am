@@ -32,7 +32,9 @@ _Context* __am_irq_STIP_handler(_Event *ev, _Context *c) {
     printf("dive into custom timer handler");
     custom_timer_handler(*ev, c);
   }
-    
+  // machine mode will clear stip
+  asm volatile("csrs mie, 0");
+  // printf("STIP handler finished\n");
   return c;
 }
 _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
@@ -40,7 +42,7 @@ _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
   // It's not deleted because we want to test sip write mask.
   asm volatile ("csrwi sip, 0");
   ev->event = _EVENT_IRQ_IODEV;
-  // printf("inside irq SSIP handler\n");
+  printf("inside irq SSIP handler\n");
   if (custom_external_handler != NULL)
     custom_external_handler(*ev, c);
   return c;
@@ -51,6 +53,7 @@ _Context* __am_irq_SECALL_handler(_Event *ev, _Context *c) {
   c->sepc += 4;
   //if (ev->event == _EVENT_YIELD)
   //  printf("SECALL: is YIELD\n");
+  printf("Inside secall handler\n");
   if (custom_secall_handler != NULL) {
     custom_secall_handler(*ev, c);
   }
@@ -169,7 +172,9 @@ _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg) {
 }
 
 void _yield() {
+  //printf("before ecall\n");
   asm volatile("li a7, -1; ecall");
+  //printf("after ecall\n");
 }
 
 int _intr_read() {

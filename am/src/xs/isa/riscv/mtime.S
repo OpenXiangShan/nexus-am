@@ -48,7 +48,7 @@ is_illegal:
         li a3, 0x800
         csrs mie, a3
         # clear the supervisor external interrupt
-        li a3, 0x200
+        li a3, 0x220
         csrc mip, a3
         csrr a3, mepc
         addi a3, a3, 4

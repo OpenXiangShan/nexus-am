@@ -16,6 +16,7 @@ void hello_intr() {
   printf("Hello, AM World @ " __ISA__ "\n");
   printf("  t = timer, d = device, y = yield\n");
   _intr_write(1);
+  // printf("hello intr written\n");
   while (1) {
     for (volatile int i = 0; i < 10000000; i++) ;
     _yield();

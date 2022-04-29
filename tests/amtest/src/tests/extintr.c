@@ -186,8 +186,8 @@ void external_intr() {
 
   // trigger interrupts
   // s-mode
-  // printf("s-mode & external interrupt from context-s(1)\n");
-  // external_trigger(true, CONTEXT_S);
+  printf("s-mode & external interrupt from context-s(1)\n");
+  external_trigger(true, CONTEXT_S);
   printf("s-mode & external interrupt from context-m(0)\n");
   external_trigger(true, CONTEXT_M);
 

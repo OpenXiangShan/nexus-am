@@ -1,5 +1,9 @@
 #include <amtest.h>
 
+/*
+ * RISC-V 64 SV39 Virutal Memory test
+ */
+
 static char *sv39_alloc_base = (char *)(0xc0000000UL);
 static uintptr_t sv39_alloced_size = 0;
 void* sv39_pgalloc(size_t pg_size) {
