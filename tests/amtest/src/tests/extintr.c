@@ -86,7 +86,7 @@ void do_ext_intr() {
     should_claim = -1;
     // simply write to mie to trigger an illegal instruction exception
     // m mode will set mie to enable meip
-    // asm volatile("csrs mie, 0");
+    asm volatile("csrs mie, 0");
   }
   else {
     printf("ERROR: no claim?\n");
@@ -196,7 +196,7 @@ void external_intr() {
   printf("s-mode & external interrupt from context-s(1)\n");
   external_trigger(true, CONTEXT_S);
   printf("s-mode & external interrupt from context-m(0)\n");
-  external_trigger(false, CONTEXT_M);
+  external_trigger(true, CONTEXT_M);
 
   // M-mode external inter is not finishec
   // s2m(); // turn to m-mode
@@ -214,4 +214,3 @@ void external_intr() {
   // }
   printf("external interrupt test passed!!!\n");
 }
-
