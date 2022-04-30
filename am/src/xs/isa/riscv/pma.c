@@ -2,11 +2,11 @@
 #include <pmp.h>
 #include <klib.h>
 
-// this functions are interface for pma
-// _pma_get_addr(int addr_idx): return value in the pmpaddr csr
-// _pma_get_cfg(int cfg_idx): return value in the pmpefg csr
-// _pma_set_addr(int addr_idx, uintptr_t val): modify value in the pmpaddr csr
-// _pma_set_cfg(int cfg_idx, uintptr_t val): modify value in the pmpcfg csr
+// these functions are interface for pma
+// uintptr_t _pma_get_addr(int addr_idx): return value in the pmpaddr csr
+// uintptr_t _pma_get_cfg(int cfg_idx): return value in the pmpefg csr
+// void _pma_set_addr(int addr_idx, uintptr_t val): modify value in the pmpaddr csr
+// void _pma_set_cfg(int cfg_idx, uintptr_t val): modify value in the pmpcfg csr
 // when testing pma:
 // firstly,  using  _cfg = _pma_get_cfg(cfg_idx), get the value of cfg
 // secondly, using _cfg = _cfg | PMP_W, or using _cfg = _cfg & ~PMP_W, to set the permission

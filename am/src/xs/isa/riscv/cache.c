@@ -3,6 +3,19 @@
 #include <pmp.h>
 #include <klib.h>
 
+// these functions are interface for cache
+// uintptr_t _l1cache_op_read(int op_idx): return value in the cache cop csr
+// uintptr_t _l1cache_data_read(int data_idx): return data in the cache data csr
+// void _l1cache_op_write(int op_idx, uintptr_t val): set value in the cache cop csr
+// void _l1cache_data_write(int data_idx, uintptr_t val): set data in the cache data csr
+// when testing, can use these interface in nexus-am/tests/amtest/src/tests/cache.c
+
+// void _l3cache_tag(int tag): set value of tag in l3chache
+// void _l3cache_set(int set): set value of tag in l3chache
+// void _l3cache_cmd(int cmd): set value of tag in l3chache
+// when testing, can use these interface in nexus-am/tests/dualcoretest/tests/huancunop.c
+
+
 uintptr_t _l1cache_op_read(int op_idx) {
     uintptr_t op;
     switch(op_idx){
