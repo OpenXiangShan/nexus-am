@@ -1,4 +1,5 @@
 #include <amtest.h>
+#include <xs.h>
 
 #define READ_WORD(addr)        (*((volatile uint32_t *)(addr)))
 #define WRITE_WORD(addr, data) (*((volatile uint32_t *)(addr)) = (data))
@@ -54,6 +55,10 @@ void s2m() {
   asm volatile("csrs mie, 0");
 }
 
+void do_wfi() {
+  asm volatile("wfi");
+}
+
 // void m2s() {
 //   asm volatile("csrw mepc, ra; li ra, MSTATUS_MPP; csrc mstatus, ra;");
 //   asm volatile("li ra, MSTATUS_MPP&(MSTATUS_MPP>>1); csrs mstatus, ra; mret");
@@ -61,10 +66,10 @@ void s2m() {
 
 void do_ext_intr() {
   if (!should_trigger) {
-    // printf("should not trigger\n");
+    printf("should not trigger\n");
     _halt(2);
   }
-  uint32_t claim = READ_WORD(PLIC_CLAIM(current_context));
+  uint32_t claim = plic_get_claim(current_context);  // READ_WORD(PLIC_CLAIM(current_context));
   // printf("DO_EXT_INTR: claim %d should_claim %d\n", claim, should_claim);
   if (claim) {
     if (!random_claim && claim != should_claim) {
@@ -73,16 +78,16 @@ void do_ext_intr() {
     }
     claim_count[claim]++;
     claim_count_all++;
-    CLEAR_INTR(claim - PLIC_EXT_INTR_OFFSET);
-    WRITE_WORD(PLIC_CLAIM(current_context), claim);
-    if (!random_claim && READ_WORD(PLIC_CLAIM(current_context)) != 0) {
+    plic_clear_intr(claim); // CLEAR_INTR(claim - PLIC_EXT_INTR_OFFSET);
+    plic_clear_claim(current_context, claim); // WRITE_WORD(PLIC_CLAIM(current_context), claim);
+    if (!random_claim && plic_get_claim(current_context)/*READ_WORD(PLIC_CLAIM(current_context))*/ != 0) {
       printf("ERROR: do you clear the external interrupt source correctly?\n");
       assert(0);
     }
     should_claim = -1;
     // simply write to mie to trigger an illegal instruction exception
     // m mode will set mie to enable meip
-    // asm volatile("csrs mie, 0");
+    asm volatile("csrs mie, 0");
   }
   else {
     printf("ERROR: no claim?\n");
@@ -106,17 +111,18 @@ _Context *external_trap(_Event ev, _Context *ctx) {
 
 static void plic_intr_init() {
   for (int i = 0; i < MAX_EXTERNAL_INTR + MAX_INTERNAL_INTR + PLIC_EXT_INTR_OFFSET; i++) {
-    WRITE_WORD(PLIC_PRIORITY + i * sizeof(uint32_t), 0x1);
+    // WRITE_WORD(PLIC_PRIORITY + i * sizeof(uint32_t), 0x1);
+    plic_set_priority(i, 0x1);
   }
   for (int i = 0; i < MAX_EXTERNAL_INTR + PLIC_EXT_INTR_OFFSET + MAX_INTERNAL_INTR; i += 32) {
-    WRITE_WORD(PLIC_ENABLE(CONTEXT_M) + i/8, 0);
-    WRITE_WORD(PLIC_ENABLE(CONTEXT_S) + i/8, 0);
+    plic_disable_word(CONTEXT_M, i); // WRITE_WORD(PLIC_ENABLE(CONTEXT_M) + i/8, 0);
+    plic_disable_word(CONTEXT_S, i); // WRITE_WORD(PLIC_ENABLE(CONTEXT_S) + i/8, 0);
   }
-  WRITE_WORD(PLIC_THRESHOLD(CONTEXT_M), 0x0);
-  WRITE_WORD(PLIC_THRESHOLD(CONTEXT_S), 0x0);
+  plic_set_threshold(CONTEXT_M, 0x0); // WRITE_WORD(PLIC_THRESHOLD(CONTEXT_M), 0x0);
+  plic_set_threshold(CONTEXT_S, 0x0); // WRITE_WORD(PLIC_THRESHOLD(CONTEXT_S), 0x0);
 }
 
-void external_trigger(bool shall_trigger, int context) {
+void external_trigger(bool shall_trigger, bool wfi, int context) {
   printf("should trigger: %s\n", shall_trigger ? "Yes" : "No");
   current_context = context;
   should_trigger = shall_trigger;
@@ -127,11 +133,16 @@ void external_trigger(bool shall_trigger, int context) {
     should_claim = (rand() % MAX_EXTERNAL_INTR) + PLIC_EXT_INTR_OFFSET;
     origin_claim = should_claim;
     // printf("interation:%d should_claim %d, setting intr\n", i, should_claim);
-    WRITE_WORD(PLIC_ENABLE(current_context) + (should_claim / 32) * 4, (1UL << (should_claim % 32)));
-    SET_INTR(should_claim - PLIC_EXT_INTR_OFFSET);
-    int counter = 0;
-    while (should_claim != -1 && counter < 100) {
-      counter++;
+    plic_enable(current_context, should_claim); // WRITE_WORD(PLIC_ENABLE(current_context) + (should_claim / 32) * 4, (1UL << (should_claim % 32)));
+    plic_set_intr(should_claim); // SET_INTR(should_claim - PLIC_EXT_INTR_OFFSET);
+    if (shall_trigger && wfi) {
+      do_wfi();
+    }
+    else {
+      int counter = 0;
+      while (should_claim != -1 && counter < 100) {
+        counter++;
+      }
     }
     if (should_trigger) {
       if (should_claim != -1) {
@@ -140,12 +151,12 @@ void external_trigger(bool shall_trigger, int context) {
       }
     } else {
       // clear
-      uint32_t claim = READ_WORD(PLIC_CLAIM(current_context));
-      CLEAR_INTR(claim - PLIC_EXT_INTR_OFFSET);
-      WRITE_WORD(PLIC_CLAIM(current_context), claim);
+      uint32_t claim =  plic_get_claim(current_context); // READ_WORD(PLIC_CLAIM(current_context));
+      plic_clear_intr(claim); // CLEAR_INTR(claim - PLIC_EXT_INTR_OFFSET);
+      plic_clear_claim(current_context, claim); // WRITE_WORD(PLIC_CLAIM(current_context), claim);
     }
 
-    WRITE_WORD(PLIC_ENABLE(current_context) + (origin_claim / 32) * 4, 0);
+    plic_disable(current_context, origin_claim); // WRITE_WORD(PLIC_ENABLE(current_context) + (origin_claim / 32) * 4, 0);
   }
   printf("current test finishes\n");
 }
@@ -185,9 +196,13 @@ void external_intr() {
   // trigger interrupts
   // s-mode
   printf("s-mode & external interrupt from context-s(1)\n");
-  external_trigger(true, CONTEXT_S);
+  external_trigger(true, false, CONTEXT_S);
+  printf("s-mode & external interrupt from context-s(1), with wfi\n");
+  external_trigger(true, true, CONTEXT_S);
   printf("s-mode & external interrupt from context-m(0)\n");
-  external_trigger(false, CONTEXT_M);
+  external_trigger(true, false, CONTEXT_M);
+  printf("s-mode & external interrupt from context-m(0), with wfi\n");
+  external_trigger(true, true, CONTEXT_M);
 
   // M-mode external inter is not finishec
   // s2m(); // turn to m-mode
@@ -205,4 +220,3 @@ void external_intr() {
   // }
   printf("external interrupt test passed!!!\n");
 }
-

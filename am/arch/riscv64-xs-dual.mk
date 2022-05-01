@@ -21,14 +21,14 @@ AM_SRCS := noop/isa/riscv/trm.c \
            xs/isa/riscv/plic.c \
            xs/isa/riscv/pma.c \
            xs/isa/riscv/cache.c \
-           nemu/isa/riscv/boot/start.S
+           xs/isa/riscv/boot/start_dual.S
 
-CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\"
+CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\" -DDUAL_CORE
 
 ASFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S
 
-LDFLAGS += -L $(AM_HOME)/am/src/nemu/ldscript
+LDFLAGS += -L $(AM_HOME)/am/src/xs/ldscript
 LDFLAGS += -T $(AM_HOME)/am/src/nemu/isa/riscv/boot/loader64.ld
 
 image:

@@ -3,7 +3,7 @@
 
 #define CLINT_MMIO (RTC_ADDR - 0xbff8)
 
-static _AddressSpace kas; // Kernel address space
+_AddressSpace kas; // Kernel address space
 static void* (*pgalloc_usr)(size_t) = NULL;
 static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
@@ -11,12 +11,14 @@ static int vme_enable = 0;
 #define RANGE_LEN(start, len) RANGE((start), (start + len))
 
 static const _Area segments[] = {      // Kernel memory mappings
-#ifdef __ARCH_RISCV64_NOOP
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV64_XS)
   RANGE_LEN(0x80000000, 0x8000000), // PMEM
   RANGE_LEN(0x40600000, 0x1000),    // uart
   RANGE_LEN(CLINT_MMIO, 0x10000),   // clint/timer
   RANGE_LEN(FB_ADDR,    0x400000),  // vmem
   RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
+  RANGE_LEN(0x3c000000, 0x4000000),  // PLIC
+  RANGE_LEN(0xc0000000, 0x100000), // page table test allocates from this position
 #else
   NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64
@@ -53,7 +55,12 @@ static inline void *new_page() {
   memset(p, 0, PGSIZE);
   return p;
 }
-
+/*
+ * Virtual Memory initialize
+ * pgalloc_f: pointer of page table memory allocater, must return page-aligned address
+ * pgfree_f: pointer page table memory free function
+ * return 0 if success
+ */
 int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
@@ -62,8 +69,9 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   int i;
   for (i = 0; i < LENGTH(segments); i ++) {
     void *va = segments[i].start;
+    printf("va start %llx, end %llx\n", segments[i].start, segments[i].end);
     for (; va < segments[i].end; va += PGSIZE) {
-      _map(&kas, va, va, 0);
+      _map(&kas, va, va, PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
     }
   }
 
@@ -73,6 +81,9 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
   return 0;
 }
 
+/*
+ * copy page table
+ */
 void _protect(_AddressSpace *as) {
   PTE *updir = new_page();
   as->ptr = updir;
@@ -84,17 +95,24 @@ void _protect(_AddressSpace *as) {
 
 void _unprotect(_AddressSpace *as) {
 }
-
+/*
+ * get current satp
+ */
 void __am_get_cur_as(_Context *c) {
   c->pdir = (vme_enable ? (void *)get_satp() : NULL);
 }
-
+/*
+ * switch page table to the given context
+ */
 void __am_switch(_Context *c) {
   if (vme_enable && c->pdir != NULL) {
     set_satp(c->pdir);
   }
 }
-
+/*
+ * map va to pa with prot permission with page table root as
+ * Note that RISC-V allow hardware to fault when A and D bit is not set
+ */
 void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
@@ -112,7 +130,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   }
 
   if (!(*pte & PTE_V)) {
-    *pte = PTE_V | PTE_R | PTE_W | PTE_X | (PN(pa) << 10);
+    *pte = PTE_V | prot | (PN(pa) << 10);
   }
 }
 

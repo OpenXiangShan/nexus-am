@@ -1,37 +1,20 @@
 #include <riscv.h>
 #include <nemu.h>
-
-#ifdef __ARCH_RISCV64_NOOP
-#define CLINT_MMIO (RTC_ADDR - 0xbff8)
-#define TIME_INC 0x80000
-#else
-#define CLINT_MMIO 0xa2000000
-#define TIME_INC 0x800
-#endif
-
-#define CLINT_MTIMECMP (CLINT_MMIO + 0x4000)
-
+// #include <printf.h>
 extern void __am_timervec(void);
 
-static void init_timer() {
-  static struct {
-    uintptr_t mtimecmp;
-    uintptr_t time_inc;
-    uintptr_t temp[3];
-  } handle;
-
-  handle.mtimecmp = CLINT_MTIMECMP;
-  handle.time_inc = TIME_INC;
-
-  asm volatile("csrw mscratch, %0" : : "r"(&handle));
-
-  // set M-mode exception entry to handle machine timer interrupt
+static void init_machine_exception() {
+  // set M-mode exception entry
   asm volatile("csrw mtvec, %0" : : "r"(__am_timervec));
-
-  // set machine timer interrupt
-  asm volatile("csrs mie, %0" : : "r"((1 << 7) | (1 << 1)));
-  outd(CLINT_MTIMECMP, 0);
 }
+
+
+extern void init_timer();
+extern void enable_timer();
+extern void init_pmp(); 
+extern void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8_t lock, uint8_t permission);
+extern void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, bool lock, uint8_t permission);
+#include <pmp.h>
 
 static void init_eip() {
   // enable machine external interrupt (mie.meip and mstatus.mie)
@@ -45,10 +28,20 @@ void __am_init_cte64() {
   asm volatile("csrw medeleg, %0" : : "r"(0xfffb));
 
   // set PMP to access all memory in S-mode
-  asm volatile("csrw pmpaddr0, %0" : : "r"(-1));
-  asm volatile("csrw pmpcfg0, %0" : : "r"(31));
+  // asm volatile("csrw pmpaddr8, %0" : : "r"(-1));
+  // asm volatile("csrw pmpcfg2, %0" : : "r"(31));
+  
+  init_pmp();
+  // protect 0x90000000 + 0x10000 for test purpose
+  enable_pmp(1, 0x90000000, 0x10000, 0, 0);
+  // printf("pmp NA inited\n");
+  // protect 0xb00000000 + 0x100
+  enable_pmp_TOR(4, 0xb0000000, 0x100, 0, 0);
+  //printf("pmp TOR inited\n");
 
+  init_machine_exception();
   init_timer();
+  enable_timer();
   init_eip();
 
   // enter S-mode
