@@ -18,7 +18,7 @@ void hello_intr() {
   _intr_write(1);
   // printf("hello intr written\n");
   while (1) {
-    for (volatile int i = 0; i < 10000000; i++) ;
+    for (volatile int i = 0; i < 1000; i++) ;
     _yield();
   }
 }
