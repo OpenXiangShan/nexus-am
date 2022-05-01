@@ -27,7 +27,7 @@ f(30) f(31)
 #define OFFSET_CAUSE  (32 * REGBYTES)
 #define OFFSET_STATUS (33 * REGBYTES)
 #define OFFSET_EPC    (34 * REGBYTES)
-
+.align 4
 .globl __am_asm_trap
 __am_asm_trap:
   csrrw sp, sscratch, sp
