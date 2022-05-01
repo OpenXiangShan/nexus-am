@@ -12,10 +12,15 @@ AM_SRCS := noop/isa/riscv/trm_flash.c \
            nemu/common/video.c \
            dummy/audio.c \
            noop/isa/riscv/instr.c \
-           dummy/mpe.c \
+           xs/isa/riscv/mpe.c \
+           xs/isa/riscv/clint.c \
+           xs/isa/riscv/pmp.c \
+           xs/isa/riscv/plic.c \
+           xs/isa/riscv/pma.c \
+           xs/isa/riscv/cache.c \
            nemu/isa/riscv/boot/start_flash.S
 
-CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -DISA_H=\"riscv.h\"
+CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\"
 
 ASFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S
