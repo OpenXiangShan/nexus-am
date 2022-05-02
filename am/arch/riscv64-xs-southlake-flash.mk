@@ -4,12 +4,15 @@ AM_SRCS := noop/isa/riscv/trm_flash.c \
            nemu/common/mainargs.S \
            noop/isa/riscv/perf.c \
            southlake/common/uartlite.c \
+           nemu/isa/riscv/cte.c \
            nemu/isa/riscv/trap.S \
+           nemu/isa/riscv/cte64.c \
+           nemu/isa/riscv/mtime.S \
            nemu/isa/riscv/vme.c \
            nemu/common/ioe.c \
-           noop/common/input.c \
-           noop/common/timer.c \
-           nemu/common/video.c \
+           dummy/input.c \
+           nemu/common/timer.c \
+           dummy/video.c \
            dummy/audio.c \
            noop/isa/riscv/instr.c \
            xs/isa/riscv/mpe.c \

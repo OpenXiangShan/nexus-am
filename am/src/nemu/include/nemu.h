@@ -25,6 +25,8 @@
 # define SCREEN_ADDR  0x40001000
 # define SYNC_ADDR    0x40001004
 # define FB_ADDR      0x50000000
+#elif defined(__ARCH_RISCV64_SOUTHLAKE) || defined(__ARCH_RISCV64_SOUTHLAKE_FLASH)
+# define RTC_ADDR     0x3800bff8
 #else
 # define SERIAL_PORT  0xa10003f8
 # define KBD_ADDR     0xa1000060
