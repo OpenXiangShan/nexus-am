@@ -14,7 +14,10 @@ void __am_switch(_Context *c);
 
 _Context* (*interrupt_handler[INTERRUPT_CAUSE_SIZE])(_Event *ev, _Context *c);
 _Context* (*exception_handler[EXCEPTION_CAUSE_SIZE])(_Event *ev, _Context *c);
-
+/*
+ * default handler for all possible irqs
+ * just panic
+ */
 _Context* __am_irq_default_handler(_Event *ev, _Context *c) {
   printf("unregisted irq detected, scause=%d, sepc=%llx\n", c->scause, c->sepc);
   ev->event = _EVENT_ERROR;
@@ -22,6 +25,12 @@ _Context* __am_irq_default_handler(_Event *ev, _Context *c) {
   // should never reach here
   return c;
 }
+
+/*
+ * default handler for Supervisor Timer Interrupt
+ * set event to IRQ_TIMER
+ * may call custom timer handler if registered
+ */
 _Context* __am_irq_STIP_handler(_Event *ev, _Context *c) {
 #if __riscv_xlen == 64
   asm volatile ("csrwi sip, 0");
@@ -37,6 +46,12 @@ _Context* __am_irq_STIP_handler(_Event *ev, _Context *c) {
   // printf("STIP handler finished\n");
   return c;
 }
+
+/*
+ * default handler for Supervisor External Interrupt
+ * set event to IEQ_IODEV
+ * may call custom external handler if registered
+ */
 _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
   // WARNING: this has no effect since in S mode only SSIP can be cleared.
   // It's not deleted because we want to test sip write mask.
@@ -48,6 +63,11 @@ _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
   return c;
 }
 
+/*
+ * default handler for Supervisor Ecall Exception
+ * set event to YIELD or SYSCALL according to a7
+ * may call custom secall handler if registered
+ */
 _Context* __am_irq_SECALL_handler(_Event *ev, _Context *c) {
   ev->event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
   c->sepc += 4;
@@ -88,16 +108,35 @@ _Context* __am_irq_handle(_Context *c) {
 
 extern void __am_asm_trap(void);
 
+/*
+ * Supervisor timer interrupt custom handler register function
+ * handler: the function to be registered
+ */
 void stip_handler_reg(_Context*(*handler)(_Event, _Context*)) {
   custom_timer_handler = handler;
 }
+
+/*
+ * Supervisor external interrupt custom handler register function
+ * handler: the function to be registered
+ */
 void seip_handler_reg(_Context*(*handler)(_Event, _Context*)) {
   custom_external_handler = handler;
 }
+
+/*
+ * Supervisor ecall exception custom handler register function
+ * handler: the function to be registered
+ */
 void secall_handler_reg(_Context*(*handler)(_Event, _Context*)) {
   custom_secall_handler = handler;
 }
 
+/*
+ * Generic interrupt/exception CUSTOM handler register function
+ * code: scause code
+ * handler: the function to be registered
+ */
 void custom_handler_reg(uintptr_t code, _Context*(*handler)(_Event, _Context*)) {
   switch (code) {
 #if __riscv_xlen == 64
@@ -118,6 +157,11 @@ void custom_handler_reg(uintptr_t code, _Context*(*handler)(_Event, _Context*)) 
   }
 }
 
+/*
+ * Generic interrupt/exception handler register function
+ * code: scause code
+ * handler: the function to be registered
+ */
 void irq_handler_reg(uintptr_t code, _Context*(*handler)(_Event*, _Context*)) {
   uintptr_t offset = (code << 1) >> 1;
   if (INTR_BIT & code) {
