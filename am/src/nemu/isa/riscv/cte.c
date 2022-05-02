@@ -143,7 +143,8 @@ int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
   __am_init_cte64();
 #endif
   for (int i = 0; i < INTERRUPT_CAUSE_SIZE; i++) {
-    interrupt_handler[i] = __am_irq_default_handler;
+    irq_handler_reg(INTR_BIT | i, __am_irq_default_handler);
+    // interrupt_handler[i] = __am_irq_default_handler;
   }
   for (int i = 0; i < EXCEPTION_CAUSE_SIZE; i++) {
     exception_handler[i] = __am_irq_default_handler;
