@@ -7,15 +7,12 @@
 #define SET_BIT(data, i)       ((data) | (0x1UL << (i)))
 #define CLEAR_BIT(data, i)     ((data) ^ EXTRACT_BIT(data, i))
 
-#define INTR_GEN_ADDR          (0x40070000UL)
 #define INTR_REG_WIDTH         32
 #define INTR_REG_ADDR(i)       ((INTR_GEN_ADDR) + ((i) << 2))
 #define INTR_REG_INDEX(i)      INTR_REG_ADDR(((i) / INTR_REG_WIDTH))
 #define INTR_REG_OFFSET(i)     ((i) % INTR_REG_WIDTH)
 
-#define INTR_RANDOM            (0x40070008UL)
 #define INTR_RANDOM_ADDR(i)    ((INTR_RANDOM) + ((i) << 2))
-#define INTR_RANDOM_MASK       (0x40070010UL)
 
 #define READ_INTR_REG(i)  READ_WORD(INTR_REG_ADDR(i))
 #define READ_INTR(i)     EXTRACT_BIT(READ_INTR_REG(INTR_REG_INDEX(i)), INTR_REG_OFFSET(i))
@@ -24,7 +21,6 @@
 
 #define CONTEXT_M 0
 #define CONTEXT_S 1
-#define PLIC_BASE_ADDR         (0x3c000000UL)
 #define PLIC_PRIORITY          (PLIC_BASE_ADDR + 0x4UL)
 #define PLIC_PENDING           (PLIC_BASE_ADDR + 0x1000UL)
 #define PLIC_ENABLE(c)         (PLIC_BASE_ADDR + 0x2000UL + c*0x80UL)
