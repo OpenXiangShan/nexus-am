@@ -17,10 +17,15 @@ void hello_intr() {
   printf("  t = timer, d = device, y = yield\n");
   _intr_write(1);
   // printf("hello intr written\n");
+#if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  for (volatile int i = 0; i < 10; i++) ;
+  _yield();
+#else
   while (1) {
     for (volatile int i = 0; i < 10000000; i++) ;
     _yield();
   }
+#endif
 }
 
 void hello_n(int n);
