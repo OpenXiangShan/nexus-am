@@ -3,7 +3,7 @@
 #include <riscv.h>
 #include <klib.h>
 
-#define UARTLITE_MMIO 0x1f40600000
+#define UARTLITE_MMIO 0x1f10050000
 #define UARTLITE_RX_FIFO  0x0
 #define UARTLITE_TX_FIFO  0x4
 #define UARTLITE_STAT_REG 0x8
