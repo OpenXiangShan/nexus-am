@@ -2,10 +2,15 @@
 #include <klib.h>
 
 // naive l2 cache op test
-
+#if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+#define CACHE_CTRL_BASE 0x1f00040100
+#define CACHE_CMD_BASE 0x1f00040200
+#define HART_CTRL_RESET_REG_BASE 0x1f00001000
+#else
 #define CACHE_CTRL_BASE 0x39000100
 #define CACHE_CMD_BASE 0x39000200
 #define HART_CTRL_RESET_REG_BASE 0x39001000
+#endif
 #define CMD_CMO_INV (0 + 16)
 #define CMD_CMO_CLEAN (1 + 16)
 #define CMD_CMO_FLUSH (2 + 16)

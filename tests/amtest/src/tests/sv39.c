@@ -7,7 +7,7 @@
 #if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
 static char *sv39_alloc_base = (char *)(0xc0000000UL);
 #elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-static char *sv39_alloc_base = (char *)(0x240000000UL);
+static char *sv39_alloc_base = (char *)(0x2040000000UL);
 #else
   // invalid arch
 #endif
@@ -38,9 +38,9 @@ void sv39_test() {
   char *r_ptr = (char *)(0x900000000UL);
   char *fault_ptr = (char *)(0xb00000000UL);
 #elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-  _map(&kas, (void *)0x2100000000UL, (void *)0x200020000, PTE_R | PTE_A | PTE_D);
-  _map(&kas, (void *)0x2200000000UL, (void *)0x200020000, PTE_W | PTE_R | PTE_A | PTE_D);
-  _map(&kas, (void *)0x2300000000UL, (void *)0x200020000, PTE_A | PTE_D);
+  _map(&kas, (void *)0x2100000000UL, (void *)0x2000020000, PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0x2200000000UL, (void *)0x2000020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0x2300000000UL, (void *)0x2000020000, PTE_A | PTE_D);
   printf("memory map done\n");
   char *w_ptr = (char *)(0x2100000000UL);
   char *r_ptr = (char *)(0x2200000000UL);

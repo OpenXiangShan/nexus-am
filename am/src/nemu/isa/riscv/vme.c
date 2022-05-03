@@ -20,7 +20,7 @@ static const _Area segments[] = {      // Kernel memory mappings
   RANGE_LEN(0x3c000000, 0x4000000), // PLIC
   RANGE_LEN(0xc0000000, 0x100000),  // page table test allocates from this position
 #elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-  RANGE_LEN(0x200000000, 0x8000000),  // PMEM
+  RANGE_LEN(0x2000000000, 0x8000000), // PMEM
   RANGE_LEN(0x1f40600000, 0x1000),    // uart
   RANGE_LEN(CLINT_MMIO, 0x10000),     // clint/timer
   RANGE_LEN(0x1f0c000000, 0x4000000), // PLIC
