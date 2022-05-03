@@ -118,6 +118,18 @@ void custom_handler_reg(uintptr_t code, _Context*(*handler)(_Event, _Context*)) 
   }
 }
 
+void register_handler(uintptr_t code, _Context*(*handler)(_Event*, _Context*)) {
+  if (INTR_BIT & code) { // is interrupt
+    int cause = code % INTERRUPT_CAUSE_SIZE;
+    printf("Register handler for %d interrupt\n", cause);
+    interrupt_handler[cause] = handler;
+  } else { // is exception
+    int cause = code % EXCEPTION_CAUSE_SIZE;
+    printf("Register handler for %d exception\n", cause);
+    exception_handler[cause] = handler;
+  }
+}
+
 void irq_handler_reg(uintptr_t code, _Context*(*handler)(_Event*, _Context*)) {
   uintptr_t offset = (code << 1) >> 1;
   if (INTR_BIT & code) {
