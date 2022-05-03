@@ -9,7 +9,7 @@ typedef struct {
 
 ClintInfo timer_handle;
 
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
 #define CLINT_MMIO (RTC_ADDR - 0xbff8)
 #define TIME_INC 0x80000
 #else
