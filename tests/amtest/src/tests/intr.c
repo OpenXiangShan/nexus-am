@@ -18,7 +18,7 @@ void hello_intr() {
   _intr_write(1);
   // printf("hello intr written\n");
 #if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-  for (volatile int i = 0; i < 10; i++) ;
+  for (volatile int i = 0; i < 512; i++) ;
   _yield();
 #else
   while (1) {
