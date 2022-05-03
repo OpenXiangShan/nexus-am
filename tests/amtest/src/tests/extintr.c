@@ -122,8 +122,11 @@ void external_trigger(bool shall_trigger, bool wfi, int context) {
   printf("should trigger: %s\n", shall_trigger ? "Yes" : "No");
   current_context = context;
   should_trigger = shall_trigger;
-
+#if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  const uint32_t MAX_RAND_ITER = 2;
+#else
   const uint32_t MAX_RAND_ITER = 1000;
+#endif
   int origin_claim;
   for (int i = 0; i < MAX_RAND_ITER; i++) {
     should_claim = (rand() % MAX_EXTERNAL_INTR) + PLIC_EXT_INTR_OFFSET;
@@ -136,7 +139,7 @@ void external_trigger(bool shall_trigger, bool wfi, int context) {
     }
     else {
       int counter = 0;
-      while (should_claim != -1 && counter < 100) {
+      while (should_claim != -1 && counter < 2000) {
         counter++;
       }
     }
@@ -208,8 +211,10 @@ void external_intr() {
   // external_trigger(true, CONTEXT_M);
   // external_trigger(false, CONTEXT_S);
 
+#if !defined(__ARCH_RISCV64_XS_SOUTHLAKE) || !defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
   plic_intr_init();
   random_trigger();
+#endif
 
   // for (int i = 0; i < MAX_EXTERNAL_INTR + MAX_INTERNAL_INTR; i++) {
   //   printf("claim_count[%d] = %lu\n", i, claim_count[i]);
