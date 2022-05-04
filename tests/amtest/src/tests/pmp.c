@@ -11,20 +11,13 @@
 
 #define EXCEPTION_STORE_ACCESS_FAULT 7
 
-uint64_t right_store_access_fault_addr = 0;
+uint64_t access_fault_to_be_reported = 0;
 
 _Context* store_access_fault_handler(_Event* ev, _Context *c) {
-  // printf("store access fault triggered\n");
-  uint64_t stval = csr_read(stval);
-  if (right_store_access_fault_addr == stval) {
-    // printf("store access fault hit addr %x\n", right_store_access_fault_addr);
+  printf("store access fault triggered\n");
+  if (access_fault_to_be_reported) {
     _halt(0);
   } else {
-    // printf("store access fault addr mismatch: right %x, wrong %x, pc %x\n", 
-    //   right_store_access_fault_addr,
-    //   stval,
-    //   c->sepc
-    // );
     _halt(1); // something went wrong
   }
   return c;
@@ -47,14 +40,17 @@ void pmp_test() {
   *c = 1; // should trigger a fault
   #endif
 #elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-  right_store_access_fault_addr = 0;
+  access_fault_to_be_reported = 0;
   int *b = (int *)(0x2030000000UL);
   *b = 1; // should not trigger a fault
-  right_store_access_fault_addr = 0x2010000040UL;
+  access_fault_to_be_reported = 1;
   volatile int *a = (int *)(0x2010000040UL);
   *a = 1; // should trigger a fault
+  printf("Store access fault not triggered\n");
+  _halt(1);
 #else
   // invalid arch
+  printf("invalid arch\n");
   _halt(1);
 #endif
 }
