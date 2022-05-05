@@ -24,7 +24,7 @@ _Context* store_access_fault_handler(_Event* ev, _Context *c) {
 }
 
 void pmp_test() {
-  register_handler(EXCEPTION_STORE_ACCESS_FAULT, &store_access_fault_handler);
+  irq_handler_reg(EXCEPTION_STORE_ACCESS_FAULT, &store_access_fault_handler);
   printf("start pmp test\n");
 #if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
   #ifdef PMP_1

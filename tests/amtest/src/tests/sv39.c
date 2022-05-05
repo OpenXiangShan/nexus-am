@@ -84,8 +84,8 @@ void sv39_test() {
   // invalid arch
   _halt(1);
 #endif
-  register_handler(EXCEPTION_STORE_PAGE_FAULT, &store_page_fault_handler);
-  register_handler(EXCEPTION_LOAD_PAGE_FAULT, &load_page_fault_handler);
+  irq_handler_reg(EXCEPTION_STORE_PAGE_FAULT, &store_page_fault_handler);
+  irq_handler_reg(EXCEPTION_LOAD_PAGE_FAULT, &load_page_fault_handler);
 
   printf("test sv39 data write\n");
   *w_ptr = 'a';

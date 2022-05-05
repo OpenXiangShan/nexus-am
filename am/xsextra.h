@@ -66,7 +66,7 @@ void stip_handler_reg(_Context*(*handler)(_Event, _Context*));
 void seip_handler_reg(_Context*(*handler)(_Event, _Context*));
 void secall_handler_reg(_Context*(*handler)(_Event, _Context*));
 void custom_handler_reg(uintptr_t code, _Context*(*handler)(_Event, _Context*));
-void register_handler(uintptr_t code, _Context*(*handler)(_Event*, _Context*));
+void irq_handler_reg(uintptr_t code, _Context*(*handler)(_Event*, _Context*));
 
 #ifdef __cplusplus
 }
