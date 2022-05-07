@@ -1,7 +1,7 @@
 #include <am.h>
 #include <klib.h>
 
-// naive l2 cache op test
+// naive LLC cache op test
 #if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
 #define CACHE_CTRL_BASE 0x1f00040100
 #define CACHE_CMD_BASE 0x1f00040200
@@ -20,7 +20,20 @@
 #define CTRL_DATA_OFFSET 24
 #define CTRL_DIR_OFFSET 32
 #define TEST_BUFFER_SIZE 32
-#define L3_SIZE_KB (6 * 1024)
+#define L3_SIZE_KB (3 * 1024)
+#define L3_NR_WAY 6
+#define L3_NR_BANK 4
+#define OFFSET_LEN 6
+
+unsigned int log2(unsigned int n) {
+  unsigned int result = 0;
+  while (n > 1) {
+    assert(n % 2 == 0);
+    n = n / 2;
+    result++;
+  }
+  return result;
+}
 
 volatile uint64_t test_buffer[TEST_BUFFER_SIZE] = {0};
 
@@ -36,49 +49,57 @@ void failure() {
   asm(".word 0x0000006b\n");
 }
 
-int main(){
-  printf("huancun op (mmio based) test\n");
-  printf("huancun l3 size is set to %d KB\n", L3_SIZE_KB);
-  for(int i = 0; i < TEST_BUFFER_SIZE; i++){
+int main() {
+  printf("HuanCun op (mmio based) test. Note that --no-diff is required!\n");
+  printf("HuanCun l3 size is set to %d KB, nr_way is set to %d, nr_bank is set to %d, ", L3_SIZE_KB, L3_NR_WAY, L3_NR_BANK);
+  unsigned int set_size = L3_SIZE_KB * 1024 / L3_NR_BANK / L3_NR_WAY / 64;
+  unsigned int set_len = log2(set_size);
+  printf("nr_set is %u, set_len is %u\n", set_size, set_len);
+  
+  /* Fill data for test_buffer */
+  for (int i = 0; i < TEST_BUFFER_SIZE; i++) {
     test_buffer[i] = (uint64_t)&test_buffer[i];
   }
-  uint64_t tag = (uint64_t)&test_buffer >> 6 >> 12; // paddr to l3 tag
-  uint64_t set = (uint64_t)&test_buffer >> 6; // paddr to l3 set
+
+  /* In our LLC design, full address is passed by CtrlUnit to one of the SliceCtrls according to BankBits
+   * Afterwards, BankBits are truncated in SliceCtrl to generate real MSHR request
+   * So we should provide full address here
+   */
+  uint64_t tag = ((uint64_t)&test_buffer >> OFFSET_LEN) >> set_len; // paddr to l3 tag
+  uint64_t set = ((uint64_t)&test_buffer >> OFFSET_LEN) & (set_size-1); // paddr to l3 set
   *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = tag;
   *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = set;
-  printf("addr %x tag %x set %x\n", &test_buffer, tag, set);
+  printf("addr 0x%llx tag 0x%llx set 0x%llx\n", &test_buffer, tag, set);
   asm("fence\n");
-
-  // (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
-  // printf("huancun op flush done\n");
-  // printf("data %lx\n", test_buffer[0]);
-  // (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
-  // printf("huancun op clean done\n");
-  // printf("data %lx\n", test_buffer[0]);
-  // (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_INV;
-  // printf("huancun op invalid done\n");
-  // printf("data %lx\n", test_buffer[0]);
 
   test_buffer[0] = 1;
   asm("fence\n");
   (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_INV;
   printf("huancun op invalid done\n");
   printf("data %lx\n", test_buffer[0]);
+  if (test_buffer[0] == 1) {
+    failure();
+  }
 
   test_buffer[0] = 2;
   asm("fence\n");
   (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
   printf("huancun op clean done\n");
   printf("data %lx\n", test_buffer[0]);
+  if (test_buffer[0] != 2) {
+    failure();
+  }
 
   test_buffer[0] = 3;
   asm("fence\n");
   (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
   printf("huancun op flush done\n");
   printf("data %lx\n", test_buffer[0]);
+  if (test_buffer[0] != 3) {
+    failure();
+  }
 
   // test to be added for a wider addr range
-
   success();
   return 0;
 }
