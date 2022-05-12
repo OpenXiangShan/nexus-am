@@ -20,6 +20,7 @@ static const char *tests[256] = {
 
 int main(const char *args) {
   switch (args[0]) {
+    CASE('x', dma_test);
     CASE('h', hello);
     CASE('i', hello_intr, IOE, CTE(simple_trap), REEH(simple_trap), RCEH(simple_trap), RTEH(simple_trap));
     CASE('e', external_intr, IOE, CTE(external_trap), REEH(external_trap), RTEH(external_trap));
