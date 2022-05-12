@@ -26,7 +26,7 @@
 # define SYNC_ADDR    0x40001004
 # define FB_ADDR      0x50000000
 #elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-# define RTC_ADDR     0x1f0000bff8
+# define RTC_ADDR     0x1f1000bff8
 // CLINT 0x1f00000000
 #else
 # define SERIAL_PORT  0xa10003f8
