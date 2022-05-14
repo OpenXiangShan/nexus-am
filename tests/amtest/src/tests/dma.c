@@ -24,8 +24,8 @@ typedef struct {
 } dma_mshr;
 
 // CHANGE this according to the memory map
-volatile dma_mshr *mshr = (volatile dma_mshr *)0x1f10070000UL;
-volatile uint64_t *mshr_valid = (volatile uint64_t *)0x1f10072000UL;
+volatile dma_mshr *mshr = (volatile dma_mshr *)0x1f00070000UL;
+volatile uint64_t *mshr_valid = (volatile uint64_t *)0x1f00072000UL;
 
 // 4GB - 6GB
 volatile uint8_t *memory = (volatile uint8_t *)0x2100000000UL;
