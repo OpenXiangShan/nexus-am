@@ -47,7 +47,7 @@ uint64_t random_number() {
 
 inline uint64_t random_memory_offset() {
   // max 16MB
-  return random_number() % 0x400000000UL;
+  return random_number() % 0x1000000UL;
 }
 
 void dma_test() {
