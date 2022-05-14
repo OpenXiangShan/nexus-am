@@ -19,7 +19,7 @@
 #define CTRL_WAY_OFFSET 16
 #define CTRL_DATA_OFFSET 24
 #define CTRL_DIR_OFFSET 32
-#define TEST_BUFFER_SIZE 32
+#define TEST_BUFFER_SIZE 128
 #define L3_SIZE_KB (3 * 1024)
 #define L3_NR_WAY 6
 #define L3_NR_BANK 4
@@ -35,18 +35,56 @@ unsigned int log2(unsigned int n) {
   return result;
 }
 
-volatile uint64_t test_buffer[TEST_BUFFER_SIZE] = {0};
+volatile uint64_t test_buffer[TEST_BUFFER_SIZE] __attribute__((aligned(64))) = {0};
 
 void success() {
   printf("test passed.\n");
-  asm("li a0, 0\n");
-  asm(".word 0x0000006b\n");
+  // asm("li a0, 0\n");
+  // asm(".word 0x0000006b\n");
+  _halt(0);
 }
 
 void failure() {
   printf("test failed.\n");
-  asm("li a0, 1\n");
-  asm(".word 0x0000006b\n");
+  // asm("li a0, 1\n");
+  // asm(".word 0x0000006b\n");
+  _halt(1);
+}
+
+void test1() {
+  test_buffer[0] = 1;
+  asm("fence\n");
+  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_INV;
+  printf("huancun op invalid done\n");
+  printf("data %lx\n", test_buffer[0]);
+  if (test_buffer[0] == 1) {
+    printf("CMO_INV failed: data right %lx wrong %lx", 1, test_buffer[0]);
+    failure();
+  }
+}
+
+void test2() {
+  test_buffer[0] = 2;
+  asm("fence\n");
+  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
+  printf("huancun op clean done\n");
+  printf("data %lx\n", test_buffer[0]);
+  if (test_buffer[0] != 2) {
+    printf("CMD_CMO_CLEAN failed: data right %lx wrong %lx", 2, test_buffer[0]);
+    failure();
+  }
+}
+
+void test3() {
+  test_buffer[0] = 3;
+  asm("fence\n");
+  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
+  printf("huancun op flush done\n");
+  printf("data %lx\n", test_buffer[0]);
+  if (test_buffer[0] != 3) {
+    printf("CMD_CMO_FLUSH failed: data right %lx wrong %lx", 3, test_buffer[0]);
+    failure();
+  }
 }
 
 int main() {
@@ -72,32 +110,9 @@ int main() {
   printf("addr 0x%llx tag 0x%llx set 0x%llx\n", &test_buffer, tag, set);
   asm("fence\n");
 
-  test_buffer[0] = 1;
-  asm("fence\n");
-  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_INV;
-  printf("huancun op invalid done\n");
-  printf("data %lx\n", test_buffer[0]);
-  if (test_buffer[0] == 1) {
-    failure();
-  }
-
-  test_buffer[0] = 2;
-  asm("fence\n");
-  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
-  printf("huancun op clean done\n");
-  printf("data %lx\n", test_buffer[0]);
-  if (test_buffer[0] != 2) {
-    failure();
-  }
-
-  test_buffer[0] = 3;
-  asm("fence\n");
-  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
-  printf("huancun op flush done\n");
-  printf("data %lx\n", test_buffer[0]);
-  if (test_buffer[0] != 3) {
-    failure();
-  }
+  test1();
+  test2();
+  test3();
 
   // test to be added for a wider addr range
   success();
