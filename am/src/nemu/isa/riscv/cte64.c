@@ -8,7 +8,7 @@ static void init_machine_exception() {
   asm volatile("csrw mtvec, %0" : : "r"(__am_timervec));
 }
 
-
+int g_config_disable_timer = 0; // dirty hack of __am_init_cte64(), to be refactored
 extern void init_timer();
 extern void enable_timer();
 extern void init_pmp(); 
@@ -52,7 +52,9 @@ void __am_init_cte64() {
 
   init_machine_exception();
   init_timer();
-  enable_timer();
+  if(!g_config_disable_timer){
+    enable_timer();
+  }
   init_eip();
 
   // enter S-mode
