@@ -35,6 +35,13 @@ unsigned int log2(unsigned int n) {
   return result;
 }
 
+void wait(int cycle) {
+  volatile int i = cycle;
+  while(i > 0){
+    i--;
+  }
+}
+
 volatile uint64_t test_buffer[TEST_BUFFER_SIZE] __attribute__((aligned(64))) = {0};
 
 void success() {
@@ -55,6 +62,7 @@ void test1() {
   test_buffer[0] = 1;
   asm("fence\n");
   (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_INV;
+  wait(100);
   printf("huancun op invalid done\n");
   printf("data %lx\n", test_buffer[0]);
   if (test_buffer[0] == 1) {
@@ -67,6 +75,7 @@ void test2() {
   test_buffer[0] = 2;
   asm("fence\n");
   (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
+  wait(100);
   printf("huancun op clean done\n");
   printf("data %lx\n", test_buffer[0]);
   if (test_buffer[0] != 2) {
@@ -79,6 +88,7 @@ void test3() {
   test_buffer[0] = 3;
   asm("fence\n");
   (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
+  wait(100);
   printf("huancun op flush done\n");
   printf("data %lx\n", test_buffer[0]);
   if (test_buffer[0] != 3) {
