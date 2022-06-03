@@ -858,7 +858,7 @@ static int _vsnprintf(out_fct_type out, char* buffer, const size_t maxlen, const
 
 
 ///////////////////////////////////////////////////////////////////////////////
-
+#ifndef NOPRINT
 int printf_(const char* format, ...)
 {
   va_list va;
@@ -868,6 +868,12 @@ int printf_(const char* format, ...)
   va_end(va);
   return ret;
 }
+#else
+int printf_(const char* format, ...)
+{
+  return 0;
+}
+#endif
 
 
 int sprintf_(char* buffer, const char* format, ...)

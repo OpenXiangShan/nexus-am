@@ -7,15 +7,12 @@
 #define SET_BIT(data, i)       ((data) | (0x1UL << (i)))
 #define CLEAR_BIT(data, i)     ((data) ^ EXTRACT_BIT(data, i))
 
-#define INTR_GEN_ADDR          (0x40070000UL)
 #define INTR_REG_WIDTH         32
 #define INTR_REG_ADDR(i)       ((INTR_GEN_ADDR) + ((i) << 2))
 #define INTR_REG_INDEX(i)      INTR_REG_ADDR(((i) / INTR_REG_WIDTH))
 #define INTR_REG_OFFSET(i)     ((i) % INTR_REG_WIDTH)
 
-#define INTR_RANDOM            (0x40070008UL)
 #define INTR_RANDOM_ADDR(i)    ((INTR_RANDOM) + ((i) << 2))
-#define INTR_RANDOM_MASK       (0x40070010UL)
 
 #define READ_INTR_REG(i)  READ_WORD(INTR_REG_ADDR(i))
 #define READ_INTR(i)     EXTRACT_BIT(READ_INTR_REG(INTR_REG_INDEX(i)), INTR_REG_OFFSET(i))
@@ -24,7 +21,6 @@
 
 #define CONTEXT_M 0
 #define CONTEXT_S 1
-#define PLIC_BASE_ADDR         (0x3c000000UL)
 #define PLIC_PRIORITY          (PLIC_BASE_ADDR + 0x4UL)
 #define PLIC_PENDING           (PLIC_BASE_ADDR + 0x1000UL)
 #define PLIC_ENABLE(c)         (PLIC_BASE_ADDR + 0x2000UL + c*0x80UL)
@@ -126,8 +122,11 @@ void external_trigger(bool shall_trigger, bool wfi, int context) {
   printf("should trigger: %s\n", shall_trigger ? "Yes" : "No");
   current_context = context;
   should_trigger = shall_trigger;
-
+#if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  const uint32_t MAX_RAND_ITER = 2;
+#else
   const uint32_t MAX_RAND_ITER = 1000;
+#endif
   int origin_claim;
   for (int i = 0; i < MAX_RAND_ITER; i++) {
     should_claim = (rand() % MAX_EXTERNAL_INTR) + PLIC_EXT_INTR_OFFSET;
@@ -140,7 +139,7 @@ void external_trigger(bool shall_trigger, bool wfi, int context) {
     }
     else {
       int counter = 0;
-      while (should_claim != -1 && counter < 100) {
+      while (should_claim != -1 && counter < 2000) {
         counter++;
       }
     }
@@ -212,8 +211,10 @@ void external_intr() {
   // external_trigger(true, CONTEXT_M);
   // external_trigger(false, CONTEXT_S);
 
+#if !defined(__ARCH_RISCV64_XS_SOUTHLAKE) && !defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
   plic_intr_init();
   random_trigger();
+#endif
 
   // for (int i = 0; i < MAX_EXTERNAL_INTR + MAX_INTERNAL_INTR; i++) {
   //   printf("claim_count[%d] = %lu\n", i, claim_count[i]);

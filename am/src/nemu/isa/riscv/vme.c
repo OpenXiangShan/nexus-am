@@ -17,8 +17,14 @@ static const _Area segments[] = {      // Kernel memory mappings
   RANGE_LEN(CLINT_MMIO, 0x10000),   // clint/timer
   RANGE_LEN(FB_ADDR,    0x400000),  // vmem
   RANGE_LEN(SCREEN_ADDR,0x1000),    // vmem
-  RANGE_LEN(0x3c000000, 0x4000000),  // PLIC
-  RANGE_LEN(0xc0000000, 0x100000), // page table test allocates from this position
+  RANGE_LEN(0x3c000000, 0x4000000), // PLIC
+  RANGE_LEN(0xc0000000, 0x100000),  // page table test allocates from this position
+#elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  RANGE_LEN(0x2000000000, 0x8000000), // PMEM
+  RANGE_LEN(0x1f00050000, 0x1000),    // uart
+  // RANGE_LEN(CLINT_MMIO, 0x10000),     // clint/timer
+  // RANGE_LEN(0x1f0c000000, 0x4000000), // PLIC
+  RANGE_LEN(0x2040000000, 0x100000),  // page table test allocates from this position
 #else
   NEMU_PADDR_SPACE,
 #if __riscv_xlen == 64
