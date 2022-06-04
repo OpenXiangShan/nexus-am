@@ -28,14 +28,17 @@ void pmp_test() {
   printf("start pmp test\n");
 #if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
   #ifdef PMP_1
+  access_fault_to_be_reported = 1;
   volatile int *a = (int *)(0x90000040UL);
   *a = 1; // should trigger a fault
   #endif
   #ifdef PMP_2
+  access_fault_to_be_reported = 0;
   int *b = (int *)(0xa0000000UL);
   *b = 1; // should not trigger a fault
   #endif
   #ifdef PMP_3
+  access_fault_to_be_reported = 1;
   int *c = (int *)(0xb00000040UL);
   *c = 1; // should trigger a fault
   #endif

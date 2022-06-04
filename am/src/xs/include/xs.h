@@ -7,7 +7,7 @@
 
 #include ISA_H // "x86.h", "mips32.h", ...
 
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_FLASH)
 #define INTR_GEN_ADDR          (0x40070000UL)
 #define INTR_RANDOM            (0x40070008UL)
 #define INTR_RANDOM_MASK       (0x40070010UL)
