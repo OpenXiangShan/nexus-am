@@ -47,6 +47,8 @@
 #define VM_START 0x80000000UL
 #define VM_RANGE 0x00080000
 
+#define error(msg) {printf(msg); _halt(1);}
+
 volatile int trap_expected;
 volatile int granule;
 volatile int expect_excep;
@@ -136,13 +138,13 @@ uintptr_t handle_trap(uintptr_t cause, uintptr_t epc, uintptr_t regs[32])
   }
 
   if (cause != CAUSE_LOAD_ACCESS && cause != CAUSE_FETCH_ACCESS && cause != CAUSE_STORE_ACCESS)
-    _halt(1); // no PMP support
+    error("unexpected exception type(actual exception)\n")
   if (!trap_expected)
-    _halt(2);
+    error("operation should not trigger an exception\n");
   if (!(expect_excep == CAUSE_LOAD_ACCESS || expect_excep == CAUSE_FETCH_ACCESS || expect_excep == CAUSE_STORE_ACCESS))
-    _halt(3);
+    error("unexpected exception type(expected exception)\n")
   if (cause != expect_excep) {
-    _halt(4);
+    error("exception type is not as expected\n")
   }
 
   trap_expected = 0;
@@ -208,13 +210,13 @@ INLINE void test_one_ldst(uintptr_t addr, int size) {
   trap_expected = !pma_check(addr, READ);
   test_one_ld(addr, size);
   if (trap_expected)
-    _halt(6);
+    error("exception should be handled correctly or should not be triggered\n")
 
   expect_excep = CAUSE_STORE_ACCESS;
   trap_expected = !pma_check(addr, WRITE);
   test_one_st(addr, size);
   if (trap_expected)
-    _halt(7);
+    error("exception should be handled correctly or should not be triggered\n")
 }
 
 INLINE void test_all_sizes(uintptr_t addr)
