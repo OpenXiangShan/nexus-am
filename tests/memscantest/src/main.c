@@ -140,7 +140,7 @@ uintptr_t handle_trap(uintptr_t cause, uintptr_t epc, uintptr_t regs[32])
   if (cause != CAUSE_LOAD_ACCESS && cause != CAUSE_FETCH_ACCESS && cause != CAUSE_STORE_ACCESS)
     error("unexpected exception type(actual exception)\n")
   if (!trap_expected)
-    error("operation should not trigger an exception\n");
+    error("operation should not trigger an exception\n")
   if (!(expect_excep == CAUSE_LOAD_ACCESS || expect_excep == CAUSE_FETCH_ACCESS || expect_excep == CAUSE_STORE_ACCESS))
     error("unexpected exception type(expected exception)\n")
   if (cause != expect_excep) {
