@@ -8,7 +8,7 @@ static void init_machine_exception() {
   asm volatile("csrw mtvec, %0" : : "r"(__am_timervec));
 }
 
-
+int g_config_disable_timer = 0; // dirty hack of __am_init_cte64(), to be refactored
 extern void init_timer();
 extern void enable_timer();
 extern void init_pmp(); 
@@ -32,16 +32,29 @@ void __am_init_cte64() {
   // asm volatile("csrw pmpcfg2, %0" : : "r"(31));
   
   init_pmp();
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
   // protect 0x90000000 + 0x10000 for test purpose
   enable_pmp(1, 0x90000000, 0x10000, 0, 0);
   // printf("pmp NA inited\n");
   // protect 0xb00000000 + 0x100
   enable_pmp_TOR(4, 0xb0000000, 0x100, 0, 0);
   //printf("pmp TOR inited\n");
+#elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  // protect 0x210000000 + 0x10000 for test purpose
+  enable_pmp(1, 0x2010000000, 0x10000, 0, 0);
+  // printf("pmp NA inited\n");
+  // protect 0x240000000 + 0x100
+  enable_pmp_TOR(4, 0x2040000000, 0x100, 0, 0);
+  //printf("pmp TOR inited\n");
+#else
+  // invalid arch
+#endif
 
   init_machine_exception();
   init_timer();
-  enable_timer();
+  if(!g_config_disable_timer){
+    enable_timer();
+  }
   init_eip();
 
   // enter S-mode

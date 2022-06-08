@@ -3,13 +3,16 @@ include $(AM_HOME)/am/arch/isa/riscv64.mk
 AM_SRCS := noop/isa/riscv/trm_flash.c \
            nemu/common/mainargs.S \
            noop/isa/riscv/perf.c \
-           noop/common/uartlite.c \
+           southlake/common/uartlite.c \
+           nemu/isa/riscv/cte.c \
            nemu/isa/riscv/trap.S \
+           nemu/isa/riscv/cte64.c \
+           nemu/isa/riscv/mtime.S \
            nemu/isa/riscv/vme.c \
            nemu/common/ioe.c \
-           noop/common/input.c \
-           noop/common/timer.c \
-           nemu/common/video.c \
+           dummy/input.c \
+           nemu/common/timer.c \
+           dummy/video.c \
            dummy/audio.c \
            noop/isa/riscv/instr.c \
            xs/isa/riscv/mpe.c \
@@ -20,12 +23,12 @@ AM_SRCS := noop/isa/riscv/trm_flash.c \
            xs/isa/riscv/cache.c \
            nemu/isa/riscv/boot/start_flash.S
 
-CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\"
+CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\" -DNOPRINT
 
 ASFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S
 
-LDFLAGS += -T $(AM_HOME)/am/src/nemu/isa/riscv/boot/loaderflash.ld
+LDFLAGS += -T $(AM_HOME)/am/src/southlake/ldscript/loaderflash.ld
 
 image:
 	@echo + LD "->" $(BINARY_REL).elf
