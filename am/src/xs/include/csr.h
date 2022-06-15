@@ -1,6 +1,9 @@
-#ifndef __PMP_H__
-#define __PMP_H__
+#ifndef __CSR_H__
+#define __CSR_H__
 
+// csr addr const
+
+// pmp csr
 #define PMPCFG_BASE 0x3a0
 #define PMPADDR_BASE 0x3b0
 #define PMP_R 1
@@ -15,7 +18,12 @@
 // currently XiangShan only support 16 PMP entries
 #define PMP_COUNT 16
 
+#define CSR_PMPCFG0 0x3a0
+#define CSR_PMPADDR0 0x3b0
 
+// hpm csr
+#define CSR_MCYCLE 0xb00
+#define CSR_MINSTRET 0xb02
 
 // csr R/W borrowed from OpenSBI project under BSD 2-clause license
 #define __ASM_STR(x)	#x
@@ -37,9 +45,6 @@
 				     : "rK"(__v)                   \
 				     : "memory");                  \
 	})
-#define CSR_PMPCFG0			0x3a0
-#define CSR_PMPADDR0	    0x3b0
-
 
 #define csr_set(csr, val)                                          \
 	({                                                         \
@@ -61,4 +66,4 @@
 
 
 
-#endif // __PMP_H__ 
+#endif // __CSR_H__ 

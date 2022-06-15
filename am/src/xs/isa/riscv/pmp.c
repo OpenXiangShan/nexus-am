@@ -1,5 +1,5 @@
 #include <xs.h>
-#include <pmp.h>
+#include <csr.h>
 #include <klib.h>
 /*
  * Note that PMP should only be set on machine mode
