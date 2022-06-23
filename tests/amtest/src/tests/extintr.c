@@ -29,9 +29,6 @@
 // External interrupts start with index PLIC_EXT_INTR_OFFSET
 #define PLIC_EXT_INTR_OFFSET   1
 
-#define MAX_EXTERNAL_INTR 64
-#define MAX_INTERNAL_INTR 10
-
 // CSR.MIE
 #define MEIE 11
 #define SEIE 9
@@ -169,7 +166,7 @@ void random_trigger() {
   for (int i = 0; i < (MAX_EXTERNAL_INTR + 31) / 32; i++) {
     WRITE_WORD(INTR_RANDOM_ADDR(i), 0xffffffff);
   }
-  for (int i = 0; i < (MAX_EXTERNAL_INTR + 32) / 32; i++) {
+  for (int i = 0; i < (MAX_EXTERNAL_INTR + 31) / 32; i++) {
     WRITE_WORD(PLIC_ENABLE(CONTEXT_S) + i * 4, 0xffffffff);
   }
   void hello_intr_n(int n);
