@@ -25,6 +25,7 @@ int main(const char *args) {
     CASE('h', hello);
     CASE('i', hello_intr, IOE, CTE(simple_trap), REEH(simple_trap), RCEH(simple_trap), RTEH(simple_trap));
     CASE('e', external_intr, IOE, NOTIMEINT(), CTE(external_trap), REEH(external_trap), RTEH(external_trap));
+    CASE('u', test_BEU, IOE, NOTIMEINT(), CTE(handle_external_trap), REEH(handle_external_trap), RTEH(handle_external_trap));
     CASE('d', devscan, IOE);
     CASE('m', finalize, PRE_MPE(args[1]), MPE(mp_print));
     CASE('t', rtc_test, IOE);
