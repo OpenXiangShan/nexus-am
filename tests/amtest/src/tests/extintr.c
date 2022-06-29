@@ -125,7 +125,7 @@ void external_trigger(bool shall_trigger, bool wfi, int context) {
 #if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
   const uint32_t MAX_RAND_ITER = 2;
 #else
-  const uint32_t MAX_RAND_ITER = 1000;
+  const uint32_t MAX_RAND_ITER = 200;
 #endif
   int origin_claim;
   for (int i = 0; i < MAX_RAND_ITER; i++) {
