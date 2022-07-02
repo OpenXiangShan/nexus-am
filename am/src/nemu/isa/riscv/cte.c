@@ -3,6 +3,7 @@
 #include <klib.h>
 
 // static _Context* (*user_handler)(_Event, _Context*) = NULL;
+static _Context* (*custom_soft_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_timer_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_external_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_secall_handler)(_Event, _Context*) = NULL;
@@ -23,6 +24,27 @@ _Context* __am_irq_default_handler(_Event *ev, _Context *c) {
   ev->event = _EVENT_ERROR;
   _halt(2);
   // should never reach here
+  return c;
+}
+
+/*
+ * default handler for Supervisor Software Interrupt
+ * set event to IRQ_SOFT
+ * may call custom soft handler if registered
+ */
+_Context* __am_irq_SSIP_handler(_Event *ev, _Context *c) {
+#if __riscv_xlen == 64
+  asm volatile ("csrwi sip, 0");
+#endif
+  // printf("inside irq SSIP handler\n");
+  ev->event = _EVENT_IRQ_SOFT;
+  if (custom_soft_handler != NULL) {
+    // printf("dive into custom soft handler");
+    custom_soft_handler(*ev, c);
+  }
+  // machine mode will clear stip
+  asm volatile("csrs mie, 0");
+  // printf("SSIP handler finished\n");
   return c;
 }
 
@@ -109,6 +131,14 @@ _Context* __am_irq_handle(_Context *c) {
 extern void __am_asm_trap(void);
 
 /*
+ * Supervisor soft interrupt custom handler register function
+ * handler: the function to be registered
+ */
+void ssip_handler_reg(_Context*(*handler)(_Event, _Context*)) {
+  custom_soft_handler = handler;
+}
+
+/*
  * Supervisor timer interrupt custom handler register function
  * handler: the function to be registered
  */
@@ -141,6 +171,8 @@ void custom_handler_reg(uintptr_t code, _Context*(*handler)(_Event, _Context*)) 
   switch (code) {
 #if __riscv_xlen == 64
     case INTR_BIT | SCAUSE_SSIP:
+      ssip_handler_reg(handler);
+      break;
 #endif
     case INTR_BIT | SCAUSE_STIP:
       stip_handler_reg(handler);
@@ -195,10 +227,9 @@ int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
   }
 
 #if __riscv_xlen == 64
-  interrupt_handler[SCAUSE_SSIP] = __am_irq_STIP_handler;
-#else
-  interrupt_handler[SCAUSE_STIP] = __am_irq_STIP_handler;
+  interrupt_handler[SCAUSE_SSIP] = __am_irq_SSIP_handler;
 #endif
+  interrupt_handler[SCAUSE_STIP] = __am_irq_STIP_handler;
   interrupt_handler[SCAUSE_SEIP] = __am_irq_SEIP_handler;
   exception_handler[SCAUSE_SECALL] = __am_irq_SECALL_handler;
 
