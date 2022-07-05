@@ -1,6 +1,7 @@
 #ifndef __EVENTS_H__
 #define __EVENTS_H__
 
+#define noEvent 0
 #define Frontend_noEvent 0
 #define Frontend_frontendFlush 1
 #define Frontend_ifu_req 2

@@ -12,7 +12,23 @@ int main() {
     printf("mcycle: %ld\n", csr_read(mcycle));
     printf("minstret: %ld\n", csr_read(minstret));
 
-#if 1
+    se_cc_single(3, MODE_M, Frontend_frontendFlush);
+    se_cc_single(11, MODE_M, Frontend_frontendFlush);
+
+    // === tmp workload ===
+    volatile uint64_t a = 0;
+    for(uint64_t i = 0; i < 100; i++) {
+        a += a + i;
+    }
+    printf("%lu\n",a);
+    // *** tmp workload ***
+
+    print_event(3);
+    print_counter(3);
+    print_event(11);
+    print_counter(11);
+
+#if 0
     uint64_t set_mode_M = (0x1UL << 63);
     // ===== frontend ==================================================
     csr_write(mhpmevent3, csr_read(mhpmevent3)|set_mode_M);
