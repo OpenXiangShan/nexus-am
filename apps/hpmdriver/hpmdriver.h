@@ -2,7 +2,7 @@
 #define __HPMDRIVER_H_
 
 #include <klib.h>
-#include <csr.h>
+#include <csr.h> // nexus-am/am/src/xs/include/csr.h
 #include "events.h"
 
 #define MODE_OFFSET 59
@@ -23,6 +23,10 @@
 #define OPTYPE_AND 0x1
 #define OPTYPE_XOR 0x2
 #define OPTYPE_ADD 0x4
+// Operations
+// Event0 <Optype0> Event1 = T1
+// Event2 <Optype1> Event3 = T2
+// T1 <Optype2> T2 = Result
 
 #define EVENT3_OFFSET 30
 #define EVENT3_MASK 0x3FF
@@ -39,6 +43,8 @@
 #define print_event(id) printf("mhpmevent%d: %lx\n", id, csr_read(mhpmevent##id))
 #define clear_counter(id) csr_write(mhpmcounter##id, 0x0UL)
 #define print_counter(id) printf("mhpmcounter%d: %lu\n", id, csr_read(mhpmcounter##id))
+#define printd_csr(csr) printf(#csr": %ld\n", csr_read(csr))
+#define printx_csr(csr) printf(#csr": %lx\n", csr_read(csr))
 
 #define set_event_quad(csr_id, mode, optype2, optype1, optype0, event3, event2, event1, event0) \
     {   \
