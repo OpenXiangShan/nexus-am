@@ -2,13 +2,13 @@
 
 int main() {
     printf("Hello, XiangShan!\n");
-    printd_csr(marchid);
+    printu_csr(marchid);
     printx_csr(mcountinhibit);
     printx_csr(mcounteren);
     printx_csr(scounteren);
 
-    printd_csr(mcycle);
-    printd_csr(minstret);
+    printu_csr(mcycle);
+    printu_csr(minstret);
 
     se_cc_single(3, MODE_M, Frontend_frontendFlush);
     se_cc_single(11, MODE_M, CtrlBlock_decoder_waitInstr);
@@ -20,7 +20,6 @@ int main() {
         a += a + i;
     }
     printf("%lu\n",a);
-    // *** tmp workload ***
 
     print_event(3);
     print_counter(3);

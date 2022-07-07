@@ -44,6 +44,7 @@
 #define clear_counter(id) csr_write(mhpmcounter##id, 0x0UL)
 #define print_counter(id) printf("mhpmcounter%d: %lu\n", id, csr_read(mhpmcounter##id))
 #define printd_csr(csr) printf(#csr": %ld\n", csr_read(csr))
+#define printu_csr(csr) printf(#csr": %lu\n", csr_read(csr))
 #define printx_csr(csr) printf(#csr": %lx\n", csr_read(csr))
 
 #define set_event_quad(csr_id, mode, optype2, optype1, optype0, event3, event2, event1, event0) \
@@ -73,8 +74,6 @@
     {set_event_double(csr_id, mode, optype0, event1, event0);clear_counter(csr_id);}
 #define se_cc_single(csr_id, mode, event) \
     {set_event_single(csr_id, mode, event);clear_counter(csr_id);}
-
-
 
 
 #endif /* __HPMDRIVER_H_ */
