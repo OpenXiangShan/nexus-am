@@ -4,12 +4,13 @@
 
 &emsp; &emsp; [nexus-am仓库地址](https://github.com/OpenXiangShan/nexus-am/tree/southlake)，采用`southlake`分支。用法见[开发环境文档](https://xiangshan-doc.readthedocs.io/zh_CN/latest/tools/xsenv/)
 
+```shell
 nexus-am/apps/hpmdriver
-
-- Makefile
-- events.h		 ：性能事件编码表
-- hpmdriver.h	：头文件，包含性能时间寄存器结构和各类功能函数
-- hpmdriver.c	：主函数
+├── Makefile
+├── events.h		 ：性能事件编码表
+├── hpmdriver.h	：头文件，包含性能时间寄存器结构和各类功能函数
+├── hpmdriver.c	：主函数
+```
 
 &emsp; &emsp; 采用`make ARCH=riscv64-xs-southlake`编译，可以采用如下指令编译＋运行
 

@@ -1,6 +1,10 @@
 #ifndef __EVENTS_H__
 #define __EVENTS_H__
 
+// due to the probable performance event change
+// it is recommeded to parse_encoding again
+// to update this event_encoding
+
 #define noEvent 0
 #define Frontend_noEvent 0
 #define Frontend_frontendFlush 1
