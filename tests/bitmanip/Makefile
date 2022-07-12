@@ -1,3 +1,3 @@
-NAME = Bitasm
-SRCS = $(shell find -L ./src/ -name "*.S")
+NAME := bitmanip
+SRCS := ./src/$(NAME).S
 include $(AM_HOME)/Makefile.app

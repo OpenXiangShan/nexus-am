@@ -34,7 +34,8 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTE_W 0x04
 #define PTE_X 0x08
 #define PTE_U 0x10
-
+#define PTE_A 0x40
+#define PTE_D 0x80
 // Address in page table entry
 #define PTE_ADDR(pte)   (((uintptr_t)(pte) & ~0x3ff) << 2)
 
@@ -42,6 +43,18 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTW_SV39 ((ptw_config) { .ptw_level = 3, .vpn_width = 9  })
 #define PTW_SV48 ((ptw_config) { .ptw_level = 4, .vpn_width = 9  })
 
+#define MAX_CPU 2
+
+#define INTERRUPT_CAUSE_SIZE 16
+#define EXCEPTION_CAUSE_SIZE 16
+
+#define SCAUSE_MASK 0x7fff
+// Interrupt
+#define SCAUSE_SSIP 0x1
+#define SCAUSE_STIP 0x5
+#define SCAUSE_SEIP 0x9
+// Exception
+#define SCAUSE_SECALL 0x9
 #endif
 
 #endif

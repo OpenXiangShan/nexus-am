@@ -25,6 +25,9 @@
 # define SCREEN_ADDR  0x40001000
 # define SYNC_ADDR    0x40001004
 # define FB_ADDR      0x50000000
+#elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+# define RTC_ADDR     0x1f1000bff8
+// CLINT 0x1f00000000
 #else
 # define SERIAL_PORT  0xa10003f8
 # define KBD_ADDR     0xa1000060
@@ -40,9 +43,6 @@
 # define AUDIO_COUNT_ADDR     0xa1000214
 # define AUDIO_SBUF_ADDR      0xa0800000
 #endif
-
-#define MMIO_BASE 0xa0000000
-#define MMIO_SIZE 0x10000000
 
 extern char _pmem_start, _pmem_end;
 
