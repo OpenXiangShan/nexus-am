@@ -1,12 +1,4 @@
 # Generate riscv-crypto assembly code(sm4 instructions is machine code)
-# Need to modify the file($AM_HOME/am/arch/isa/riscv64.mk) as follow:
-# -CROSS_COMPILE := riscv64-linux-gnu-
-# -COMMON_FLAGS  := -fno-pic -march=rv64g -mcmodel=medany
-# +CROSS_COMPILE := /bigdata/zfw/bk-tools/bin/riscv64-unknown-linux-gnu-
-# +COMMON_FLAGS  := -fno-pic -march=rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zknd_zkne_zknh_zkr_zksed_zksh_zkt -mcmodel=medany
-#
-# Run "python3 randtest.py" to generate random test
-# Run "make ARCH=riscv64-noop" to compile
 
 import argparse
 import random
