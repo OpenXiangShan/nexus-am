@@ -15,6 +15,11 @@
 #define PLIC_EXT_INTR_OFFSET 1
 
 #define BUS_ERROR_INTERRUPT 256
+#define L3_ERROR_INTERRUPT 257
+
+// set `TEST_L3` to test l3 cache error 
+// unset `TEST_L3` to test flow of BEU
+#define TEST_L3
 
 // BEU constants
 #define BEU_BASE 0x1f10010000UL
@@ -28,6 +33,7 @@ static volatile uint32_t should_claim = -1;
 static volatile bool should_trigger = false;
 static volatile int current_context = CONTEXT_S;
 
+#ifndef TEST_L3
 static void enable_plic_bus_error_interrupt() {
   // enable bus error interrupt 0
   plic_enable(CONTEXT_S, BUS_ERROR_INTERRUPT + PLIC_EXT_INTR_OFFSET);
@@ -37,6 +43,24 @@ static void disable_plic_bus_error_interrupt() {
   // disable bus error interrupt 0
   plic_disable(CONTEXT_S, BUS_ERROR_INTERRUPT + PLIC_EXT_INTR_OFFSET);
 }
+
+static void config_BEU() {
+  // enable icache , dcache , l2 cache ecc; 7 means 0b111
+  // 0b1(l2 cache ecc)1(dcache ecc)1(icache ecc)
+  WRITE_WORD(BEU_ENABLE_REG, READ_WORD(BEU_ENABLE_REG) | 7);
+  WRITE_WORD(BEU_PLIC_INTERRUPT_REG, READ_WORD(BEU_PLIC_INTERRUPT_REG) | 7);
+}
+#else
+static void enable_plic_l3_cache_error_interrupt() {
+  // enable l3 cache error interrupt
+  plic_enable(CONTEXT_S, L3_ERROR_INTERRUPT + PLIC_EXT_INTR_OFFSET);
+}
+
+static void disable_plic_l3_cache_error_interrupt() {
+  // disable l3 cache error interrupt
+  plic_disable(CONTEXT_S, L3_ERROR_INTERRUPT + PLIC_EXT_INTR_OFFSET);
+}
+#endif
 
 void handle_ext_intr() {
   if (!should_trigger) {
@@ -53,7 +77,11 @@ void handle_ext_intr() {
     // NOTE: claim will always be 257 as beu always sends ecc error to plic
     should_claim = -1;
     // disable ecc error interrupt to continue
-    disable_plic_bus_error_interrupt();
+    #ifndef TEST_L3
+      disable_plic_bus_error_interrupt();
+    #else
+      disable_plic_l3_cache_error_interrupt();
+    #endif
   }
   else {
     error("ERROR: no claim?\n");
@@ -87,15 +115,14 @@ static void plic_intr_init() {
   plic_set_threshold(CONTEXT_S, 0x0); // WRITE_WORD(PLIC_THRESHOLD(CONTEXT_S), 0x0);
 }
 
-static void config_BEU() {
-  // enable icache , dcache , l2 cache ecc; 7 means 0b111
-  // 0b1(l2 cache ecc)1(dcache ecc)1(icache ecc)
-  WRITE_WORD(BEU_ENABLE_REG, READ_WORD(BEU_ENABLE_REG) | 7);
-  WRITE_WORD(BEU_PLIC_INTERRUPT_REG, READ_WORD(BEU_PLIC_INTERRUPT_REG) | 7);
-}
-
 static inline void __attribute__((optimize("O0"))) wait_time(int cnt) {
-  while(cnt--) {}
+  char blocks[20][512];
+  while(cnt--) {
+    for(int i = 0; i < 20; i++) {
+      blocks[i][0] = 1;
+      blocks[i][1] = blocks[i][0];
+    }
+  }
 }
 
 void test_BEU() {
@@ -106,19 +133,34 @@ void test_BEU() {
   asm volatile("csrs sstatus, 2");
   plic_intr_init();
 
-  // config BEU to enable cache ecc error interrupt
-  config_BEU();
+  #ifndef TEST_L3
+    // config BEU to enable cache ecc error interrupt
+    config_BEU();
 
-  should_trigger = true;
-  should_claim = BUS_ERROR_INTERRUPT + PLIC_EXT_INTR_OFFSET;
-  // enable plic source of BEU
-  enable_plic_bus_error_interrupt();
+    should_trigger = true;
+    should_claim = BUS_ERROR_INTERRUPT + PLIC_EXT_INTR_OFFSET;
+    // enable plic source of BEU
+    enable_plic_bus_error_interrupt();
 
-  // we expect an interrupt from now on
-  wait_time(1000);
+    // we expect an interrupt from now on
+    wait_time(100);
+  #else 
+    // test l3 cache error
+    should_trigger = true;
+    should_claim = L3_ERROR_INTERRUPT + PLIC_EXT_INTR_OFFSET;
+    // enable plic source of l3 cache error
+    enable_plic_l3_cache_error_interrupt();
+
+    // we expect an interrupt from now on
+    wait_time(100);
+  #endif
 
   if(should_claim != -1) {
-    error("beu interrupt is not triggered or not handled correctly\n");
+    #ifndef TEST_L3
+      error("beu interrupt is not triggered or not handled correctly\n");
+    #else
+      error("l3 cache error interrupt is not triggered or not handled correctly\n");
+    #endif
   }
 
   printf("beu test passed!!!\n");

@@ -20,8 +20,8 @@
 #define CTRL_DATA_OFFSET 24
 #define CTRL_DIR_OFFSET 32
 #define TEST_BUFFER_SIZE 128
-#define L3_SIZE_KB (3 * 1024)
-#define L3_NR_WAY 6
+#define L3_SIZE_KB (2 * 1024)
+#define L3_NR_WAY 8
 #define L3_NR_BANK 4
 #define OFFSET_LEN 6
 
