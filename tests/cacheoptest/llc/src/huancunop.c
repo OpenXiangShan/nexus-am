@@ -97,6 +97,26 @@ void test3() {
   }
 }
 
+void flush_to_memory(uint64_t paddr) {
+  // printf("l3 size is set to %d KB, nr_way is set to %d, nr_bank is set to %d, ", L3_SIZE_KB, L3_NR_WAY, L3_NR_BANK);
+  unsigned int set_size = L3_SIZE_KB * 1024 / L3_NR_BANK / L3_NR_WAY / 64;
+  unsigned int set_len = log2(set_size);
+  // printf("nr_set is %u, set_len is %u\n", set_size, set_len);
+
+  /* In our LLC design, full address is passed by CtrlUnit to one of the SliceCtrls according to BankBits
+   * Afterwards, BankBits are truncated in SliceCtrl to generate real MSHR request
+   * So we should provide full address here
+   */
+  uint64_t tag = (paddr >> OFFSET_LEN) >> set_len; // paddr to l3 tag
+  uint64_t set = (paddr >> OFFSET_LEN) & (set_size-1); // paddr to l3 set
+  *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = tag;
+  *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = set;
+  // printf("flush to memory: addr 0x%llx tag 0x%llx set 0x%llx\n", &test_buffer, tag, set);
+  asm("fence\n");
+  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN; // or CMD_CMO_FLUSH
+  wait(100);
+}
+
 int main() {
   printf("HuanCun op (mmio based) test. Note that --no-diff is required!\n");
   printf("HuanCun l3 size is set to %d KB, nr_way is set to %d, nr_bank is set to %d, ", L3_SIZE_KB, L3_NR_WAY, L3_NR_BANK);
