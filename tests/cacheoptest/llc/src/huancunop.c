@@ -24,6 +24,8 @@
 #define L3_NR_WAY 8
 #define L3_NR_BANK 4
 #define OFFSET_LEN 6
+#define CACHE_LINE_SIZE_BIT 512
+#define CACHE_LINE_SIZE_BYTE (CACHE_LINE_SIZE_BIT / 8)
 
 unsigned int log2(unsigned int n) {
   unsigned int result = 0;
@@ -119,7 +121,7 @@ void flush_to_memory(uint64_t paddr) {
 }
 
 // Flush an n*512 bit address region to memory
-void flush_region_to_memory(uint64_t start_paddr, uint64_t size_in_bit) {
+void flush_region_to_memory(uint64_t start_paddr, uint64_t size_in_byte) {
   // pre-calcuated const
   unsigned int set_size = L3_SIZE_KB * 1024 / L3_NR_BANK / L3_NR_WAY / 64;
   unsigned int set_len = log2(set_size);
@@ -130,7 +132,7 @@ void flush_region_to_memory(uint64_t start_paddr, uint64_t size_in_bit) {
   asm("fence\n");
 
   // send l3 cache flush op to l3 cache controller
-  for(uint64_t current_paddr = start_paddr; current_paddr < (start_paddr + size_in_bit); current_paddr += 512){
+  for(uint64_t current_paddr = start_paddr; current_paddr < (start_paddr + size_in_byte); current_paddr += CACHE_LINE_SIZE_BYTE){
     uint64_t tag = (current_paddr >> OFFSET_LEN) >> set_len; // paddr to l3 tag
     uint64_t set = (current_paddr >> OFFSET_LEN) & (set_size-1); // paddr to l3 set
     *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = tag;
