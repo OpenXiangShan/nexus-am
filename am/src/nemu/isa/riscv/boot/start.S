@@ -31,11 +31,13 @@
 
 _start:
   init_regs
-  init_fregs
 
   mv s0, zero
   la sp, _stack_pointer
   li a0, MSTATUS_FS & (MSTATUS_FS >> 1)
   csrs mstatus, a0
   csrwi fcsr, 0
+
+  init_fregs # init fregs after fp enable
+
   jal _trm_init
