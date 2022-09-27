@@ -14,8 +14,10 @@ int main()
     printf("L2 latency:\n");
     test_latency(_PERF_L2_SIZE_BYTE/2, 2);
     // test_latency(_PERF_L2_SIZE_BYTE, 2);
-    printf("L3 latency:\n");
-    test_latency(_PERF_L3_SIZE_BYTE/2, 2);
+    //printf("L3 latency:\n");
+    //test_latency(_PERF_L3_SIZE_BYTE/2, 2);
+    printf("mem latency:\n");
+    test_latency(_PERF_MEM_SIZE_BYTE, 2);
     // test_latency(_PERF_L3_SIZE_BYTE,2);
     // printf("MEM:\n");
     // test_latency(_PERF_L3_SIZE_BYTE*2,2);

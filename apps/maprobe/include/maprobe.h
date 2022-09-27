@@ -15,11 +15,14 @@
 // platform dependent const
 // #define _PERF_TEST_ADDR_BASE 0x80400000
 #define _PERF_TEST_ADDR_BASE 0x2000400000
-#define _PERF_CACHELINE_SIZE_BYTE (64 * BYTE)
-#define _PERF_L1_NOALIAS_SIZE_BYTE (32 * KB)
-#define _PERF_L1_SIZE_BYTE (128 * KB)
-#define _PERF_L2_SIZE_BYTE (512 * KB)
+#define _PERF_CACHELINE_SIZE_BYTE (8 * BYTE)
+//#define _PERF_L1_NOALIAS_SIZE_BYTE (32 * KB)
+#define _PERF_L1_NOALIAS_SIZE_BYTE (8 * KB)
+//#define _PERF_L1_SIZE_BYTE (128 * KB)
+#define _PERF_L1_SIZE_BYTE (32 * KB)
+#define _PERF_L2_SIZE_BYTE (4 * MB)
 #define _PERF_L3_SIZE_BYTE (2 * MB)
+#define _PERF_MEM_SIZE_BYTE (32 *MB)
 
 // probe const
 #define _PERF_BLACKHOLE _PERF_TEST_ADDR_BASE
