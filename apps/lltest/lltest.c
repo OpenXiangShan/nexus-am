@@ -1,106 +1,15 @@
-//#include <stdio.h>
 #include <klib.h>
-//#include "util.h"
+#include <csr.h>
 
 #define xstr(s) str(s)
 #define str(s)  #s
 #define OP1 72057594037927935
 #define OP2 4294967295
+#define EMPTY 0
+#define FULL 1
 
 
-
-__attribute__((aligned(256)))
-void empty_load_use(unsigned long long* instr_count, unsigned long long* cycle_count ){
-    *instr_count = 0;
-    *cycle_count = 0;
-    asm volatile(
-            "jal zero, _init;"
-            //"xor s8  , zero , zero;"
-
-        "_loop:"
-            "addi s8 , s8, 1;"
-            "fence;"
-            "addi s4 , s4 , 1;"
-            "bleu s4 , s5 , _loop;"
-            "jal      zero, _term;"
-
-        "_init:"
-            "mv   s4 , zero;"
-            "li   s5 , 100;"
-            "li   s6 , 0x80000000;"
-            "li   s7 , 0x80000008;"
-            "li   s8 , 0x8000000c;"
-            "sd   s7 , 0(s6);"
-            "sd   s8 , 0(s7);"
-
-            "csrr s9 , mcycle ;"
-            "csrr s10, minstret;"
-
-            "jal  zero, _loop;"
-
-        "_term:"
-            "csrr s11, mcycle ;"
-            "csrr t3 , minstret;"
-            "fence;"
-
-            "subw %[c], s11, s9;"
-            "subw %[i], t3 , s10;"
-
-        : [c] "=r" (*cycle_count), [i] "=r" (*instr_count)
-        : 
-        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","cc"
-
-    );
-}
-__attribute__((aligned(256)))
-void load_use_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
-    *instr_count = 0;
-    *cycle_count = 0;
-    asm volatile(
-            "jal zero, init;"
-            //"xor s8  , zero , zero;"
-
-        "loop:"
-            //xstr(INST)  " s8,  s6,  s7;"
-            "ld   s8 ,0(s6);"
-            "addi s8 ,s8   ,1;"
-
-            "fence;"
-            "addi s4 , s4 , 1 ;"
-            "bleu s4 , s5 , loop;"
-
-            "jal  zero ,term;"
-
-        "init:"
-            "mv   s4 , zero;"
-            "li   s5 , 100;"
-            "li   s6 , 0x80000000;"
-            "li   s7 , 0x80000008;"
-            "li   s8 , 0x8000000c;"
-            "sd   s7 , 0(s6);"
-            "sd   s8 , 0(s7);"
-
-
-            "csrr  s9 , mcycle;"
-            "csrr  s10, minstret;"
-
-            "jal   zero, loop;"
-
-        "term:"
-            "csrr s11 , mcycle;"
-            "csrr t3  , minstret;"
-            "fence;"
-
-            "subw  %[c], s11 , s9;"
-            "subw  %[i], t3  , s10;"
-
-        : [c] "=r" (*cycle_count),[i] "=r" (*instr_count)
-        : 
-        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","cc"
-
-    );
-
-}
+#if EMPTY == 1
 __attribute__((aligned(256)))
 void empty_load_load(unsigned long long* instr_count, unsigned long long* cycle_count ){
     *instr_count = 0;
@@ -144,6 +53,8 @@ void empty_load_load(unsigned long long* instr_count, unsigned long long* cycle_
 
     );
 }
+#endif
+#if FULL == 1
 __attribute__((aligned(256)))
 void load_load_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
     *instr_count = 0;
@@ -155,6 +66,7 @@ void load_load_loop(unsigned long long* instr_count, unsigned long long* cycle_c
         "llloop:"
             //xstr(INST)  " s8,  s6,  s7;"
             "ld   s7 ,0(s6);"
+           // "fence;"
 
             "ld   s8 ,0(s7);"
 
@@ -193,6 +105,7 @@ void load_load_loop(unsigned long long* instr_count, unsigned long long* cycle_c
 
     );
 }
+#endif
 /*__attribute__((aligned(256)))
 void ll_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
     *instr_count = 0;
@@ -258,28 +171,16 @@ void ll_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
 }*/
 int main(int argc,char* argv[]){
 
-
-    unsigned long long busy_cycles = 0, busy_instrs = 0;
-    load_use_loop(&busy_instrs, &busy_cycles);
-
-    unsigned long long empty_cycles = 0, empty_instrs = 0;
-    
-    empty_load_use(&empty_instrs, &empty_cycles);
-
-    unsigned long instrs = busy_instrs - empty_instrs;
-    unsigned long cycles = busy_cycles - empty_cycles;
-
-    printf("busy_cycles %d\n",busy_cycles);
-    printf("empty_cycles %d\n",empty_cycles);
-
-    printf("load to use instrs\t%x\tcycles\t%x\n", instrs, cycles);          
-
     unsigned long long ll_busy_cycles = 0, ll_busy_instrs = 0;
+    #if FULL == 1
     load_load_loop(&ll_busy_instrs, &ll_busy_cycles);
+    #endif
 
     unsigned long long ll_empty_cycles = 0, ll_empty_instrs = 0;
     
+    #if EMPTY == 1
     empty_load_load(&ll_empty_instrs, &ll_empty_cycles);
+    #endif
 
     unsigned long ll_instrs = ll_busy_instrs - ll_empty_instrs;
     unsigned long ll_cycles = ll_busy_cycles - ll_empty_cycles;
@@ -287,7 +188,7 @@ int main(int argc,char* argv[]){
     printf("ll_busy_cycles %d\n",ll_busy_cycles);
     printf("ll_empty_cycles %d\n",ll_empty_cycles);
 
-    printf("load to load instrs\t%x\tcycles\t%x\n", ll_instrs, ll_cycles);     
+    printf("load to load instrs\t%d\tcycles\t%d\n", ll_instrs, ll_cycles);     
 
     //unsigned long long ll_busy_cycles = 0, ll_busy_instrs = 0;
     //load_load_loop(&ll_busy_instrs, &ll_busy_cycles);
@@ -304,6 +205,14 @@ int main(int argc,char* argv[]){
 
     printf("load to load instrs\t%x\tcycles\t%x\n", ll_instrs, ll_cycles);   */  
 
+
+
+
+
+
+
+
+   
 
 
     return 0;
