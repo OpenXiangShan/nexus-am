@@ -88,6 +88,34 @@ int _vme_init(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*)) {
 }
 
 /*
+ * Virtual Memory initialize with custom segments
+ * pgalloc_f: pointer of page table memory allocater, must return page-aligned address
+ * pgfree_f: pointer page table memory free function
+ * custom_segments: pointer of self-defined segments
+ * len: length of custom_segments
+ * return 0 if success
+ */
+int _vme_init_custom(void* (*pgalloc_f)(size_t), void (*pgfree_f)(void*), _Area custom_segments[], int len) {
+  pgalloc_usr = pgalloc_f;
+  pgfree_usr = pgfree_f;
+
+  kas.ptr = new_page();
+  int i;
+  for (i = 0; i < len; i ++) {
+    void *va = custom_segments[i].start;
+    printf("va start %llx, end %llx\n", custom_segments[i].start, custom_segments[i].end);
+    for (; va < custom_segments[i].end; va += PGSIZE) {
+      _map(&kas, va, va, PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+    }
+  }
+
+  set_satp(kas.ptr);
+  vme_enable = 1;
+
+  return 0;
+}
+
+/*
  * copy page table
  */
 void _protect(_AddressSpace *as) {
