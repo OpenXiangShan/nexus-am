@@ -14,7 +14,7 @@ extern void enable_timer();
 extern void init_pmp(); 
 extern void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8_t lock, uint8_t permission);
 extern void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, bool lock, uint8_t permission);
-#include <pmp.h>
+// #include <pmp.h>
 
 static void init_eip() {
   // enable machine external interrupt (mie.meip and mstatus.mie)
