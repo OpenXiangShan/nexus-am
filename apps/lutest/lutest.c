@@ -124,27 +124,41 @@ void load_use_loop(unsigned long long* instr_count, unsigned long long* cycle_co
 
 int main(){
 
-    unsigned long long busy_cycles = 0, busy_instrs = 0;
+    /*unsigned long long busy_cycles = 0, busy_instrs = 0;
     unsigned long long busy_cycles1 = 0, busy_instrs1 = 0;
     unsigned long long busy_cycles2 = 0, busy_instrs2 = 0;
     unsigned long long empty_cycles = 0, empty_instrs = 0;
     unsigned long long empty_cycles1 = 0, empty_instrs1 = 0;
-    unsigned long long empty_cycles2 = 0, empty_instrs2 = 0;
+    unsigned long long empty_cycles2 = 0, empty_instrs2 = 0;*/
+    unsigned long long busy_cycles[10],busy_instrs[10];
+    unsigned long long busy_cycles1[10],busy_instrs1[10];
+    unsigned long long busy_cycles2[10],busy_instrs2[10];
+
+    
 //    #if FULL ==1
-    load_use_loop(&busy_instrs, &busy_cycles,&busy_instrs1, &busy_cycles1,&busy_instrs2, &busy_cycles2);
+    for(int i = 0;i<10;i++){
+        load_use_loop(&busy_instrs[i], &busy_cycles[i],&busy_instrs1[i], &busy_cycles1[i],&busy_instrs2[i], &busy_cycles2[i]);
+    }
+        
   //  #endif
     //#if EMPTY ==1
-    empty_load_use(&empty_instrs, &empty_cycles,&empty_instrs1, &empty_cycles1,&empty_instrs2, &empty_cycles2);
+ //   empty_load_use(&empty_instrs, &empty_cycles,&empty_instrs1, &empty_cycles1,&empty_instrs2, &empty_cycles2);
     //#endif
-    unsigned long instrs = busy_instrs - empty_instrs;
-    unsigned long cycles = busy_cycles - empty_cycles;
+  //  unsigned long instrs = busy_instrs - empty_instrs;
+  //  unsigned long cycles = busy_cycles - empty_cycles;
 
    // printf("the result is this\n");
 
-    printf("busy_cycles1 %d,busy_cycles2 %d\n",busy_cycles1,busy_cycles2);
-    printf("empty_cycles1 %d,empty_cycles2 %d\n",empty_cycles1,empty_cycles2);
+   // printf("busy_cycles1 %d,busy_cycles2 %d\n",busy_cycles1,busy_cycles2);
+   // printf("empty_cycles1 %d,empty_cycles2 %d\n",empty_cycles1,empty_cycles2);
 
-    printf("load to use instrs\t%d\tcycles\t%d\n", instrs, cycles);  
+//    printf("load to use instrs\t%d\tcycles\t%d\n", instrs, cycles);  
+    for(int j = 0;j<10;j++){
+        printf("j = %d busy_instrs %d,busy_cycles %d\n",j,busy_instrs[j],busy_cycles[j]);
+        printf("j = %d busy_instrs1 %d,busy_cycles1 %d\n",j,busy_instrs1[j],busy_cycles1[j]);
+        printf("j = %d busy_instrs2 %d,busy_cycles2 %d\n",j,busy_instrs2[j],busy_cycles2[j]);
+        printf("\n");
+    }
    // assert(0); 
     return 0;
 
