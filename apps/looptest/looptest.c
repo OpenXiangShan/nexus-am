@@ -13,20 +13,21 @@ void load_use_loop(unsigned long long* instr_count, unsigned long long* cycle_co
         "loop_lp:"
             "addi s4 ,s4  ,0;"
 
-            "sd   s4 ,0(s8);"//M[s8]=s4
-            "ld   s4 ,0(s8);"//s4 = M[s8] =0
+            "sd   s4 ,0(s6);"//M[s8]=s4
+            "ld   s7 ,0(s6);"//s4 = M[s8] =0
 //            "addi s8 ,s8   ,1;"
-            "addi s4 , s4 , 1 ;"
+            "addi s4 , s7 , 1 ;"
             "bleu s4 , s5 , loop_lp;"
 
             "jal  zero ,term_lp;"
 
         "init_lp:"
             "li   s4 , 0;"
-            "li   s5 , 10;"
+            "li   s5 , 500;"
             "li   s6 , 0x80000000;"
            // "li   s7 , 0x80000008;"
             "li   s8 , 0x8000000c;"
+            "li   s7,100;"
            // "sd   s7 , 0(s6);"
            // "sd   s8 , 0(s7);"
 
@@ -55,19 +56,23 @@ void load_use_loop(unsigned long long* instr_count, unsigned long long* cycle_co
 
 int main(){
     unsigned long long busy_cycles[10],busy_instrs[10];
-    printf("1\n");
+    //printf("1\n");
+    //printf("looptest\n");
+    uint64_t lu_cycle;
 
     for(int i = 0;i<10;i++){
         load_use_loop(&busy_instrs[i], &busy_cycles[i]);
-        printf("i = %d\n",i);
+     //   printf("i = %d\n",i);
     }
-        
+    lu_cycle = csr_read(CSR_MCYCLE);
+    printf("lu_cycle %d\n",lu_cycle);        
 
     for(int j = 0;j<10;j++){
         printf("j = %d busy_instrs %d,busy_cycles %d\n",j,busy_instrs[j],busy_cycles[j]);
 
         printf("\n");
     }
+
 
     return 0;
 
