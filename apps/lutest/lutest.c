@@ -18,8 +18,13 @@ void load_use_loop(unsigned long long* instr_count, unsigned long long* cycle_co
             "jal  zero, init;"
 
         "loop:"
-            "ld   s8 ,(s6);"
-            "addi s8 ,s8   ,1;"
+            "sub  t4 , s4 ,s4;"
+            "add  s8 , s8 ,t4;"
+            //"add  s6 , s6 ,t4;"//busy
+        //    "ld   s8 ,(s6);"//busy
+
+            "addi s8 ,s8   ,0;"
+            "add  s4,s4,s8;"
 
             "addi s4 , s4 , 1 ;"
             "bleu s4 , s5 , loop;"
@@ -28,25 +33,30 @@ void load_use_loop(unsigned long long* instr_count, unsigned long long* cycle_co
 
         "init:"
             "li   s4 , 0;"
-            "li   s5 , 100;"
+            "li   s5 , 500;"
             "li   s6 , 0x80000000;"
-            "li   s7 , 0x80000008;"
-            "li   s8 , 0x8000000c;"
+            //"li   s7 , 0x80000008;"
+            "li   s7 , 0;"
+           // "li   s8 , 0x8000000c;"
+            "li   s8 , 0;"
             "sd   s7 , 0(s6);"
-            "sd   s8 , 0(s7);"
+         //   "sd   s8 , 0(s7);"
 
             //"csrr  %[c1] , mcycle;"
-            "mv  s9 , s7;"
+            
             //"csrr  %[i1], minstret;"
-            "mv  s10, s8;"
+            "csrr  s9 , mcycle;"
+            "csrr  s10, minstret;"
 
             "jal   zero, loop;"
 
         "term:"
-            "mv s11 , s4;"
+            //"mv s11 , s4;"
             //"csrr %[c2] , mcycle;"
-            "mv t3  , s5;"
+            //"mv t3  , s5;"
             //"csrr %[i2]  , minstret;"
+            "csrr s11 , mcycle;"
+            "csrr t3  , minstret;"
 
             "subw  %[c], s11 , s9;"
             "subw  %[i], t3  , s10;"
@@ -55,7 +65,7 @@ void load_use_loop(unsigned long long* instr_count, unsigned long long* cycle_co
 
         : [c] "=r" (*cycle_count),[i] "=r" (*instr_count)
         : 
-        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","t0","ra","cc"
+        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","t0","t4","ra","cc"
 
     );
 

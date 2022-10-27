@@ -64,13 +64,13 @@ void load_load_loop(unsigned long long* instr_count, unsigned long long* cycle_c
             //"xor s8  , zero , zero;"
 
         "llloop:"
-            //xstr(INST)  " s8,  s6,  s7;"
-            "ld   s7 ,0(s6);"
-           // "fence;"
+            "sub  t4 ,s4,s4;"
+            "add  s6 ,s6 ,t4;"
+        /*    "ld   s7 ,0(s6);"
+            "ld   s8 ,0(s7);"*/ //full
+            "ld   s8  ,0(s6);"
+            "add  s4 ,s4,s8;"
 
-            "ld   s8 ,0(s7);"
-
-            "fence;"
             "addi s4 , s4 , 1 ;"
             "bleu s4 , s5 , llloop;"
 
@@ -78,12 +78,13 @@ void load_load_loop(unsigned long long* instr_count, unsigned long long* cycle_c
 
         "llinit:"
             "mv   s4 , zero;"
-            "li   s5 , 100;"
+            "li   s5 , 500;"
             "li   s6 , 0x80000000;"
-            "li   s7 , 0x80000008;"
+//            "li   s7 , 0x80000008;"//full
+            "li   s7 ,0;"
             "li   s8 , 0x8000000c;"
             "sd   s7 , 0(s6);"
-            "sd   s8 , 0(s7);"
+ //           "sd   s4 , 0(s7);"//fluu
 
 
             "csrr  s9 , mcycle;"
@@ -94,14 +95,13 @@ void load_load_loop(unsigned long long* instr_count, unsigned long long* cycle_c
         "llterm:"
             "csrr s11 , mcycle;"
             "csrr t3  , minstret;"
-            "fence;"
 
             "subw  %[c], s11 , s9;"
             "subw  %[i], t3  , s10;"
 
         : [c] "=r" (*cycle_count),[i] "=r" (*instr_count)
         : 
-        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","cc"
+        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","cc"
 
     );
 }
@@ -171,24 +171,32 @@ void ll_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
 }*/
 int main(int argc,char* argv[]){
 
-    unsigned long long ll_busy_cycles = 0, ll_busy_instrs = 0;
+    unsigned long long ll_busy_cycles[10] , ll_busy_instrs[10];
     #if FULL == 1
-    load_load_loop(&ll_busy_instrs, &ll_busy_cycles);
+    for(int i=0;i<10;i++){
+        load_load_loop(&ll_busy_instrs[i], &ll_busy_cycles[i]);
+    }
+    
     #endif
 
-    unsigned long long ll_empty_cycles = 0, ll_empty_instrs = 0;
+    //unsigned long long ll_empty_cycles = 0, ll_empty_instrs = 0;
     
     #if EMPTY == 1
     empty_load_load(&ll_empty_instrs, &ll_empty_cycles);
     #endif
 
-    unsigned long ll_instrs = ll_busy_instrs - ll_empty_instrs;
-    unsigned long ll_cycles = ll_busy_cycles - ll_empty_cycles;
+    printf("lltest\n");
+        for(int j =0;j<10;j++){
+        printf("instrs %d ,cycles %d\n",ll_busy_instrs[j],ll_busy_cycles[j]);
+    }
 
-    printf("ll_busy_cycles %d\n",ll_busy_cycles);
-    printf("ll_empty_cycles %d\n",ll_empty_cycles);
+    //unsigned long ll_instrs = ll_busy_instrs - ll_empty_instrs;
+    //unsigned long ll_cycles = ll_busy_cycles - ll_empty_cycles;
 
-    printf("load to load instrs\t%d\tcycles\t%d\n", ll_instrs, ll_cycles);     
+    //printf("ll_busy_cycles %d\n",ll_busy_cycles);
+    //printf("ll_empty_cycles %d\n",ll_empty_cycles);
+
+    //printf("load to load instrs\t%d\tcycles\t%d\n", ll_instrs, ll_cycles);     
 
     //unsigned long long ll_busy_cycles = 0, ll_busy_instrs = 0;
     //load_load_loop(&ll_busy_instrs, &ll_busy_cycles);
