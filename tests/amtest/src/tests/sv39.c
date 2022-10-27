@@ -21,7 +21,7 @@ uint64_t page_fault_to_be_reported = 0;
 
 inline int inst_is_compressed(uint64_t addr){
   uint8_t byte = *(uint8_t*)addr;
-  return (byte | 0x3) != 0x3; 
+  return (byte & 0x3) != 0x3; 
 }
 
 _Context* store_page_fault_handler(_Event* ev, _Context *c) {
