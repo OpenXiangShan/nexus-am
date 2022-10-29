@@ -61,6 +61,7 @@ static inline void *new_page() {
   memset(p, 0, PGSIZE);
   return p;
 }
+
 /*
  * Virtual Memory initialize
  * pgalloc_f: pointer of page table memory allocater, must return page-aligned address
@@ -101,12 +102,14 @@ void _protect(_AddressSpace *as) {
 
 void _unprotect(_AddressSpace *as) {
 }
+
 /*
  * get current satp
  */
 void __am_get_cur_as(_Context *c) {
   c->pdir = (vme_enable ? (void *)get_satp() : NULL);
 }
+
 /*
  * switch page table to the given context
  */
@@ -115,6 +118,7 @@ void __am_switch(_Context *c) {
     set_satp(c->pdir);
   }
 }
+
 /*
  * map va to pa with prot permission with page table root as
  * Note that RISC-V allow hardware to fault when A and D bit is not set
@@ -138,6 +142,45 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   if (!(*pte & PTE_V)) {
     *pte = PTE_V | prot | (PN(pa) << 10);
   }
+}
+
+/*
+ * map va to pa with prot permission with page table root as
+ * pagetable_level indicates page table level to be used
+ * 0: basic 4KiB page
+ * 1: 2MiB megapage
+ * 2: 1GiB gigapage
+ * Note that RISC-V allow hardware to fault when A and D bit is not set
+ */
+void _map_rv_hugepage(_AddressSpace *as, void *va, void *pa, int prot, int pagetable_level) {
+  int hugepage_size;
+  switch (pagetable_level) {
+    case 0: hugepage_size = PGSIZE; break; // 4KiB
+    case 1: hugepage_size = PGSIZE * 512; break;  // 2MiB
+    case 2: hugepage_size = PGSIZE * 512 * 512; break;  // 1GiB
+    default: assert(0);
+  }
+  assert((uintptr_t)va % hugepage_size == 0);
+  // printf("pa %lx sz %lx\n", pa, hugepage_size);
+  assert((uintptr_t)pa % hugepage_size == 0);
+  PTE *pg_base = as->ptr;
+  PTE *pte;
+  int level;
+  for (level = PTW_CONFIG.ptw_level - 1; ; level --) {
+    pte = &pg_base[VPNi(PTW_CONFIG, (uintptr_t)va, level)];
+    pg_base = (PTE *)PTE_ADDR(*pte);
+    if (level == pagetable_level) break;
+    if (!(*pte & PTE_V)) {
+      pg_base = new_page();
+      *pte = PTE_V | (PN(pg_base) << 10);
+    }
+  }
+
+  int hugepage_pn_shift = pagetable_level * 9;
+  if (!(*pte & PTE_V)) {
+    *pte = PTE_V | prot | (PN(pa) >> hugepage_pn_shift << hugepage_pn_shift << 10);
+  }
+  printf("map huge page level %d, pte value %lx\n", pagetable_level, *pte);
 }
 
 _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry) {
