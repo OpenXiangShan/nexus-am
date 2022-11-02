@@ -1,7 +1,10 @@
-for ((i=0;i<4;i++))
+for ((i=0;i<3;i++))
 do
-  for((j=0;j<5;j++))
+  for((j=0;j<3;j++))
   do
-    make ARCH=riscv64-xs CHOOSEO=$i CHOOSET=$j
+    for((k=0;k<3;k++))
+    do
+      make ARCH=riscv64-xs CHOOSEO=$i CHOOSET=$j CHOOSER=$k
+    done
   done
 done
