@@ -1,5 +1,5 @@
 #include <xs.h>
-#include <pmp.h>
+#include <csr.h>
 #include <klib.h>
 
 // these functions are interface for pma

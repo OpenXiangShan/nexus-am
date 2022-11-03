@@ -62,6 +62,7 @@ void enable_timer();
 void set_timer_inc(uintptr_t inc);
 
 // =========== Interrupt handler registration =======
+void ssip_handler_reg(_Context*(*handler)(_Event, _Context*));
 void stip_handler_reg(_Context*(*handler)(_Event, _Context*));
 void seip_handler_reg(_Context*(*handler)(_Event, _Context*));
 void secall_handler_reg(_Context*(*handler)(_Event, _Context*));
