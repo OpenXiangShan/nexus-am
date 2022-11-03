@@ -1,6 +1,6 @@
 #include <riscv.h>
 #include <nemu.h>
-// #include <printf.h>
+#include <printf.h>
 extern void __am_timervec(void);
 
 static void init_machine_exception() {
@@ -34,11 +34,15 @@ void __am_init_cte64() {
   init_pmp();
 #if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
   // protect 0x90000000 + 0x10000 for test purpose
-  enable_pmp(1, 0x90000000, 0x10000, 0, 0);
+  printf("enable_pmp\n");
+  enable_pmp(1, 0x90000000, 0x10000, 0, 0); // !rw
   // printf("pmp NA inited\n");
   // protect 0xb00000000 + 0x100
-  enable_pmp_TOR(4, 0xb0000000, 0x100, 0, 0);
+  enable_pmp_TOR(3, 0xb0000000, 0x1000, 0, 0); // !rw
   //printf("pmp TOR inited\n");
+  enable_pmp_TOR(5, 0xb0004000, 0x1000, 0, PMP_R); // r,!w
+  enable_pmp_TOR(7, 0xb0008000, 0x1000, 0, PMP_W); // !r, w
+  enable_pmp_TOR(9, 0xb0010000, 0x1000, 0, 0); // !r, w
 #elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
   // protect 0x210000000 + 0x10000 for test purpose
   enable_pmp(1, 0x2010000000, 0x10000, 0, 0);

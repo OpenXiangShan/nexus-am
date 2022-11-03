@@ -208,7 +208,8 @@ void init_pmp() {
   }
   // set PMP to access all memory in S-mode
   // asm volatile("csrw pmpaddr8, %0" : : "r"(-1));
-  asm volatile("csrw pmpcfg2, %0" : : "r"(31));
+  // the last pmp pair is used to enable all access (in current case is pmp15)
+  asm volatile("csrw pmpcfg2, %0" : : "r"((long)31<<(8*7))); 
 
   asm volatile("sfence.vma");
 }
