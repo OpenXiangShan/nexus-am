@@ -20,6 +20,8 @@
 #define _PERF_L1_SIZE_BYTE (128 * KB)
 #define _PERF_L2_SIZE_BYTE (512 * KB)
 #define _PERF_L3_SIZE_BYTE (2 * MB)
+#define _PERF_L1_NUM_WAYS 8
+#define _PERF_SET_SIZE_BYTE (_PERF_L1_SIZE_BYTE / _PERF_L1_NUM_WAYS)
 
 // probe const
 #define _PERF_BLACKHOLE _PERF_TEST_ADDR_BASE
@@ -130,6 +132,21 @@ void test_mem_throughput(uint64_t iter)
     while (remain--) {
         result += *(uint64_t*) access_addr;
         access_addr += _PERF_CACHELINE_SIZE_BYTE;
+    }
+    _perf_end_timer();
+    *(uint64_t*) _PERF_BLACKHOLE = result;
+    printf("mem band width %f B/cycle (%d samples)\n", (float)iter * _PERF_CACHELINE_SIZE_BYTE / perf.cycle, iter);
+}
+
+void test_mem_throughput_same_set(uint64_t iter)
+{
+    uint64_t remain = iter;
+    uint64_t result = 0;
+    uint64_t access_addr = _PERF_TEST_ADDR_BASE;
+    _perf_start_timer();
+    while (remain--) {
+        result += *(uint64_t*) access_addr;
+        access_addr += _PERF_SET_SIZE_BYTE;
     }
     _perf_end_timer();
     *(uint64_t*) _PERF_BLACKHOLE = result;
