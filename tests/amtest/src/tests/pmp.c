@@ -1,5 +1,5 @@
 #include <amtest.h>
-#include <pmp.h>
+#include <csr.h>
 #include <xsextra.h>
 
 /*

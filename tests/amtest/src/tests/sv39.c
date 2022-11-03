@@ -1,5 +1,5 @@
 #include <amtest.h>
-#include <pmp.h>
+#include <csr.h>
 #include <xsextra.h>
 
 /*
@@ -86,7 +86,7 @@ void sv39_test() {
 #endif
   irq_handler_reg(EXCEPTION_STORE_PAGE_FAULT, &store_page_fault_handler);
   irq_handler_reg(EXCEPTION_LOAD_PAGE_FAULT, &load_page_fault_handler);
-
+  asm volatile("sfence.vma");
   printf("test sv39 data write\n");
   *w_ptr = 'a';
 

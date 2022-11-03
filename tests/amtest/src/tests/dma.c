@@ -59,8 +59,12 @@ void dma_test() {
   for (int i = 0; i < 64; i++) {
     uint64_t offset = random_memory_offset();
     uint64_t rand_num = random_number();
-    memory[offset] = rand_num;
-    ref_memory[offset] = rand_num;
+    // fetch memory to cache hierarchy randomly
+    if (rand_num & 1) {
+      memory[offset] = random_number();
+    }
+    // memory[offset] = rand_num;
+    // ref_memory[offset] = rand_num;
     mshr[i].data[3] = rand_num;
     mshr[i].data[5] = rand_num;
     mshr[i].state.value = s_write;
@@ -85,15 +89,39 @@ void dma_test() {
       }
     }
   }
-  printf("Finished DMA write. Starting CPU read.\n");
+  riscv_fence();
+  printf("Finished DMA write. Starting DMA read.\n");
+  for (int i = 0; i < 64; i++) {
+    uint64_t rand_num = random_number();
+    mshr[i].data[3] = rand_num;
+    mshr[i].data[5] = rand_num;
+    mshr[i].state.value = s_read;
+    // do not touch mshr.address/mask
+  }
+  riscv_fence();
+  *mshr_valid = 0xffffffffffffffffUL;
+  mshr_cleared = false;
+  while (!mshr_cleared) {
+    mshr_cleared = true;
+    for (int i = 0; i < 64; i++) {
+      if (mshr[i].state.value) {
+        mshr_cleared = false;
+        break;
+      }
+    }
+  }
+  riscv_fence();
+  printf("Finished DMA read. Starting CPU read.\n");
   for (int i = 0; i < 64; i++) {
     uint64_t base_offset = (uint64_t *)mshr[i].address - (uint64_t *)memory;
     volatile uint64_t *golden = (uint64_t *)ref_memory + base_offset;
-    volatile uint64_t *dut = (uint64_t *)memory + base_offset;
+    volatile uint64_t *dut = (uint64_t *)memory + base_offset; 
     for (int j = 0; j < 8; j++) {
+      // only difftest for masked written data because original value in memory may be non-zero
+      if (j != 3 && j != 5) continue;
       uint64_t dut_data = dut[j];
       uint64_t ref_data = golden[j];
-      if (dut_data != ref_data) {
+      if (dut_data != ref_data || mshr[i].data[j] != ref_data) {
         printf("[ERROR  ] Test %d at offset %d: DUT(0x%016lx) != REF(0x%016lx) at address 0x%lx and 0x%lx\n",
           i, j, dut_data, ref_data, dut + j, golden + j);
         _halt(1);

@@ -19,6 +19,7 @@ extern "C" {
 enum {
   _EVENT_NULL = 0,
   _EVENT_ERROR,
+  _EVENT_IRQ_SOFT,
   _EVENT_IRQ_TIMER,
   _EVENT_IRQ_IODEV,
   _EVENT_PAGEFAULT,
