@@ -87,23 +87,24 @@ void fcom_loop(unsigned long long* instr_count, unsigned long long* cycle_count)
 
         "loop:"            
 #if   CHOOSEO == 0
-            "fadd.d  fs6,fs4,fs5;"//s8 =8000000
+            "fadd.d  fs6,fs5,fs8;"//fs6 = fs4(1)+fs5()
 #elif CHOOSEO == 1
-            "fmul.d  fs6,fs4,fs5;"
+            "fmul.d  fs6,fs5,fs4;"
 #elif CHOOSEO == 2
-            "fdiv.d  fs6,fs4,fs5;"
+            "fdiv.d  fs6,fs5,fs4;"//fs6 = fs4(1)/fs5(1)=1
 #endif
 
 #if   CHOOSET ==0
-            "fadd.d fs7,fs6,fs4;"
+            //"fadd.d fs7,fs6,fs4;"//fs7 = fs6(1)+fs4(1) = 2
+            "fadd.d fs7,fs6,fs8;"//fs7 = fs6(1)+fs4(1) = 2
 #elif CHOOSET ==1
-            "fmul.d fs7,fs6,fs4;"
+            "fmul.d fs7,fs6,fs4;"//fs7 = fs6
 #elif CHOOSET ==2
             "fdiv.d fs7,fs6,fs4;"
 #endif
 
 #if   CHOOSER ==0
-            "fadd.d fs5,fs7,fs4;"
+            "fadd.d fs5,fs7,fs8;"
 #elif CHOOSER ==1
             "fmul.d fs5,fs7,fs4;"
 #elif CHOOSER ==2
@@ -125,6 +126,8 @@ void fcom_loop(unsigned long long* instr_count, unsigned long long* cycle_count)
             "li   t6 , 1;"
             "fmv.d.x fs5,t6;"
             "fmv.d.x fs4,s8;"
+            "fmv.d.x fs8,s4;"
+            //"fmv.d.x fs8,s8;"
             "li   t5 ,0x80000000;"
 
             "csrr  s9 , mcycle;"
