@@ -29,18 +29,19 @@ void ficom_loop(unsigned long long* instr_count, unsigned long long* cycle_count
 #elif CHOOSER == 1
             "fmv.d.x  fs5,s8;"
 #endif
-/*#if CHOOSEF ==0
-            "fcvt.d.l fs8,s8;"
+
+#if CHOOSEF ==0
+            "fcvt.l.d s6,fs5;"
 #elif CHOOSEF ==1
-            "fmv.d.x fs8,s8;"
+            "fmv.x.d  s6,fs5;"
 #endif
 
 #if CHOOSEI ==0
-            "fcvt.l.d s6,fs8;"
+            "fcvt.d.l fs5,s6;"
 #elif CHOOSEI == 1
-            "fmv.x.d s6,fs8; "
+            "fmv.d.x  fs5,s6; "
 #endif
-*/
+
             "addi s4 , s4 , 1;"
             "bleu s4,s5,loop;"
 
@@ -88,7 +89,7 @@ int main(int argc,char* argv[]){
         ficom_loop(&busy_instr[i], &busy_cycle[i]);
     }
     for(i=0;i<10;i++){
-        printf("i = %d;busy_instr = %d;busy_cycle = %6d\n",i,busy_instr[i],busy_cycle[i]);
+        printf("i = %d;busy_instr = %d;busy_cycle = %8d\n",i,busy_instr[i],busy_cycle[i]);
     }
     for(i=0;i<10;i++)
         printf("the test is finish\n");
