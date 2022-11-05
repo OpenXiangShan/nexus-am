@@ -19,6 +19,7 @@ extern "C" {
 enum {
   _EVENT_NULL = 0,
   _EVENT_ERROR,
+  _EVENT_IRQ_SOFT,
   _EVENT_IRQ_TIMER,
   _EVENT_IRQ_IODEV,
   _EVENT_PAGEFAULT,
@@ -84,6 +85,9 @@ void _protect(_AddressSpace *as);
 void _unprotect(_AddressSpace *as);
 void _map(_AddressSpace *as, void *va, void *pa, int prot);
 _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry);
+
+// hugepage map for xiangshan testing
+void _map_rv_hugepage(_AddressSpace *as, void *va, void *pa, int prot, int pagetable_level);
 
 // ================= Multi-Processor Extension (MPE) =================
 

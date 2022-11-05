@@ -1,11 +1,13 @@
 #include <amtest.h>
-#include <pmp.h>
+#include <csr.h>
 #include <xsextra.h>
 
 /*
  * RISC-V 64 SV39 Virutal Memory test
  */
 
+#define EXCEPTION_LOAD_ACCESS_FAULT 5
+#define EXCEPTION_STORE_ACCESS_FAULT 7
 #define EXCEPTION_LOAD_PAGE_FAULT 13
 #define EXCEPTION_STORE_PAGE_FAULT 15
 
@@ -17,29 +19,53 @@ static char *sv39_alloc_base = (char *)(0x2040000000UL);
   // invalid arch
 #endif
 
-uint64_t page_fault_to_be_reported = 0;
+volatile uint64_t load_page_fault_to_be_reported = 0;
+volatile uint64_t store_page_fault_to_be_reported = 0;
+volatile uint64_t load_access_fault_to_be_reported = 0;
+volatile uint64_t store_access_fault_to_be_reported = 0;
+
 
 inline int inst_is_compressed(uint64_t addr){
   uint8_t byte = *(uint8_t*)addr;
-  return (byte | 0x3) != 0x3; 
+  return (byte & 0x3) != 0x3; 
 }
 
 _Context* store_page_fault_handler(_Event* ev, _Context *c) {
   printf("store page fault triggered\n");
-  if(!page_fault_to_be_reported){
+  if(!store_page_fault_to_be_reported){
     _halt(1); // something went wrong
   }
-  page_fault_to_be_reported = 0;
+  store_page_fault_to_be_reported = 0;
   c->sepc = inst_is_compressed(c->sepc) ? c->sepc + 2: c->sepc + 4;
   return c;
 }
 
 _Context* load_page_fault_handler(_Event* ev, _Context *c) {
   printf("load page fault triggered\n");
-  if(!page_fault_to_be_reported){
+  if(!load_page_fault_to_be_reported){
     _halt(1); // something went wrong
   }
-  page_fault_to_be_reported = 0;
+  load_page_fault_to_be_reported = 0;
+  c->sepc = inst_is_compressed(c->sepc) ? c->sepc + 2: c->sepc + 4;
+  return c;
+}
+
+_Context* load_access_fault_handler(_Event* ev, _Context *c) {
+  printf("load access fault triggered\n");
+  if(!load_access_fault_to_be_reported){
+    _halt(1); // something went wrong
+  }
+  load_access_fault_to_be_reported = 0;
+  c->sepc = inst_is_compressed(c->sepc) ? c->sepc + 2: c->sepc + 4;
+  return c;
+}
+
+_Context* store_access_fault_handler(_Event* ev, _Context *c) {
+  printf("store access fault triggered\n");
+  if(!store_access_fault_to_be_reported){
+    _halt(1); // something went wrong
+  }
+  store_access_fault_to_be_reported = 0;
   c->sepc = inst_is_compressed(c->sepc) ? c->sepc + 2: c->sepc + 4;
   return c;
 }
@@ -86,7 +112,7 @@ void sv39_test() {
 #endif
   irq_handler_reg(EXCEPTION_STORE_PAGE_FAULT, &store_page_fault_handler);
   irq_handler_reg(EXCEPTION_LOAD_PAGE_FAULT, &load_page_fault_handler);
-
+  asm volatile("sfence.vma");
   printf("test sv39 data write\n");
   *w_ptr = 'a';
 
@@ -94,17 +120,144 @@ void sv39_test() {
   assert(*r_ptr == 'a');
 
   printf("test sv39 store page fault\n");
-  page_fault_to_be_reported = 1;
-  *fault_ptr = 'b'; // store: not compressed 
-  if(page_fault_to_be_reported){
+  store_page_fault_to_be_reported = 1;
+  *fault_ptr = 'b';
+  if(store_page_fault_to_be_reported){
     _halt(1);
   }
 
   printf("test sv39 load page fault\n");
-  page_fault_to_be_reported = 1;
+  load_page_fault_to_be_reported = 1;
   *w_ptr = *fault_ptr;
-  if(page_fault_to_be_reported){
+  if(load_page_fault_to_be_reported){
     _halt(1);
   }
+  _halt(0);
+}
+
+/*
+ * RISC-V 64 SV39 Hugepage + Hugepage Atom Inst test
+ */
+
+void sv39_hp_atom_test() {
+  printf("start sv39 hugepage atom test\n");
+  _vme_init(sv39_pgalloc, sv39_pgfree);
+  printf("sv39 setup done\n");
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+  _map(&kas, (void *)0x900000000UL, (void *)0x80200000, PTE_R | PTE_A | PTE_D);
+  // allocate a metapage, not protected by pmp
+  _map_rv_hugepage(&kas, (void *)0xa00000000UL, (void *)0x80200000, PTE_W | PTE_R | PTE_A | PTE_D, 1);
+  // allocate a metapage, not protected by pmp, without write perm
+  _map_rv_hugepage(&kas, (void *)0xb00000000UL, (void *)0x80200000, PTE_R | PTE_A | PTE_D, 1);
+  // allocate a metapage, not protected by pmp, without read perm
+  _map_rv_hugepage(&kas, (void *)0xc00000000UL, (void *)0x80200000, PTE_W | PTE_A | PTE_D, 1);
+  // allocate a metapage, protected by pmp (!rw)
+  _map_rv_hugepage(&kas, (void *)0xd00000000UL, (void *)0xb0000000, PTE_W | PTE_R | PTE_A | PTE_D, 1);
+  char *normal_rw_ptr = (char *)(0x900000000UL);
+  char *hp_rw_ptr     = (char *)(0xa00000000UL);
+  char *hp_r_ptr      = (char *)(0xb00000000UL);
+  char *hp_w_ptr      = (char *)(0xc00000000UL);
+  char *hp_pmp_ptr    = (char *)(0xd00000000UL);
+  printf("memory map done\n");
+#elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  // TODO
+#else
+  // invalid arch
+  _halt(1);
+#endif
+  irq_handler_reg(EXCEPTION_STORE_PAGE_FAULT, &store_page_fault_handler);
+  irq_handler_reg(EXCEPTION_LOAD_PAGE_FAULT, &load_page_fault_handler);
+  irq_handler_reg(EXCEPTION_STORE_ACCESS_FAULT, &store_access_fault_handler);
+  irq_handler_reg(EXCEPTION_LOAD_ACCESS_FAULT, &load_access_fault_handler);
+
+  printf("test sv39 hugepage data write\n");
+  *hp_rw_ptr = 'a';
+
+  printf("test sv39 hugepage data read\n");
+  assert(*hp_rw_ptr == 'a');
+
+  printf("test sv39 normalpage data read\n");
+  assert(*normal_rw_ptr == 'a');
+
+  printf("test sv39 hugepage store page fault\n");
+  store_page_fault_to_be_reported = 1;
+  *hp_r_ptr = 'b';
+  if(store_page_fault_to_be_reported){
+    _halt(1);
+  }
+
+  printf("test sv39 hugepage load page fault\n");
+  load_page_fault_to_be_reported = 1;
+  *hp_rw_ptr = *hp_w_ptr;
+  if(load_page_fault_to_be_reported){
+    _halt(1);
+  }
+
+  printf("test sv39 hugepage store access fault\n");
+  store_access_fault_to_be_reported = 1;
+  *hp_pmp_ptr = 'b';
+  if(store_page_fault_to_be_reported){
+    _halt(1);
+  }
+
+  printf("test sv39 hugepage load access fault\n");
+  load_access_fault_to_be_reported = 1;
+  *hp_rw_ptr = *hp_pmp_ptr;
+  if(load_access_fault_to_be_reported){
+    _halt(1);
+  }
+
+  printf("test sv39 hugepage atom store page fault\n");
+  store_page_fault_to_be_reported = 1;
+  asm volatile(
+    "li s4, 0xb00000000;"
+    "amoadd.d s5, s6, (s4);"
+    :
+    :
+    :"s4","s5","s6"
+  );
+  if(store_page_fault_to_be_reported){
+    _halt(1);
+  }
+
+  printf("test sv39 hugepage atom load page fault\n");
+  load_page_fault_to_be_reported = 1;
+  asm volatile(
+    "li s4, 0xc00000000;"
+    "lr.d s5, (s4);"
+    :
+    :
+    :"s4","s5","s6"
+  );
+  if(load_page_fault_to_be_reported){
+    _halt(1);
+  }
+
+  printf("test sv39 hugepage atom store access fault\n");
+  store_access_fault_to_be_reported = 1;
+  asm volatile(
+    "li s4, 0xd00000000;"
+    "amoadd.d s5, s6, (s4);"
+    :
+    :
+    :"s4","s5","s6"
+  );
+  if(store_page_fault_to_be_reported){
+    _halt(1);
+  }
+
+  printf("test sv39 hugepage atom load access fault\n");
+  load_access_fault_to_be_reported = 1;
+  asm volatile(
+    "li s4, 0xd00000000;"
+    "lr.d s5, (s4);"
+    :
+    :
+    :"s4","s5","s6"
+  );
+  if(load_access_fault_to_be_reported){
+    _halt(1);
+  }
+
   _halt(0);
 }

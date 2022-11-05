@@ -353,11 +353,17 @@
 #include <am.h>
 #include <klib.h>
 #include <klib-macros.h>
+#include <csr.h> // read csr for ipc
 
 #define Start_Timer() Begin_Time = uptime()
 #define Stop_Timer()  End_Time   = uptime()
 
+
+#if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+#define NUMBER_OF_RUNS		1000 /* Default number of runs, reduced for fast test */
+#else
 #define NUMBER_OF_RUNS		500000 /* Default number of runs */
+#endif
 #define PASS2
 
 #ifdef  NOSTRUCTASSIGN
@@ -743,6 +749,10 @@ Boolean check(int cond) {
   if (!cond) pass = false;
   return cond;
 }
+
+uint64_t instrcnt = 0;
+uint64_t cycle = 0;
+
 int main ()
 /*****/
 
@@ -761,7 +771,7 @@ int main ()
 
   _ioe_init();
 
- Number_Of_Runs = NUMBER_OF_RUNS;
+  Number_Of_Runs = NUMBER_OF_RUNS;
 
   /* Initializations */
 
@@ -794,6 +804,8 @@ int main ()
     /***************/
 
     Start_Timer();
+    instrcnt = csr_read(CSR_MINSTRET);
+    cycle = csr_read(CSR_MCYCLE);
 
     for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
     {
@@ -851,6 +863,11 @@ int main ()
 
     Done = true;
   }
+
+  cycle = csr_read(CSR_MCYCLE) - cycle;
+  instrcnt = csr_read(CSR_MINSTRET) - instrcnt;
+  printf("cycle %d inst %d ipc %lf\n", cycle, instrcnt, (float)instrcnt/cycle);
+
 
   if (!check(Int_Glob == 5)) {
     printf("Int_Glob:            %d\n", Int_Glob);
@@ -937,11 +954,19 @@ int main ()
     printf("        should be:   DHRYSTONE PROGRAM, 2'ND STRING\n");
   }
 
-  printf ("Finished in %d ms\n", (int)User_Time);
+  float HZ = 2000000000;
+  float Dhrystones_Per_Second = ((float) HZ * (float) Number_Of_Runs)
+                        / (float) cycle;
+  float Dhrystones_Per_MHZ = (1000000 * (float) Number_Of_Runs)
+                        / (float) cycle;
+
+  printf("Freq is set to %f HZ\n", HZ);
+
   printf("==================================================\n");
-  printf("Dhrystone %s         %d Marks\n", pass ? "PASS" : "FAIL",
-      880900 / (int)User_Time * NUMBER_OF_RUNS/ 500000);
-  printf("                   vs. 100000 Marks (i7-7700K @ 4.20GHz)\n");
+  printf("Dhrystone %s\n", pass ? "PASS" : "FAIL");
+  printf("%f Dhrystones_Per_Second\n", Dhrystones_Per_Second);
+  printf("%f DMIPS\n", Dhrystones_Per_Second / 1757);
+  printf("%f DMIPS/MHZ\n", Dhrystones_Per_MHZ / 1757);
 
   return 0;
 }

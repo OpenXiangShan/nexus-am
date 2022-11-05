@@ -9,6 +9,7 @@
 #define IOE ({ _ioe_init();  })
 
 #define CTE(h) ({ _Context *h(_Event, _Context *); _cte_init(h); })
+#define RSEH(h) ({ _Context *h(_Event, _Context *); ssip_handler_reg(h);})
 #define REEH(h) ({ _Context *h(_Event, _Context *); seip_handler_reg(h);})
 #define RTEH(h) ({ _Context *h(_Event, _Context *); stip_handler_reg(h);})
 #define RCEH(h) ({ _Context *h(_Event, _Context *); secall_handler_reg(h);})
