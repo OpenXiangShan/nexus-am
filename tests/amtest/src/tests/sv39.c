@@ -159,10 +159,13 @@ void sv39_hp_atom_test() {
   char *hp_w_ptr      = (char *)(0xc00000000UL);
   char *hp_pmp_ptr    = (char *)(0xd00000000UL);
   printf("memory map done\n");
-#elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-  // TODO
 #else
   // invalid arch
+  char *normal_rw_ptr = (char *)(0x900000000UL);
+  char *hp_rw_ptr     = (char *)(0xa00000000UL);
+  char *hp_r_ptr      = (char *)(0xb00000000UL);
+  char *hp_w_ptr      = (char *)(0xc00000000UL);
+  char *hp_pmp_ptr    = (char *)(0xd00000000UL);
   _halt(1);
 #endif
   irq_handler_reg(EXCEPTION_STORE_PAGE_FAULT, &store_page_fault_handler);
