@@ -29,6 +29,7 @@
 #define CACHE_LINE_SIZE_BYTE (CACHE_LINE_SIZE_BIT / 8)
 
 void wait(int);
+void wait_for_ready();
 
 inline uint64_t is_ready() {
   return *((uint64_t*)CACHE_RDY_REG);
@@ -47,5 +48,7 @@ void make_invalid(uint64_t);
 void make_clean(uint64_t);
 void make_flush(uint64_t);
 
-// invalidate a memory region
+// operate on a memory region
 void make_region_invalid(uint64_t, uint64_t);
+void make_region_clean(uint64_t, uint64_t);
+void make_region_flush(uint64_t, uint64_t);

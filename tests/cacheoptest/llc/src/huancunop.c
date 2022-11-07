@@ -7,6 +7,20 @@ void wait(int cycle) {
   }
 }
 
+void wait_for_ready() {
+  volatile uint64_t cycle = 0;
+  while(1) {
+    if(is_ready()) {
+      break;
+    } else if(cycle >= 200) {
+      printf("wait for too long.");
+      _halt(-1);
+    } else {
+      cycle++;
+    }
+  }
+}
+
 void make_invalid(uint64_t paddr) {
   *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(paddr);
   *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(paddr);
@@ -14,27 +28,40 @@ void make_invalid(uint64_t paddr) {
 }
 
 void make_clean(uint64_t paddr) {
-*(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(paddr);
-*(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(paddr);
-(*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
+  *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(paddr);
+  *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(paddr);
+  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
 }
 
 void make_flush(uint64_t paddr) {
-*(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(paddr);
-*(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(paddr);
-(*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
+  *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(paddr);
+  *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(paddr);
+  (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
 }
 
-// Flush an n*512 bit address region to memory
 void make_region_invalid(uint64_t start_paddr, uint64_t size_in_byte) {
   for(uint64_t current_paddr = start_paddr; current_paddr < (start_paddr + size_in_byte); current_paddr += CACHE_LINE_SIZE_BYTE) {
-    if(is_ready()) {
-      *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(current_paddr);
-      *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(current_paddr);
-      (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_INV;   // or CMD_CMO_CLEAN / CMD_CMO_FLUSH
-    } else {
-      continue;
-    }
+    wait_for_ready();
+    *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(current_paddr);
+    *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(current_paddr);
+    (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_INV;
   }
 }
 
+void make_region_clean(uint64_t start_paddr, uint64_t size_in_byte) {
+  for(uint64_t current_paddr = start_paddr; current_paddr < (start_paddr + size_in_byte); current_paddr += CACHE_LINE_SIZE_BYTE) {
+    wait_for_ready();
+    *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(current_paddr);
+    *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(current_paddr);
+    (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_CLEAN;
+  }
+}
+
+void make_region_flush(uint64_t start_paddr, uint64_t size_in_byte) {
+  for(uint64_t current_paddr = start_paddr; current_paddr < (start_paddr + size_in_byte); current_paddr += CACHE_LINE_SIZE_BYTE) {
+    wait_for_ready();
+    *(uint64_t*)(CACHE_CTRL_BASE + CTRL_TAG_OFFSET) = get_tag(current_paddr);
+    *(uint64_t*)(CACHE_CTRL_BASE + CTRL_SET_OFFSET) = get_set(current_paddr);
+    (*(uint64_t*)CACHE_CMD_BASE) = CMD_CMO_FLUSH;
+  }
+}
