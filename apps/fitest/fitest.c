@@ -15,7 +15,7 @@ void ficom_loop(unsigned long long* instr_count, unsigned long long* cycle_count
 #elif CHOOSEO ==1
             "fmul.d  fs6,fs4,fs5;"
 #elif CHOOSEO ==2
-            "fdiv.d  fs6,fs4,fs5;"
+            "fdiv.d  fs6,fs5,fs4;"
 #endif
 
 #if CHOOSET ==0
@@ -30,7 +30,7 @@ void ficom_loop(unsigned long long* instr_count, unsigned long long* cycle_count
             "fmv.d.x  fs5,s8;"
 #endif
 
-#if CHOOSEF ==0
+/*#if CHOOSEF ==0
             "fcvt.l.d s6,fs5;"
 #elif CHOOSEF ==1
             "fmv.x.d  s6,fs5;"
@@ -41,7 +41,7 @@ void ficom_loop(unsigned long long* instr_count, unsigned long long* cycle_count
 #elif CHOOSEI == 1
             "fmv.d.x  fs5,s6; "
 #endif
-
+*/
             "addi s4 , s4 , 1;"
             "bleu s4,s5,loop;"
 
@@ -55,8 +55,8 @@ void ficom_loop(unsigned long long* instr_count, unsigned long long* cycle_count
             "li   s8 , 1;"
             "sd   s7 , 0(s6);"
             "li   t6 , 1;"
-            "fmv.d.x fs5,t6;"
-            "fmv.d.x fs4,s8;"
+            "fcvt.d.l fs5,t6;"
+            "fcvt.d.l fs4,s8;"
             "li   t5 ,0x80000000;"
 
             "csrr  s9 , mcycle;"
