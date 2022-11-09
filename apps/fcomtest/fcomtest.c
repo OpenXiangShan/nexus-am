@@ -124,9 +124,12 @@ void fcom_loop(unsigned long long* instr_count, unsigned long long* cycle_count)
             "li   s8 , 1;"
             "sd   s7 , 0(s6);"
             "li   t6 , 1;"
-            "fmv.d.x fs5,t6;"
+            /*"fmv.d.x fs5,t6;"
             "fmv.d.x fs4,s8;"
-            "fmv.d.x fs8,s4;"
+            "fmv.d.x fs8,s4;"*/
+            "fcvt.d.lu fs5,t6;"//fs5 = 1
+            "fcvt.d.lu fs4,s8;"//fs4 = 1
+            "fcvt.d.lu fs8,s4;"//fs8 = 0
             //"fmv.d.x fs8,s8;"
             "li   t5 ,0x80000000;"
 

@@ -4,7 +4,7 @@ NAME_1 = fcomtest
 #CHOOSET ?= 3
 CFLAGS +=-DCHOOSEO=$(CHOOSEO) -g 
 CFLAGS +=-DCHOOSET=$(CHOOSET) -g
-CFLAGS +=-DCHOOSER=$(CHOOSET) -g
+CFLAGS +=-DCHOOSER=$(CHOOSER) -g
 NAME = build-$(NAME_1)-$(CHOOSEO)-$(CHOOSET)-$(CHOOSER)
 $(NAME).c:fcomtest.c
 	cp fcomtest.c $(NAME).c
