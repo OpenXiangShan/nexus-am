@@ -6,7 +6,8 @@ int main(){
     unsigned long long busy_cycles;
     unsigned long long busy_instrs;
     uint64_t start_addr = _PERF_TEST_ADDR_BASE;
-    uint64_t end_addr = _PERF_TEST_ADDR_BASE + 2*(_PERF_L1_SIZE_BYTE);
+    uint64_t end_addr = _PERF_TEST_ADDR_BASE + 5*(_PERF_L1_SIZE_BYTE);
+    printf("end_addr %x\n",end_addr);
     //printf("222222222222222\n");
     full_cache_init(start_addr,end_addr,_PERF_CACHELINE_SIZE_BYTE);
     //printf("finish_full\n");
