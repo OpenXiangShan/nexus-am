@@ -11,10 +11,11 @@
 #define _PERF_TEST_ADDR_BASE 0x80010000
 #define _PERF_CACHELINE_SIZE_BYTE (8 * BYTE)
 //#define _PERF_L1_SIZE_BYTE (32 * KB)
-#define _PERF_L1_SIZE_BYTE (33 * KB)
+#define _PERF_L1_SIZE_BYTE (128 * KB)
 #define _PERF_L2_SIZE_BYTE (1 * MB)
 #define _PERF_L3_SIZE_BYTE (2 * MB)
 #define _PERF_MEM_SIZE_BYTE (32 *MB)
+#define _TEST_NUM_SIZE (32 * KB)
 
 
 void full_cache_init(uint64_t base_addr, uint64_t end_addr, uint64_t step){
