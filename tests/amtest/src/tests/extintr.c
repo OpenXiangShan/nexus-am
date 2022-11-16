@@ -188,6 +188,8 @@ void external_intr() {
   asm volatile("csrs sie, %0" : : "r"((1 << 9)));
   asm volatile("csrs sstatus, 2");
   plic_intr_init();
+  // enable WFI instruction
+  asm volatile("csrs 0x5c4, %0" : : "r"((0x7)));
 
   // trigger interrupts
   // s-mode
