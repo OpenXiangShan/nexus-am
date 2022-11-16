@@ -79,7 +79,7 @@ _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
   // It's not deleted because we want to test sip write mask.
   asm volatile ("csrwi sip, 0");
   ev->event = _EVENT_IRQ_IODEV;
-  printf("inside irq SEIP handler\n");
+  // printf("inside irq SEIP handler\n");
   if (custom_external_handler != NULL)
     custom_external_handler(*ev, c);
   return c;
