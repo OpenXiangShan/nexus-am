@@ -168,7 +168,8 @@ void random_trigger() {
   for (int i = 0; i < (MAX_EXTERNAL_INTR + 31) / 32; i++) {
     WRITE_WORD(INTR_RANDOM_ADDR(i), 0xffffffff);
   }
-  for (int i = 0; i < (MAX_EXTERNAL_INTR + 31) / 32; i++) {
+  // Add one here because PLIC interrupt number starts at 1.
+  for (int i = 0; i < (MAX_EXTERNAL_INTR + 1 + 31) / 32; i++) {
     WRITE_WORD(PLIC_ENABLE(CONTEXT_S) + i * 4, 0xffffffff);
   }
   void hello_intr_n(int n);
