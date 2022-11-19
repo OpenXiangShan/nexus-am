@@ -13,12 +13,12 @@
 //#define _PERF_L1_SIZE_BYTE (32 * KB)
 #define _PERF_L1_SIZE_BYTE (128 * KB)
 #define _PERF_L2_SIZE_BYTE (1 * MB)
-#define _PERF_L3_SIZE_BYTE (2 * MB)
+#define _PERF_L3_SIZE_BYTE (6 * MB)
 #define _PERF_MEM_SIZE_BYTE (32 *MB)
 #define _TEST_NUM_SIZE (32 * KB)
 
 
-void full_cache_init(uint64_t base_addr, uint64_t end_addr, uint64_t step){
+void full_cache_init(uint64_t base_addr, uint64_t end_addr, uint64_t step ,int choose){
     //printf("111\n");
     uint64_t num = 0;
     assert(step % 8 == 0);
@@ -26,8 +26,18 @@ void full_cache_init(uint64_t base_addr, uint64_t end_addr, uint64_t step){
     for(uint64_t cur_addr = base_addr;cur_addr < end_addr;){
         //printf("cur_addr 0x%lx\n",cur_addr);
         //printf("end_addr 0x%lx\n",end_addr);
+       /* if(cur_addr >( 0x80730000 - 100)){
+            printf("cur_addr 0x%lx\n",cur_addr);
+        }*/
         uint64_t next_addr = cur_addr + step;
-        *((uint64_t*)cur_addr) = next_addr+24;
+        //*((uint64_t*)cur_addr) = next_addr+16;
+        if(choose == 1){
+            *((uint64_t*)cur_addr) = cur_addr;
+        }
+        else{
+            *((uint64_t*)cur_addr) = cur_addr + 64;
+        }
+        
         cur_addr = next_addr;
         num ++;
     }
@@ -55,8 +65,8 @@ void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count
             "li   s4 , 0;"
             "li   s5 , 500;"
             "li   s6 , 0x80010000;"
-            "addi s7 , s6,0x8;"
-            "addi s8 , s7,0x8;"
+            "addi s7 , s6,64;"
+            "addi s8 , s7,64;"
 
             "csrr  s9 , mcycle;"
             "csrr  s10, minstret;"
@@ -76,6 +86,5 @@ void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count
     );
 
 }
-
 
 
