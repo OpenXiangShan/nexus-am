@@ -44,40 +44,70 @@ void full_cache_init(uint64_t base_addr, uint64_t end_addr, uint64_t step ,int c
 }
 
 __attribute__((aligned(256)))
-void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
+void cache_loop_l1d(unsigned long long* instr_count, unsigned long long* cycle_count){
     *instr_count = 0;
     *cycle_count = 0;
     asm volatile(
-            "jal zero, init;"
+            "jal zero, init_l1d;"
             "xor s8  , zero , zero;"
 
-        "loop:" 
-            "ld    s6,0(s6);"
-            "ld    s7,0(s7);"
-            "ld    s8,0(s8);"
+        "loop_l1d:" 
+            "ld    a2,0(s0);"
+            "addi  s0,s0,0;"
+            "ld    a2,0(s1);"
+            "addi  s1,s1,0;"
+            "ld    a2,0(s2);"
+            "addi  s2,s2,0;"
+            "ld    a2,0(s3);"
+            "addi  s3,s3,0;"
+            "ld    a2,0(s4);"
+            "addi  s4,s4,0;"
+           /* "ld    a2,0(s5);"
+            "addi  s5,s5,0;"
+            "ld    a2,0(s6);"
+            "addi  s6,s6,0;"
+            "ld    a2,0(s7);"
+            "addi  s7,s7,0;"
+            "ld    a2,0(s8);"
+            "addi  s8,s8,0;"
+            "ld    a2,0(s9);"
+            "addi  s9,s9,0;"
+            "ld    a2,0(s10);"
+            "addi  s10,s10,0;"
+            "ld    a2,0(s11);"
+            "addi  s11,s11,0;"*/
 
-            "addi s4 , s4 , 1;"
-            "bleu s4,s5,loop;"
+            "addi  t0, t0 , 1;"
+            "bleu  t0, t1 , loop_l1d;"
 
-            "jal  zero ,term;"
+            "jal  zero ,term_l1d;"
 
-        "init:"
-            "li   s4 , 0;"
-            "li   s5 , 500;"
-            "li   s6 , 0x80010000;"
-            "addi s7 , s6,64;"
-            "addi s8 , s7,64;"
+        "init_l1d:"
+            "li   t0  , 0;"
+            "li   t1  , 500;"
+            "li   s0  , 0x80010000;"
+            "addi s1  , s0,64;"
+            "addi s2  , s1,64;"
+            "addi s3  , s2,64;"
+            "addi s4  , s3,64;"
+            "addi s5  , s4,64;"
+            "addi s6  , s5,64;"
+            "addi s7  , s6,64;"
+            "addi s8  , s7,64;"
+            "addi s9  , s8,64;"
+            "addi s10 , s9,64;"
+            "addi s11 , s10,64;"
 
-            "csrr  s9 , mcycle;"
-            "csrr  s10, minstret;"
+            "csrr  t2 , mcycle;"
+            "csrr  t3 , minstret;"
 
-            "jal   zero, loop;"
-        "term:"
-            "csrr s11 , mcycle;"
-            "csrr t3  , minstret;"
+            "jal   zero, loop_l1d;"
+        "term_l1d:"
+            "csrr t4  , mcycle;"
+            "csrr t5  , minstret;"
 
-            "subw  %[c], s11 , s9;"
-            "subw  %[i], t3  , s10;"
+            "subw  %[c], t4 , t2;"
+            "subw  %[i], t5 , t3;"
 
         : [c] "=r" (*cycle_count),[i] "=r" (*instr_count)
         : 
@@ -86,5 +116,80 @@ void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count
     );
 
 }
+
+__attribute__((aligned(256)))
+void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
+    *instr_count = 0;
+    *cycle_count = 0;
+    asm volatile(
+            "jal zero, init;"
+            "xor s8  , zero , zero;"
+
+        "loop:" 
+            "ld    a2,0(s0);"
+            "addi  s0,s0,192;"
+            "ld    a2,0(s1);"
+            "addi  s1,s1,192;"
+            "ld    a2,0(s2);"
+            "addi  s2,s2,192;"
+            "ld    a2,0(s3);"
+            "addi  s3,s3,768;"
+            "ld    a2,0(s4);"
+            "addi  s4,s4,768;"
+            /*"ld    a2,0(s5);"
+            "addi  s5,s5,768;"
+            "ld    a2,0(s6);"
+            "addi  s6,s6,768;"
+            "ld    a2,0(s7);"
+            "addi  s7,s7,768;"
+            "ld    a2,0(s8);"
+            "addi  s8,s8,768;"
+            "ld    a2,0(s9);"
+            "addi  s9,s9,768;"
+            "ld    a2,0(s10);"
+            "addi  s10,s10,768;"
+            "ld    a2,0(s11);"
+            "addi  s11,s11,768;"*/
+
+            "addi  t0, t0 , 1;"
+            "bleu  t0, t1 , loop;"
+
+            "jal  zero ,term;"
+
+        "init:"
+            "li   t0  , 0;"
+            "li   t1  , 500;"
+            "li   s0  , 0x80010000;"
+            "addi s1  , s0,64;"
+            "addi s2  , s1,64;"
+            "addi s3  , s2,64;"
+            "addi s4  , s3,64;"
+            "addi s5  , s4,64;"
+            "addi s6  , s5,64;"
+            "addi s7  , s6,64;"
+            "addi s8  , s7,64;"
+            "addi s9  , s8,64;"
+            "addi s10 , s9,64;"
+            "addi s11 , s10,64;"
+
+            "csrr  t2 , mcycle;"
+            "csrr  t3 , minstret;"
+
+            "jal   zero, loop;"
+        "term:"
+            "csrr t4  , mcycle;"
+            "csrr t5  , minstret;"
+
+            "subw  %[c], t4 , t2;"
+            "subw  %[i], t5 , t3;"
+
+        : [c] "=r" (*cycle_count),[i] "=r" (*instr_count)
+        : 
+        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","t5","t6","cc"
+
+    );
+
+}
+
 
 
