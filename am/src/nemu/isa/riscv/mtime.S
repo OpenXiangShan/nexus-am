@@ -28,8 +28,9 @@ is_timer:
         add a3, a3, a2
         sd a3, 0(a1)
 
-        # raise a supervisor software interrupt.
-        csrwi sip, 2
+        # raise a supervisor timer interrupt.
+	li a3, 32
+        csrw mip, a3
         j end_of_intr
 
 is_ext:

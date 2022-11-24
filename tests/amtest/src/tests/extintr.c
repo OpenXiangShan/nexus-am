@@ -57,6 +57,12 @@ void do_wfi() {
 //   asm volatile("li ra, MSTATUS_MPP&(MSTATUS_MPP>>1); csrs mstatus, ra; mret");
 // }
 
+#if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  const uint32_t MAX_RAND_ITER = 2;
+#else
+  const uint32_t MAX_RAND_ITER = 50;
+#endif
+
 void do_ext_intr() {
   if (!should_trigger) {
     printf("should not trigger\n");
@@ -119,11 +125,7 @@ void external_trigger(bool shall_trigger, bool wfi, int context) {
   printf("should trigger: %s\n", shall_trigger ? "Yes" : "No");
   current_context = context;
   should_trigger = shall_trigger;
-#if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
-  const uint32_t MAX_RAND_ITER = 2;
-#else
-  const uint32_t MAX_RAND_ITER = 200;
-#endif
+
   int origin_claim;
   for (int i = 0; i < MAX_RAND_ITER; i++) {
     should_claim = (rand() % MAX_EXTERNAL_INTR) + PLIC_EXT_INTR_OFFSET;
@@ -166,12 +168,13 @@ void random_trigger() {
   for (int i = 0; i < (MAX_EXTERNAL_INTR + 31) / 32; i++) {
     WRITE_WORD(INTR_RANDOM_ADDR(i), 0xffffffff);
   }
-  for (int i = 0; i < (MAX_EXTERNAL_INTR + 31) / 32; i++) {
+  // Add one here because PLIC interrupt number starts at 1.
+  for (int i = 0; i < (MAX_EXTERNAL_INTR + 1 + 31) / 32; i++) {
     WRITE_WORD(PLIC_ENABLE(CONTEXT_S) + i * 4, 0xffffffff);
   }
   void hello_intr_n(int n);
-  hello_intr_n(30);
-  while (claim_count_all < 200);
+  hello_intr_n(10);
+  while (claim_count_all < MAX_RAND_ITER);
   printf("random test finishes\n");
 }
 
@@ -188,6 +191,8 @@ void external_intr() {
   asm volatile("csrs sie, %0" : : "r"((1 << 9)));
   asm volatile("csrs sstatus, 2");
   plic_intr_init();
+  // enable WFI instruction
+  asm volatile("csrs 0x5c4, %0" : : "r"((0x7)));
 
   // trigger interrupts
   // s-mode
