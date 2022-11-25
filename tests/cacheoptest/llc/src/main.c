@@ -19,22 +19,54 @@ int main() {
 
   asm("fence\n");
 
+
   /*  simple test  */
-  // test_flush();
+  test_invalid();
+
+  asm("fence\n");
+  test_clean();
+
+  asm("fence\n");
+  test_flush();
+
 
   /*  test region operation */
-  // make_region_flush((uint64_t)test_buffer, 512);
-  // for(int i = 0; i < TEST_BUFFER_SIZE; ++i) {
-  //   uint64_t test_data = test_buffer[i];
-  //   if(test_data != i + 1) {
-  //     printf("test failed, test_buffer[%d] = %d, original: %d\n", i, test_buffer[i], i+1);
-  //   }
-  // }
+  asm("fence\n");
+  make_region_invalid((uint64_t)test_buffer[32], 256);
+  for(int i = 32; i < TEST_BUFFER_SIZE/4; ++i) {
+    uint64_t test_data = test_buffer[i];
+    if(test_data == i + 1) {
+      printf("test failed, test_buffer[%d] = %lld, original: %d\n", i, test_buffer[i], i+1);
+      _halt(-1);
+    }
+  }
+  printf("make region invalid succeed!\n\n");
+
+  asm("fence\n");
+  make_region_clean((uint64_t)test_buffer[64], 256);
+  for(int i = 64; i < TEST_BUFFER_SIZE/4; ++i) {
+    uint64_t test_data = test_buffer[i];
+    if(test_data != i + 1) {
+      printf("test failed, test_buffer[%d] = %lld, original: %d\n", i, test_buffer[i], i+1);
+      _halt(-1);
+    }
+  }
+  printf("make region clean succeed!\n\n");
+
+  asm("fence\n");
+  make_region_flush((uint64_t)test_buffer[96], 256);
+  for(int i = 96; i < TEST_BUFFER_SIZE/4; ++i) {
+    uint64_t test_data = test_buffer[i];
+    if(test_data != i + 1) {
+      printf("test failed, test_buffer[%d] = %lld, original: %d\n", i, test_buffer[i], i+1);
+      _halt(-1);
+    }
+  }
+  printf("make region flush succeed!\n");
 
   return 0;
 }
 
-// just a test example.
 void test_invalid() {
   if(is_ready()) {
     make_invalid((uint64_t)&test_buffer[0]);
@@ -43,47 +75,47 @@ void test_invalid() {
     _halt(1);
   }
   wait(100);
-  if (test_buffer[0] == 1) {  
-    // with diff-test, NEMU will report Refill failed!
-    printf("CMO_INV failed: test_buffer[0] = %lx, original: %d\n", test_buffer[0], 1);
-    _halt(1);
-  } else {
-    printf("CMO_INV succeed!");
-    _halt(0);
+  for(int i = 0; i < 8; ++i) {
+    if (test_buffer[i] == i+1) {  
+      // with diff-test, NEMU will report Refill failed!
+      printf("CMO_INV failed: test_buffer[%d] = %lld, original: %d\n", i, test_buffer[i], i+1);
+      _halt(1);
+    }
   }
+  printf("CMO_INV succeed!\n\n");
 }
 
 void test_clean() {
   if(is_ready()) {
-    make_clean((uint64_t)&test_buffer[1]);
+    make_clean((uint64_t)&test_buffer[8]);
   } else {
     printf("CtrlUnit is not ready yet.");
     _halt(1);
   }
   wait(100);
-  if (test_buffer[1] != 2) {  
-    printf("CMO_CLEAN failed: test_buffer[1] = %lx, original: %d\n", test_buffer[1], 2);
-    _halt(1);
-  } else {
-    printf("CMO_CLEAN succeed!");
-    _halt(0);
+  for(int i = 8; i < 16; ++i) {
+    if (test_buffer[i] != i+1) {  
+      printf("CMO_CLEAN failed: test_buffer[%d] = %lld, original: %d\n", i, test_buffer[i], i+1);
+      _halt(1);
+    }
   }
+  printf("CMO_CLEAN succeed!\n\n");
 }
 
 void test_flush() {
   if(is_ready()) {
-    make_flush((uint64_t)&test_buffer[2]);
+    make_flush((uint64_t)&test_buffer[16]);
   } else {
     printf("CtrlUnit is not ready yet.");
     _halt(1);
   }
   wait(100);
-  if (test_buffer[2] != 3) {  
-    printf("CMO_FLUSH failed: test_buffer[0] = %lx, original: %d\n", test_buffer[2], 3);
-    _halt(1);
-  } else {
-    printf("CMO_FLUSH succeed!");
-    _halt(0);
+  for(int i = 16; i < 24; ++i) {
+    if (test_buffer[i] != i+1) {  
+      printf("CMO_FLUSH failed: test_buffer[%d] = %lld, original: %d\n", i, test_buffer[i], i+1);
+      _halt(1);
+    }
   }
+  printf("CMO_FLUSH succeed!\n\n");
 }
 

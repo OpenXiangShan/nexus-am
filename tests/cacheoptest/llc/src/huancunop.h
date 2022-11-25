@@ -35,11 +35,11 @@ inline uint64_t is_ready() {
   return *((uint64_t*)CACHE_RDY_REG);
 }
 
-inline volatile uint64_t get_tag(uint64_t paddr) {
+inline uint64_t get_tag(uint64_t paddr) {
   return (paddr >> OFFSET_LEN) >> SET_LEN;
 }
 
-inline volatile uint64_t get_set(uint64_t paddr) {
+inline uint64_t get_set(uint64_t paddr) {
   return (paddr >> OFFSET_LEN) & (SET_SIZE-1);
 }
 
