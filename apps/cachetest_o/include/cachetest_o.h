@@ -53,29 +53,18 @@ void cache_loop_l1d(unsigned long long* instr_count, unsigned long long* cycle_c
 
         "loop_l1d:" 
             "ld    a2,0(s0);"
-            "addi  s0,s0,0;"
             "ld    a2,0(s1);"
-            "addi  s1,s1,0;"
             "ld    a2,0(s2);"
-            "addi  s2,s2,0;"
             "ld    a2,0(s3);"
-            "addi  s3,s3,0;"
             "ld    a2,0(s4);"
-            "addi  s4,s4,0;"
-           /* "ld    a2,0(s5);"
-            "addi  s5,s5,0;"
+            "ld    a2,0(s5);"
             "ld    a2,0(s6);"
-            "addi  s6,s6,0;"
             "ld    a2,0(s7);"
-            "addi  s7,s7,0;"
             "ld    a2,0(s8);"
-            "addi  s8,s8,0;"
             "ld    a2,0(s9);"
-            "addi  s9,s9,0;"
             "ld    a2,0(s10);"
-            "addi  s10,s10,0;"
             "ld    a2,0(s11);"
-            "addi  s11,s11,0;"*/
+
 
             "addi  t0, t0 , 1;"
             "bleu  t0, t1 , loop_l1d;"
@@ -86,17 +75,17 @@ void cache_loop_l1d(unsigned long long* instr_count, unsigned long long* cycle_c
             "li   t0  , 0;"
             "li   t1  , 500;"
             "li   s0  , 0x80010000;"
-            "addi s1  , s0,64;"
-            "addi s2  , s1,64;"
-            "addi s3  , s2,64;"
-            "addi s4  , s3,64;"
-            "addi s5  , s4,64;"
-            "addi s6  , s5,64;"
-            "addi s7  , s6,64;"
-            "addi s8  , s7,64;"
-            "addi s9  , s8,64;"
-            "addi s10 , s9,64;"
-            "addi s11 , s10,64;"
+            "addi s1  , s0,72;"
+            "addi s2  , s1,80;"
+            "addi s3  , s2,88;"
+            "addi s4  , s3,96;"
+            "addi s5  , s4,104;"
+            "addi s6  , s5,112;"
+            "addi s7  , s6,120;"
+            "addi s8  , s7,128;"
+            "addi s9  , s8,136;"
+            "addi s10 , s9,144;"
+            "addi s11 , s10,152;"
 
             "csrr  t2 , mcycle;"
             "csrr  t3 , minstret;"
@@ -117,7 +106,7 @@ void cache_loop_l1d(unsigned long long* instr_count, unsigned long long* cycle_c
 
 }
 
-__attribute__((aligned(256)))
+/*__attribute__((aligned(256)))
 void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count){
     *instr_count = 0;
     *cycle_count = 0;
@@ -127,29 +116,27 @@ void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count
 
         "loop:" 
             "ld    a2,0(s0);"
-            "addi  s0,s0,192;"
-            "ld    a2,0(s1);"
-            "addi  s1,s1,192;"
-            "ld    a2,0(s2);"
-            "addi  s2,s2,192;"
-            "ld    a2,0(s3);"
-            "addi  s3,s3,768;"
-            "ld    a2,0(s4);"
-            "addi  s4,s4,768;"
-            /*"ld    a2,0(s5);"
-            "addi  s5,s5,768;"
-            "ld    a2,0(s6);"
-            "addi  s6,s6,768;"
-            "ld    a2,0(s7);"
-            "addi  s7,s7,768;"
-            "ld    a2,0(s8);"
-            "addi  s8,s8,768;"
-            "ld    a2,0(s9);"
-            "addi  s9,s9,768;"
-            "ld    a2,0(s10);"
-            "addi  s10,s10,768;"
-            "ld    a2,0(s11);"
-            "addi  s11,s11,768;"*/
+            "ld    a2,64(s0);"
+            "ld    a2,128(s0);"
+        //    "addi  s0,s0,192;"
+
+            "ld    a2,192(s0);"
+            "ld    a2,256(s0);"
+            //"addi  s0,s0,320;"
+            "ld    a2,320(s0);"
+            //"addi  s5,s5,768;"
+            "ld    a2,384(s0);"
+            //"addi  s6,s6,768;"
+            "ld    a2,448(s0);"
+            //"addi  s7,s7,768;"
+            "ld    a2,512(s0);"
+            //"addi  s8,s8,768;"
+            "ld    a2,576(s0);"
+            //"addi  s9,s9,768;"
+            "ld    a2,640(s0);"
+           // "addi  s10,s10,768;"
+            "ld    a2,704(s0);"
+            "addi  s0,s0,768;"
 
             "addi  t0, t0 , 1;"
             "bleu  t0, t1 , loop;"
@@ -190,6 +177,7 @@ void cache_loop(unsigned long long* instr_count, unsigned long long* cycle_count
     );
 
 }
+*/
 
 
 
