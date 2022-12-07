@@ -1,6 +1,7 @@
 NAME_1 = cachetest_o
 CFLAGS += -DCHOOSE=$(CHOOSE) -g
-NAME = build-$(NAME_1)-$(CHOOSE)
+CFLAGS += -DINST=$(INST) -g
+NAME = build-$(NAME_1)-$(CHOOSE)-$(INST)
 $(NAME).c:cachetest_o.c
 	cp cachetest_o.c $(NAME).c
 #NAME = cachetest_o

@@ -1,4 +1,7 @@
-for ((i=1;i<13;i++))
+for ((j=3;j<6;j++))
 do
-    make ARCH=riscv64-xs CHOOSE=$i
+    for ((i=0;i<51;i++))
+    do
+        make ARCH=riscv64-xs CHOOSE=$j INST=$i
+    done
 done
