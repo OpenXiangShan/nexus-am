@@ -2,6 +2,7 @@
 
 void (*entry)() = NULL; // mp entry
 
+
 static const char *tests[256] = {
   ['h'] = "hello",
   ['H'] = "display this help message",
@@ -39,6 +40,8 @@ int main(const char *args) {
     CASE('s', sv39_test, IOE, CTE(simple_trap));
     CASE('b', cache_test);
     CASE('r', rtc_accuracy_test);
+    CASE('f', tlb_test2,IOE,NOTIMEINT(),CTE(external_trap2),RCEH(external_trap2));
+    //CASE('g', tlb_test,IOE,NOTIMEINT(),CTE(external_trap1),RCEH(external_trap1));
     case 'H':
     default:
       printf("Usage: make run mainargs=*\n");

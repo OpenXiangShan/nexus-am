@@ -49,6 +49,7 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define EXCEPTION_CAUSE_SIZE 16
 
 #define SCAUSE_MASK 0x7fff
+#define MCAUSE_MASK 0x7fff
 // Interrupt
 #define SCAUSE_SSIP 0x1
 #define SCAUSE_STIP 0x5

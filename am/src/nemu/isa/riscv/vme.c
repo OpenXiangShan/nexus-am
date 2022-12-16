@@ -150,11 +150,22 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
   PTE *pg_base = as->ptr;
+  //if((uintptr_t)pa == 0x80040000){
+    //printf("as->ptr %lx",as->ptr);
+  //}
+  
   PTE *pte;
   int level;
-  for (level = PTW_CONFIG.ptw_level - 1; ; level --) {
+  for (level = PTW_CONFIG.ptw_level - 1; ; level --) {//level=2
     pte = &pg_base[VPNi(PTW_CONFIG, (uintptr_t)va, level)];
+//if((uintptr_t)pa == 0x80040000){
+  //printf("pg_base 1 %lx\n",pg_base);
+//}
+    
     pg_base = (PTE *)PTE_ADDR(*pte);
+    //if((uintptr_t)pa == 0x80040000){
+    //printf("pg_base 2 %lx\n",pg_base);
+    //}
     if (level == 0) break;
     if (!(*pte & PTE_V)) {
       pg_base = new_page();

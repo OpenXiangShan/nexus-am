@@ -1,6 +1,7 @@
 #include <am.h>
 #include <riscv.h>
 #include <klib.h>
+#include <csr.h>
 
 // static _Context* (*user_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_soft_handler)(_Event, _Context*) = NULL;
@@ -84,19 +85,27 @@ _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
     custom_external_handler(*ev, c);
   return c;
 }
-
+extern void __am_asm_trap(void);
 /*
  * default handler for Supervisor Ecall Exception
  * set event to YIELD or SYSCALL according to a7
  * may call custom secall handler if registered
  */
 _Context* __am_irq_SECALL_handler(_Event *ev, _Context *c) {
-  ev->event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
-  c->sepc += 4;
+//  printf("GPR1 %d\n",c->GPR1);
+//  ev->event = (c->GPR1 == -1) ? _EVENT_YIELD : _EVENT_SYSCALL;
+//  printf("event111 %d\n",ev->event);
+//  c->sepc += 4;
   //if (ev->event == _EVENT_YIELD)
   //  printf("SECALL: is YIELD\n");
   // printf("Inside secall handler\n");
   if (custom_secall_handler != NULL) {
+    printf("custom\n");
+    //asm volatile("csrw stvec, %0" : : "r"(__am_asm_trap));
+    //extern void __am_init_cte64();
+    //__am_init_cte64();
+  //  printf("external_trap1 %lx\n",(uint64_t)external_trap1);
+  //  printf("external_trap1 use%lx\n",(uint64_t)custom_secall_handler);
     custom_secall_handler(*ev, c);
   }
   return c;
@@ -104,12 +113,14 @@ _Context* __am_irq_SECALL_handler(_Event *ev, _Context *c) {
 
 
 _Context* __am_irq_handle(_Context *c) {
-  __am_get_cur_as(c);
+  __am_get_cur_as(c);//拿satp 不用
+  printf("irq_handle_s\n");
+  //printf("cte_irq %lu\n",csr_read(0xb00));
 
   _Event ev = {0};
-  uintptr_t scause_code = c->scause & SCAUSE_MASK;
+  uintptr_t scause_code = c->scause & SCAUSE_MASK;//拿scause
   // printf("am irq triggered %llx\n", c->scause);
-  if (c->scause & INTR_BIT) {
+  if (c->scause & INTR_BIT) {//根据scause  选择往哪个异常走
     assert(scause_code < INTERRUPT_CAUSE_SIZE);
     // printf("is an interrupt\n");
     interrupt_handler[scause_code](&ev, c);
@@ -119,7 +130,7 @@ _Context* __am_irq_handle(_Context *c) {
     exception_handler[scause_code](&ev, c);
   }
 
-  __am_switch(c);
+  __am_switch(c);//不用
 
 #if __riscv_xlen == 64
   asm volatile("fence.i");
@@ -128,7 +139,24 @@ _Context* __am_irq_handle(_Context *c) {
   return c;
 }
 
-extern void __am_asm_trap(void);
+
+_Context* __am_irq_handle_m(_Context *c) {
+
+  printf("irq_handle_m\n");
+  //printf("cte_irq %lu\n",csr_read(0xb00));
+//printf("m_mcause %d\n",c);
+  _Event ev = {0};
+  __am_irq_SECALL_handler(&ev, c);
+  
+
+//  __am_switch(c);//不用
+
+#if __riscv_xlen == 64
+  asm volatile("fence.i");
+#endif
+
+  return c;
+}
 
 /*
  * Supervisor soft interrupt custom handler register function
@@ -159,6 +187,7 @@ void seip_handler_reg(_Context*(*handler)(_Event, _Context*)) {
  * handler: the function to be registered
  */
 void secall_handler_reg(_Context*(*handler)(_Event, _Context*)) {
+  printf("nemu-secall_handle\n");
   custom_secall_handler = handler;
 }
 
@@ -214,7 +243,7 @@ int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
   // cte init handler has no effect for now
 
 #if __riscv_xlen == 64
-  // printf("CTE64 inited\n");
+   printf("CTE64 inited\n");
   extern void __am_init_cte64();
   __am_init_cte64();
 #endif
@@ -248,9 +277,9 @@ _Context *_kcontext(_Area kstack, void (*entry)(void *), void *arg) {
 }
 
 void _yield() {
-  //printf("before ecall\n");
+  printf("before ecall\n");
   asm volatile("li a7, -1; ecall");
-  //printf("after ecall\n");
+  printf("after ecall\n");
 }
 
 int _intr_read() {

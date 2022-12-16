@@ -8,6 +8,7 @@ AM_SRCS := noop/isa/riscv/trm.c \
            nemu/isa/riscv/trap.S \
            nemu/isa/riscv/cte64.c \
            nemu/isa/riscv/mtime.S \
+           nemu/isa/riscv/mecall.S \
            nemu/isa/riscv/vme.c \
            nemu/common/ioe.c \
            noop/common/input.c \

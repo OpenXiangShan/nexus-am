@@ -1,5 +1,6 @@
 #include <amtest.h>
 #include <xs.h>
+#include <csr.h>
 
 #define READ_WORD(addr)        (*((volatile uint32_t *)(addr)))
 #define WRITE_WORD(addr, data) (*((volatile uint32_t *)(addr)) = (data))
@@ -88,7 +89,10 @@ void do_ext_intr() {
   }
 }
 
+
+
 _Context *external_trap(_Event ev, _Context *ctx) {
+ // printf("e_sim\n");
   switch(ev.event) {
     case _EVENT_IRQ_TIMER:
       printf("t"); break;
