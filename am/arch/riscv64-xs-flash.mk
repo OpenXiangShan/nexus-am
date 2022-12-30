@@ -3,7 +3,7 @@ include $(AM_HOME)/am/arch/isa/riscv64.mk
 AM_SRCS := noop/isa/riscv/trm_flash.c \
            nemu/common/mainargs.S \
            noop/isa/riscv/perf.c \
-           noop/common/uartlite.c \
+           noop/common/uart_snps.c \
            nemu/isa/riscv/trap.S \
            nemu/isa/riscv/vme.c \
            nemu/common/ioe.c \
