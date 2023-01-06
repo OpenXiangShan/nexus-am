@@ -37,7 +37,7 @@ _Context *external_trap2(_Event ev, _Context *ctx) {
   return ctx;
 }
 
-/*__attribute__((aligned(256)))
+__attribute__((aligned(256)))
 void tlb_hit_test2(unsigned long long* instr_count, unsigned long long* cycle_count){
     *instr_count = 0;
     *cycle_count = 0;
@@ -93,98 +93,8 @@ void tlb_hit_test2(unsigned long long* instr_count, unsigned long long* cycle_co
 
     );
 
-}*/
-
-__attribute__((aligned(256)))
-void tlb_hit_test(unsigned long long* instr_count, unsigned long long* cycle_count){
-    *instr_count = 0;
-    *cycle_count = 0;
-    asm volatile(
-            "jal zero, init;"
-            "xor s8  , zero , zero;"
-
-        "loop:" 
-            "ld    s8,0(s6);"
-            "sub   s7,s8,s8;"
-    //        "ld    s6,0(s8);"
-            "addi  s8,s7,64;"
-            "add   s6,s6,s8;"
-
-            "addi s4 , s4 , 1;"
-            "bleu s4,s5,loop;"
-
-            "jal  zero ,term;"
-
-        "init:"
-            "li   s4 , 0;"
-            "li   s5 , 500;"
-            //"li   s6 , 0x80000000;"
-            "li   s6 , 0x80040000;"
-            "li   s7 , 0x80040000;"
-            "li   s7 , 0;"
-            "li   s8 , 0;"
-            "ld   s8 ,0(s6);"
-            "addi s6,s6,8;"
-            "li a7,-1;"
-            "ecall;"
-
-//            "li  s9 , 10;"
-//            "li  s10, 10;"
-
-
- //           "csrr  s9 , mcycle;"
- //           "csrr  s10, minstret;"
-
-            "jal   zero, loop;"
-        "term:"
-            "li a7,-1;"
-            "ecall;"
-
-            "li s11 , 11;"
-            "li t3  , 11;"
-//            "csrr s11 , mcycle;"
-//            "csrr t3  , minstret;"
-
-            "subw  %[c], s11 , s9;"
-            "subw  %[i], t3  , s10;"
-
-        : [c] "=r" (*cycle_count),[i] "=r" (*instr_count)
-        : 
-        : "zero","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","t5","t6","cc"
-
-    );
-
 }
-/*void tlb_hit_test2(uint64_t base_addr,int log){
-  volatile int i_all = 0;
-  volatile int i = 0;
-  volatile uint64_t addr_now = base_addr;
-  volatile uint64_t read_num;
-  volatile uint64_t next_step_c = 64;
-  volatile uint64_t next_step_t = 0x8000;
-  _yield();
-  for(i_all;i_all<500;i_all++){
-    read_num = *((uint64_t*)addr_now);
-    if(i == 63){
-      next_step_c = 64;
-      i=0;
-    }
-    addr_now = base_addr + next_step_c + next_step_t;
-  //  printf("addr_now %lx\n",addr_now);
-    next_step_c = next_step_c + 64;
-    next_step_t = next_step_t + 0x8000;
-    //printf("")
 
-    
-
-  }
-  _yield();
-  if(log ==3){
-    printf("%d\n",read_num);
-  }
-
-
-}*/
 void full_tlb (uint64_t base_addr,uint64_t end_addr,uint64_t step,int level){
     volatile uint64_t num = 0;
     volatile uint64_t read_num2 =0;
@@ -212,44 +122,30 @@ void full_tlb (uint64_t base_addr,uint64_t end_addr,uint64_t step,int level){
 
 void tlb_test2(){
     unsigned long long instrs,cycles;
+    instrs =1;
+    cycles = 1;
     _vme_init(sv39_pgalloc2, sv39_pgfree2);
-    printf("finish\n");
+//    printf("finish\n");
+//    printf("%lx\n",0x80040000+500*0x1000);
 
-    uint64_t tlb_start_addr;
-    uint64_t tlb_end_addr;
+
     uint64_t map_now = 0x900040000UL;
     uint64_t map_end = 0x900040000UL + 0x2000000;
 
-    tlb_start_addr = map_now;//
-    tlb_end_addr =  tlb_start_addr+ 600*8*PAGESIZE;//
+    uint64_t tlb_start_addr = map_now;//
+    uint64_t tlb_end_addr =  tlb_start_addr+ 600*8*PAGESIZE;//
     uint64_t paddr = 0x80040000;
-    int i=0;
-    int i_p = 0;
 
-    printf("111\n");
-
-   for(; map_now < map_end ; map_now +=PAGESIZE){   
-    // printf("map_now %lx paddr%lx\n",map_now,paddr);
-      _map(&kas,(void *)map_now,(void *)((uint64_t)(paddr )),PTE_W | PTE_R | PTE_A | PTE_D | PTE_X);
-      i++;
-      i_p++;
-      if(i_p == 63 *8){
-        i_p = 0;
-        paddr = paddr + PAGESIZE;
-      }
-       
+   for(; map_now < map_end ; map_now +=PAGESIZE){
+     _map(&kas,(void *)map_now,(void *)((uint64_t)(paddr )),PTE_W | PTE_R | PTE_A | PTE_D | PTE_X);
+     paddr += PAGESIZE;
    }
     asm volatile("sfence.vma");
-  /*  printf("******************************start_yield\n");
-    _yield();
-    printf("*******************************read from addr\n");
-    printf("*********************************read_load 2\n");
-    _yield();
-    printf("*********************************test_end\n");  */  
 
-    //full_tlb(tlb_start_addr,tlb_end_addr,PAGESIZE,2);
-    tlb_hit_test(&instrs,&cycles);
-   // tlb_hit_test2(0x900040040UL,1);
-    printf("%d %d\n",tlb_num_2[0],tlb_num_2[1]);
+
+    full_tlb(tlb_start_addr,tlb_end_addr,PAGESIZE,2);
+    tlb_hit_test2(&instrs,&cycles);
+
+    printf("the result is %d %d\n",tlb_num_2[0],tlb_num_2[1]);
 
 }
