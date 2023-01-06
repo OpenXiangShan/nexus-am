@@ -4,11 +4,13 @@
 
 #define RANGE_LEN(start, len) RANGE((start), (start + len))
 
+const static uint64_t pmem_base = 0x80000000UL;
+
 #define PAGESIZE 0x1000 // 4KB
-#define _PERF_TEST_ADDR_BASE 0x80040000
-#define PAGE_TABLE_START_ADDR 0xc0000000UL // page table starts from here
-#define TEST_DATA_START_ADDR 0x83000000UL // blank data pages start from here
-#define TEST_INSTR_START_ADDR 0x84000000UL // instruction pages start from here
+#define TLB_TEST_ADDR_BASE (pmem_base + 0x40000UL)
+#define PAGE_TABLE_START_ADDR (pmem_base + 0x40000000UL) // page table starts from here
+#define TEST_DATA_START_ADDR (pmem_base + 0x3000000UL) // blank data pages start from here
+#define TEST_INSTR_START_ADDR (pmem_base + 0x4000000UL) // instruction pages start from here
 
 extern _AddressSpace kas;
 static char *sv39_alloc_base_2 = (char *)(PAGE_TABLE_START_ADDR);
@@ -41,12 +43,11 @@ __attribute__((aligned(256)))
 void tlb_hit_test2(unsigned long long* instr_count, unsigned long long* cycle_count){
     *instr_count = 0;
     *cycle_count = 0;
-    printf("1111\n");
     asm volatile(
             "jal zero, init_2;"
             "xor s8  , zero , zero;"
 
-        "loop_2:" 
+        "loop_2:"
             "ld    s8,0(s6);"
             "sub   s7,s8,s8;"
     //        "ld    s6,0(s8);"
@@ -134,7 +135,7 @@ void tlb_test2(){
 
     uint64_t tlb_start_addr = map_now;//
     uint64_t tlb_end_addr =  tlb_start_addr+ 600*8*PAGESIZE;//
-    uint64_t paddr = 0x80040000;
+    uint64_t paddr = TLB_TEST_ADDR_BASE;
 
    for(; map_now < map_end ; map_now +=PAGESIZE){
      _map(&kas,(void *)map_now,(void *)((uint64_t)(paddr )),PTE_W | PTE_R | PTE_A | PTE_D | PTE_X);
