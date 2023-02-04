@@ -27,7 +27,7 @@ volatile uint64_t store_access_fault_to_be_reported = 0;
 
 inline int inst_is_compressed(uint64_t addr){
   uint8_t byte = *(uint8_t*)addr;
-  return (byte & 0x3) != 0x3; 
+  return (byte & 0x3) != 0x3;
 }
 
 _Context* store_page_fault_handler(_Event* ev, _Context *c) {
@@ -131,6 +131,73 @@ void sv39_test() {
   *w_ptr = *fault_ptr;
   if(load_page_fault_to_be_reported){
     _halt(1);
+  }
+  _halt(0);
+}
+
+/*
+ * RISC-V 64 SV39 raise access fault when high 20 bits of ppn is not zero
+ */
+
+void sv39_ppn_af_test() {
+  printf("start sv39 test\n");
+  _vme_init(sv39_pgalloc, sv39_pgfree);
+  printf("sv39 setup done\n");
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+  _map(&kas, (void *)0x900000000UL, (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0xa00000000UL, (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  uint64_t addr = 0xb00000000UL;
+  for (int i = 0; i < 100; i++) {
+    _map_fault(&kas, (void *)(addr + 0x1000 * i), (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  }
+  printf("memory map done\n");
+  char *w_ptr = (char *)(0xa00000000UL);
+  char *r_ptr = (char *)(0x900000000UL);
+  char *fault_ptr[100] = {0};
+  for (int i = 0; i < 100; i++) {
+    fault_ptr[i] = (char *)(addr + 0x1000 * i);
+  }
+#elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  _map(&kas, (void *)0x2100000000UL, (void *)0x2000020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0x2200000000UL, (void *)0x2000020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  uint64_t addr = 0x2300000000UL;
+  for (int i = 0; i < 100; i++) {
+    _map_fault(&kas, (void *)(addr + 0x1000 * i), (void *)0x2000020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  }
+  printf("memory map done\n");
+  char *w_ptr = (char *)(0x2100000000UL);
+  char *r_ptr = (char *)(0x2200000000UL);
+  char *fault_ptr[100] = {0};
+  for (int i = 0; i < 100; i++) {
+    fault_ptr[i] = (char *)(addr + 0x1000 * i);
+  }}
+#else
+  // invalid arch
+  _halt(1);
+#endif
+  irq_handler_reg(EXCEPTION_STORE_ACCESS_FAULT, &store_access_fault_handler);
+  irq_handler_reg(EXCEPTION_LOAD_ACCESS_FAULT, &load_access_fault_handler);
+  asm volatile("sfence.vma");
+  printf("test sv39 data write\n");
+  *w_ptr = 'a';
+
+  printf("test sv39 data read\n");
+  assert(*r_ptr == 'a');
+
+  for (int i = 0; i < 100; i++) {
+    printf("test sv39 store access fault %d\n", i);
+    store_access_fault_to_be_reported = 1;
+    *fault_ptr[i] = 'b';
+    if(store_access_fault_to_be_reported){
+      _halt(1);
+    }
+
+    printf("test sv39 load access fault %d\n", i);
+    load_access_fault_to_be_reported = 1;
+    *w_ptr = *fault_ptr[i];
+    if(load_access_fault_to_be_reported){
+      _halt(1);
+    }
   }
   _halt(0);
 }

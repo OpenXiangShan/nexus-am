@@ -38,6 +38,7 @@ int main(const char *args) {
     CASE('c', pmp_test, CTE(simple_trap));
     CASE('s', sv39_test, IOE, CTE(simple_trap));
     CASE('f', sv39_hp_atom_test, IOE, CTE(simple_trap));
+    CASE('g', sv39_ppn_af_test, IOE, CTE(simple_trap))
     CASE('b', cache_test);
     CASE('r', rtc_accuracy_test);
     case 'H':
