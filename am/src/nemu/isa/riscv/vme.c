@@ -173,6 +173,37 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
 }
 
 /*
+ * A wrong map to test access fault, high bits of ppn is not zero
+ * Only available for sv39 and paddr = 36! (ppnlen can not be changed)
+ */
+void _map_fault(_AddressSpace *as, void *va, void *pa, int prot) {
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
+  PTE *pg_base = as->ptr;
+  PTE *pte;
+  int level;
+  uintptr_t max = 1;
+  for (int i = 0; i < 20; i++){
+    max *= 2;
+  }
+  uintptr_t randnum = rand() % (max - 1);
+
+  for (level = PTW_CONFIG.ptw_level - 1; ; level --) {
+    pte = &pg_base[VPNi(PTW_CONFIG, (uintptr_t)va, level)];
+    pg_base = (PTE *)PTE_ADDR(*pte);
+    if (level == 0) break;
+    if (!(*pte & PTE_V)) {
+      pg_base = new_page();
+      *pte = PTE_V | (PN(pg_base) << 10);
+    }
+  }
+
+  if (!(*pte & PTE_V)) {
+    *pte = PTE_V | prot | (PN(pa) << 10) | (randnum << 34);
+  }
+}
+
+/*
  * map va to pa with prot permission with page table root as
  * pagetable_level indicates page table level to be used
  * 0: basic 4KiB page

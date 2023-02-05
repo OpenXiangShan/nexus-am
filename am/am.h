@@ -86,6 +86,9 @@ void _unprotect(_AddressSpace *as);
 void _map(_AddressSpace *as, void *va, void *pa, int prot);
 _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry);
 
+// a fault map for xiangshan testing access fault
+void _map_fault(_AddressSpace *as, void *va, void *pa, int prot);
+
 // hugepage map for xiangshan testing
 void _map_rv_hugepage(_AddressSpace *as, void *va, void *pa, int prot, int pagetable_level);
 
