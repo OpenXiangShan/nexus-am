@@ -5,7 +5,9 @@ void _putc(char ch) {
 }
 
 void _halt(int code) {
+#ifndef NOHYPE
   asm volatile("mv a0, %0; .word 0x0000006b" : :"r"(code));
+#endif
 
   // should not reach here
   while (1);

@@ -19,7 +19,7 @@
 # define AUDIO_INIT_ADDR      0x210
 # define AUDIO_COUNT_ADDR     0x214
 # define AUDIO_SBUF_ADDR      0xa0800000
-#elif defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#elif defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
 //# define KBD_ADDR     0x40900000
 # define RTC_ADDR     0x3800bff8
 # define SCREEN_ADDR  0x40001000

@@ -79,7 +79,7 @@ void pmp_test() {
   irq_handler_reg(EXCEPTION_STORE_ACCESS_FAULT, &pmp_store_access_fault_handler);
   irq_handler_reg(EXCEPTION_LOAD_ACCESS_FAULT, &pmp_load_access_fault_handler);
   printf("start pmp test\n");
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
   // Case: store to address protected by pmp
   pmp_store_access_fault_to_be_reported = 1;
   volatile int *a = (int *)(0x90000040UL);

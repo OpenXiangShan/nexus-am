@@ -11,7 +11,7 @@
 #define EXCEPTION_LOAD_PAGE_FAULT 13
 #define EXCEPTION_STORE_PAGE_FAULT 15
 
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
 static char *sv39_alloc_base = (char *)(0xc0000000UL);
 #elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
 static char *sv39_alloc_base = (char *)(0x2040000000UL);
@@ -90,7 +90,7 @@ void sv39_test() {
   printf("start sv39 test\n");
   _vme_init(sv39_pgalloc, sv39_pgfree);
   printf("sv39 setup done\n");
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
   _map(&kas, (void *)0x900000000UL, (void *)0x80020000, PTE_R | PTE_A | PTE_D);
   _map(&kas, (void *)0xa00000000UL, (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
   _map(&kas, (void *)0xb00000000UL, (void *)0x80020000, PTE_A | PTE_D);
@@ -143,7 +143,7 @@ void sv39_ppn_af_test() {
   printf("start sv39 test\n");
   _vme_init(sv39_pgalloc, sv39_pgfree);
   printf("sv39 setup done\n");
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
   _map(&kas, (void *)0x900000000UL, (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
   _map(&kas, (void *)0xa00000000UL, (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
   uint64_t addr = 0xb00000000UL;
@@ -210,7 +210,7 @@ void sv39_hp_atom_test() {
   printf("start sv39 hugepage atom test\n");
   _vme_init(sv39_pgalloc, sv39_pgfree);
   printf("sv39 setup done\n");
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
   _map(&kas, (void *)0x900000000UL, (void *)0x80200000, PTE_R | PTE_A | PTE_D);
   // allocate a metapage, not protected by pmp
   _map_rv_hugepage(&kas, (void *)0xa00000000UL, (void *)0x80200000, PTE_W | PTE_R | PTE_A | PTE_D, 1);

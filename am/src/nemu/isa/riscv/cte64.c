@@ -32,7 +32,7 @@ void __am_init_cte64() {
   // asm volatile("csrw pmpcfg2, %0" : : "r"(31));
   
   init_pmp();
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
   // protect 0x90000000 + 0x10000 for test purpose
   printf("enable_pmp\n");
   enable_pmp(1, 0x90000000, 0x10000, 0, 0); // !rw

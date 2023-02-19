@@ -11,7 +11,7 @@ static int vme_enable = 0;
 #define RANGE_LEN(start, len) RANGE((start), (start + len))
 
 static const _Area segments[] = {      // Kernel memory mappings
-#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV64_XS)
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV64_XS) || defined(__ARCH_RISCV64_XS_NOHYPE)
   RANGE_LEN(0x80000000, 0x8000000), // PMEM
   RANGE_LEN(0x40600000, 0x1000),    // uart
   RANGE_LEN(CLINT_MMIO, 0x10000),   // clint/timer
