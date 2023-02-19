@@ -240,6 +240,7 @@ void sv39_hp_atom_test() {
   irq_handler_reg(EXCEPTION_STORE_ACCESS_FAULT, &store_access_fault_handler);
   irq_handler_reg(EXCEPTION_LOAD_ACCESS_FAULT, &load_access_fault_handler);
 
+  asm volatile("sfence.vma");
   printf("test sv39 hugepage data write\n");
   *hp_rw_ptr = 'a';
 
