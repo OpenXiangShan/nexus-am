@@ -27,11 +27,11 @@ void typical_linear_load_test_set()
     test_linear_access_latency(_PERF_L2_SIZE_BYTE / 2, _PERF_CACHELINE_SIZE_BYTE, 1, 0);
     test_linear_access_latency(_PERF_L2_SIZE_BYTE / 2, _PERF_CACHELINE_SIZE_BYTE, 2, 0);
     printf("L1 (L1 same set) linear cache line load:\n");
-    test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_L1_SAME_SET, 1, 0);
     test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_L1_SAME_SET, 10, 0);
+    test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_L1_SAME_SET, 100, 0);
     printf("L2 (L1 same set) linear cache line load:\n");
-    test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_L1_SAME_SET, 1, 0);
     test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_L1_SAME_SET, 2, 0);
+    test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_L1_SAME_SET, 4, 0);
     printf("L1 (L2 same slice) linear cache line load:\n");
     test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_L2_SAME_SLICE, 1, 0);
     test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_L2_SAME_SLICE, 2, 0);
@@ -39,11 +39,11 @@ void typical_linear_load_test_set()
     test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_L2_SAME_SLICE, 1, 0);
     test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_L2_SAME_SLICE, 2, 0);
     printf("L1 (page traverse) linear cache line load:\n");
-    test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_NEXT_PAGE, 1, 0);
     test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_NEXT_PAGE, 10, 0);
+    test_linear_access_latency(_PERF_L1_SIZE_BYTE, _PERF_ADDR_STRIDE_NEXT_PAGE, 100, 0);
     printf("L2 (page traverse) linear cache line load:\n");
-    test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_NEXT_PAGE, 1, 0);
     test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_NEXT_PAGE, 2, 0);
+    test_linear_access_latency(_PERF_L2_SIZE_BYTE, _PERF_ADDR_STRIDE_NEXT_PAGE, 4, 0);
     printf("total samples: %ld\n", _perf_g_total_samples);
 }
 
@@ -103,6 +103,10 @@ void typical_memory_disambiuation_test_set()
     test_same_address_load_latency(1024, 0);
     test_same_address_load_latency(1024, 0);
     test_same_address_load_latency(1024, 0);
+    printf("load then store to the same address:\n");
+    test_read_after_write_latency(1024, 0);
+    test_read_after_write_latency(1024, 0);
+    test_read_after_write_latency(1024, 0);
     // more to be added
 }
 
@@ -141,10 +145,12 @@ void latency_test_example()
     _perf_calibrate();
     printf("latency test example:\n");
     test_pointer_tracing_latency(_PERF_PAGE_SIZE_BYTE, _PERF_CACHELINE_SIZE_BYTE, 5, 0);
+    test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, sizeof(uint64_t), 5, 0);
     test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, _PERF_CACHELINE_SIZE_BYTE, 5, 0);
     test_random_access_latency(4096, 1024*MB, _PERF_CACHELINE_SIZE_BYTE, 0, 1, 0);
     test_random_access_latency(4096, 1024*MB, _PERF_CACHELINE_SIZE_BYTE, 1, 1, 0);
     test_same_address_load_latency(1024, 0);
+    test_read_after_write_latency(1024, 0);
     printf("total samples: %ld\n", _perf_g_total_samples);
 }
 

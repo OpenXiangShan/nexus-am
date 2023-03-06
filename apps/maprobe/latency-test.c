@@ -50,7 +50,7 @@ void test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv)
 {
     // printf("pointer tracing latency test\n");
     // printf("range (B), read latency, iters, samples, cycles\n");
-    volatile uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
+    register uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
     _perf_start_timer();
     uint64_t nnode = setup_pointer_tracing_linklist(_PERF_TEST_ADDR_BASE, _PERF_TEST_ADDR_BASE + size, step);
     _perf_end_timer();
@@ -79,13 +79,13 @@ void test_same_address_load_latency(int iter, int to_csv)
 {
     // printf("same address load latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
-    volatile uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
+    register uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
     // _perf_print_timer();
 
     _perf_start_timer();
     uint64_t address = _PERF_TEST_ADDR_BASE;
     for (int i = 0; i < iter; i++) {
-        result += *((uint64_t*) (address));
+        result += *((volatile uint64_t*) (address));
     }
     _perf_end_timer();
     // _perf_print_timer();
@@ -102,11 +102,39 @@ void test_same_address_load_latency(int iter, int to_csv)
     _perf_g_total_samples += total_access;
 }
 
+void test_read_after_write_latency(int iter, int to_csv)
+{
+    // printf("same address store-load latency test\n", step);
+    // printf("range (B), read latency, iters, samples, cycles\n");
+    volatile uint64_t result = 0; // make sure compiler will store data to memory
+    // _perf_print_timer();
+
+    _perf_start_timer();
+    uint64_t address = _PERF_TEST_ADDR_BASE;
+    for (int i = 0; i < iter; i++) {
+        result += *((uint64_t*) (address));
+        address += sizeof(uint64_t);
+    }
+    _perf_end_timer();
+    // _perf_print_timer();
+    uint64_t total_access = iter;
+    if (to_csv) {
+        printf("%ld, %f, %d, %ld, %ld\n", 0, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
+    } else {
+        printf("read after write latency %f, throughput %f B/cycle (%ld samples, %ld cycles)\n", 
+            (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle
+        );
+    }
+
+    _perf_blackhole(result);
+    _perf_g_total_samples += total_access;
+}
+
 void test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv)
 {
     // printf("stride %d linear access latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
-    volatile uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
+    register uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
     uint64_t num_access = size / step;
     // _perf_print_timer();
 
@@ -139,7 +167,7 @@ void test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64
     //     test_align, pregen_addr ? "use pregen addr array" : "gen rand addr at run time"
     // );
     // printf("range (B), read latency, iters, samples, cycles\n");
-    volatile uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
+    register uint64_t result = 0; // make sure compiler will not opt read_pointer_tracing_linklist
     // _perf_print_timer();
 
     // alloc memory for random access addr array and data
