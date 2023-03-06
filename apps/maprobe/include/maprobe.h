@@ -22,12 +22,22 @@
 // #define _PERF_TEST_ADDR_BASE 0x2000400000
 #endif
 #define _PERF_CACHELINE_SIZE_BYTE (64 * BYTE)
-#define _PERF_L1_NOALIAS_SIZE_BYTE (32 * KB)
+#define _PERF_PAGE_SIZE_BYTE (4 * KB)
+#define _PERF_L1_NOALIAS_SIZE_BYTE (16 * KB)
 #define _PERF_L1_SIZE_BYTE (64 * KB)
-#define _PERF_L2_SIZE_BYTE (512 * KB)
-#define _PERF_L3_SIZE_BYTE (2 * MB)
+#define _PERF_L2_SIZE_BYTE (1 * MB)
+#define _PERF_L3_SIZE_BYTE (6 * MB)
+#define _PERF_MEM_SIZE_BYTE (1024 * MB)
 #define _PERF_L1_NUM_WAYS 4
-#define _PERF_SET_SIZE_BYTE (_PERF_L1_SIZE_BYTE / _PERF_L1_NUM_WAYS)
+#define _PERF_L1_NUM_SETS 256
+#define _PERF_L2_NUM_SLICES 4
+// #define _PERF_L2_NUM_SETS 512
+
+#define _PERF_ADDR_STRIDE_L1_SAME_BANK _PERF_CACHELINE_SIZE_BYTE
+#define _PERF_ADDR_STRIDE_L1_SAME_SET (_PERF_L1_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_L2_SAME_SLICE (_PERF_L2_NUM_SLICES * _PERF_CACHELINE_SIZE_BYTE)
+// #define _PERF_ADDR_STRIDE_L2_SAME_SET (_PERF_L2_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_NEXT_PAGE (_PERF_PAGE_SIZE_BYTE)
 
 // probe const
 #define _PERF_BLACKHOLE _PERF_TEST_ADDR_BASE
@@ -42,8 +52,9 @@ struct perf
     uint64_t cycle;
     uint64_t instrcnt;
 };
-
 extern struct perf perf;
+
+extern uint64_t _perf_g_total_samples;
 
 // common perf tools
 extern void _perf_start_timer();
@@ -53,11 +64,15 @@ extern void _perf_calibrate();
 extern void _perf_blackhole(uint64_t value);
 
 // latency test
-extern uint64_t setup_latency_test_linklist(uint64_t base_addr, uint64_t end_addr, uint64_t step);
-extern uint64_t read_latency_test_linklist(uint64_t base_addr, uint64_t num_valid_node);
+extern uint64_t setup_pointer_tracing_linklist(uint64_t base_addr, uint64_t end_addr, uint64_t step);
+extern uint64_t read_pointer_tracing_linklist(uint64_t base_addr, uint64_t num_valid_node);
 extern void latency_test_warmup(uint64_t base_addr, uint64_t end_addr);
-extern void test_latency(uint64_t size, int iter);
-extern void test_mem_throughput(uint64_t iter);
-extern void test_mem_throughput_same_set(uint64_t iter);
+extern void test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv);
+extern void test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv);
+extern void test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv);
+extern void test_same_address_load_latency(int iter, int to_csv);
+
+extern void legacy_test_mem_throughput(uint64_t iter);
+extern void legacy_test_mem_throughput_same_set(uint64_t iter);
 
 #endif

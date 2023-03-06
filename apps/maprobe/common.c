@@ -1,6 +1,7 @@
 #include "maprobe.h"
 
 struct perf perf;
+uint64_t _perf_g_total_samples = 0;
 
 void _perf_start_timer()
 {
