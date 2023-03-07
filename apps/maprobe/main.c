@@ -199,6 +199,7 @@ void legacy_latency_throughput_test()
 
 int main()
 {
+    matrix_print_example();
     latency_test_example();
     typical_latency_test();
     // pointer_tracing_graph();

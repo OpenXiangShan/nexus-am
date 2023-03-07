@@ -6,6 +6,7 @@
 #include <klib.h>
 #include <csr.h>
 #include "bitutils.h"
+#include "resultmat.h"
 
 // config
 // #define PERF_SIM // probe run in simulatior, diaable perf counters
@@ -72,6 +73,8 @@ extern void test_linear_access_latency(uint64_t size, uint64_t step, int iter, i
 extern void test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv);
 extern void test_same_address_load_latency(int iter, int to_csv);
 extern void test_read_after_write_latency(int iter, int to_csv);
+
+// bandwidth test
 extern void test_l1_load_bandwidth(uint64_t size, int iter, int to_csv);
 extern void test_l1_store_bandwidth(uint64_t size, int iter, int to_csv);
 extern void test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv);
