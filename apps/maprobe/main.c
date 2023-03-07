@@ -199,7 +199,11 @@ void legacy_latency_throughput_test()
 
 int main()
 {
-    matrix_print_example();
+    generate_linear_access_latency_matrix();
+    generate_pointer_tracing_latency_matrix();
+    generate_random_access_latency_matrix();
+
+    // matrix_print_example();
     latency_test_example();
     typical_latency_test();
     // pointer_tracing_graph();
