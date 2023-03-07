@@ -1,6 +1,6 @@
 #include "maprobe.h"
 
-void test_l1_load_bandwidth(uint64_t size, int iter, int to_csv)
+float test_l1_load_bandwidth(uint64_t size, int iter, int to_csv)
 {
     // printf("stride %d linear access latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -23,17 +23,19 @@ void test_l1_load_bandwidth(uint64_t size, int iter, int to_csv)
     _perf_end_timer();
     // _perf_print_timer();
     uint64_t total_access = size / _PERF_CACHELINE_SIZE_BYTE * 8 * iter;
+    float bandwidth = total_access * 8 * BYTE / (float)perf.cycle;
     if (to_csv) {
         printf("%ld, %f, %d, %ld, %ld\n", size, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
     } else {
         printf("range %ldKB (%d iters) dcache linear (8Byte) read, latency %f, throughput %f B/cycle (%ld samples, %ld cycles), stride %dB\n", 
-            size/KB, iter, (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, 8
+            size/KB, iter, (float)perf.cycle / total_access, bandwidth, total_access, perf.cycle, 8
         );
     }
     _perf_g_total_samples += total_access;
+    return bandwidth;
 }
 
-void test_l1_store_bandwidth(uint64_t size, int iter, int to_csv)
+float test_l1_store_bandwidth(uint64_t size, int iter, int to_csv)
 {
     // printf("stride %d linear access latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -56,17 +58,19 @@ void test_l1_store_bandwidth(uint64_t size, int iter, int to_csv)
     _perf_end_timer();
     // _perf_print_timer();
     uint64_t total_access = size / _PERF_CACHELINE_SIZE_BYTE * 8 * iter;
+    float bandwidth = total_access * 8 * BYTE / (float)perf.cycle;
     if (to_csv) {
         printf("%ld, %f, %d, %ld, %ld\n", size, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
     } else {
         printf("range %ldKB (%d iters) dcache linear (8Byte) store latency %f, throughput %f B/cycle (%ld samples, %ld cycles), stride %dB\n", 
-            size/KB, iter, (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, 8
+            size/KB, iter, (float)perf.cycle / total_access, bandwidth, total_access, perf.cycle, 8
         );
     }
     _perf_g_total_samples += total_access;
+    return bandwidth;
 }
 
-void test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv)
+float test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv)
 {
     // printf("stride %d linear access latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -82,6 +86,7 @@ void test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv)
     _perf_end_timer();
     // _perf_print_timer();
     uint64_t total_access = size / _PERF_CACHELINE_SIZE_BYTE * iter;
+    float bandwidth = total_access * _PERF_CACHELINE_SIZE_BYTE / (float)perf.cycle;
     if (to_csv) {
         printf("%ld, %f, %d, %ld, %ld\n", size, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
     } else {
@@ -90,4 +95,5 @@ void test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv)
         );
     }
     _perf_g_total_samples += total_access;
+    return bandwidth;
 }

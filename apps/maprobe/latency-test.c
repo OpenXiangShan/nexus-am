@@ -42,7 +42,7 @@ void latency_test_warmup(uint64_t base_addr, uint64_t end_addr)
     setup_pointer_tracing_linklist(base_addr, end_addr, _PERF_CACHELINE_SIZE_BYTE);
 }
 
-void test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv)
+float test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv)
 {
     // printf("pointer tracing latency test\n");
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -59,19 +59,21 @@ void test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv)
     }
     _perf_end_timer();
     // _perf_print_timer();
+    float acpa = (float)perf.cycle / total_node; // average cycle per access
     if (to_csv) {
-        printf("%ld, %f, %d, %ld, %ld\n", size, (float)perf.cycle / total_node, iter, total_node, perf.cycle);
+        printf("%ld, %f, %d, %ld, %ld\n", size, acpa, iter, total_node, perf.cycle);
     } else {
         printf("range %ldKB (%d iters) pointer tracing read latency %f, throughput %f B/cycle (%ld samples, %ld cycles)\n",
-            size/KB, iter, (float)perf.cycle / total_node, total_node * 8 * BYTE / (float)perf.cycle, total_node, perf.cycle
+            size/KB, iter, acpa, total_node * 8 * BYTE / (float)perf.cycle, total_node, perf.cycle
         );
     }
 
     _perf_blackhole(result);
     _perf_g_total_samples += total_node;
+    return acpa;
 }
 
-void test_same_address_load_latency(int iter, int to_csv)
+float test_same_address_load_latency(int iter, int to_csv)
 {
     // printf("same address load latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -86,19 +88,21 @@ void test_same_address_load_latency(int iter, int to_csv)
     _perf_end_timer();
     // _perf_print_timer();
     uint64_t total_access = iter;
+    float acpa = (float)perf.cycle / total_access; // average cycle per access
     if (to_csv) {
-        printf("%ld, %f, %d, %ld, %ld\n", 0, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
+        printf("%ld, %f, %d, %ld, %ld\n", 0, acpa, iter, total_access, perf.cycle);
     } else {
         printf("same address read latency %f, throughput %f B/cycle (%ld samples, %ld cycles)\n", 
-            (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle
+            acpa, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle
         );
     }
 
     _perf_blackhole(result);
     _perf_g_total_samples += total_access;
+    return acpa;
 }
 
-void test_read_after_write_latency(int iter, int to_csv)
+float test_read_after_write_latency(int iter, int to_csv)
 {
     // printf("same address store-load latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -114,19 +118,21 @@ void test_read_after_write_latency(int iter, int to_csv)
     _perf_end_timer();
     // _perf_print_timer();
     uint64_t total_access = iter;
+    float acpa = (float)perf.cycle / total_access; // average cycle per access
     if (to_csv) {
-        printf("%ld, %f, %d, %ld, %ld\n", 0, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
+        printf("%ld, %f, %d, %ld, %ld\n", 0, acpa, iter, total_access, perf.cycle);
     } else {
         printf("read after write latency %f, throughput %f B/cycle (%ld samples, %ld cycles)\n", 
-            (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle
+            acpa, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle
         );
     }
 
     _perf_blackhole(result);
     _perf_g_total_samples += total_access;
+    return acpa;
 }
 
-void test_linear_access_latency_simple(uint64_t size, uint64_t step, int iter, int to_csv)
+float test_linear_access_latency_simple(uint64_t size, uint64_t step, int iter, int to_csv)
 {
     // printf("stride %d linear access latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -145,19 +151,21 @@ void test_linear_access_latency_simple(uint64_t size, uint64_t step, int iter, i
     _perf_end_timer();
     // _perf_print_timer();
     uint64_t total_access = num_access * iter;
+    float acpa = (float)perf.cycle / total_access; // average cycle per access
     if (to_csv) {
-        printf("%ld, %f, %d, %ld, %ld\n", size, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
+        printf("%ld, %f, %d, %ld, %ld\n", size, acpa, iter, total_access, perf.cycle);
     } else {
         printf("range %ldKB (%d iters) simple linear read latency %f, throughput %f B/cycle (%ld samples, %ld cycles), stride %dB\n", 
-            size/KB, iter, (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, step
+            size/KB, iter, acpa, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, step
         );
     }
 
     _perf_blackhole(result);
     _perf_g_total_samples += total_access;
+    return acpa;
 }
 
-void test_linear_access_latency_batch8(uint64_t size, uint64_t step, int iter, int to_csv)
+float test_linear_access_latency_batch8(uint64_t size, uint64_t step, int iter, int to_csv)
 {
     // printf("stride %d linear access latency test\n", step);
     // printf("range (B), read latency, iters, samples, cycles\n");
@@ -203,24 +211,26 @@ void test_linear_access_latency_batch8(uint64_t size, uint64_t step, int iter, i
     _perf_end_timer();
     // _perf_print_timer();
     uint64_t total_access = num_access * iter;
+    float acpa = (float)perf.cycle / total_access; // average cycle per access
     if (to_csv) {
-        printf("%ld, %f, %d, %ld, %ld\n", size, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
+        printf("%ld, %f, %d, %ld, %ld\n", size, acpa, iter, total_access, perf.cycle);
     } else {
         printf("range %ldKB (%d iters) batch(8) linear read latency %f, throughput %f B/cycle (%ld samples, %ld cycles), stride %dB\n", 
-            size/KB, iter, (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, step
+            size/KB, iter, acpa, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, step
         );
     }
 
     _perf_blackhole(result);
     _perf_g_total_samples += total_access;
+    return acpa;
 }
 
-void test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv)
+float test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv)
 {
-    test_linear_access_latency_batch8(size, step, iter, to_csv);
+    return test_linear_access_latency_batch8(size, step, iter, to_csv);
 }
 
-void test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv)
+float test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv)
 {
     // printf("align %d random access (cache line) latency test, %s\n",
     //     test_align, pregen_addr ? "use pregen addr array" : "gen rand addr at run time"
@@ -255,17 +265,19 @@ void test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64
     }
     // _perf_print_timer();
     uint64_t total_access = num_access * iter;
+    float acpa = (float)perf.cycle / total_access; // average cycle per access
     if (to_csv) {
-        printf("%ld, %f, %d, %ld, %ld\n", test_range, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
+        printf("%ld, %f, %d, %ld, %ld\n", test_range, acpa, iter, total_access, perf.cycle);
     } else {
         printf("range %ldKB, access cover %ldKB (%d iters) random read latency %f, throughput %f B/cycle (%ld samples, %ld cycles), align %ldB, %s\n", 
-            test_range/KB, total_access*8*_PERF_CACHELINE_SIZE_BYTE/KB, iter, (float)perf.cycle / (total_access), total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, test_align,
+            test_range/KB, total_access*8*_PERF_CACHELINE_SIZE_BYTE/KB, iter, acpa, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, test_align,
             pregen_addr ? "pregen addr" : "runtime addr"
         );
     }
 
     _perf_blackhole(result);
     _perf_g_total_samples += total_access;
+    return acpa;
 }
 
 void legacy_test_mem_throughput(uint64_t iter)

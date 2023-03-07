@@ -68,16 +68,16 @@ extern void _perf_blackhole(uint64_t value);
 extern uint64_t setup_pointer_tracing_linklist(uint64_t base_addr, uint64_t end_addr, uint64_t step);
 extern uint64_t read_pointer_tracing_linklist(uint64_t base_addr, uint64_t num_valid_node);
 extern void latency_test_warmup(uint64_t base_addr, uint64_t end_addr);
-extern void test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv);
-extern void test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv);
-extern void test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv);
-extern void test_same_address_load_latency(int iter, int to_csv);
-extern void test_read_after_write_latency(int iter, int to_csv);
+extern float test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv);
+extern float test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv);
+extern float test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv);
+extern float test_same_address_load_latency(int iter, int to_csv);
+extern float test_read_after_write_latency(int iter, int to_csv);
 
 // bandwidth test
-extern void test_l1_load_bandwidth(uint64_t size, int iter, int to_csv);
-extern void test_l1_store_bandwidth(uint64_t size, int iter, int to_csv);
-extern void test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv);
+extern float test_l1_load_bandwidth(uint64_t size, int iter, int to_csv);
+extern float test_l1_store_bandwidth(uint64_t size, int iter, int to_csv);
+extern float test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv);
 
 extern void legacy_test_mem_throughput(uint64_t iter);
 extern void legacy_test_mem_throughput_same_set(uint64_t iter);
