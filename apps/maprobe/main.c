@@ -110,10 +110,25 @@ void typical_memory_disambiuation_test_set()
     // more to be added
 }
 
+void typical_l1_access_test_set()
+{
+    printf("------------- typical dcache access pattern test set -------------\n");
+    printf("ideal load bandwidth:\n");
+    test_l1_load_bandwidth(_PERF_L1_SIZE_BYTE, 2, 0);
+    test_l1_load_bandwidth(_PERF_L1_SIZE_BYTE, 10, 0);
+    printf("ideal store bandwidth:\n");
+    test_l1_store_bandwidth(_PERF_L1_SIZE_BYTE, 2, 0);
+    test_l1_store_bandwidth(_PERF_L1_SIZE_BYTE, 10, 0);
+    printf("ideal write combine buffer bandwidth:\n");
+    test_l1_store_wcb_bandwidth(_PERF_L1_SIZE_BYTE, 2, 0);
+    test_l1_store_wcb_bandwidth(_PERF_L1_SIZE_BYTE, 5, 0);
+}
+
 // typical latency test for fast regression
 void typical_latency_test()
 {
     _perf_g_total_samples = 0;
+    typical_l1_access_test_set();
     typical_linear_load_test_set();
     typical_random_load_test_set();
     typical_pointer_tracing_load_test_set();
@@ -144,7 +159,14 @@ void latency_test_example()
 {
     _perf_calibrate();
     printf("latency test example:\n");
+    test_l1_load_bandwidth(4*KB, 5, 0);
+    test_l1_load_bandwidth(4*KB, 5, 0);
+    test_l1_store_bandwidth(4*KB, 5, 0);
+    test_l1_store_bandwidth(4*KB, 5, 0);
+    test_l1_store_wcb_bandwidth(8*KB, 5, 0);
+    test_l1_store_wcb_bandwidth(8*KB, 5, 0);
     test_pointer_tracing_latency(_PERF_PAGE_SIZE_BYTE, _PERF_CACHELINE_SIZE_BYTE, 5, 0);
+    test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, sizeof(uint64_t), 5, 0);
     test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, sizeof(uint64_t), 5, 0);
     test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, _PERF_CACHELINE_SIZE_BYTE, 5, 0);
     test_random_access_latency(4096, 1024*MB, _PERF_CACHELINE_SIZE_BYTE, 0, 1, 0);

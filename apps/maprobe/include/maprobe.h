@@ -72,6 +72,9 @@ extern void test_linear_access_latency(uint64_t size, uint64_t step, int iter, i
 extern void test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv);
 extern void test_same_address_load_latency(int iter, int to_csv);
 extern void test_read_after_write_latency(int iter, int to_csv);
+extern void test_l1_load_bandwidth(uint64_t size, int iter, int to_csv);
+extern void test_l1_store_bandwidth(uint64_t size, int iter, int to_csv);
+extern void test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv);
 
 extern void legacy_test_mem_throughput(uint64_t iter);
 extern void legacy_test_mem_throughput_same_set(uint64_t iter);
