@@ -6,8 +6,8 @@ uint64_t _perf_g_total_samples = 0;
 void _perf_start_timer()
 {
 #ifndef PERF_SIM
-    perf.cycle = csr_read(CSR_MCYCLE);
     perf.instrcnt = csr_read(CSR_MINSTRET);
+    perf.cycle = csr_read(CSR_MCYCLE);
 #endif
 }
 

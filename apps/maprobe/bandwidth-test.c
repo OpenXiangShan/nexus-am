@@ -91,7 +91,7 @@ float test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv)
         printf("%ld, %f, %d, %ld, %ld\n", size, (float)perf.cycle / total_access, iter, total_access, perf.cycle);
     } else {
         printf("range %ldKB (%d iters) dcache linear (8Byte) store latency %f, throughput %f B/cycle (L1-L2 %f B/cycle) (%ld samples, %ld cycles), stride %dB\n", 
-            size/KB, iter, (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access * _PERF_CACHELINE_SIZE_BYTE / (float)perf.cycle, total_access, perf.cycle, 8
+            size/KB, iter, (float)perf.cycle / total_access, total_access * 8 * BYTE / (float)perf.cycle, total_access * _PERF_CACHELINE_SIZE_BYTE / (float)perf.cycle, total_access, perf.cycle, _PERF_CACHELINE_SIZE_BYTE
         );
     }
     _perf_g_total_samples += total_access;

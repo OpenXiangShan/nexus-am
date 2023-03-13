@@ -122,6 +122,9 @@ void typical_l1_access_test_set()
     printf("ideal write combine buffer bandwidth:\n");
     test_l1_store_wcb_bandwidth(_PERF_L1_SIZE_BYTE, 2, 0);
     test_l1_store_wcb_bandwidth(_PERF_L1_SIZE_BYTE, 5, 0);
+    printf("replacement error penalty:\n");
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*32,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*32,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
 }
 
 // typical latency test for fast regression
@@ -169,11 +172,38 @@ void latency_test_example()
     test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, sizeof(uint64_t), 5, 0);
     test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, sizeof(uint64_t), 5, 0);
     test_linear_access_latency(_PERF_PAGE_SIZE_BYTE, _PERF_CACHELINE_SIZE_BYTE, 5, 0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*4,_PERF_ADDR_STRIDE_L1_SAME_SET,8,0);
     test_random_access_latency(4096, 1024*MB, _PERF_CACHELINE_SIZE_BYTE, 0, 1, 0);
     test_random_access_latency(4096, 1024*MB, _PERF_CACHELINE_SIZE_BYTE, 1, 1, 0);
     test_same_address_load_latency(1024, 0);
     test_read_after_write_latency(1024, 0);
     printf("total samples: %ld\n", _perf_g_total_samples);
+}
+
+void l2_l3_pressure_test()
+{
+    for (int i = 1; i < 16; i++) {
+        printf("ways accessed: %d\n", i);
+        test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L2_SAME_SET*i,_PERF_ADDR_STRIDE_L2_SAME_SET,64,0);
+        test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L2_SAME_SET*i,_PERF_ADDR_STRIDE_L2_SAME_SET,64,0);
+    }
+    for (int i = 16; i <= 512; i*=2) {
+        printf("ways accessed: %d\n", i);
+        // jump at i = 32
+        test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L2_SAME_SET*i,_PERF_ADDR_STRIDE_L2_SAME_SET,64,0);
+    }
+
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*32,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*32,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*64,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*64,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    // jump at i = 128
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*128,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*128,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*256,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*256,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*512,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
+    test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L1_SAME_SET*512,_PERF_ADDR_STRIDE_L1_SAME_SET,64,0);
 }
 
 void legacy_latency_throughput_test()
@@ -194,17 +224,23 @@ void legacy_latency_throughput_test()
     // test_pointer_tracing_latency(_PERF_L3_SIZE_BYTE, _PERF_CACHELINE_SIZE_BYTE,2, 0);
     // printf("MEM:\n");
     // test_pointer_tracing_latency(_PERF_L3_SIZE_BYTE*2, _PERF_CACHELINE_SIZE_BYTE,2, 0);
-    printf("total samples: %ld\n", _perf_g_total_samples);
+    printf("total sampl8es: %ld\n", _perf_g_total_samples);
 }
 
 int main()
 {
+    l2_l3_pressure_test();
+    return 0;
+    generate_replacement_test_matrix();
+
+    latency_test_example();
+
     generate_linear_access_latency_matrix();
     generate_pointer_tracing_latency_matrix();
     generate_random_access_latency_matrix();
+    generate_replacement_test_matrix();
 
     // matrix_print_example();
-    latency_test_example();
     typical_latency_test();
     // pointer_tracing_graph();
     // latency_test();

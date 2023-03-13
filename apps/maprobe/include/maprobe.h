@@ -31,13 +31,15 @@
 #define _PERF_MEM_SIZE_BYTE (1024 * MB)
 #define _PERF_L1_NUM_WAYS 4
 #define _PERF_L1_NUM_SETS 256
+#define _PERF_L2_NUM_WAYS 8
 #define _PERF_L2_NUM_SLICES 4
-// #define _PERF_L2_NUM_SETS 512
+#define _PERF_L2_NUM_SETS 512
 
 #define _PERF_ADDR_STRIDE_L1_SAME_BANK _PERF_CACHELINE_SIZE_BYTE
 #define _PERF_ADDR_STRIDE_L1_SAME_SET (_PERF_L1_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
 #define _PERF_ADDR_STRIDE_L2_SAME_SLICE (_PERF_L2_NUM_SLICES * _PERF_CACHELINE_SIZE_BYTE)
-// #define _PERF_ADDR_STRIDE_L2_SAME_SET (_PERF_L2_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_L1_SAME_SET (_PERF_L1_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_L2_SAME_SET (_PERF_L2_NUM_SLICES * _PERF_L2_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
 #define _PERF_ADDR_STRIDE_NEXT_PAGE (_PERF_PAGE_SIZE_BYTE)
 
 // probe const
@@ -70,6 +72,8 @@ extern uint64_t read_pointer_tracing_linklist(uint64_t base_addr, uint64_t num_v
 extern void latency_test_warmup(uint64_t base_addr, uint64_t end_addr);
 extern float test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv);
 extern float test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv);
+extern float test_linear_access_latency_simple(uint64_t size, uint64_t step, int iter, int to_csv);
+extern float test_linear_access_latency_batch8(uint64_t size, uint64_t step, int iter, int to_csv);
 extern float test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv);
 extern float test_same_address_load_latency(int iter, int to_csv);
 extern float test_read_after_write_latency(int iter, int to_csv);
@@ -85,6 +89,7 @@ extern float test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv);
 void generate_linear_access_latency_matrix();
 void generate_pointer_tracing_latency_matrix();
 void generate_random_access_latency_matrix();
+void generate_replacement_test_matrix();
 
 // legacy test
 extern void legacy_test_mem_throughput(uint64_t iter);
