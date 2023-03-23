@@ -362,7 +362,7 @@
 #if defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
 #define NUMBER_OF_RUNS		1000 /* Default number of runs, reduced for fast test */
 #else
-#define NUMBER_OF_RUNS		500000 /* Default number of runs */
+#define NUMBER_OF_RUNS		1000 /* Default number of runs */
 #endif
 #define PASS2
 
