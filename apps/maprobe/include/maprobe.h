@@ -87,6 +87,7 @@ extern float test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv);
 
 // key parameter matrix generate
 void generate_linear_access_latency_matrix();
+void generate_continuosly_access_latency_matrix();
 void generate_pointer_tracing_latency_matrix();
 void generate_random_access_latency_matrix();
 void generate_replacement_test_matrix();

@@ -381,6 +381,23 @@ void generate_linear_access_latency_matrix()
     print_float_result_matrix(&linear_access_latency_matrix_meta);
 }
 
+void generate_continuosly_access_latency_matrix()
+{
+#define CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB 14
+    // CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB 14: 14 cases in total, from 1KB to 8MB
+    DEFINE_FLOAT_RESULT_MATRIX(continuosly_access_latency,size_kb_pow2,CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB,iter,3);
+    FOR(x,CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB) { continuosly_access_latency_row_array[x] = x; }
+    FOR(x,3) { continuosly_access_latency_column_array[x] = x; }
+    for (int i = 0; i < CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB; i++) {
+        int warm_up_iter = i < 6 ? 4 : 1;
+        int test_iter = i < 6 ? 4 : 2;
+        continuosly_access_latency_result_array[i][0] = test_linear_access_latency((1<<i)*KB,8*BYTE,warm_up_iter,0); //warmup
+        continuosly_access_latency_result_array[i][1] = test_linear_access_latency((1<<i)*KB,8*BYTE,test_iter,0); //test
+        continuosly_access_latency_result_array[i][2] = test_linear_access_latency((1<<i)*KB,8*BYTE,test_iter,0); //test
+    }
+    print_float_result_matrix(&continuosly_access_latency_matrix_meta);
+}
+
 void generate_pointer_tracing_latency_matrix()
 {
 #define POINTER_CHASING_MATRIX_SIZE_MAX_POW2_KB 14

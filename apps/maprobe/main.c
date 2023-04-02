@@ -229,13 +229,10 @@ void legacy_latency_throughput_test()
 
 int main()
 {
-    l2_l3_pressure_test();
-    return 0;
-    generate_replacement_test_matrix();
-
     latency_test_example();
 
     generate_linear_access_latency_matrix();
+    generate_continuosly_access_latency_matrix();
     generate_pointer_tracing_latency_matrix();
     generate_random_access_latency_matrix();
     generate_replacement_test_matrix();
@@ -245,5 +242,7 @@ int main()
     // pointer_tracing_graph();
     // latency_test();
     // legacy_latency_throughput_test();
+    l2_l3_pressure_test();
     return 0;
+    // return 0;
 }
