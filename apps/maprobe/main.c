@@ -187,6 +187,8 @@ void latency_test_example()
 
 void l2_l3_pressure_test()
 {
+    _perf_calibrate();
+    printf("L2 and L3 same set pressure test:\n");
     for (int i = 1; i < 16; i++) {
         printf("ways accessed: %d\n", i);
         test_linear_access_latency_simple(_PERF_ADDR_STRIDE_L2_SAME_SET*i,_PERF_ADDR_STRIDE_L2_SAME_SET,64,0);
@@ -240,7 +242,7 @@ int main()
     generate_linear_access_latency_matrix(_PERF_CACHELINE_SIZE_BYTE);
     generate_pointer_tracing_latency_matrix(8*BYTE);
     generate_pointer_tracing_latency_matrix(_PERF_CACHELINE_SIZE_BYTE);
-    generate_random_access_latency_matrix();
+    // generate_random_access_latency_matrix();
     generate_replacement_test_matrix();
 
     // matrix_print_example();

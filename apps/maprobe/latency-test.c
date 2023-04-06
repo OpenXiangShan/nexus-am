@@ -322,6 +322,15 @@ float test_random_access_latency(uint64_t num_access, uint64_t test_range, uint6
     register uint64_t result = 0; 
     // _perf_print_timer();
 
+    uint64_t total_access = num_access * iter;
+    if (test_range > total_access*8*_PERF_CACHELINE_SIZE_BYTE) {
+        printf("total access size %ldKB less than test range %ldKB, ignored\n",
+            total_access*8*_PERF_CACHELINE_SIZE_BYTE/KB,
+            test_range/KB
+        );
+        return 0;
+    }
+
     // alloc memory for random access addr array and data
     assert(test_align >= 8 * BYTE);
     // assert(size >= test_align);
@@ -347,13 +356,12 @@ float test_random_access_latency(uint64_t num_access, uint64_t test_range, uint6
         _perf_end_timer();
     }
     // _perf_print_timer();
-    uint64_t total_access = num_access * iter;
     float acpa = (float)perf.cycle / total_access; // average cycle per access
     if (to_csv) {
         printf("%ld, %f, %d, %ld, %ld\n", test_range, acpa, iter, total_access, perf.cycle);
     } else {
-        printf("range %ldKB, access cover %ldKB (%d iters) random read latency %f, throughput %f B/cycle (%ld samples, %ld cycles), align %ldB, %s\n", 
-            test_range/KB, total_access*8*_PERF_CACHELINE_SIZE_BYTE/KB, iter, acpa, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, test_align,
+        printf("range %ldKB, access %ldKB (cover %ldKB) (%d iters) random read latency %f, throughput %f B/cycle (%ld samples, %ld cycles), align %ldB, %s\n", 
+            test_range/KB, total_access*8*BYTE/KB,  total_access*8*_PERF_CACHELINE_SIZE_BYTE/KB, iter, acpa, total_access * 8 * BYTE / (float)perf.cycle, total_access, perf.cycle, test_align,
             pregen_addr ? "pregen addr" : "runtime addr"
         );
     }
