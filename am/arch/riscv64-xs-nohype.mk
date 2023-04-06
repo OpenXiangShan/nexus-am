@@ -10,9 +10,9 @@ AM_SRCS := noop/isa/riscv/trm.c \
            nemu/isa/riscv/mtime.S \
            nemu/isa/riscv/vme.c \
            nemu/common/ioe.c \
-           noop/common/input.c \
+           dummy/input.c \
            noop/common/timer.c \
-           nemu/common/video.c \
+           dummy/video.c \
            dummy/audio.c \
            noop/isa/riscv/instr.c \
            xs/isa/riscv/mpe.c \
