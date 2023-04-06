@@ -80,6 +80,11 @@ void typical_random_load_test_set()
 void typical_pointer_tracing_load_test_set()
 {
     printf("------------- pointer tracing load test set -------------\n");
+    printf("dobule word by dobule word tracing:\n");
+    test_pointer_tracing_latency(_PERF_PAGE_SIZE_BYTE, 8*BYTE, 10, 0);
+    test_pointer_tracing_latency(_PERF_L1_SIZE_BYTE/2, 8*BYTE, 2, 0);
+    test_pointer_tracing_latency(_PERF_L1_SIZE_BYTE, 8*BYTE, 2, 0);
+    test_pointer_tracing_latency(_PERF_L2_SIZE_BYTE/2, 8*BYTE, 2, 0);
     printf("cacheline by cacheline tracing:\n");
     test_pointer_tracing_latency(_PERF_PAGE_SIZE_BYTE, _PERF_CACHELINE_SIZE_BYTE, 10, 0);
     test_pointer_tracing_latency(_PERF_L1_SIZE_BYTE/2, _PERF_CACHELINE_SIZE_BYTE, 2, 0);
@@ -231,9 +236,10 @@ int main()
 {
     latency_test_example();
 
-    generate_linear_access_latency_matrix();
-    generate_continuosly_access_latency_matrix();
-    generate_pointer_tracing_latency_matrix();
+    generate_linear_access_latency_matrix(8*BYTE);
+    generate_linear_access_latency_matrix(_PERF_CACHELINE_SIZE_BYTE);
+    generate_pointer_tracing_latency_matrix(8*BYTE);
+    generate_pointer_tracing_latency_matrix(_PERF_CACHELINE_SIZE_BYTE);
     generate_random_access_latency_matrix();
     generate_replacement_test_matrix();
 

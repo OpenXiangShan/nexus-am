@@ -169,7 +169,6 @@ float test_linear_access_latency_batch8(uint64_t size, uint64_t step, int iter, 
     num_access += num_access % 8 ? 8 - num_access % 8 : 0;
     assert(num_access >= 8);
     // prepare access offset
-    uint64_t address_offset_0 = 0;
     register uint64_t address_offset_1 = step * 1;
     register uint64_t address_offset_2 = step * 2;
     register uint64_t address_offset_3 = step * 3;
@@ -184,23 +183,52 @@ float test_linear_access_latency_batch8(uint64_t size, uint64_t step, int iter, 
     for (int i = 0; i < iter; i++) {
         uint64_t address = _PERF_TEST_ADDR_BASE;
         for (int j = 0; j < num_access; j += 8) {
-            register uint64_t access_addr_0 = address + address_offset_0;
-            register uint64_t access_addr_1 = address + address_offset_1;
-            register uint64_t access_addr_2 = address + address_offset_2;
-            register uint64_t access_addr_3 = address + address_offset_3;
-            register uint64_t access_addr_4 = address + address_offset_4;
-            register uint64_t access_addr_5 = address + address_offset_5;
-            register uint64_t access_addr_6 = address + address_offset_6;
-            register uint64_t access_addr_7 = address + address_offset_7;
+            __asm__ volatile (
+                "mv a1, %[addr]\n"
+                "add a2, %[addr], %[offset1]\n"
+                "add a3, %[addr], %[offset2]\n"
+                "add a4, %[addr], %[offset3]\n"
+                "add a5, %[addr], %[offset4]\n"
+                "add t0, %[addr], %[offset5]\n"
+                "add t1, %[addr], %[offset6]\n"
+                "add t2, %[addr], %[offset7]\n"
+                "ld a0, 0(a1)\n" 
+                "ld a0, 0(a2)\n" 
+                "ld a0, 0(a3)\n" 
+                "ld a0, 0(a4)\n" 
+                "ld a0, 0(a5)\n" 
+                "ld a0, 0(t0)\n" 
+                "ld a0, 0(t1)\n" 
+                "ld a0, 0(t2)\n" 
+                :: 
+                [offset1] "r"(address_offset_1),
+                [offset2] "r"(address_offset_2),
+                [offset3] "r"(address_offset_3),
+                [offset4] "r"(address_offset_4),
+                [offset5] "r"(address_offset_5),
+                [offset6] "r"(address_offset_6),
+                [offset7] "r"(address_offset_7),
+                [addr] "r"(address) 
+                : "a0", "a1", "a2", "a3", "a4", "a5", "t0", "t1", "t2", "t3"
+            );
             address += address_offset_8;
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_0) : "a0");
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_1) : "a0");
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_2) : "a0");
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_3) : "a0");
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_4) : "a0");
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_5) : "a0");
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_6) : "a0");
-            __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_7) : "a0");
+            // register uint64_t access_addr_0 = address + address_offset_0;
+            // register uint64_t access_addr_1 = address + address_offset_1;
+            // register uint64_t access_addr_2 = address + address_offset_2;
+            // register uint64_t access_addr_3 = address + address_offset_3;
+            // register uint64_t access_addr_4 = address + address_offset_4;
+            // register uint64_t access_addr_5 = address + address_offset_5;
+            // register uint64_t access_addr_6 = address + address_offset_6;
+            // register uint64_t access_addr_7 = address + address_offset_7;
+            // address += address_offset_8;
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_0) : "a0");
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_1) : "a0");
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_2) : "a0");
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_3) : "a0");
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_4) : "a0");
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_5) : "a0");
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_6) : "a0");
+            // __asm__ volatile ("ld a0, 0(%[addr])\n" :: [addr] "r"(access_addr_7) : "a0");
         }
     }
     _perf_end_timer();
@@ -364,8 +392,9 @@ void legacy_test_mem_throughput_same_set(uint64_t iter)
     printf("mem band width %f B/cycle (%d samples)\n", (float)iter * _PERF_CACHELINE_SIZE_BYTE / perf.cycle, iter);
 }
 
-void generate_linear_access_latency_matrix()
+void generate_linear_access_latency_matrix(uint64_t step)
 {
+    // step can be _PERF_CACHELINE_SIZE_BYTE or 8*BYTE
 #define LINEAR_ACCESS_MATRIX_SIZE_MAX_POW2_KB 14
     // LINEAR_ACCESS_MATRIX_SIZE_MAX_POW2_KB 14: 14 cases in total, from 1KB to 8MB
     DEFINE_FLOAT_RESULT_MATRIX(linear_access_latency,size_kb_pow2,LINEAR_ACCESS_MATRIX_SIZE_MAX_POW2_KB,iter,3);
@@ -374,32 +403,17 @@ void generate_linear_access_latency_matrix()
     for (int i = 0; i < LINEAR_ACCESS_MATRIX_SIZE_MAX_POW2_KB; i++) {
         int warm_up_iter = i < 6 ? 4 : 1;
         int test_iter = i < 6 ? 4 : 2;
-        linear_access_latency_result_array[i][0] = test_linear_access_latency((1<<i)*KB,_PERF_CACHELINE_SIZE_BYTE,warm_up_iter,0); //warmup
-        linear_access_latency_result_array[i][1] = test_linear_access_latency((1<<i)*KB,_PERF_CACHELINE_SIZE_BYTE,test_iter,0); //test
-        linear_access_latency_result_array[i][2] = test_linear_access_latency((1<<i)*KB,_PERF_CACHELINE_SIZE_BYTE,test_iter,0); //test
+        linear_access_latency_result_array[i][0] = test_linear_access_latency((1<<i)*KB,step,warm_up_iter,0); //warmup
+        linear_access_latency_result_array[i][1] = test_linear_access_latency((1<<i)*KB,step,test_iter,0); //test
+        linear_access_latency_result_array[i][2] = test_linear_access_latency((1<<i)*KB,step,test_iter,0); //test
     }
+    printf("[test step %ld]\n", step);
     print_float_result_matrix(&linear_access_latency_matrix_meta);
 }
 
-void generate_continuosly_access_latency_matrix()
+void generate_pointer_tracing_latency_matrix(uint64_t step)
 {
-#define CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB 14
-    // CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB 14: 14 cases in total, from 1KB to 8MB
-    DEFINE_FLOAT_RESULT_MATRIX(continuosly_access_latency,size_kb_pow2,CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB,iter,3);
-    FOR(x,CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB) { continuosly_access_latency_row_array[x] = x; }
-    FOR(x,3) { continuosly_access_latency_column_array[x] = x; }
-    for (int i = 0; i < CONTINUOUSLY_ACCESS_MATRIX_SIZE_MAX_POW2_KB; i++) {
-        int warm_up_iter = i < 6 ? 4 : 1;
-        int test_iter = i < 6 ? 4 : 2;
-        continuosly_access_latency_result_array[i][0] = test_linear_access_latency((1<<i)*KB,8*BYTE,warm_up_iter,0); //warmup
-        continuosly_access_latency_result_array[i][1] = test_linear_access_latency((1<<i)*KB,8*BYTE,test_iter,0); //test
-        continuosly_access_latency_result_array[i][2] = test_linear_access_latency((1<<i)*KB,8*BYTE,test_iter,0); //test
-    }
-    print_float_result_matrix(&continuosly_access_latency_matrix_meta);
-}
-
-void generate_pointer_tracing_latency_matrix()
-{
+    // step can be _PERF_CACHELINE_SIZE_BYTE or 8*BYTE
 #define POINTER_CHASING_MATRIX_SIZE_MAX_POW2_KB 14
     // POINTER_CHASING_MATRIX_SIZE_MAX_POW2_KB 14: 14 cases in total, from 1KB to 8MB
     DEFINE_FLOAT_RESULT_MATRIX(pointer_tracing_latency,size_kb_pow2,POINTER_CHASING_MATRIX_SIZE_MAX_POW2_KB,iter,3);
@@ -408,10 +422,11 @@ void generate_pointer_tracing_latency_matrix()
     for (int i = 0; i < POINTER_CHASING_MATRIX_SIZE_MAX_POW2_KB; i++) {
         int warm_up_iter = i < 6 ? 4 : 1;
         int test_iter = i < 6 ? 4 : 2;
-        pointer_tracing_latency_result_array[i][0] = test_pointer_tracing_latency((1<<i)*KB,_PERF_CACHELINE_SIZE_BYTE,warm_up_iter,0); //warmup
-        pointer_tracing_latency_result_array[i][1] = test_pointer_tracing_latency((1<<i)*KB,_PERF_CACHELINE_SIZE_BYTE,test_iter,0); //test
-        pointer_tracing_latency_result_array[i][2] = test_pointer_tracing_latency((1<<i)*KB,_PERF_CACHELINE_SIZE_BYTE,test_iter,0); //test
+        pointer_tracing_latency_result_array[i][0] = test_pointer_tracing_latency((1<<i)*KB,step,warm_up_iter,0); //warmup
+        pointer_tracing_latency_result_array[i][1] = test_pointer_tracing_latency((1<<i)*KB,step,test_iter,0); //test
+        pointer_tracing_latency_result_array[i][2] = test_pointer_tracing_latency((1<<i)*KB,step,test_iter,0); //test
     }
+    printf("[test step %ld]\n", step);
     print_float_result_matrix(&pointer_tracing_latency_matrix_meta);
 }
 
