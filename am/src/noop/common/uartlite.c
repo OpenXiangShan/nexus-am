@@ -1,6 +1,6 @@
 #include <riscv.h>
 
-#define UARTLITE_MMIO 0x40600000
+#define UARTLITE_MMIO 0x30000000
 #define UARTLITE_RX_FIFO  0x0
 #define UARTLITE_TX_FIFO  0x4
 #define UARTLITE_STAT_REG 0x8
