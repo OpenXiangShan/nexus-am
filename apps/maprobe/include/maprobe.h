@@ -5,6 +5,11 @@
 
 #include <klib.h>
 #include <csr.h>
+#include "bitutils.h"
+#include "resultmat.h"
+
+// config
+// #define PERF_SIM // probe run in simulatior, diaable perf counters
 
 // perf const
 #define BYTE (1)
@@ -13,15 +18,29 @@
 #define GB (1024*MB)
 
 // platform dependent const
-// #define _PERF_TEST_ADDR_BASE 0x80400000
-#define _PERF_TEST_ADDR_BASE 0x2000400000
+#ifndef _PERF_TEST_ADDR_BASE
+#define _PERF_TEST_ADDR_BASE 0x80400000
+// #define _PERF_TEST_ADDR_BASE 0x2000400000
+#endif
 #define _PERF_CACHELINE_SIZE_BYTE (64 * BYTE)
-#define _PERF_L1_NOALIAS_SIZE_BYTE (32 * KB)
-#define _PERF_L1_SIZE_BYTE (128 * KB)
-#define _PERF_L2_SIZE_BYTE (512 * KB)
-#define _PERF_L3_SIZE_BYTE (2 * MB)
-#define _PERF_L1_NUM_WAYS 8
-#define _PERF_SET_SIZE_BYTE (_PERF_L1_SIZE_BYTE / _PERF_L1_NUM_WAYS)
+#define _PERF_PAGE_SIZE_BYTE (4 * KB)
+#define _PERF_L1_NOALIAS_SIZE_BYTE (16 * KB)
+#define _PERF_L1_SIZE_BYTE (64 * KB)
+#define _PERF_L2_SIZE_BYTE (1 * MB)
+#define _PERF_L3_SIZE_BYTE (6 * MB)
+#define _PERF_MEM_SIZE_BYTE (1024 * MB)
+#define _PERF_L1_NUM_WAYS 4
+#define _PERF_L1_NUM_SETS 256
+#define _PERF_L2_NUM_WAYS 8
+#define _PERF_L2_NUM_SLICES 4
+#define _PERF_L2_NUM_SETS 512
+
+#define _PERF_ADDR_STRIDE_L1_SAME_BANK _PERF_CACHELINE_SIZE_BYTE
+#define _PERF_ADDR_STRIDE_L1_SAME_SET (_PERF_L1_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_L2_SAME_SLICE (_PERF_L2_NUM_SLICES * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_L1_SAME_SET (_PERF_L1_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_L2_SAME_SET (_PERF_L2_NUM_SLICES * _PERF_L2_NUM_SETS * _PERF_CACHELINE_SIZE_BYTE)
+#define _PERF_ADDR_STRIDE_NEXT_PAGE (_PERF_PAGE_SIZE_BYTE)
 
 // probe const
 #define _PERF_BLACKHOLE _PERF_TEST_ADDR_BASE
@@ -29,128 +48,51 @@
 struct perf
 {
     // const to be calibrated at run time
-    uint64_t csr_read_cycle; //# of cycles to read mcycle
+    uint64_t csr_read_cycle; // # of cycles to read mcycle
     uint64_t csr_read_ninst; // # of inst needed to read minstret
 
     // timer
     uint64_t cycle;
     uint64_t instrcnt;
-} perf;
+};
+extern struct perf perf;
 
-void _perf_start_timer()
-{
-    perf.cycle = csr_read(CSR_MCYCLE);
-    perf.instrcnt = csr_read(CSR_MINSTRET);
-}
+extern uint64_t _perf_g_total_samples;
 
-void _perf_end_timer()
-{
-    perf.cycle = csr_read(CSR_MCYCLE) - perf.cycle;
-    perf.instrcnt = csr_read(CSR_MINSTRET) - perf.instrcnt;
-}
+// common perf tools
+extern void _perf_start_timer();
+extern void _perf_end_timer();
+extern void _perf_print_timer();
+extern void _perf_calibrate();
+extern void _perf_blackhole(uint64_t value);
 
-void _perf_print_timer()
-{
-    printf("cycle %d inst %d ipc %lf\n", perf.cycle, perf.instrcnt, (float)perf.instrcnt/perf.cycle);
-}
+// latency test
+extern uint64_t setup_pointer_tracing_linklist(uint64_t base_addr, uint64_t end_addr, uint64_t step);
+extern uint64_t read_pointer_tracing_linklist(uint64_t base_addr, uint64_t num_valid_node);
+extern void latency_test_warmup(uint64_t base_addr, uint64_t end_addr);
+extern float test_pointer_tracing_latency(uint64_t size, int step, int iter, int to_csv);
+extern float test_linear_access_latency(uint64_t size, uint64_t step, int iter, int to_csv);
+extern float test_linear_access_latency_simple(uint64_t size, uint64_t step, int iter, int to_csv);
+extern float test_linear_access_latency_batch8(uint64_t size, uint64_t step, int iter, int to_csv);
+extern float test_random_access_latency(uint64_t num_access, uint64_t test_range, uint64_t test_align, int pregen_addr, int iter, int to_csv);
+extern float test_same_address_load_latency(int iter, int to_csv);
+extern float test_read_after_write_latency(int iter, int to_csv);
+extern float test_linear_write_latency(uint64_t size, uint64_t step, int iter, int to_csv);
 
-void _perf_calibrate()
-{
-    // csr read delay
-    uint64_t cycle_1 = csr_read(CSR_MCYCLE);
-    uint64_t cycle_2 = csr_read(CSR_MCYCLE);
-    perf.csr_read_cycle = cycle_2-cycle_1;
-    printf("perf_calibrate: csr_read_cycle %d\n", perf.csr_read_cycle);
 
-    // csr read inst cost
-    uint64_t inst_1 = csr_read(CSR_MINSTRET);
-    uint64_t inst_2 = csr_read(CSR_MINSTRET);
-    perf.csr_read_ninst = inst_2-inst_1;
-    printf("perf_calibrate: csr_read_ninst %d\n", perf.csr_read_ninst);
-}
+// bandwidth test
+extern float test_l1_load_bandwidth(uint64_t size, int iter, int to_csv);
+extern float test_l1_store_bandwidth(uint64_t size, int iter, int to_csv);
+extern float test_l1_store_wcb_bandwidth(uint64_t size, int iter, int to_csv);
 
-void _perf_blackhole(uint64_t value)
-{
-    *(uint64_t*) _PERF_BLACKHOLE = value;
-}
+// key parameter matrix generate
+void generate_linear_access_latency_matrix(uint64_t step);
+void generate_pointer_tracing_latency_matrix(uint64_t step);
+void generate_random_access_latency_matrix();
+void generate_replacement_test_matrix();
 
-uint64_t setup_latency_test_linklist(uint64_t base_addr, uint64_t end_addr, uint64_t step)
-{
-    uint64_t num_valid_node = 0;
-    assert(step % 8 == 0);
-    assert(step >= 8);
-    for (uint64_t cur_addr = base_addr; cur_addr < end_addr;) {
-        uint64_t next_addr = cur_addr + step;
-        *((uint64_t*)cur_addr) = next_addr;
-        cur_addr = next_addr;
-        num_valid_node++;
-    }
-    return num_valid_node;
-}
-
-uint64_t read_latency_test_linklist(uint64_t base_addr, uint64_t num_valid_node)
-{
-    uint64_t cur_addr = base_addr;
-    for (int i = 0; i < num_valid_node; i++) {
-        cur_addr = (*(uint64_t*)cur_addr);
-    }
-    return cur_addr;
-}
-
-void warmup(uint64_t base_addr, uint64_t end_addr)
-{
-    setup_latency_test_linklist(base_addr, end_addr, _PERF_CACHELINE_SIZE_BYTE);
-}
-
-void test_latency(uint64_t size, int iter)
-{
-    volatile uint64_t result = 0; // make sure compiler will not opt read_latency_test_linklist
-    printf("range 0x%xB (%d iters) latency test\n", size, iter);
-    _perf_start_timer();
-    uint64_t nnode = setup_latency_test_linklist(_PERF_TEST_ADDR_BASE, _PERF_TEST_ADDR_BASE + size, _PERF_CACHELINE_SIZE_BYTE);
-    _perf_end_timer();
-    uint64_t total_node = nnode * iter;
-    // _perf_print_timer();
-
-    _perf_start_timer();
-    for (int i = 0; i < iter; i++) {
-        result += read_latency_test_linklist(_PERF_TEST_ADDR_BASE, nnode);
-    }
-    _perf_end_timer();
-    // _perf_print_timer();
-    printf("range 0x%xB (%d intrs) read latency %f (%d samples)\n", size, iter, (float)perf.cycle / total_node, total_node);
-
-    _perf_blackhole(result);
-}
-
-void test_mem_throughput(uint64_t iter)
-{
-    uint64_t remain = iter;
-    uint64_t result = 0;
-    uint64_t access_addr = _PERF_TEST_ADDR_BASE;
-    _perf_start_timer();
-    while (remain--) {
-        result += *(uint64_t*) access_addr;
-        access_addr += _PERF_CACHELINE_SIZE_BYTE;
-    }
-    _perf_end_timer();
-    *(uint64_t*) _PERF_BLACKHOLE = result;
-    printf("mem band width %f B/cycle (%d samples)\n", (float)iter * _PERF_CACHELINE_SIZE_BYTE / perf.cycle, iter);
-}
-
-void test_mem_throughput_same_set(uint64_t iter)
-{
-    uint64_t remain = iter;
-    uint64_t result = 0;
-    uint64_t access_addr = _PERF_TEST_ADDR_BASE;
-    _perf_start_timer();
-    while (remain--) {
-        result += *(uint64_t*) access_addr;
-        access_addr += _PERF_SET_SIZE_BYTE;
-    }
-    _perf_end_timer();
-    *(uint64_t*) _PERF_BLACKHOLE = result;
-    printf("mem band width %f B/cycle (%d samples)\n", (float)iter * _PERF_CACHELINE_SIZE_BYTE / perf.cycle, iter);
-}
+// legacy test
+extern void legacy_test_mem_throughput(uint64_t iter);
+extern void legacy_test_mem_throughput_same_set(uint64_t iter);
 
 #endif
