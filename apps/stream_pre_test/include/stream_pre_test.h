@@ -17,13 +17,13 @@ void stream_pre(unsigned long long* instr_count, unsigned long long* cycle_count
 
         "loop:" 
             "ld    s6,0(s0);"
-            "ld    s7,8(s0);"
-            "ld    s8,16(s0);"
-            "ld    t4,24(s0);"
-            "ld    t5,32(s0);"
+            "ld    s7,72(s0);"
+            "ld    s8,144(s0);"
+            "ld    t4,216(s0);"
+            "ld    t5,288(s0);"
 
             "addi s4 , s4 , 1;"
-            "addi s0 ,s0,64;"
+            "addi s0 ,s0,320;"
             "bleu s4,s5,loop;"
 
             "jal  zero ,term;"
