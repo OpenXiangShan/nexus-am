@@ -30,7 +30,7 @@ void stream_pre(unsigned long long* instr_count, unsigned long long* cycle_count
 
         "init:"
             "li   s4 , 0;"
-            "li   s5 , 500;"
+            "li   s5 , 524288;"
             "li   s6 , 0;"
             "li   s7 , 0;"
             "li   s8 , 0;"
