@@ -6,7 +6,10 @@
 #define MB (1024*KB)
 #define GB (1024*MB)
 
+#define _LAST_ADDR_BYTE  (160*MB)
+
 #define _PERF_TEST_ADDR_BASE 0x80000000
+#define _PERF_TEST_ADDR_BASE_1 0x80010000
 __attribute__((aligned(256)))
 void stream_pre(unsigned long long* instr_count, unsigned long long* cycle_count){
     *instr_count = 0;
@@ -56,5 +59,29 @@ void stream_pre(unsigned long long* instr_count, unsigned long long* cycle_count
 
     );
 
+}
+
+uint64_t stream_pre_address(uint64_t step,uint64_t roundstep,uint64_t last_addr){
+    //uint64_t num =0;
+    assert(step %8 ==0);
+    assert(step >=8);
+    uint64_t cur_addr;
+    uint64_t num0 =0;
+    uint64_t num1 =0;
+    uint64_t num2 =0;
+    uint64_t num3 =0;
+    uint64_t num4 =0;
+    uint64_t num_all =0;
+
+    for (cur_addr = _PERF_TEST_ADDR_BASE;cur_addr<last_addr;){
+        num0 = (*(uint64_t*)cur_addr);
+        num1 = (*(uint64_t*)(cur_addr+step));
+        num2 = (*(uint64_t*)(cur_addr+2*step));
+        num3 = (*(uint64_t*)(cur_addr+3*step));
+        num4 = (*(uint64_t*)(cur_addr+4*step));
+        cur_addr = cur_addr +roundstep;
+        num_all= num_all +num0+num1+num2+num3+num4;
+    }
+    return num_all;
 }
 
