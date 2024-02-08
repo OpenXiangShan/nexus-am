@@ -1,27 +1,51 @@
 # The Abstract Machine (AM)
 
-## How to build benchmark flash image
+## Get Started for Memory Images (Workloads)
+
+In this section, we demonstrate how to build memory images (`base_address = 0x80000000`) for simulation.
+
 - clone `nexus-am` from github:
 ``` shell
-git clone git@github.com:OpenXiangShan/nexus-am.git
+git clone https://github.com/OpenXiangShan/nexus-am.git
+cd nexus-am
 ```
+
+- enter tests or benchmark directory (using `apps/coremark` as an example):
+```
+cd apps/coremark
+make ARCH=riscv64-xs
+ls ./build # you will see .bin, .txt, *,elf
+```
+
+- use the ".bin" file as the memory image for RTL simulation
+
+Here we use the DiffTest RTL-simulation framework as an example.
+NEMU and other designs should work similarly if the base address is 0x8000_0000.
+
+```
+$NOOP_HOME/build/emu -i ./build/coremark-riscv64-xs.bin
+```
+
+## How to build benchmark flash image
+
+Some designs have a read-only bootrom for bring-up.
+This section builds the bootrom (flash) image whose base address is 0x1000_0000.
+We will be using `riscv64-xs-flash` instead of `riscv64-xs` to fix into the new address space.
+Do NOT follow the steps in this section if you don't know what the bootrom means.
+
 - enter benchmark directory (using `apps/coremark` as an example):
 ```
 cd /apps/coremark
 make ARCH=riscv64-xs-flash
-cd ./build
-ls
+ls ./build
 ```
-- you will find a ".bin" file, this is a benchmark image in flash
+- you will find a ".bin" file, this is a benchmark image for flash
 
-## How to use the prepared flash image to do simulation
-- assuming you have a `XiangShan` repo, the commit ID should be newer than 188f739de96af363761c0f2b80b95b70ad01e0fc
-- make `emu` build
-- use `-F` to load the image in flash:
+- to add the flash image to simulation in DiffTest, you can use the `-F` option:
+
 ```
-./emu -F $AM_HOME//apps/coremark/build/coremark-riscv64-xs-flash.bin  -i ../ready-to-run/coremark-2-iteration.bin 2>debug.log
+$NOOP_HOME/build/emu -F ./build/coremark-riscv64-xs-flash.bin
 ```
-> NOTE: use `-i` to specify the initial ram image, or a ramdom file if you do not care.
 
 ## Explanation of multi-processor bring-up drivers
 
