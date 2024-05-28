@@ -81,7 +81,8 @@
 .endm
 
 # entry to trap into M-mode
-.balign 0x4
+.text
+.align 4
 .global m_trap_entry
 m_trap_entry:
   SAVE_CONTEXT

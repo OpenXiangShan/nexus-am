@@ -18,7 +18,8 @@ enum {
 
 typedef struct
 {
-    uint64_t expected;
+    uint64_t expected_trap;
+    uint64_t actual_trap;
     uint64_t cause;
     uint64_t epc;
 } exception_t;
@@ -74,5 +75,8 @@ void do_ecall(
     uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3,
     uint64_t arg4, uint64_t arg5, uint64_t arg6, uint64_t ecall_num
 );
+
+void setup_expected_exception();
+void clear_last_exception();
 
 #endif // __PRIV_H__

@@ -32,8 +32,8 @@ volatile int m_exception_handler(
     }
 
     // other exceptions should be expected by main program
-    assert(last_exception.expected);
-    last_exception.expected = 0;
+    assert(last_exception.expected_trap);
+    last_exception.actual_trap = 1;
 
     // epc to next
     uint64_t this_mepc = csr_read(mepc);
@@ -98,3 +98,16 @@ void do_ecall(
                     "+r" (a4), "+r" (a5), "+r" (a6), "+r" (a7));
 }
 
+void setup_expected_exception() {
+    last_exception.expected_trap = 1;
+    last_exception.actual_trap = 0;
+    last_exception.cause = 0;
+    last_exception.epc = 0;
+}
+
+void clear_last_exception() {
+    last_exception.expected_trap = 0;
+    last_exception.actual_trap = 0;
+    last_exception.cause = 0;
+    last_exception.epc = 0;
+}

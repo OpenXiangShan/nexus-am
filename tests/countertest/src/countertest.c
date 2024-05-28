@@ -6,34 +6,24 @@
 #include <klib-macros.h>
 
 #include "priv.h"
+#include "countertest.h"
+#include "enable.h"
 
 extern void m_trap_entry();
 
+int error = 0;
+
 int main() {
-    // setup
+    // setup trap vector
     csr_write(mtvec, m_trap_entry);
 
-    goto_priv_mode(MODE_M);
-    csr_write(mcounteren, 0);
-    csr_write(scounteren, 0);
-    csr_write(hcounteren, 0);
+    check_enable_func_arr[1] = 0;
 
-    goto_priv_mode(MODE_VU);
-
-    last_exception.expected = 1;
-    last_exception.cause = 0;
-    last_exception.epc = 0;
-
-    int this_cycle = csr_read(cycle);
-    printf("cycle: %d\n", this_cycle);
-    
-    if (last_exception.cause == 2) {
-        printf("good exception!\n");
-        _halt(0);
-    } else {
-        printf("bad no exception!\n");
-        _halt(1);
+    for (int i = 0; i < COUNTER_NUM; i++) {
+        if (check_enable_func_arr[i]) {
+            check_enable_func_arr[i]();
+        }
     }
 
-    return 0;
+    return error;
 }
