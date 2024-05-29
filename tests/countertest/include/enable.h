@@ -99,4 +99,6 @@ extern func_enable_t arr_func_check_enable[COUNTER_NUM];
 #define list_func_check_enable(csr, addr) \
     check_enable_##csr,
 
+void test_counter_enable();
+
 #endif // __ENABLE_H__

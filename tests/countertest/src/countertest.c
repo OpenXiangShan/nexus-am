@@ -45,13 +45,9 @@ int main() {
     }
 
     // test counter-enable
-    for (int i = 0; i < COUNTER_NUM; i++) {
-        if (arr_func_check_enable[i]) {
-            arr_func_check_enable[i]();
-        }
-    }
+    test_counter_enable();
 
-    // test counter-inhibit and writing to counter
+    // test counter-inhibit
     test_counter_inhibit();
 
     return error;
