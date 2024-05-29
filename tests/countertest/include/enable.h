@@ -2,7 +2,7 @@
 #define __ENABLE_H__
 
 typedef void (*func_enable_t)();
-extern func_enable_t check_enable_func_arr[32];
+extern func_enable_t arr_func_check_enable[COUNTER_NUM];
 
 #define check_enable_detail(csr, addr, m, h, s, mode, res) \
     do { \
@@ -19,19 +19,19 @@ extern func_enable_t check_enable_func_arr[32];
         csr_read_res &= csr_read_res; \
         if (res) { /* should trap */ \
             if (!last_exception.actual_trap) { \
-                printf(MSG_ERROR ": checking " #csr ", "); \
+                printf(MSG_ERROR "checking " #csr ", "); \
                 printf("m/h/scounteren: %d/%d/%d, mode: " #mode "\n", m, h, s); \
                 printf("reading " #csr " shoule trap into " #res ", but not.\n"); \
                 error += 1; \
             } else if (last_exception.cause != res) { \
-                printf(MSG_ERROR ": checking " #csr ", "); \
+                printf(MSG_ERROR "checking " #csr ", "); \
                 printf("m/h/scounteren: %d/%d/%d, mode: " #mode "\n", m, h, s); \
                 printf("reading " #csr " shoule trap into " #res ", but trapped into %d.\n", last_exception.cause); \
                 error += 1; \
             } \
         } else { /* should be accessible */\
             if (last_exception.actual_trap) { \
-                printf(MSG_ERROR ": checking " #csr ", "); \
+                printf(MSG_ERROR "checking " #csr ", "); \
                 printf("m/h/scounteren: %d/%d/%d, mode: " #mode "\n", m, h, s); \
                 printf(#csr " shoule be accessible, but not.\n"); \
                 error += 1; \
@@ -42,9 +42,9 @@ extern func_enable_t check_enable_func_arr[32];
 
 #define def_func_check_enable(csr, addr) \
     void check_enable_##csr() { \
-        int this_mcounteren; \
-        int this_hcounteren; \
-        int this_scounteren; \
+        uint64_t this_mcounteren; \
+        uint64_t this_hcounteren; \
+        uint64_t this_scounteren; \
         uint64_t csr_read_res; \
         /* m/h/scounteren: 0/0/0 */ \
         check_enable_detail(csr, addr, 0, 0, 0, MODE_M,  ACCESSIBLE); \
