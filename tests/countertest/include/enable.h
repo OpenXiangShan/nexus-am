@@ -1,8 +1,8 @@
 #ifndef __ENABLE_H__
 #define __ENABLE_H__
 
-typedef void (*func_void_t)();
-extern func_void_t check_enable_func_arr[32];
+typedef void (*func_enable_t)();
+extern func_enable_t check_enable_func_arr[32];
 
 #define check_enable_detail(csr, addr, m, h, s, mode, res) \
     do { \

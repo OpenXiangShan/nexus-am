@@ -1,7 +1,8 @@
 #ifndef __COUNTERTEST_H__
 #define __COUNTERTEST_H__
 
-#define MSG_ERROR "\33[1;31mERROR\033[0m"
+#define MSG_ERROR   "\33[1;31mERROR\033[0m"
+#define MSG_WARNING "\33[1;33mWARNING\033[0m"
 
 #define MAP(c, f) c(f)
 
@@ -24,9 +25,26 @@
     f(hpmcounter24   , 0xC18) f(hpmcounter25   , 0xC19) f(hpmcounter26   , 0xC1A) f(hpmcounter27   , 0xC1B) \
     f(hpmcounter28   , 0xC1C) f(hpmcounter29   , 0xC1D) f(hpmcounter30   , 0xC1E) f(hpmcounter31   , 0xC1F)
 
-#define CSR_ALL_UNPRIV_COUNTER(f) \
+#define CSRS_UNPRIV_COUNTER_TIMERS(f) \
     CSRS_UNPRIV_CNTR(f) \
     CSRS_UNPRIV_HPM(f)
+
+#define CSRS_M_CNTR(f) \
+  f(mcycle     , 0xB00) f(minstret   , 0xB02)
+
+#define CSRS_M_HPM(f) \
+  f(mhpmcounter3   , 0xB03) \
+  f(mhpmcounter4   , 0xB04) f(mhpmcounter5   , 0xB05) f(mhpmcounter6   , 0xB06) f(mhpmcounter7   , 0xB07) \
+  f(mhpmcounter8   , 0xB08) f(mhpmcounter9   , 0xB09) f(mhpmcounter10  , 0xB0A) f(mhpmcounter11  , 0xB0B) \
+  f(mhpmcounter12  , 0xB0C) f(mhpmcounter13  , 0xB0D) f(mhpmcounter14  , 0xB0E) f(mhpmcounter15  , 0xB0F) \
+  f(mhpmcounter16  , 0xB10) f(mhpmcounter17  , 0xB11) f(mhpmcounter18  , 0xB12) f(mhpmcounter19  , 0xB13) \
+  f(mhpmcounter20  , 0xB14) f(mhpmcounter21  , 0xB15) f(mhpmcounter22  , 0xB16) f(mhpmcounter23  , 0xB17) \
+  f(mhpmcounter24  , 0xB18) f(mhpmcounter25  , 0xB19) f(mhpmcounter26  , 0xB1A) f(mhpmcounter27  , 0xB1B) \
+  f(mhpmcounter28  , 0xB1C) f(mhpmcounter29  , 0xB1D) f(mhpmcounter30  , 0xB1E) f(mhpmcounter31  , 0xB1F)
+
+#define CSRS_M_COUNTER_TIMERS(f)\
+  CSRS_M_CNTR(f) \
+  CSRS_M_HPM(f)
 
 #define ACCESSIBLE 0
 #define EX_II 2
