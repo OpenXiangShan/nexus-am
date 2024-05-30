@@ -6,3 +6,12 @@ This program provides a self-test for the counter CSRs, testing the following fe
 - Functionality of `mcountinhibit`.
 
 This program provides a simple framework for privilege mode switching and expected exception capture, which could be applied to other test programs.
+
+## How-to
+In `tests/countertest`, run
+```
+make ARCH=riscv64-xs
+```
+You will get `countertest-riscv64-xs.bin` in `tests/countertest/build`.
+
+This program would `HIT GOOD TRAP` if there were no fatal error.
