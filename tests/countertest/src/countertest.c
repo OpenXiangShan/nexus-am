@@ -11,6 +11,7 @@
 #include "enable.h"
 #include "probe.h"
 #include "inhibit.h"
+#include "write.h"
 
 extern void m_trap_entry();
 int error = 0;
@@ -20,6 +21,7 @@ int main() {
     csr_write(mtvec, m_trap_entry);
 
     // probe machine counter
+    printf("Probing machine counter...\n");
     for (int i = 0; i < COUNTER_NUM; i++) {
         if (arr_func_probe_machine_cntr[i]) {
             int res = arr_func_probe_machine_cntr[i]();
@@ -34,6 +36,7 @@ int main() {
     }
 
     // probe unprivileged counter
+    printf("Probing unprivileged counter...\n");
     for (int i = 0; i < COUNTER_NUM; i++) {
         if (arr_func_probe_unpriv_cntr[i]) {
             int res = arr_func_probe_unpriv_cntr[i]();
@@ -45,10 +48,22 @@ int main() {
     }
 
     // test counter-enable
+    printf("Testing counter-enable...\n");
     test_counter_enable();
 
     // test counter-inhibit
+    printf("Testing counter-inhibit...\n");
     test_counter_inhibit();
+
+    // test writing to counter
+    printf("Testing writing to counter...\n");
+    test_counter_write();
+
+    // test minstret
+    printf("Testing minstret...\n");
+    test_minstret();
+
+    printf("Finished!\n");
 
     return error;
 }
