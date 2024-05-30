@@ -20,6 +20,10 @@ int main() {
     // setup trap vector
     csr_write(mtvec, m_trap_entry);
 
+    // setup pmp to allow full access to physical memory in other modes
+    csr_write(pmpcfg0, 0xf);
+    csr_write(pmpaddr0, (uint64_t) -1);
+
     // probe machine counter
     printf("Probing machine counter...\n");
     for (int i = 0; i < COUNTER_NUM; i++) {
