@@ -53,7 +53,7 @@ void* memset(void* v,int c,size_t n){
 
   if (n >= threshold) {
     // first let dst aligned by 8 bytes
-    int pad = (uintptr_t)dst % 8;
+    int pad = (8 - (uintptr_t)dst % 8) % 8;
     n -= pad;
     while (pad --) { *dst ++ = c; }
 
@@ -102,7 +102,7 @@ void* memcpy(void* out, const void* in, size_t n) {
 
   if (n >= threshold && is_align8) {
     // first let dst aligned by 8 bytes
-    int pad = (uintptr_t)dst % 8;
+    int pad = (8 - (uintptr_t)dst % 8) % 8;
     n -= pad;
     while (pad --) { *dst ++ = *src ++; }
 
@@ -131,7 +131,7 @@ void* memcpy(void* out, const void* in, size_t n) {
 
   if (n >= threshold && is_align4) {
     // first let dst aligned by 4 bytes
-    int pad = (uintptr_t)dst % 4;
+    int pad = (4 - (uintptr_t)dst % 4) % 4;
     n -= pad;
     while (pad --) { *dst ++ = *src ++; }
 
