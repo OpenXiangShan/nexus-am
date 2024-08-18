@@ -32,9 +32,9 @@ El Dorado Hills, CA, 95762
 	Returns:
 	NULL.
 */
-static ee_u16 list_known_crc[]   =      {(ee_u16)0xd4b0,(ee_u16)0x3340,(ee_u16)0x6a79,(ee_u16)0xe714,(ee_u16)0xe3c1};
-static ee_u16 matrix_known_crc[] =      {(ee_u16)0xbe52,(ee_u16)0x1199,(ee_u16)0x5608,(ee_u16)0x1fd7,(ee_u16)0x0747};
-static ee_u16 state_known_crc[]  =      {(ee_u16)0x5e47,(ee_u16)0x39bf,(ee_u16)0xe5a4,(ee_u16)0x8e3a,(ee_u16)0x8d84};
+static ee_u16 list_known_crc[]   =      {(ee_u16)0xd4b0,(ee_u16)0x3340,(ee_u16)0x6a79,(ee_u16)0xe714,(ee_u16)0xe3c1,(ee_u16)0xa6ab,(ee_u16)0x11ee,(ee_u16)0x31be};
+static ee_u16 matrix_known_crc[] =      {(ee_u16)0xbe52,(ee_u16)0x1199,(ee_u16)0x5608,(ee_u16)0x1fd7,(ee_u16)0x0747,(ee_u16)0xbadc,(ee_u16)0x66cc,(ee_u16)0x0000};
+static ee_u16 state_known_crc[]  =      {(ee_u16)0x5e47,(ee_u16)0x39bf,(ee_u16)0xe5a4,(ee_u16)0x8e3a,(ee_u16)0x8d84,(ee_u16)0x0ab9,(ee_u16)0x5cd9,(ee_u16)0x7bd3};
 void *iterate(void *pres) {
 	ee_u32 i;
 	ee_u16 crc;
@@ -261,6 +261,18 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 		case 0x18f2: /*  seed1=0x3415, seed2=0x3415, seed3=0x66, size 666 per algorithm */
 			known_id=4;
 			ee_printf("2K validation run parameters for coremark.\n");
+			break;
+		case 0xe9ed: /* seed1=0, seed2=0, seed3=0x66, size 333 per algorithm */
+			known_id=5;
+			ee_printf("1K performance run parameters for coremark.\n");
+			break;
+		case 0xd962: /* seed1=0, seed2=0, seed3=0x66, size 166 per algorithm */
+			known_id=6;
+			ee_printf("500 performance run parameters for coremark.\n");
+			break;
+		case 0xe97b: /* seed1=0, seed2=0, seed3=0x66, size 133 per algorithm */
+			known_id=7;
+			ee_printf("400 performance run parameters for coremark.\n");
 			break;
 		default:
 			total_errors=-1;
