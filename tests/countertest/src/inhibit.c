@@ -27,7 +27,7 @@ void test_counter_inhibit() {
 
     uint64_t this_mcountinhibit = csr_read(mcountinhibit);
     for (int i = 0; i < COUNTER_NUM; i++) {
-        uint64_t this_bit = 0b1 << i;
+        uint64_t this_bit = 1ULL << i;
         if (i == 1) { // mtime
             if (this_bit & this_mcountinhibit) {
                 printf(MSG_ERROR "mtime should not be able to be inhibited.\n");
@@ -51,7 +51,7 @@ void test_counter_inhibit() {
         if (could_not_be_inhibit[i]) {
             continue;
         } else if (arr_func_read_machine_counter[i]) {
-            int cur = arr_func_read_machine_counter[i]();
+            uint64_t cur = arr_func_read_machine_counter[i]();
             if (cur != saved_machine_counters[i]) {
                 printf(MSG_ERROR "machine counter %d changed after inhibiting.\n", i);
                 error += 1;
