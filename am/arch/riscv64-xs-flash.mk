@@ -6,11 +6,9 @@ AM_SRCS := noop/isa/riscv/trm_flash.c \
            noop/common/uartlite.c \
            nemu/isa/riscv/trap.S \
            nemu/isa/riscv/vme.c \
-           nemu/common/ioe.c \
+           xs/common/ioe.c \
            noop/common/input.c \
            noop/common/timer.c \
-           nemu/common/video.c \
-           dummy/audio.c \
            noop/isa/riscv/instr.c \
            xs/isa/riscv/mpe.c \
            xs/isa/riscv/clint.c \
