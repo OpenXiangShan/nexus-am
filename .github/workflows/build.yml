@@ -1,0 +1,86 @@
+name: build tests for XiangShan
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  MAKE_FLAGS: ARCH=riscv64-xs CROSS_COMPILE=riscv64-linux-gnu-
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu gfortran-riscv64-linux-gnu binutils-riscv64-linux-gnu
+      - name: Setup env
+        run: |
+          echo "AM_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+      - name: Build normal tests
+        env:
+          tests:
+            tests/cputest
+            tests/softprefetchtest
+            tests/dualcoretest
+            tests/cacheoptest/dcache
+            tests/cacheoptest/icache
+            tests/cacheoptest/llc
+            tests/aliastest
+            apps/coremark
+            apps/microbench
+        run: |
+          for one_test in $tests; do
+            echo ::group::$one_test
+            cd $GITHUB_WORKSPACE/$one_test
+            make ${{ env.MAKE_FLAGS }}
+            mkdir -p $GITHUB_WORKSPACE/build/$one_test
+            cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/$one_test
+            cd $GITHUB_WORKSPACE
+            echo "::endgroup::"
+          done
+      - name: Build amtest
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/build/amtest/
+          cd $GITHUB_WORKSPACE/tests/amtest
+
+          # Thanks to the brilliant framework of amtest, tests should be compiled one by on.
+
+          # external_intr
+          echo ::group::external_intr
+          make ${{ env.MAKE_FLAGS }} mainargs=e
+          cp build/amtest-riscv64-xs.bin $GITHUB_WORKSPACE/build/amtest/external_intr-riscv64-xs.bin
+          cp build/amtest-riscv64-xs.elf $GITHUB_WORKSPACE/build/amtest/external_intr-riscv64-xs.elf
+          cp build/amtest-riscv64-xs.txt $GITHUB_WORKSPACE/build/amtest/external_intr-riscv64-xs.txt
+          make clean
+          echo "::endgroup::"
+
+          # pmp_test
+          echo ::group::pmp_test
+          make ${{ env.MAKE_FLAGS }} mainargs=c
+          mkdir -p $GITHUB_WORKSPACE/build/amtest/
+          cp build/amtest-riscv64-xs.bin $GITHUB_WORKSPACE/build/amtest/pmp_test-riscv64-xs.bin
+          cp build/amtest-riscv64-xs.elf $GITHUB_WORKSPACE/build/amtest/pmp_test-riscv64-xs.elf
+          cp build/amtest-riscv64-xs.txt $GITHUB_WORKSPACE/build/amtest/pmp_test-riscv64-xs.txt
+          make clean
+          echo "::endgroup::"
+          
+          # sv39_hp_atom_test
+          echo ::group::sv39_hp_atom_test
+          make ${{ env.MAKE_FLAGS }} mainargs=f
+          mkdir -p $GITHUB_WORKSPACE/build/amtest/
+          cp build/amtest-riscv64-xs.bin $GITHUB_WORKSPACE/build/amtest/sv39_hp_atom_test-riscv64-xs.bin
+          cp build/amtest-riscv64-xs.elf $GITHUB_WORKSPACE/build/amtest/sv39_hp_atom_test-riscv64-xs.elf
+          cp build/amtest-riscv64-xs.txt $GITHUB_WORKSPACE/build/amtest/sv39_hp_atom_test-riscv64-xs.txt
+          make clean
+          echo "::endgroup::"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-am-workloads
+          path: build
