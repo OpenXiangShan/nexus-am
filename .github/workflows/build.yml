@@ -50,6 +50,13 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/build/apps/microbench
           cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/microbench
           cd $GITHUB_WORKSPACE
+      - name: Build coremark 1 iteration
+        run: |
+          cd $GITHUB_WORKSPACE/apps/coremark
+          make ${{ env.MAKE_FLAGS }} ITERATIONS=1
+          mkdir -p $GITHUB_WORKSPACE/build/apps/coremark-1-iteration
+          cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/coremark-1-iteration
+          cd $GITHUB_WORKSPACE
       - name: Build amtest
         run: |
           mkdir -p $GITHUB_WORKSPACE/build/amtest/
