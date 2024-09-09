@@ -33,7 +33,6 @@ jobs:
             tests/cacheoptest/llc
             tests/aliastest
             apps/coremark
-            apps/microbench
         run: |
           for one_test in $tests; do
             echo ::group::$one_test
@@ -44,6 +43,13 @@ jobs:
             cd $GITHUB_WORKSPACE
             echo "::endgroup::"
           done
+      - name: Build Microbench
+        run: |
+          cd $GITHUB_WORKSPACE/apps/microbench
+          make ${{ env.MAKE_FLAGS }} mainargs=test
+          mkdir -p $GITHUB_WORKSPACE/build/apps/microbench
+          cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/microbench
+          cd $GITHUB_WORKSPACE
       - name: Build amtest
         run: |
           mkdir -p $GITHUB_WORKSPACE/build/amtest/
