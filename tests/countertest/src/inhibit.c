@@ -64,7 +64,7 @@ void test_counter_inhibit() {
         if (could_not_be_inhibit[i]) {
             continue;
         } else if (arr_func_read_machine_counter[i] && arr_func_read_unpriv_counter[i]) {
-            int cur = arr_func_read_unpriv_counter[i]();
+            uint64_t cur = arr_func_read_unpriv_counter[i]();
             if (cur != saved_machine_counters[i]) {
                 printf(MSG_ERROR "unprivileged counter %d changed after inhibiting.\n", i);
                 error += 1;
