@@ -32,11 +32,11 @@ jobs:
             tests/cacheoptest/icache
             tests/cacheoptest/llc
             tests/aliastest
-            apps/coremark
         run: |
           for one_test in $tests; do
             echo ::group::$one_test
             cd $GITHUB_WORKSPACE/$one_test
+            make clean
             make ${{ env.MAKE_FLAGS }}
             mkdir -p $GITHUB_WORKSPACE/build/$one_test
             cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/$one_test
@@ -46,6 +46,7 @@ jobs:
       - name: Build Microbench
         run: |
           cd $GITHUB_WORKSPACE/apps/microbench
+          make clean
           make ${{ env.MAKE_FLAGS }} mainargs=test
           mkdir -p $GITHUB_WORKSPACE/build/apps/microbench
           cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/microbench
@@ -53,16 +54,27 @@ jobs:
       - name: Build coremark 1 iteration
         run: |
           cd $GITHUB_WORKSPACE/apps/coremark
+          make clean
           make ${{ env.MAKE_FLAGS }} ITERATIONS=1
-          mkdir -p $GITHUB_WORKSPACE/build/apps/coremark-1-iteration
-          cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/coremark-1-iteration
+          mkdir -p $GITHUB_WORKSPACE/build/apps/coremark
+          cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/coremark
+          cd $GITHUB_WORKSPACE
+      - name: Build copy_and_run_coremark
+        env:
+          MAKE_FLAGS: ARCH=riscv64-xs-flash CROSS_COMPILE=riscv64-linux-gnu-
+        run: |
+          cd $GITHUB_WORKSPACE/apps/loader
+          make clean
+          make ${{ env.MAKE_FLAGS }} ELF_PATH=$GITHUB_WORKSPACE/build/apps/coremark/coremark-riscv64-xs.bin
+          mkdir -p $GITHUB_WORKSPACE/build/apps/copy_and_run_coremark
+          cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/copy_and_run_coremark
           cd $GITHUB_WORKSPACE
       - name: Build amtest
         run: |
           mkdir -p $GITHUB_WORKSPACE/build/amtest/
           cd $GITHUB_WORKSPACE/tests/amtest
 
-          # Thanks to the brilliant framework of amtest, tests should be compiled one by on.
+          # Thanks to the brilliant framework of amtest, tests have to be compiled one by on.
 
           # external_intr
           echo ::group::external_intr
@@ -76,7 +88,6 @@ jobs:
           # pmp_test
           echo ::group::pmp_test
           make ${{ env.MAKE_FLAGS }} mainargs=c
-          mkdir -p $GITHUB_WORKSPACE/build/amtest/
           cp build/amtest-riscv64-xs.bin $GITHUB_WORKSPACE/build/amtest/pmp_test-riscv64-xs.bin
           cp build/amtest-riscv64-xs.elf $GITHUB_WORKSPACE/build/amtest/pmp_test-riscv64-xs.elf
           cp build/amtest-riscv64-xs.txt $GITHUB_WORKSPACE/build/amtest/pmp_test-riscv64-xs.txt
@@ -86,7 +97,6 @@ jobs:
           # sv39_hp_atom_test
           echo ::group::sv39_hp_atom_test
           make ${{ env.MAKE_FLAGS }} mainargs=f
-          mkdir -p $GITHUB_WORKSPACE/build/amtest/
           cp build/amtest-riscv64-xs.bin $GITHUB_WORKSPACE/build/amtest/sv39_hp_atom_test-riscv64-xs.bin
           cp build/amtest-riscv64-xs.elf $GITHUB_WORKSPACE/build/amtest/sv39_hp_atom_test-riscv64-xs.elf
           cp build/amtest-riscv64-xs.txt $GITHUB_WORKSPACE/build/amtest/sv39_hp_atom_test-riscv64-xs.txt
