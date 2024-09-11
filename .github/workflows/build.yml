@@ -32,6 +32,7 @@ jobs:
             tests/cacheoptest/icache
             tests/cacheoptest/llc
             tests/aliastest
+            tests/countertest
         run: |
           for one_test in $tests; do
             echo ::group::$one_test
