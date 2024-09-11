@@ -24,7 +24,7 @@ jobs:
           echo "AM_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
       - name: Build normal tests
         env:
-          tests:
+          tests: |
             tests/cputest
             tests/softprefetchtest
             tests/dualcoretest
@@ -52,13 +52,29 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/build/apps/microbench
           cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/microbench
           cd $GITHUB_WORKSPACE
-      - name: Build coremark 1 iteration
+      - name: Build coremark for 1/2/10 iterations
+        env:
+          args: |
+            ITERATIONS=1
+            ITERATIONS=2
         run: |
           cd $GITHUB_WORKSPACE/apps/coremark
-          make clean
-          make ${{ env.MAKE_FLAGS }} ITERATIONS=1
           mkdir -p $GITHUB_WORKSPACE/build/apps/coremark
+
+          echo ::group::default
+          make clean
+          make ${{ env.MAKE_FLAGS }}
           cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/coremark
+          echo "::endgroup::"
+
+          for one_arg in $args; do
+            echo ::group::$one_arg
+            make clean
+            make ${{ env.MAKE_FLAGS }} $one_arg
+            cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/coremark
+            echo "::endgroup::"
+          done
+          
           cd $GITHUB_WORKSPACE
       - name: Build copy_and_run_coremark
         env:
@@ -66,7 +82,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/apps/loader
           make clean
-          make ${{ env.MAKE_FLAGS }} ELF_PATH=$GITHUB_WORKSPACE/build/apps/coremark/coremark-riscv64-xs.bin
+          make ${{ env.MAKE_FLAGS }} ELF_PATH=$GITHUB_WORKSPACE/build/apps/coremark/coremark-1-iteration-riscv64-xs.bin
           mkdir -p $GITHUB_WORKSPACE/build/apps/copy_and_run_coremark
           cp build/*.{elf,bin,txt} $GITHUB_WORKSPACE/build/apps/copy_and_run_coremark
           cd $GITHUB_WORKSPACE
