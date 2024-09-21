@@ -10,7 +10,7 @@ void _protect(_AddressSpace *as) {
 void _unprotect(_AddressSpace *as) {
 }
 
-void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, uint64_t prot) {
 }
 
 _Context* _ucontext(_AddressSpace *as, _Area kstack, void *entry) {

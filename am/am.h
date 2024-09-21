@@ -83,14 +83,14 @@ int  _vme_init(void *(*pgalloc)(size_t size), void (*pgfree)(void *));
 int  _vme_init_custom(void *(*pgalloc)(size_t size), void (*pgfree)(void *), _Area * custom_segments, int len);
 void _protect(_AddressSpace *as);
 void _unprotect(_AddressSpace *as);
-void _map(_AddressSpace *as, void *va, void *pa, int prot);
+void _map(_AddressSpace *as, void *va, void *pa, uint64_t prot);
 _Context *_ucontext(_AddressSpace *as, _Area kstack, void *entry);
 
 // a fault map for xiangshan testing access fault
-void _map_fault(_AddressSpace *as, void *va, void *pa, int prot);
+void _map_fault(_AddressSpace *as, void *va, void *pa, uint64_t prot);
 
 // hugepage map for xiangshan testing
-void _map_rv_hugepage(_AddressSpace *as, void *va, void *pa, int prot, int pagetable_level);
+void _map_rv_hugepage(_AddressSpace *as, void *va, void *pa, uint64_t prot, int pagetable_level);
 
 // ================= Multi-Processor Extension (MPE) =================
 

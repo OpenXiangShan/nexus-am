@@ -63,7 +63,7 @@ void __am_switch(_Context *c) {
 
 #define PTW_CONFIG ((ptw_config) { .ptw_level = 2, .vpn_width = 10 })
 
-void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, uint64_t prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
   PTE *pg_base = as->ptr;

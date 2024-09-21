@@ -151,7 +151,7 @@ void __am_switch(_Context *c) {
  * map va to pa with prot permission with page table root as
  * Note that RISC-V allow hardware to fault when A and D bit is not set
  */
-void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, uint64_t prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
   PTE *pg_base = as->ptr;
@@ -176,7 +176,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
  * A wrong map to test access fault, high bits of ppn is not zero
  * Only available for sv39 and paddr = 36! (ppnlen can not be changed)
  */
-void _map_fault(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map_fault(_AddressSpace *as, void *va, void *pa, uint64_t prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
   PTE *pg_base = as->ptr;
@@ -211,7 +211,7 @@ void _map_fault(_AddressSpace *as, void *va, void *pa, int prot) {
  * 2: 1GiB gigapage
  * Note that RISC-V allow hardware to fault when A and D bit is not set
  */
-void _map_rv_hugepage(_AddressSpace *as, void *va, void *pa, int prot, int pagetable_level) {
+void _map_rv_hugepage(_AddressSpace *as, void *va, void *pa, uint64_t prot, int pagetable_level) {
   int hugepage_size;
   switch (pagetable_level) {
     case 0: hugepage_size = PGSIZE; break; // 4KiB

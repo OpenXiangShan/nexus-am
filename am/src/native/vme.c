@@ -6,7 +6,7 @@ typedef struct PageMap {
   void *va;
   void *pa;
   struct PageMap *next;
-  int prot;
+  uint64_t prot;
   int is_mapped;
 } PageMap;
 
@@ -64,7 +64,7 @@ void __am_switch(_Context *c) {
   thiscpu->vm_head = head;
 }
 
-void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, uint64_t prot) {
   assert(IN_RANGE(va, USER_SPACE));
   assert((uintptr_t)va % __am_pgsize == 0);
   assert((uintptr_t)pa % __am_pgsize == 0);

@@ -36,6 +36,9 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTE_U 0x10
 #define PTE_A 0x40
 #define PTE_D 0x80
+/* Svpbmt: Page-based memory types */
+#define PTE_PBMT_3  0x6000000000000000
+#define PTE_PBMT_1  0x2000000000000000
 // Address in page table entry
 #define PTE_ADDR(pte)   (((uintptr_t)(pte) & ~0x3ff) << 2)
 

@@ -46,7 +46,7 @@ void __am_switch(_Context *c) {
   }
 }
 
-void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, uint64_t prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
   PTE *pdir = (PTE*)as->ptr;

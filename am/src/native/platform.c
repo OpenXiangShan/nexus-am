@@ -162,7 +162,7 @@ void __am_exit_platform(int code) {
   exit(code);
 }
 
-void __am_pmem_map(void *va, void *pa, int prot) {
+void __am_pmem_map(void *va, void *pa, uint64_t prot) {
   // translate AM prot to mmap prot
   int mmap_prot = PROT_NONE;
   // we do not support executable bit, so mark

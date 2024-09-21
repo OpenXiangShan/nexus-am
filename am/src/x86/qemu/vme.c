@@ -139,7 +139,7 @@ void _unprotect(_AddressSpace *as) {
   teardown(0, (void *)&as->ptr);
 }
 
-void _map(_AddressSpace *as, void *va, void *pa, int prot) {
+void _map(_AddressSpace *as, void *va, void *pa, uint64_t prot) {
   panic_on(!IN_RANGE(va, uvm_area), "mapping an invalid address");
   panic_on((prot & _PROT_NONE) && (prot != _PROT_NONE), "invalid protection flags");
   panic_on((uintptr_t)va != ROUNDDOWN(va, mmu.pgsize) ||

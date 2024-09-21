@@ -10,6 +10,9 @@
 #define EXCEPTION_STORE_ACCESS_FAULT 7
 #define EXCEPTION_LOAD_PAGE_FAULT 13
 #define EXCEPTION_STORE_PAGE_FAULT 15
+#define EXCEPTION_ECALL_FROM_U 8
+#define EXCEPTION_ECALL_FROM_S 9
+#define EXCEPTION_ECALL_FROM_M 11
 
 #if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
 static char *sv39_alloc_base = (char *)(0xc0000000UL);
@@ -66,6 +69,35 @@ _Context* store_access_fault_handler(_Event* ev, _Context *c) {
     _halt(1); // something went wrong
   }
   store_access_fault_to_be_reported = 0;
+  c->sepc = inst_is_compressed(c->sepc) ? c->sepc + 2: c->sepc + 4;
+  return c;
+}
+
+_Context* machine_mode_trap_handler(_Event* ev, _Context *c) {
+  printf("machine mode trap triggered\n");
+  // Modify menvcfg
+  asm volatile(
+    "csrr a5,0x30a;"
+    "li a3, 0x4000000000000000;"
+    "or a5,a3,a3;"
+    "csrw 0x30a,a5;"
+  );
+  // Modify mstatus to switch back to S-mode
+  /*
+  asm volatile (
+    "csrr t1, mstatus;"      // Read the current mstatus register
+    "li t2, ~(3 << 11);"     // Clear MPP bits (12:11) to set mode to S-mode
+    "li t3, (1 << 11);"      // Set the MPP field to S-mode (01)
+    "or t1, t1, t3;"         // Set the bits in mstatus for returning to S-mode
+    "csrw mstatus, t1;"      // Write back modified mstatus
+
+    "csrr t0, mepc;"         // Read the machine exception program counter (mepc)
+    "addi t0, t0, 4;"        // Increment mepc to skip ECALL instruction
+    "csrw mepc, t0;"         // Write the updated mepc value
+
+    "mret;"                  // Return from M-mode to S-mode
+  );
+  */
   c->sepc = inst_is_compressed(c->sepc) ? c->sepc + 2: c->sepc + 4;
   return c;
 }
@@ -329,6 +361,60 @@ void sv39_hp_atom_test() {
   if(load_access_fault_to_be_reported){
     _halt(1);
   }
+
+  _halt(0);
+}
+
+void sv39_pbmt_test() {
+  printf("start pbmt test\n");
+  _vme_init(sv39_pgalloc, sv39_pgfree);
+  printf("sv39 setup done\n");
+  char *pbmt_ptr = NULL;
+  char *pma_ptr = NULL;
+#if defined(__ARCH_RISCV64_NOOP) || defined(__ARCH_RISCV32_NOOP) || defined(__ARCH_RISCV64_XS)
+  _map(&kas, (void *)0x900000000UL, (void *)0x80020000, PTE_PBMT_1 | PTE_W | PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0xa00000000UL, (void *)0x80020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  printf("memory map done\n");
+  pbmt_ptr = (char *)(0x900000000UL);
+  pma_ptr = (char *)(0xa00000000UL);
+#elif defined(__ARCH_RISCV64_XS_SOUTHLAKE) || defined(__ARCH_RISCV64_XS_SOUTHLAKE_FLASH)
+  _map(&kas, (void *)0x2100000000UL, (void *)0x2000020000, PTE_PBMT_1 | PTE_W | PTE_R | PTE_A | PTE_D);
+  _map(&kas, (void *)0x2200000000UL, (void *)0x2000020000, PTE_W | PTE_R | PTE_A | PTE_D);
+  printf("memory map done\n");
+  pbmt_ptr = (char *)(0x2100000000UL);
+  pma_ptr = (char *)(0x2200000000UL);
+#else
+  // invalid arch
+  _halt(1);
+#endif
+  irq_handler_reg(EXCEPTION_STORE_PAGE_FAULT, &store_page_fault_handler);
+  irq_handler_reg(EXCEPTION_LOAD_PAGE_FAULT, &load_page_fault_handler);
+  irq_handler_reg(EXCEPTION_ECALL_FROM_S, &machine_mode_trap_handler);
+  asm volatile("sfence.vma");
+  
+  printf("test (menvcfg.pbmte, PBMT) = (0, 0)\n");
+  *pma_ptr = 'a';
+
+  printf("test (menvcfg.pbmte, PBMT) = (0, 1), page fault\n");
+  store_page_fault_to_be_reported = 1;
+  *pbmt_ptr = 'a';
+  if(store_page_fault_to_be_reported){
+    _halt(1);
+  }
+
+  asm volatile("ecall");
+  asm volatile("sfence.vma");
+
+  printf("test (menvcfg.pbmte, PBMT) = (1, 0)\n");
+  *pma_ptr = 'a';
+
+  printf("test (menvcfg.pbmte, PBMT) = (1, 1)\n");
+  *pbmt_ptr = 'a';
+  // store_page_fault_to_be_reported = 1;
+  // *pbmt_ptr = 'a';
+  // if(store_page_fault_to_be_reported){
+  //   _halt(1);
+  // }
 
   _halt(0);
 }
