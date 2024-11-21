@@ -8,6 +8,7 @@ In this section, we demonstrate how to build memory images (`base_address = 0x80
 ``` shell
 git clone https://github.com/OpenXiangShan/nexus-am.git
 cd nexus-am
+export AM_HOME=`pwd`  # set AM_HOME
 ```
 
 - enter tests or benchmark directory (using `apps/coremark` as an example):
