@@ -89,3 +89,32 @@ Finalize CPU ID: 0
 ```
 
 Note that both `sum` and `atomic_sum` are incremented 100 times per CPU parallelly. However, `atomic_sum` utilizes atomic primitive. Thus, we have `sum` <= 200 && `atomic_sum` == 200.
+
+
+## How to build AM image for 16550
+
+The major difference between RTL simulation with Verilator and FPGA of Xiangshan is that FPGA is using 16550 at 0x310b0000,
+while RTL simulation is using UARTLITE at 0x40600000.
+So we should change the serial devices when compiling for FPGA by
+``` shell
+# Hello as an example
+cd apps/hello
+rm -rf $AM_HOME/am/build build  # Macro definition is not yet added into dependency of Makefile, clean am.a manually
+make ARCH=riscv64-xs CPPFLAGS=-DUART16550=1  # define UART16550
+```
+Then run `build/hello-riscv64-xs.bin` on FPGA
+
+Remember to `rm -rf $AM_HOME/am/build build` if you want to switch back to uartlite.
+
+
+## How to generate compile_commands.json
+
+`compile_commands.json` can be used in many language servers to help completion.
+
+``` shell
+# Hello as an example
+rm -rf $AM_HOME/am/build apps/hello/build  # A full rebuild to obtain full compile commands
+bear -- make -C apps/hello ARCH=riscv64-xs
+```
+
+If you don't have bear on your machine, please search.
