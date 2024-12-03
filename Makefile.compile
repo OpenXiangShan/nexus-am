@@ -20,17 +20,18 @@ CFLAGS   += $(CC_OPT) -MMD -Wall -Werror -ggdb $(INCLUDES) \
             -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector \
 			-Wno-main
 CXXFLAGS +=  $(CFLAGS) -ffreestanding -fno-rtti -fno-exceptions
+CPPFLAGS ?=
 ASFLAGS  += -MMD $(INCLUDES)
 
 ## Compliation rule for .c -> .o (using gcc)
 $(DST_DIR)/%.o: %.c
 	@mkdir -p $(dir $@) && echo + CC $<
-	@$(CC) -std=gnu11 $(CFLAGS) -c -o $@ $(realpath $<)
+	@$(CC) $(CPPFLAGS) -std=gnu11 $(CFLAGS) -c -o $@ $(realpath $<)
 
 ## Compliation rule for .cpp -> .o (using g++)
 $(DST_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@) && echo + CXX $<
-	@$(CXX) -std=c++11 $(CXXFLAGS) -c -o $@ $(realpath $<)
+	@$(CXX) $(CPPFLAGS) -std=c++11 $(CXXFLAGS) -c -o $@ $(realpath $<)
 
 ## Compliation rule for .S -> .o (using as)
 $(DST_DIR)/%.o: %.S
