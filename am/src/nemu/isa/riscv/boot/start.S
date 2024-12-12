@@ -35,8 +35,8 @@ _start:
   mv s0, zero
   la sp, _stack_pointer
   li a0, MSTATUS_FS & (MSTATUS_FS >> 1)
+  fscsr x0
   csrs mstatus, a0
-  csrwi fcsr, 0
 
   init_fregs # init fregs after fp enable
 
