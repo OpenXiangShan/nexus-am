@@ -100,6 +100,7 @@ int main() {
     failed += test(ITARGET_SET(ITARGET_RSVD1) | INJECT | ENABLE, target, ISTATUS_ERROR, IERROR_TARGET_INVALID, "Inject to invalid target");
     failed += test(ITARGET_SET(ITARGET_META) | INJECT, target, ISTATUS_ERROR, IERROR_NOT_ENABLED, "Inject when ecc not enabled");
     failed += test(ITARGET_SET(ITARGET_META) | INJECT | ENABLE, 0, ISTATUS_ERROR, IERROR_NOT_FOUND, "Inject to invalid address");
+    failed += test(ISTATUS_SET(ISTATUS_WORKING) | IERROR_SET(IERROR_TARGET_INVALID) | ENABLE, target, ISTATUS_IDLE, 0, "IStatus & IError read-only");
 
     return failed;
 }
