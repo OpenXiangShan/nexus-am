@@ -35,8 +35,10 @@ int __attribute__((noinline)) target() {
 volatile uint64_t* const eccctrl = (uint64_t *)(ICACHECTRL_ECCCTRL_ADDR);
 volatile uint64_t* const ecciaddr = (uint64_t *)(ICACHECTRL_ECCIADDR_ADDR);
 
-int test(uint64_t ctrl, istatus_t expected_istatus, ierror_t expected_ierror, const char *desp) {
+int test(uint64_t ctrl, int (*target)(), istatus_t expected_istatus, ierror_t expected_ierror, const char *desp) {
+#if TEST_LOG_LEVEL <= TEST_LOG_LEVEL_INFO
     static int test_id = 0;
+#endif
 
     asm volatile("fence.i":::"memory");
 
@@ -49,6 +51,7 @@ int test(uint64_t ctrl, istatus_t expected_istatus, ierror_t expected_ierror, co
 
     // set the control register and wait for the operation to finish
     DEBUG("ECC inject start! eccctrl=0x%x\n", ctrl);
+    *ecciaddr = (uint64_t) target;
     *eccctrl = ctrl;
     istatus_t istatus;
     int wait = 0;
@@ -90,20 +93,13 @@ fail:
 }
 
 int main() {
-    INFO("Setup\n");
-    target(); // call target() first to make sure it is in the icache
-    *ecciaddr = (uint64_t) target;
-
-    INFO("Test\n");
     int failed = 0;
 
-    failed += test(ITARGET_SET(ITARGET_META) | INJECT | ENABLE, ISTATUS_INJECTED, 0, "Inject metaArray");
-    failed += test(ITARGET_SET(ITARGET_DATA) | INJECT | ENABLE, ISTATUS_INJECTED, 0, "Inject dataArray");
-    failed += test(ITARGET_SET(ITARGET_RSVD1) | INJECT | ENABLE, ISTATUS_ERROR, IERROR_TARGET_INVALID, "Inject to invalid target");
-    failed += test(ITARGET_SET(ITARGET_META) | INJECT, ISTATUS_ERROR, IERROR_NOT_ENABLED, "Inject when ecc not enabled");
-
-    *ecciaddr = 0; // set to where definitely cannot be in the icache
-    failed += test(ITARGET_SET(ITARGET_META) | INJECT | ENABLE, ISTATUS_ERROR, IERROR_NOT_FOUND, "Inject to invalid address");
+    failed += test(ITARGET_SET(ITARGET_META) | INJECT | ENABLE, target, ISTATUS_INJECTED, 0, "Inject metaArray");
+    failed += test(ITARGET_SET(ITARGET_DATA) | INJECT | ENABLE, target, ISTATUS_INJECTED, 0, "Inject dataArray");
+    failed += test(ITARGET_SET(ITARGET_RSVD1) | INJECT | ENABLE, target, ISTATUS_ERROR, IERROR_TARGET_INVALID, "Inject to invalid target");
+    failed += test(ITARGET_SET(ITARGET_META) | INJECT, target, ISTATUS_ERROR, IERROR_NOT_ENABLED, "Inject when ecc not enabled");
+    failed += test(ITARGET_SET(ITARGET_META) | INJECT | ENABLE, 0, ISTATUS_ERROR, IERROR_NOT_FOUND, "Inject to invalid address");
 
     return failed;
 }
