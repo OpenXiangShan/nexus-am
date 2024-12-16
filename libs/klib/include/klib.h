@@ -78,6 +78,10 @@ void free(void *ptr);
 
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 
+uint64_t compare_and_swap(volatile uint64_t*, uint64_t, uint64_t);
+void lock(volatile uint64_t *);
+void release(volatile uint64_t *);
+
 // assert.h
 #ifdef NDEBUG
   #define assert(ignore) ((void)0)
