@@ -33,7 +33,10 @@ static struct {
   uintptr_t size;
 } last = { .ptr = NULL, .size = 0 };
 
+volatile uint64_t malloc_lock = 0;
+
 void *malloc(size_t size) {
+  lock(&malloc_lock);
   if (last.ptr == NULL) {
     last.ptr = _heap.start;
     printf("heap start = %x\n", last.ptr);
@@ -44,14 +47,20 @@ void *malloc(size_t size) {
 
   // skip the region allocated by the last call
   last.ptr += last.size;
-  if (last.ptr + size >= _heap.end) return NULL;
+  if (last.ptr + size >= _heap.end) {
+    release(&malloc_lock);
+    return NULL;
+  }
   void *ret = last.ptr;
   last.size = size;
+  release(&malloc_lock);
   return ret;
 }
 
 void free(void *ptr) {
+  lock(&malloc_lock);
   if (ptr == last.ptr) last.size = 0;
+  release(&malloc_lock);
 }
 
 #endif
