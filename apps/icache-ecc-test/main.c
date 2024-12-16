@@ -37,7 +37,16 @@ volatile uint64_t* const ecciaddr = (uint64_t *)(ICACHECTRL_ECCIADDR_ADDR);
 
 int test(uint64_t ctrl, istatus_t expected_istatus, ierror_t expected_ierror, const char *desp) {
     static int test_id = 0;
+
+    asm volatile("fence.i":::"memory");
+
     INFO("=== [%d] %s ===\n", test_id, desp);
+
+    if (expected_istatus == ISTATUS_INJECTED) {
+        DEBUG("Call target() first to make sure it is in the icache\n");
+        target();
+    }
+
     // set the control register and wait for the operation to finish
     DEBUG("ECC inject start! eccctrl=0x%x\n", ctrl);
     *eccctrl = ctrl;
