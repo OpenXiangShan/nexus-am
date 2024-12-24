@@ -7,16 +7,19 @@ Clear old build
 rm -rf $AM_HOME/am/build build
 ```
 
-Build latency bmk with specific footprint size, given than L3 size is 16:
-```
-make ARCH=riscv64-xs INST=16
-```
+Build latency bmk with specific footprint size: `make ARCH=riscv64-xs INST=N`,
+where INST is multiplied by 256 KBytes.
+Users can also use test-example.sh to generate multiple footprint sizes.
 
-Note that `INST` here will be multiplied by 1MB to flush caches
+## Note for testing
 
-# Build DUT with prefetcher off
+If prefetcher is turned off,
+to test DDR latency when L2=1M and L3=2M, we should set INST larger than 12 (=3MB).
 
-To avoid prefetching, please remember to turn off prefetchers.
+If prefetcher is on, due the existence of temporal prefetcher,
+we suggest following sizes for testing DDR latency (when L2=1M and L3=2M):
+INST = 14 16 20 24 32 48
+
 
 # Run
 
