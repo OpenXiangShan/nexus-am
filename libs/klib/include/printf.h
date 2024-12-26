@@ -60,6 +60,12 @@ void _putchar(char character);
 #define printf printf_
 int printf_(const char* format, ...);
 
+/**
+ * Atomic version of printf
+ */
+#define atomic_printf atomic_printf_
+int atomic_printf_(const char* format, ...);
+
 
 /**
  * Tiny sprintf implementation
