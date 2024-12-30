@@ -29,7 +29,7 @@ uint32_t lfsr_next(uint32_t last) {
 
 uint64_t random_num_to_addr(uint64_t base_addr, uint32_t num, uint32_t size_limit) {
   uint32_t size_mask = size_limit - 1;
-  uint32_t cache_line_mask = _PERF_CACHELINE_SIZE_BYTE - 1;
+  uint32_t cache_line_mask = 0x7;
   uint32_t masked_num = num & (size_mask & (~cache_line_mask));
   return base_addr + masked_num;
 }
@@ -37,13 +37,13 @@ uint64_t random_num_to_addr(uint64_t base_addr, uint32_t num, uint32_t size_limi
 void pseudo_random_warmup(uint64_t base_addr, uint32_t seed, unsigned blk_count, uint32_t size_limit) {
   unsigned count = 0;
   uint64_t cur_addr = base_addr;
-  /*uint32_t init_seed = seed;*/
+  uint32_t init_seed = seed;
   while (count < blk_count) {
     uint32_t next_number = lfsr_next(seed);
-    /*if (next_number == init_seed) {*/
-    /*  printf("Loop detected, stop warmup\n");*/
-    /*  assert(0);*/
-    /*}*/
+    if (next_number == init_seed) {
+      printf("Loop detected, stop warmup\n");
+      assert(0);
+    }
     uint64_t next_addr = random_num_to_addr(base_addr, next_number, size_limit);
     // assert(next_addr >= base_addr && next_addr < base_addr + size_limit);
     *((uint64_t*)cur_addr) = next_addr;
