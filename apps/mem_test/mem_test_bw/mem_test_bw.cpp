@@ -94,8 +94,12 @@ void legacy_test_mem_bandwidth(const char *cache_name, uint64_t iter, uint64_t f
 
     /*printf("%s bandwidth test\n", cache_name);*/
     // warmup
-    access_region_with_step_by_xtimes<Stride, 8>(
-        iter, _PERF_TEST_ADDR_BASE,  footprint_cachelines * Stride);
+    if (strcmp(cache_name, "MEM") != 0) {
+      access_region_with_step_by_xtimes<Stride, 8>(
+          iter, _PERF_TEST_ADDR_BASE1, footprint_cachelines * Stride);
+    } else {
+      printf("MEM bandwidth test, skip warmup\n");
+    }
     // test
     cycle_1 = csr_read(CSR_MCYCLE);
     /*inst_1  = csr_read(CSR_MINSTRET); */
@@ -110,29 +114,43 @@ void legacy_test_mem_bandwidth(const char *cache_name, uint64_t iter, uint64_t f
            cache_name, (float)iter * footprint_per_sample / cycle, iter, footprint_cachelines, Stride);
 }
 
+#define xstr(s) str(s)
+#define str(s) #s
+
 int main(){
-    printf("start ddr test\n");
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L1", 2048, 128, 64);
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC>("L1", 2048, 128, 64);
-    legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L1", 2048, 128, 64);
+#if not defined(TEST_TYPE)
+    printf("TEST_TYPE not specified, start DDR bandwidth test\n");
+    legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("MEM", 32*1024, 64*1024, 64);
+#else
+    if (strcmp(xstr(TEST_TYPE), "mem") == 0) {
+        printf("start DDR bandwidth test\n");
+        legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("MEM", 32*1024, 64*1024, 64);
+    } else if (strcmp(xstr(TEST_TYPE), "cache") == 0) {
+        printf("start cache bandwidth test\n");
 
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L1",  2048, 256, 64);
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC>("L1", 2048, 256, 64);
-    legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L1", 2048, 256, 64);
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L1", 2048, 128, 64);
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC>("L1", 2048, 128, 64);
+        legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L1", 2048, 128, 64);
 
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 2048, 1024, 64);
-    legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 2048, 1024, 64);
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L1",  2048, 256, 64);
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC>("L1", 2048, 256, 64);
+        legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L1", 2048, 256, 64);
 
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 2048, 2048, 64);
-    legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 2048, 2048, 64);
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 2048, 1024, 64);
+        legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 2048, 1024, 64);
 
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 4096, 4096, 64);
-    legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 4096, 4096, 64);
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 2048, 2048, 64);
+        legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 2048, 2048, 64);
 
-    legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 8*1024, 8*1024, 64);
-    legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 8*1024, 8*1024, 64);
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 4096, 4096, 64);
+        legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 4096, 4096, 64);
 
+        legacy_test_mem_bandwidth<_PERF_STRIDE_AVOID_BC_NEWLINE>("L2", 8*1024, 8*1024, 64);
+        legacy_test_mem_bandwidth<_PERF_CACHELINE_SIZE_BYTE>("L2", 8*1024, 8*1024, 64);
+    } else {
+        printf("unknown test type\n");
+    }
 
-    // legacy_test_mem_throughput_same_set(500);
+#endif  // TEST_TYPE
     return 0;
 }

@@ -9,7 +9,8 @@ rm -rf $AM_HOME/am/build build
 
 Build bandwidth bmk:
 ```
-make ARCH=riscv64-xs
+make ARCH=riscv64-xs TEST_TYPE=mem    # for memory
+make ARCH=riscv64-xs TEST_TYPE=cache  # for cache
 ```
 
 # Build DUT with well-tuned prefetcher
