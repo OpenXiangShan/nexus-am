@@ -40,9 +40,7 @@ uintptr_t _pma_get_cfg(int cfg_idx) {
     uintptr_t cfg;
     switch(cfg_idx){
         case 0: asm volatile("csrr %0, pmpcfg0" : "=r"(cfg)); break;
-        case 1: asm volatile("csrr %0, pmpcfg1" : "=r"(cfg)); break;
         case 2: asm volatile("csrr %0, pmpcfg2" : "=r"(cfg)); break;
-        case 3: asm volatile("csrr %0, pmpcfg3" : "=r"(cfg)); break;
         default: cfg = 0; break;
     }
     return cfg;
@@ -73,9 +71,7 @@ void _pma_set_addr(int addr_idx, uintptr_t val) {
 void _pma_set_cfg(int cfg_idx, uintptr_t val) {
     switch(cfg_idx){
         case 0: asm volatile("csrw pmpcfg0, %0" : : "r"(val)); break;
-        case 1: asm volatile("csrw pmpcfg1, %0" : : "r"(val)); break;
         case 2: asm volatile("csrw pmpcfg2, %0" : : "r"(val)); break;
-        case 3: asm volatile("csrw pmpcfg3, %0" : : "r"(val)); break;
         default: break;
     }
 }
