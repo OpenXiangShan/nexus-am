@@ -36,7 +36,7 @@ prompt:
 	@echo \# Creating binary image [$(ARCH)]
 
 clean-am:
-	@$(MAKE) -s -C $(AM_HOME) clean
+	@$(MAKE) -s -C $(AM_HOME)/am clean
 
 clean: 
 	rm -rf $(APP_DIR)/build/
