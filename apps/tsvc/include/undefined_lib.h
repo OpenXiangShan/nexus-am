@@ -17,7 +17,6 @@ void *memalign(size_t alignment, size_t size);
 int gettimeofday(struct timeval *rtc, void * null);
 int fprintf(void *file, const char *format, ...);
 float fabsf(float x);
-int exit(int x);
 float sinf(float x);
 float cosf(float x);
 #endif

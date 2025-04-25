@@ -1030,7 +1030,7 @@ real_t calc_checksum(const char * name)
     } else {
         printf("Unknown function name passed to calc_checksum: %s\n", name);
         // fprintf(stderr, "Unknown function name passed to calc_checksum: %s\n", name);
-        exit(1);
+        _halt(1);
     }
     return 0;
 }

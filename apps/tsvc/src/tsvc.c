@@ -3379,7 +3379,7 @@ real_t s481(struct args_t * func_args)
     for (int nl = 0; nl < iterations; nl++) {
         for (int i = 0; i < LEN_1D; i++) {
             if (d[i] < (real_t)0.) {
-                exit (0);
+                _halt (0);
             }
             a[i] += b[i] * c[i];
         }

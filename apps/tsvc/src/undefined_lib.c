@@ -77,14 +77,3 @@ float cosf(float x) {
     }
     return result;
 }
-
-
-int exit(int a){
-    if(a==0){
-        printf("Success! Exit with 0.\n");
-        assert(0);
-    } else{
-        printf("Failed! Exit with %d.\n",a);
-        assert(0);
-    }
-}
