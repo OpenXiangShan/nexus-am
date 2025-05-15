@@ -33,7 +33,7 @@ static struct {
   uintptr_t size;
 } last = { .ptr = NULL, .size = 0 };
 
-volatile uint64_t malloc_lock = 0;
+volatile size_t malloc_lock = 0;
 
 void *malloc(size_t size) {
   lock(&malloc_lock);
