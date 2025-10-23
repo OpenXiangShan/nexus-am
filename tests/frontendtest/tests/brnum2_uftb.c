@@ -23,6 +23,7 @@ void __attribute__ ((noinline)) branch_test2(int cnt) {
         // 初始化计数器
         "li t0, 0\n\t"      // 循环计数器
         "li t2, 0\n\t"
+        "li t3, 0\n\t"
         "li t4, 3\n\t"      // 第一个分支跳转阈值
         "li t5, 5\n\t"     // 第二个分支跳转阈值
         ".align 4\n\t"

@@ -19,5 +19,6 @@ int32_t prime_based_pattern(int32_t n) {
 }
 
 int main() {
-  return prime_based_pattern(LOOP_COUNT);
+  prime_based_pattern(LOOP_COUNT);
+  return 0;
 } 

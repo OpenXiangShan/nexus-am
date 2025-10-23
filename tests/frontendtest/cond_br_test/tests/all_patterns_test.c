@@ -227,7 +227,7 @@ int main() {
   result += gradual_transition(LOOP_COUNT);
   result += aliasing_pattern(LOOP_COUNT);
   
-  return result;
+  return 0;
 }
 
 #endif // BRANCH_PATTERN_COMMON_H

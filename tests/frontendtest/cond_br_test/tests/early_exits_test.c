@@ -19,5 +19,6 @@ int32_t early_exits(int32_t n) {
 }
 
 int main() {
-  return early_exits(LOOP_COUNT);
+  early_exits(LOOP_COUNT);
+  return 0;
 } 

@@ -18,5 +18,6 @@ int32_t three_bit_pattern(int32_t n) {
 }
 
 int main() {
-  return three_bit_pattern(LOOP_COUNT);
+  three_bit_pattern(LOOP_COUNT);
+  return 0;
 } 

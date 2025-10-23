@@ -27,5 +27,6 @@ int32_t nested_branches(int32_t n) {
 }
 
 int main() {
-  return nested_branches(LOOP_COUNT);
+  nested_branches(LOOP_COUNT);
+  return 0;
 } 

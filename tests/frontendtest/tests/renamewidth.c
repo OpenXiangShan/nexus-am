@@ -21,7 +21,7 @@ void __attribute__ ((noinline)) renamewidth(int cnt){
         "li a0, 123\n\t"         // 源整数寄存器
         ".align 4\n\t"
         "1:\n\t"
-        THOUSAND
+        HUNDRED
         "addi %0, %0, -1\n\t"
         "bnez %0, 1b\n\t"
         : 

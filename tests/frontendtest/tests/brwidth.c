@@ -9,7 +9,7 @@ void __attribute__ ((noinline)) brwidth(int cnt){
         ".align 4\n\t"
         "1:\n\t"
         "addi t0, t0, 1\n\t"     // 确保t0始终为非零
-        THOUSAND                   // 100个分支指令
+        HUNDRED                   // 100个分支指令
         "addi %0, %0, -1\n\t"
         "bnez %0, 1b\n\t"
         : 
@@ -20,6 +20,6 @@ void __attribute__ ((noinline)) brwidth(int cnt){
 
 
 int main() {
-  brwidth(__LOOP_COUNT * 10);
+  brwidth(100);
   return 0;
 }

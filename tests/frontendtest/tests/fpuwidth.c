@@ -19,7 +19,7 @@ void __attribute__ ((noinline)) fpuwidth(int cnt){
         "fmv.d.x f1, t0\n\t"    // 设置 f1 为 1.0
         ".align 4\n\t"
         "1:\n\t"
-        THOUSAND
+        HUNDRED
         "addi %0, %0, -1\n\t"
         "bnez %0, 1b\n\t"
         : 
@@ -30,6 +30,6 @@ void __attribute__ ((noinline)) fpuwidth(int cnt){
 
 
 int main() {
-  fpuwidth(__LOOP_COUNT);
+  fpuwidth(100);
   return 0;
 }

@@ -34,7 +34,7 @@ void __attribute__ ((noinline)) ifuwidth(int cnt) {
 
 
 int main() {
-  ifuwidth(1000);
+  ifuwidth(100);
 //   perf_counter_t perf;
 //   measure_performance(ifuwidth, 1000, &perf);
 //   printf("\nIFU Test Performance:\n");

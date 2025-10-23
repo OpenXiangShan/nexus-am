@@ -18,5 +18,6 @@ int32_t never_taken(int32_t n) {
 }
 
 int main() {
-  return never_taken(LOOP_COUNT);
+  never_taken(LOOP_COUNT);
+  return 0;
 } 

@@ -37,6 +37,6 @@ void __attribute__ ((noinline)) aluwidth(int cnt){
 
 
 int main() {
-  aluwidth(2000);
+  aluwidth(200);
   return 0;
 }

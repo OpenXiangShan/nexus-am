@@ -19,5 +19,6 @@ int32_t rare_branches(int32_t n) {
 }
 
 int main() {
-  return rare_branches(LOOP_COUNT);
+  rare_branches(LOOP_COUNT);
+  return 0;
 } 

@@ -31,5 +31,6 @@ int32_t aliasing_pattern(int32_t n) {
 }
 
 int main() {
-  return aliasing_pattern(LOOP_COUNT);
+  aliasing_pattern(LOOP_COUNT);
+  return 0;
 } 

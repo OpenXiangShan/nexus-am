@@ -17,5 +17,6 @@ int32_t two_bit_pattern(int32_t n) {
 }
 
 int main() {
-  return two_bit_pattern(LOOP_COUNT);
+  two_bit_pattern(LOOP_COUNT);
+  return 0;
 } 

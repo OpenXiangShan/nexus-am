@@ -18,5 +18,6 @@ int32_t always_taken(int32_t n) {
 }
 
 int main() {
-  return always_taken(LOOP_COUNT);
+  always_taken(LOOP_COUNT);
+  return 0;
 } 

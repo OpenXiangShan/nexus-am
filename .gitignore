@@ -13,3 +13,4 @@ __pycache__
 tags
 cscope.*
 build/
+compile_commands.json

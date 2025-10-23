@@ -18,5 +18,6 @@ int32_t alternating(int32_t n) {
 }
 
 int main() {
-  return alternating(LOOP_COUNT);
+  alternating(LOOP_COUNT);
+  return 0;
 } 

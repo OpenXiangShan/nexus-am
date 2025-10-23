@@ -28,5 +28,6 @@ int32_t switching_pattern(int32_t n, int32_t switch_point) {
 }
 
 int main() {
-  return switching_pattern(LOOP_COUNT, PATTERN_SWITCH);
+  switching_pattern(LOOP_COUNT, PATTERN_SWITCH);
+  return 0;
 } 

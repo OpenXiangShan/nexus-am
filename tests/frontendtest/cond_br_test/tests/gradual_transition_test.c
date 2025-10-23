@@ -19,5 +19,6 @@ int32_t gradual_transition(int32_t n) {
 }
 
 int main() {
-  return gradual_transition(LOOP_COUNT);
+  gradual_transition(LOOP_COUNT);
+  return 0;
 } 

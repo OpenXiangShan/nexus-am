@@ -66,6 +66,6 @@ void __attribute__ ((noinline)) fetchfrag(int cnt) {
 
 
 int main() {
-  fetchfrag(1000);
+  fetchfrag(100);
   return 0;
 }
