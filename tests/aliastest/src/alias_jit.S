@@ -50,7 +50,7 @@ do_alias_jit_init:
   la a1, page_table_1
   srl a1, a1, RISCV_PGSHIFT
   or a1, a1, a0
-  csrw sptbr, a1
+  csrw satp, a1
   sfence.vma
 
   # Write code to code_page
