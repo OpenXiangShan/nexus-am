@@ -1,5 +1,6 @@
 #include <am.h>
 #include <klib.h>
+#include <klib-macros.h>
 
 #if !defined(__ARCH_RISCV32_NOOP) && !defined(__ARCH_RISCV64_NOOP)
 typedef union {
