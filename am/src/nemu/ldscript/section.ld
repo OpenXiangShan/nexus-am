@@ -22,6 +22,9 @@ SECTIONS {
     *(.sbss*)
     *(.scommon)
   }
+  /* bss 128MB */
+  . = _bss_start + 0x8000000;
+  _bss_end = .;
   _stack_top = ALIGN(0x1000);
   . = _stack_top + 0x8000;
   _stack_pointer = .;

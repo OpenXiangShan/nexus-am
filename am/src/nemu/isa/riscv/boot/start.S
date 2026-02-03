@@ -8,9 +8,9 @@
   mv x\reg_idx, zero
 .endm
 
-.macro set_freg_zero freg_idx
-  fmv.w.x f\freg_idx, zero
-.endm
+# .macro set_freg_zero freg_idx
+#   fmv.w.x f\freg_idx, zero
+# .endm
 
 .macro init_regs
   .altmacro
@@ -21,13 +21,13 @@
   .endr
 .endm
 
-.macro init_fregs
-  .set i, 0
-  .rept 32
-    set_freg_zero %i
-    .set i, i+1
-  .endr
-.endm
+# .macro init_fregs
+#   .set i, 0
+#   .rept 32
+#     set_freg_zero %i
+#     .set i, i+1
+#   .endr
+# .endm
 
 _start:
   init_regs
@@ -38,6 +38,6 @@ _start:
   csrs mstatus, a0
   csrwi fcsr, 0
 
-  init_fregs # init fregs after fp enable
+  # init_fregs # init fregs after fp enable
 
   jal _trm_init
