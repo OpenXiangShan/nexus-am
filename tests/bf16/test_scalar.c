@@ -88,7 +88,6 @@ void test_float_to_bf16(void) {
     float f = test_cases[i].input;
     uint16_t expected = test_cases[i].expected;
     const char *desc = test_cases[i].desc;
-    // uint16_t bf = float_to_bf16_soft(f);
     uint16_t bf = float_to_bf16(f);
 
     int ok = 0;
@@ -132,6 +131,7 @@ void test_float_to_bf16(void) {
   for (int i = 0; i < num_rt; i++) {
     float orig = roundtrip_vals[i];
     uint16_t bf = float_to_bf16(orig);
+    uint16_t mid = float_to_bf16_soft(orig);
     float back = bf16_to_float(bf);
     int ok = 0;
 
@@ -143,9 +143,9 @@ void test_float_to_bf16(void) {
       /* Normal numbers: Allow small absolute or relative errors */
 
       float ulp = my_fabs(orig) * (1.0f / 64.0f); // BF16 的步长 ≈ |x| / 2^7
-      ok = (my_fabs(orig - back) <= 2.0f * ulp) ||
-           float_equal(orig, back, 1e-6f, 1e-5f);
-      ;
+      ok = ((my_fabs(orig - back) <= 2.0f * ulp) ||
+            float_equal(orig, back, 1e-6f, 1e-5f)) &&
+           (mid == bf);
     }
 
     if (ok) {

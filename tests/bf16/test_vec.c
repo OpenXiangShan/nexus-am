@@ -120,7 +120,7 @@ void test_vfwcvtbf16() {
         printf("%sPASS%s: 0x%04x -> %g\n", COLOR_GREEN, COLOR_RESET,
                bf16_values[i - base], results[i - base]);
       } else {
-        float expected2 = bf16_to_float(bf16_values[i - base]);
+        float expected2 = bf16_to_float_soft(test_cases[i].expected);
         if (float_equal(results[i - base], expected2, 1e-6f, 1e-5f)) {
           printf("%sPASS%s: 0x%04x -> %g~%g\n", COLOR_GREEN, COLOR_RESET,
                  bf16_values[i - base], results[i - base], expected);
@@ -339,26 +339,6 @@ void test_vfwmaccbf16() {
   printf("\nvfwmaccbf16.vv test completed\n\n");
 }
 
-// Reference implementation for vfwmaccbf16.vf using equivalent sequence:
-//   fcvt.s.bf16 T1, rs1
-//   vfwcvtbf16.f.f.v T2, vs2, vm
-//   vfmacc.vf vd, T1, T2, vm
-void expand_vfwmaccbf16_vf(uint16_t rs1_bf16, uint16_t *vs2, float *vd) {
-  float t1 = bf16_to_float(rs1_bf16);
-  asm volatile("csrwi frm,0 \n"
-               "vsetivli zero, 4, e16, m1, ta, ma\n"
-               "vle16.v v2, (%2)\n"
-               "vfwcvtbf16.f.f.v v4, v2\n"
-               "vsetivli zero, 4, e32, m1, ta, ma\n"
-               "vle32.v v6, (%1)\n"
-               "vfmacc.vf v6, %0, v4\n"
-               "vse32.v v6, (%1)\n"
-               "fence rw, rw\n"
-               :
-               : "f"(t1), "r"(vd), "r"(vs2)
-               : "v2", "v3", "v4", "v5", "v6", "v7");
-}
-
 void do_vfwmaccbf16_vf(uint16_t rs1_bf16, uint16_t *vs2, float *vd) {
   asm volatile("csrwi frm,0 \n"
                "fmv.h.x ft0, %0\n"
@@ -426,8 +406,6 @@ void test_vfwmaccbf16_vf() {
     for (int i = 0; i < 4; i++)
       vd_copy[i] = vf_tests[t].vd[i];
 
-    // expand_vfwmaccbf16_vf(vf_tests[t].rs1, (uint16_t *)vf_tests[t].vs2,
-    // vd_copy);
     do_vfwmaccbf16_vf(vf_tests[t].rs1, (uint16_t *)vf_tests[t].vs2, vd_copy);
 
     for (int i = 0; i < 4; i++) {
