@@ -1,70 +1,5 @@
 #include "bf16.h"
-#include <klib.h>
-#include <math.h>
-#include <stdint.h>
 
-/*
-** The value in the BASE field of mtvec
-** must always be aligned on a 4-byte boundary
-** aligned(4) means aligned on a 4-byte boundary
-** not aligned on a 2^4 byte boundary
-*/
-__attribute__((aligned(4))) void __am_asm_trap(void) {
-  asm volatile("csrr t0, mepc\n\t"
-               "addi t0, t0, 4\n\t"
-               "csrw mepc, t0\n\t"
-               "mret");
-}
-#define INIT()                                                                 \
-  do {                                                                         \
-    asm volatile("lui a0,0x2\n"                                                \
-                 "addiw a0,a0,512\n"                                           \
-                 "csrs mstatus,a0\n"                                           \
-                 "csrwi vcsr,0" ::);                                           \
-  } while (0)
-
-// Test data structure for BF16 conversion tests
-typedef struct {
-  float input;       // Input float value
-  uint16_t expected; // Expected BF16 value
-  const char *desc;  // Description of the test case
-} test_case_t;
-
-// Test data for BF16 conversion
-static test_case_t test_cases[] = {
-    // Normal numbers
-    {1.0f, 0x3F80, "1.0"},
-    {0.0f, 0x0000, "0.0"},
-    {-1.0f, 0xBF80, "-1.0"},
-    {0.5f, 0x3F00, "0.5"},
-    {-0.5f, 0xBF00, "-0.5"},
-    {2.0f, 0x4000, "2.0"},
-    {-2.0f, 0xC000, "-2.0"},
-    {100.0f, 0x42C8, "100.0"},
-    {-100.0f, 0xC2C8, "-100.0"},
-    {0.0001f, 0x38D2, "0.0001"},
-    {-0.0001f, 0xB8D2, "-0.0001"},
-    {100000.0f, 0x47C3, "100000.0"},
-    {-100000.0f, 0xC7C3, "-100000.0"},
-
-    // Special values
-    {INFINITY, 0x7F80, "+inf"},
-    {-INFINITY, 0xFF80, "-inf"},
-    {NAN, 0x7FC0, "NaN"},
-
-    // Denormal numbers
-    {1.40129846e-45f, 0x0000, "Smallest positive denormal"},
-    {1.0e-45f, 0x0000, "Rounds to 0"},
-    {-1.40129846e-45f, 0x8000, "Smallest negative denormal"},
-
-    // Edge cases
-    {0.0078125f, 0x3C00, "2^-7"},
-    {65504.0f, 0x4780, "Largest normal number"},
-};
-
-static int num_test_cases = sizeof(test_cases) / sizeof(test_cases[0]);
-
-// Test vfncvtbf16.f.f.w (Vector convert FP32 to BF16)
 void test_vfncvtbf16() {
   printf("Testing vfncvtbf16.f.f.w (Vector convert FP32 to BF16):\n");
 
@@ -89,7 +24,7 @@ void test_vfncvtbf16() {
                  "fence rw, rw\n"
                  :
                  : "r"(test_values), "r"(results)
-                 : "v0", "v1", "v2","memory");
+                 : "v0", "v1", "v2", "memory");
     // Check results
     for (int i = base; i < base + 4; i++) {
       uint16_t expected = test_cases[i].expected;
@@ -124,7 +59,7 @@ void test_vfncvtbf16() {
                "fence rw, rw\n"
                :
                : "r"(masked_values), "r"(mask_bits), "r"(masked_results)
-               : "v0", "v1", "v2", "v4", "v5","memory");
+               : "v0", "v1", "v2", "v4", "v5", "memory");
 
   for (int i = 0; i < 4; i++) {
     if (mask[i]) {
@@ -173,7 +108,8 @@ void test_vfwcvtbf16() {
                  "fence rw, rw\n"
                  :
                  : "r"(bf16_values), "r"(results)
-                 : "v0", "v1", "v2", "v3","memory"); // v2-v3 for EMUL=2 with e32
+                 : "v0", "v1", "v2", "v3",
+                   "memory"); // v2-v3 for EMUL=2 with e32
 
     // Check results
     for (int i = base; i < base + 4; i++) {
@@ -220,7 +156,7 @@ void test_vfwcvtbf16() {
                "fence rw, rw\n"
                :
                : "r"(masked_bf16), "r"(mask_bits), "r"(masked_results)
-               : "v0", "v1", "v2", "v4", "v5","memory");
+               : "v0", "v1", "v2", "v4", "v5", "memory");
 
   for (int i = 0; i < 4; i++) {
     if (mask[i]) {
@@ -264,7 +200,7 @@ void expand_vfwmaccbf_vf(uint16_t *vs1_bf16, uint16_t *vs2_bf16,
                "fence rw, rw\n"
                :
                : "r"(vs1_bf16), "r"(vs2_bf16), "r"(vd_fp32)
-               : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7","memory");
+               : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "memory");
 }
 
 void vfwmaccbf_vf(uint16_t *vs1_bf16, uint16_t *vs2_bf16, float *vd_fp32) {
@@ -280,7 +216,7 @@ void vfwmaccbf_vf(uint16_t *vs1_bf16, uint16_t *vs2_bf16, float *vd_fp32) {
                "fence rw, rw\n"
                :
                : "r"(vs1_bf16), "r"(vs2_bf16), "r"(vd_fp32)
-               : "v0", "v1", "v2", "v3", "v4", "v5","memory");
+               : "v0", "v1", "v2", "v3", "v4", "v5", "memory");
 }
 // Test vfwmaccbf16.vv (Vector widening fused multiply-accumulate)
 void test_vfwmaccbf16() {
@@ -376,7 +312,7 @@ void test_vfwmaccbf16() {
                :
                : "r"(masked_vs1_bf16), "r"(masked_vs2_bf16),
                  "r"(masked_vd_fp32), "r"(mask_bits)
-               : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7","memory");
+               : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "memory");
   for (int i = 0; i < 4; i++) {
     if (mask[i]) {
       float expected = wmacc_tests[i].expected;
@@ -564,20 +500,4 @@ void test_vfwmaccbf16_vf() {
   }
 
   printf("\nvfwmaccbf16.vf test completed\n\n");
-}
-
-int main() {
-  printf("=== BF16 Vector Function Tests ===\n\n");
-
-  asm volatile("csrw mtvec, %0" : : "r"(__am_asm_trap));
-  INIT();
-
-  // Run tests
-  test_vfncvtbf16();
-  test_vfwcvtbf16();
-  test_vfwmaccbf16();
-  test_vfwmaccbf16_vf();
-
-  printf("=== All Tests Completed ===\n");
-  return 0;
 }
