@@ -1,18 +1,5 @@
 #include "bf16.h"
 
-/*
-** The value in the BASE field of mtvec
-** must always be aligned on a 4-byte boundary
-** aligned(4) means aligned on a 4-byte boundary
-** not aligned on a 2^4 byte boundary
-*/
-__attribute__((aligned(4))) void __am_asm_trap(void) {
-  asm volatile("csrr t0, mepc\n\t"
-               "addi t0, t0, 4\n\t"
-               "csrw mepc, t0\n\t"
-               "mret");
-}
-
 // Assembly implementations
 uint16_t float_to_bf16(float f) {
   uint16_t bf;

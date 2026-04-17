@@ -7,7 +7,6 @@
 int main() {
   printf("=== BF16 Function Tests ===\n\n");
   asm volatile("fsrm zero" : : : "memory");
-  asm volatile("csrw mtvec, %0" : : "r"(__am_asm_trap));
   INIT();
   
   test_fmv();
