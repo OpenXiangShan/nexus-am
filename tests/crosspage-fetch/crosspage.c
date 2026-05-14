@@ -1,31 +1,64 @@
 // Test fetch block crossing page boundary with different page attributes.
 
-// TESTMODE: yx
-// x: single 32-bit RVI instruction crosses page boundary
-//    expected mepc=0x82fffffe
-// 1x: full RVC instructions, fetch block crosses page boundary
-//    expected mepc=0x83000000
+// TEST_FLAG_RVC:
+// - 0: use a 32-bit RVI instruction stream that crosses the page boundary
+// - 1: use an RVC instruction stream that crosses the page boundary
+//
+// TEST_FLAG_PAD2B:
+// - 0: start = 0x82fffff8,
+// - 1: start = 0x82fffffa, with TEST_FLAG_RVC=1, there will be a 4B instruction crossing the page boundary
+//
+// TEST_FLAG_PAGE1/2_EXEC:
+// - 0: page 1/2 is not executable
+// - 1: page 1/2 is executable
+//
+// TEST_FLAG_PAGE1/2_IO:
+// - 0: page 1/2 uses normal memory attributes
+// - 1: page 1/2 uses IO attributes
 
-// y1: crossing EXEC+IO -> IO
-//     expected mcause=0xc
-// y2: crossing EXEC+IO -> EXEC
-//     expected mcause=0x1
-// y3: crossing EXEC -> EXEC+IO
-//     expected mcause=0x1
+// NOTE: kunminghu-v2 and -v3 expect different outcomes, as v2 does not support fetch across different page attributes.
+// In v2:
+// -     _PAD2B_EXEC_IO ->     _IO: page fault(mcause=0xc) with mepc=0x82fffffe
+// -  RVC_PAD2B_EXEC_IO ->     _IO: page fault(mcause=0xc) with mepc=0x83000000
+// -     _PAD2B_EXEC_IO -> EXEC_  : access fault(mcause=0x1) with mepc=0x82fffffe
+// -  RVC_PAD2B_EXEC_IO -> EXEC_  : access fault(mcause=0x1) with mepc=0x83000000
+// -     _PAD2B_EXEC_   ->     _IO: access fault(mcause=0x1) with mepc=0x82fffffe
+// -  RVC_PAD2B_EXEC_   ->     _IO: access fault(mcause=0x1) with mepc=0x83000000
+// In v3:
+// -     _PAD2B_EXEC_IO ->     _IO: page fault(mcause=0xc) with mepc=0x82fffffe
+// -  RVC_PAD2B_EXEC_IO ->     _IO: page fault(mcause=0xc) with mepc=0x83000000
+// -     _PAD2B_EXEC_IO -> EXEC_  : pass
+// -  RVC_PAD2B_EXEC_IO -> EXEC_  : pass
+// -     _PAD2B_EXEC_   ->     _IO: page fault(mcause=0xc) with mepc=0x83000000
+// -  RVC_PAD2B_EXEC_   ->     _IO: page fault(mcause=0xc) with mepc=0x83000000
+// !RVC+!PAD2B and RVC+PAD2B should be same as RVC
 
-// NOTE: TEST_MODE 12 expected NO TRAP,
-// because we can fetch 0x82fffffe->0x83000000 as an RVC instruction, then fetch the next fetch block,
-// so actually no cross-page fetch happens in TEST_MODE 12, and the test is expected to pass without exception.
-
-// NOTE: TEST_MODE y2/y3 expected to cause difftest failure, as NEMU will allow cross-page fetch with different page attributes, while XiangShan will not.
-
-#ifndef TEST_MODE
-#define TEST_MODE 1
+#ifndef TEST_FLAG_RVC
+#define TEST_FLAG_RVC 0
+#endif
+#ifndef TEST_FLAG_PAD2B
+#define TEST_FLAG_PAD2B 1
+#endif
+#ifndef TEST_FLAG_PAGE1_EXEC
+#define TEST_FLAG_PAGE1_EXEC 1
+#endif
+#ifndef TEST_FLAG_PAGE2_EXEC
+#define TEST_FLAG_PAGE2_EXEC 1
+#endif
+#ifndef TEST_FLAG_PAGE1_IO
+#define TEST_FLAG_PAGE1_IO 0
+#endif
+#ifndef TEST_FLAG_PAGE2_IO
+#define TEST_FLAG_PAGE2_IO 0
 #endif
 
-#if !((TEST_MODE == 1) || (TEST_MODE == 2) || (TEST_MODE == 3) || \
-    (TEST_MODE == 11) || (TEST_MODE == 12) || (TEST_MODE == 13))
-#error "TEST_MODE must be one of {1,2,3,11,12,13}"
+#if !((TEST_FLAG_RVC == 0) || (TEST_FLAG_RVC == 1)) || \
+    !((TEST_FLAG_PAD2B == 0) || (TEST_FLAG_PAD2B == 1)) || \
+    !((TEST_FLAG_PAGE1_EXEC == 0) || (TEST_FLAG_PAGE1_EXEC == 1)) || \
+    !((TEST_FLAG_PAGE2_EXEC == 0) || (TEST_FLAG_PAGE2_EXEC == 1)) || \
+    !((TEST_FLAG_PAGE1_IO == 0) || (TEST_FLAG_PAGE1_IO == 1)) || \
+    !((TEST_FLAG_PAGE2_IO == 0) || (TEST_FLAG_PAGE2_IO == 1))
+#error "TEST_FLAG_* must be 0 or 1"
 #endif
 
 #include <klib.h>
@@ -35,32 +68,14 @@ extern void init_pmp(void);
 extern unsigned char test_func_start[];
 extern unsigned char test_func_end[];
 
-// Mode 1/2/3: single 32-bit RVI instruction crosses page boundary (start @ 0x82fffffa)
-// Mode 11/12/13: RVC instruction block crosses page boundary (start @ 0x82fffff8)
-#if (TEST_MODE == 1) || (TEST_MODE == 2) || (TEST_MODE == 3)
+#if TEST_FLAG_RVC
 asm(
     ".pushsection .crosspage_test, \"ax\", @progbits\n"
-    ".balign 2\n"
-    ".option push\n"
-    ".option norvc\n"
-    "  .2byte 0x0001\n"
-    ".global test_func_start\n"
-    "test_func_start:\n"
-    "  lui t3, 0x12345\n"
-    "  xori t3, t3, 0x7f\n"
-    "  addi a0, t3, 0\n"
-    "  jalr x0, 0(ra)\n"
-    ".global test_func_end\n"
-    "test_func_end:\n"
-    ".option pop\n"
-    ".popsection\n"
-);
-#else
-asm(
-    ".pushsection .crosspage_test, \"ax\", @progbits\n"
-    ".balign 4\n"
     ".option push\n"
     ".option rvc\n"
+#if TEST_FLAG_PAD2B
+    "  .2byte 0x0001\n" // c.nop
+#endif
     ".global test_func_start\n"
     "test_func_start:\n"
     "  c.li a0, 0\n"
@@ -73,6 +88,25 @@ asm(
     ".option pop\n"
     ".popsection\n"
 );
+#else
+asm(
+    ".pushsection .crosspage_test, \"ax\", @progbits\n"
+    ".option push\n"
+    ".option norvc\n"
+#if TEST_FLAG_PAD2B
+    "  .2byte 0x0001\n" // c.nop
+#endif
+    ".global test_func_start\n"
+    "test_func_start:\n"
+    "  lui t3, 0x12345\n"
+    "  xori t3, t3, 0x7f\n"
+    "  addi a0, t3, 0\n"
+    "  jalr x0, 0(ra)\n"
+    ".global test_func_end\n"
+    "test_func_end:\n"
+    ".option pop\n"
+    ".popsection\n"
+ );
 #endif
 
 typedef uint64_t pte_t;
@@ -89,6 +123,32 @@ typedef uint64_t pte_t;
 #define PTE_A 0x040ull
 #define PTE_D 0x080ull
 #define PTE_ADDR(pte)   (((uintptr_t)(pte) & ~0x3ffull) << 2)
+
+#define PTE_BASE_FLAGS (PTE_V | PTE_R | PTE_A | PTE_D)
+
+#if TEST_FLAG_PAGE1_EXEC
+#define PAGE1_EXEC_PTE PTE_X
+#else
+#define PAGE1_EXEC_PTE 0
+#endif
+
+#if TEST_FLAG_PAGE2_EXEC
+#define PAGE2_EXEC_PTE PTE_X
+#else
+#define PAGE2_EXEC_PTE 0
+#endif
+
+#if TEST_FLAG_PAGE1_IO
+#define PAGE1_IO_PTE PTE_PBMT_IO
+#else
+#define PAGE1_IO_PTE 0
+#endif
+
+#if TEST_FLAG_PAGE2_IO
+#define PAGE2_IO_PTE PTE_PBMT_IO
+#else
+#define PAGE2_IO_PTE 0
+#endif
 
 #define PT_ENTRIES 512
 #define PAGE_SIZE  4096
@@ -120,7 +180,7 @@ __attribute__((aligned(4))) void trap_entry(void) {
     _halt(0);
 }
 
-#if (TEST_MODE == 1) || (TEST_MODE == 2) || (TEST_MODE == 3)
+#if TEST_FLAG_PAD2B
 static const uintptr_t func_ptr = 0x82fffffaull;
 #else
 static const uintptr_t func_ptr = 0x82fffff8ull;
@@ -128,16 +188,8 @@ static const uintptr_t func_ptr = 0x82fffff8ull;
 static const uintptr_t page0 = 0x82fff000ull;
 static const uintptr_t page1 = 0x83000000ull;
 
-#if (TEST_MODE == 1) || (TEST_MODE == 11)
-static const pte_t page0_flags = (pte_t)(PTE_V | PTE_R | PTE_X | PTE_A | PTE_D) | PTE_PBMT_IO;
-static const pte_t page1_flags = (pte_t)(PTE_V | PTE_R | PTE_A | PTE_D) | PTE_PBMT_IO;
-#elif (TEST_MODE == 2) || (TEST_MODE == 12)
-static const pte_t page0_flags = (pte_t)(PTE_V | PTE_R | PTE_X | PTE_A | PTE_D) | PTE_PBMT_IO;
-static const pte_t page1_flags = (pte_t)(PTE_V | PTE_R | PTE_X | PTE_A | PTE_D);
-#else
-static const pte_t page0_flags = (pte_t)(PTE_V | PTE_R | PTE_X | PTE_A | PTE_D);
-static const pte_t page1_flags = (pte_t)(PTE_V | PTE_R | PTE_X | PTE_A | PTE_D) | PTE_PBMT_IO;
-#endif
+static const pte_t page0_flags = (pte_t)(PTE_BASE_FLAGS | PAGE1_EXEC_PTE | PAGE1_IO_PTE);
+static const pte_t page1_flags = (pte_t)(PTE_BASE_FLAGS | PAGE2_EXEC_PTE | PAGE2_IO_PTE);
 
 static inline uintptr_t vpn2(uintptr_t va) {
     return (va >> 30) & 0x1ff;
@@ -217,10 +269,20 @@ int main() {
     uintptr_t mtvec_base = ((uintptr_t)trap_entry) & ~0x3ull;
 
     if ((uintptr_t)test_func_start != func_ptr) {
+        printf("test_func_start is not at the expected address 0x%lx\n", (unsigned long)func_ptr);
         _halt(2);
     }
 
-    printf("TEST_MODE=%d: func_ptr=0x%lx\n", TEST_MODE, (unsigned long)func_ptr);
+    printf(
+        "TEST_FLAGS: RVC=%d PAD2B=%d PAGE1_EXEC=%d PAGE2_EXEC=%d PAGE1_IO=%d PAGE2_IO=%d func_ptr=0x%lx\n",
+        TEST_FLAG_RVC,
+        TEST_FLAG_PAD2B,
+        TEST_FLAG_PAGE1_EXEC,
+        TEST_FLAG_PAGE2_EXEC,
+        TEST_FLAG_PAGE1_IO,
+        TEST_FLAG_PAGE2_IO,
+        (unsigned long)func_ptr
+    );
 
     asm volatile("csrw mtvec, %0" :: "r"(mtvec_base));
 
