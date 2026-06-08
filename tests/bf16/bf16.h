@@ -85,6 +85,10 @@ int bf16_is_nan(uint16_t bf);
 /* Get sign bit of bf16 */
 int bf16_get_sign(uint16_t bf);
 
+int bf16_matches_float_conversion(float input, uint16_t actual,
+                                  uint16_t expected);
+int float_matches_bf16_conversion(uint16_t input, float actual);
+
 /* ------------------------------------------------------------------------- */
 /* Test functions */
 

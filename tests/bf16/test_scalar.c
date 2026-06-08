@@ -5,6 +5,7 @@ test_case_t test_cases[] = {
     // Normal numbers
     {1.0f, 0x3F80, "1.0"},
     {0.0f, 0x0000, "0.0"},
+    {-0.0f, 0x8000, "-0.0"},
     {-1.0f, 0xBF80, "-1.0"},
     {0.5f, 0x3F00, "0.5"},
     {-0.5f, 0xBF00, "-0.5"},
@@ -26,13 +27,134 @@ test_case_t test_cases[] = {
     {1.40129846e-45f, 0x0000, "Smallest positive denormal"},
     {1.0e-45f, 0x0000, "Rounds to 0"},
     {-1.40129846e-45f, 0x8000, "Smallest negative denormal"},
+    {0x1p-133f, 0x0001, "Smallest positive BF16 subnormal"},
+    {-0x1p-133f, 0x8001, "Smallest negative BF16 subnormal"},
+    {0x1p-126f, 0x0080, "Smallest positive BF16 normal"},
 
     // Edge cases
     {0.0078125f, 0x3C00, "2^-7"},
-    {65504.0f, 0x4780, "Largest normal number"},
+    {0x1.01p+0f, 0x3F80, "RNE tie with even BF16 LSB"},
+    {0x1.03p+0f, 0x3F82, "RNE tie with odd BF16 LSB"},
+    {0x1.fep+127f, 0x7F7F, "Largest finite BF16"},
+    {0x1.fffffep+127f, 0x7F80, "Largest finite FP32 rounds to +inf"},
 };
 
 int num_test_cases = sizeof(test_cases) / sizeof(test_cases[0]);
+
+static uint32_t bf16_test_rand_state = 0x6D2B79F5u;
+
+static uint32_t bf16_test_rand(void) {
+  bf16_test_rand_state = bf16_test_rand_state * 1664525u + 1013904223u;
+  return bf16_test_rand_state;
+}
+
+static void test_float_to_bf16_boundary_bits(void) {
+  typedef struct {
+    uint32_t input_bits;
+    uint16_t expected;
+    const char *desc;
+  } bit_case_t;
+
+  static const bit_case_t bit_cases[] = {
+      {0x00000000u, 0x0000, "+0"},
+      {0x80000000u, 0x8000, "-0"},
+      {0x00008000u, 0x0000, "Subnormal tie to +0"},
+      {0x00008001u, 0x0001, "Subnormal just above +0 tie"},
+      {0x00018000u, 0x0002, "Subnormal tie to even non-zero"},
+      {0x007FFFFFu, 0x0080, "Largest FP32 subnormal"},
+      {0x00800000u, 0x0080, "Smallest FP32 normal"},
+      {0x3F808000u, 0x3F80, "Normal tie to even"},
+      {0x3F818000u, 0x3F82, "Normal tie away from odd"},
+      {0x7F7F0000u, 0x7F7F, "Largest finite BF16 exact"},
+      {0x7F7F7FFFu, 0x7F7F, "Just below overflow tie"},
+      {0x7F7F8000u, 0x7F80, "Overflow tie to +inf"},
+      {0xFF7F8000u, 0xFF80, "Overflow tie to -inf"},
+      {0x7F800001u, 0x7FC0, "Positive signaling NaN"},
+      {0xFFBFFFFFu, 0xFFC0, "Negative NaN"},
+  };
+
+  int pass_count = 0;
+  int num_cases = sizeof(bit_cases) / sizeof(bit_cases[0]);
+
+  printf("Boundary bit-pattern test (float -> bf16):\n");
+  for (int i = 0; i < num_cases; i++) {
+    float_bits input;
+    input.u = bit_cases[i].input_bits;
+    uint16_t actual = float_to_bf16(input.f);
+    int ok = bf16_matches_float_conversion(input.f, actual,
+                                           bit_cases[i].expected);
+
+    if (ok) {
+      pass_count++;
+      printf("%sPASS%s: %s (0x%08x) -> 0x%04x\n", COLOR_GREEN, COLOR_RESET,
+             bit_cases[i].desc, bit_cases[i].input_bits, actual);
+    } else {
+      printf("%sFAIL%s: %s (0x%08x) -> 0x%04x, expected 0x%04x\n",
+             COLOR_RED, COLOR_RESET, bit_cases[i].desc,
+             bit_cases[i].input_bits, actual, bit_cases[i].expected);
+    }
+  }
+
+  printf("Boundary bit-pattern passed %d/%d.\n\n", pass_count, num_cases);
+}
+
+static void test_bf16_to_float_all_bits(void) {
+  int fail_count = 0;
+
+  printf("Exhaustive bit-pattern test (bf16 -> float):\n");
+  for (uint32_t i = 0; i <= 0xFFFFu; i++) {
+    uint16_t input = (uint16_t)i;
+    float actual = bf16_to_float(input);
+
+    if (!float_matches_bf16_conversion(input, actual)) {
+      if (fail_count < 8) {
+        float_bits actual_bits;
+        actual_bits.f = actual;
+        printf("%sFAIL%s: 0x%04x -> 0x%08x, expected 0x%08x\n",
+               COLOR_RED, COLOR_RESET, input, actual_bits.u,
+               (uint32_t)input << 16);
+      }
+      fail_count++;
+    }
+  }
+
+  if (fail_count == 0) {
+    printf("%sPASS%s: all 65536 bf16 values converted correctly.\n\n",
+           COLOR_GREEN, COLOR_RESET);
+  } else {
+    printf("%sFAIL%s: bf16_to_float failed %d/65536 cases.\n\n", COLOR_RED,
+           COLOR_RESET, fail_count);
+  }
+}
+
+static void test_float_to_bf16_random(void) {
+  int fail_count = 0;
+  const int num_random = 4096;
+
+  printf("Deterministic random test (float -> bf16):\n");
+  for (int i = 0; i < num_random; i++) {
+    float_bits input;
+    input.u = bf16_test_rand();
+    uint16_t expected = float_to_bf16_soft(input.f);
+    uint16_t actual = float_to_bf16(input.f);
+
+    if (!bf16_matches_float_conversion(input.f, actual, expected)) {
+      if (fail_count < 8) {
+        printf("%sFAIL%s: bits=0x%08x -> 0x%04x, expected 0x%04x\n",
+               COLOR_RED, COLOR_RESET, input.u, actual, expected);
+      }
+      fail_count++;
+    }
+  }
+
+  if (fail_count == 0) {
+    printf("%sPASS%s: %d random FP32 patterns matched software oracle.\n\n",
+           COLOR_GREEN, COLOR_RESET, num_random);
+  } else {
+    printf("%sFAIL%s: random float_to_bf16 failed %d/%d cases.\n\n",
+           COLOR_RED, COLOR_RESET, fail_count, num_random);
+  }
+}
 
 void test_store_load_half() {
   printf("Testing store_half and load_half:\n");
@@ -92,18 +214,7 @@ void test_float_to_bf16(void) {
 
     int ok = 0;
 
-    /* Special handling for NaN: As long as output is NaN, it's correct
-     * (mantissa doesn't need to match exactly) */
-    if (is_nan(f)) {
-      ok = bf16_is_nan(bf);
-    } else if (is_inf(f)) {
-      /* Infinity: Requires all 1s in exponent, 0s in mantissa, and matching
-       * sign */
-      ok = bf16_is_inf(bf) && (bf16_get_sign(bf) == get_sign(f));
-    } else {
-      /* Normal numbers: Direct bit pattern comparison */
-      ok = (bf == expected);
-    }
+    ok = bf16_matches_float_conversion(f, bf, expected);
 
     if (ok) {
       printf("%sPASS%s: %s (%g) -> 0x%04x (expected 0x%04x)\n", COLOR_GREEN,
@@ -116,6 +227,10 @@ void test_float_to_bf16(void) {
   }
 
   printf("Passed %d/%d tests.\n\n", pass_count, num_test_cases);
+
+  test_float_to_bf16_boundary_bits();
+  test_bf16_to_float_all_bits();
+  test_float_to_bf16_random();
 
   /* --------------------------------------------------------------------- */
   /* Reverse conversion test (float -> bf16 -> float) */

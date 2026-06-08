@@ -1,19 +1,32 @@
 #include "bf16.h"
 
+static uint32_t vec_rand_state = 0x9E3779B9u;
+
+static uint32_t vec_rand(void) {
+  vec_rand_state = vec_rand_state * 1103515245u + 12345u;
+  return vec_rand_state;
+}
+
+static int active_lanes(int base, int total) {
+  int lanes = total - base;
+  return lanes < 4 ? lanes : 4;
+}
+
 void test_vfncvtbf16() {
   printf("Testing vfncvtbf16.f.f.w (Vector convert FP32 to BF16):\n");
 
   // Test 1: Basic conversion
   printf("\nTest 1: Basic conversion\n");
 
-  // Test with vector length 8
+  // Test with vector length 4
   float test_values[4] = {};
   uint16_t results[4] = {3, 3, 3, 3};
 
-  // int idx = 0;
-  for (int base = 0; base + 4 < num_test_cases; base += 4) {
-    for (int i = base; i < base + 4; i++) {
-      test_values[i - base] = test_cases[i].input;
+  for (int base = 0; base < num_test_cases; base += 4) {
+    int lanes = active_lanes(base, num_test_cases);
+    for (int i = 0; i < 4; i++) {
+      test_values[i] = i < lanes ? test_cases[base + i].input : 0.0f;
+      results[i] = 0xA5A5;
     }
     asm volatile("csrwi frm,0 \n"
                  "vsetivli zero, 4, e32, m1, ta, ma\n"
@@ -26,14 +39,15 @@ void test_vfncvtbf16() {
                  : "r"(test_values), "r"(results)
                  : "v0", "v1", "v2", "memory");
     // Check results
-    for (int i = base; i < base + 4; i++) {
-      uint16_t expected = test_cases[i].expected;
-      if (results[i - base] == expected) {
+    for (int i = 0; i < lanes; i++) {
+      uint16_t expected = test_cases[base + i].expected;
+      if (bf16_matches_float_conversion(test_values[i], results[i],
+                                        expected)) {
         printf("%sPASS%s: %g -> 0x%04x\n", COLOR_GREEN, COLOR_RESET,
-               test_values[i - base], results[i - base]);
+               test_values[i], results[i]);
       } else {
         printf("%sFAIL%s: %g -> 0x%04x, expected 0x%04x\n", COLOR_RED,
-               COLOR_RESET, test_values[i - base], results[i - base], expected);
+               COLOR_RESET, test_values[i], results[i], expected);
       }
     }
   }
@@ -64,7 +78,8 @@ void test_vfncvtbf16() {
   for (int i = 0; i < 4; i++) {
     if (mask[i]) {
       uint16_t expected = test_cases[i].expected;
-      if (masked_results[i] == expected) {
+      if (bf16_matches_float_conversion(masked_values[i], masked_results[i],
+                                        expected)) {
         printf("%sPASS%s: [masked] %g -> 0x%04x\n", COLOR_GREEN, COLOR_RESET,
                masked_values[i], masked_results[i]);
       } else {
@@ -82,6 +97,52 @@ void test_vfncvtbf16() {
     }
   }
 
+  // Test 3: Deterministic random operation
+  printf("\nTest 3: Deterministic random operation\n");
+
+  int random_fail = 0;
+  for (int iter = 0; iter < 64; iter++) {
+    for (int i = 0; i < 4; i++) {
+      float_bits input;
+      input.u = vec_rand();
+      test_values[i] = input.f;
+      results[i] = 0x5A5A;
+    }
+
+    asm volatile("csrwi frm,0 \n"
+                 "vsetivli zero, 4, e32, m1, ta, ma\n"
+                 "vle32.v v2, (%0)\n"
+                 "vsetivli zero, 4, e16, m1, ta, ma\n"
+                 "vfncvtbf16.f.f.w v0, v2\n"
+                 "vse16.v v0, (%1)\n"
+                 "fence rw, rw\n"
+                 :
+                 : "r"(test_values), "r"(results)
+                 : "v0", "v1", "v2", "memory");
+
+    for (int i = 0; i < 4; i++) {
+      uint16_t expected = float_to_bf16_soft(test_values[i]);
+      if (!bf16_matches_float_conversion(test_values[i], results[i],
+                                         expected)) {
+        if (random_fail < 8) {
+          float_bits bits;
+          bits.f = test_values[i];
+          printf("%sFAIL%s: random bits=0x%08x -> 0x%04x, expected 0x%04x\n",
+                 COLOR_RED, COLOR_RESET, bits.u, results[i], expected);
+        }
+        random_fail++;
+      }
+    }
+  }
+
+  if (random_fail == 0) {
+    printf("%sPASS%s: vfncvtbf16 random conversion matched 256 lanes.\n",
+           COLOR_GREEN, COLOR_RESET);
+  } else {
+    printf("%sFAIL%s: vfncvtbf16 random conversion failed %d/256 lanes.\n",
+           COLOR_RED, COLOR_RESET, random_fail);
+  }
+
   printf("\nvfncvtbf16.f.f.w test completed\n\n");
 }
 
@@ -95,9 +156,11 @@ void test_vfwcvtbf16() {
   uint16_t bf16_values[4];
   float results[4];
 
-  for (int base = 0; base + 4 < num_test_cases; base += 4) {
-    for (int i = base; i < base + 4; i++) {
-      bf16_values[i - base] = test_cases[i].expected;
+  for (int base = 0; base < num_test_cases; base += 4) {
+    int lanes = active_lanes(base, num_test_cases);
+    for (int i = 0; i < 4; i++) {
+      bf16_values[i] = i < lanes ? test_cases[base + i].expected : 0;
+      results[i] = -3.0f;
     }
     asm volatile("csrwi frm,0 \n"
                  "vsetivli zero, 4, e16, m1, ta, ma\n"
@@ -112,23 +175,19 @@ void test_vfwcvtbf16() {
                    "memory"); // v2-v3 for EMUL=2 with e32
 
     // Check results
-    for (int i = base; i < base + 4; i++) {
-      float expected = test_cases[i].input;
+    for (int i = 0; i < lanes; i++) {
       float_bits result_bits;
-      result_bits.f = results[i - base];
-      if (float_equal(results[i - base], expected, 1e-6f, 1e-5f)) {
+      result_bits.f = results[i];
+      if (float_matches_bf16_conversion(bf16_values[i], results[i])) {
         printf("%sPASS%s: 0x%04x -> %g\n", COLOR_GREEN, COLOR_RESET,
-               bf16_values[i - base], results[i - base]);
+               bf16_values[i], results[i]);
       } else {
-        float expected2 = bf16_to_float_soft(test_cases[i].expected);
-        if (float_equal(results[i - base], expected2, 1e-6f, 1e-5f)) {
-          printf("%sPASS%s: 0x%04x -> %g~%g\n", COLOR_GREEN, COLOR_RESET,
-                 bf16_values[i - base], results[i - base], expected);
-        } else {
-          printf("%sFAIL%s: 0x%04x -> %g/%08x, expected %g\n", COLOR_RED,
-                 COLOR_RESET, bf16_values[i - base], results[i - base],
-                 result_bits.u, expected2);
-        }
+        float expected2 = bf16_to_float_soft(bf16_values[i]);
+        float_bits expected_bits;
+        expected_bits.f = expected2;
+        printf("%sFAIL%s: 0x%04x -> %g/%08x, expected %g/%08x\n",
+               COLOR_RED, COLOR_RESET, bf16_values[i], results[i],
+               result_bits.u, expected2, expected_bits.u);
       }
     }
   }
@@ -160,11 +219,11 @@ void test_vfwcvtbf16() {
 
   for (int i = 0; i < 4; i++) {
     if (mask[i]) {
-      float expected = test_cases[i].input;
-      if (float_equal(masked_results[i], expected, 1e-6f, 1e-5f)) {
+      if (float_matches_bf16_conversion(masked_bf16[i], masked_results[i])) {
         printf("%sPASS%s: [masked] 0x%04x -> %g\n", COLOR_GREEN, COLOR_RESET,
                masked_bf16[i], masked_results[i]);
       } else {
+        float expected = bf16_to_float_soft(masked_bf16[i]);
         printf("%sFAIL%s: [masked] 0x%04x -> %g, expected %g\n", COLOR_RED,
                COLOR_RESET, masked_bf16[i], masked_results[i], expected);
       }
@@ -177,6 +236,51 @@ void test_vfwcvtbf16() {
                COLOR_RESET, masked_bf16[i], masked_results[i]);
       }
     }
+  }
+
+  // Test 3: Deterministic random operation
+  printf("\nTest 3: Deterministic random operation\n");
+
+  int random_fail = 0;
+  for (int iter = 0; iter < 64; iter++) {
+    for (int i = 0; i < 4; i++) {
+      bf16_values[i] = (uint16_t)(vec_rand() >> 16);
+      results[i] = -3.0f;
+    }
+
+    asm volatile("csrwi frm,0 \n"
+                 "vsetivli zero, 4, e16, m1, ta, ma\n"
+                 "vle16.v v2, (%0)\n"
+                 "vfwcvtbf16.f.f.v v0, v2\n"
+                 "vsetivli zero, 4, e32, m1, ta, ma\n"
+                 "vse32.v v0, (%1)\n"
+                 "fence rw, rw\n"
+                 :
+                 : "r"(bf16_values), "r"(results)
+                 : "v0", "v1", "v2", "v3", "memory");
+
+    for (int i = 0; i < 4; i++) {
+      if (!float_matches_bf16_conversion(bf16_values[i], results[i])) {
+        if (random_fail < 8) {
+          float_bits actual_bits;
+          float_bits expected_bits;
+          actual_bits.f = results[i];
+          expected_bits.f = bf16_to_float_soft(bf16_values[i]);
+          printf("%sFAIL%s: random 0x%04x -> 0x%08x, expected 0x%08x\n",
+                 COLOR_RED, COLOR_RESET, bf16_values[i], actual_bits.u,
+                 expected_bits.u);
+        }
+        random_fail++;
+      }
+    }
+  }
+
+  if (random_fail == 0) {
+    printf("%sPASS%s: vfwcvtbf16 random conversion matched 256 lanes.\n",
+           COLOR_GREEN, COLOR_RESET);
+  } else {
+    printf("%sFAIL%s: vfwcvtbf16 random conversion failed %d/256 lanes.\n",
+           COLOR_RED, COLOR_RESET, random_fail);
   }
 
   printf("vfwcvtbf16.f.f.v test completed\n\n");
