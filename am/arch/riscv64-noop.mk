@@ -19,7 +19,7 @@ AM_SRCS := noop/isa/riscv/trm.c \
            dummy/mpe.c \
            nemu/isa/riscv/boot/start.S
 
-CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -DISA_H=\"riscv.h\"
+CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\"
 
 ASFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S

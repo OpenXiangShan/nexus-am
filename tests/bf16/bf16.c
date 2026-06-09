@@ -12,6 +12,10 @@ uint16_t float_to_bf16(float f) {
   return (uint16_t)bf;
 }
 
+void set_rounding_mode(int rm) {
+  asm volatile("csrw frm, %0" : : "r"(rm) : "memory");
+}
+
 float bf16_to_float(uint16_t bf) {
   float f;
   asm volatile("fmv.h.x ft0, %1\n"
@@ -58,49 +62,53 @@ float fmv_h_x(uint32_t half_bits) {
 
 // Software implementations
 uint16_t float_to_bf16_soft(float f) {
+  return float_to_bf16_soft_rm(f, 0);
+}
+
+uint16_t float_to_bf16_soft_rm(float f, int rm) {
   float_bits fb;
   fb.f = f;
-  uint32_t sign = (fb.u >> 31) & 0x1;
-  uint32_t exponent = (fb.u >> 23) & 0xFF;
-  uint32_t mantissa = fb.u & 0x7FFFFF;
+  uint32_t abs = fb.u & 0x7FFFFFFF;
+  uint32_t hi = fb.u >> 16;
+  uint32_t lo = fb.u & 0xFFFF;
+  uint32_t sign = fb.u >> 31;
+  int increment = 0;
 
-  if (exponent == 0xFF) {
-    // NaN or infinity
-    return (sign << 15) | 0x7F80 | (mantissa >> 16);
-  } else if (exponent == 0) {
-    // Zero or denormal
-    return (sign << 15);
+  if ((abs & 0x7F800000) == 0x7F800000) {
+    uint16_t bf = (uint16_t)(fb.u >> 16);
+    if (abs & 0x007FFFFF) {
+      bf |= 0x0040; // Preserve NaN while quieting signaling NaNs.
+    }
+    return bf;
   }
 
-  // Normal number: round to nearest even
-  uint32_t rounding = (mantissa >> 15) & 1; // Highest bit of discarded part
-  uint32_t sticky =
-      (mantissa & 0x7FFF) != 0; // Whether discarded part has non-zero bits
-  mantissa = (mantissa >> 16) + (rounding & sticky); // Carry
-  // Handle exponent overflow due to carry (very rare case)
-  if (mantissa == 0x80) {
-    mantissa = 0;
-    exponent++;
+  switch (rm) {
+  case 0: // RNE: round to nearest, ties to even
+    increment = (lo > 0x8000) || ((lo == 0x8000) && (hi & 1));
+    break;
+  case 1: // RTZ: round toward zero
+    increment = 0;
+    break;
+  case 2: // RDN: round down toward -inf
+    increment = sign && (lo != 0);
+    break;
+  case 3: // RUP: round up toward +inf
+    increment = !sign && (lo != 0);
+    break;
+  case 4: // RMM: round to nearest, ties to max magnitude
+    increment = lo >= 0x8000;
+    break;
+  default:
+    increment = (lo > 0x8000) || ((lo == 0x8000) && (hi & 1));
+    break;
   }
-  return (sign << 15) | (exponent << 7) | mantissa;
+
+  return (uint16_t)(hi + increment);
 }
 
 float bf16_to_float_soft(uint16_t bf) {
   float_bits fb;
-  uint32_t sign = (bf >> 15) & 0x1;
-  uint32_t exponent = (bf >> 7) & 0xFF;
-  uint32_t mantissa = bf & 0x7F;
-
-  if (exponent == 0xFF) {
-    // NaN or infinity
-    fb.u = (sign << 31) | 0x7F800000 | (mantissa << 16);
-  } else if (exponent == 0) {
-    // Denormal or zero: preserve mantissa
-    fb.u = (sign << 31) | (mantissa << 16);
-  } else {
-    // Normal case
-    fb.u = (sign << 31) | (exponent << 23) | (mantissa << 16);
-  }
+  fb.u = (uint32_t)bf << 16;
   return fb.f;
 }
 
@@ -197,3 +205,24 @@ int bf16_is_nan(uint16_t bf) {
 
 /* Get sign bit of bf16 */
 int bf16_get_sign(uint16_t bf) { return (bf >> 15) & 0x1; }
+
+int bf16_matches_float_conversion(float input, uint16_t actual,
+                                  uint16_t expected) {
+  if (is_nan(input)) {
+    return bf16_is_nan(actual);
+  }
+  if (is_inf(input)) {
+    return bf16_is_inf(actual) && (bf16_get_sign(actual) == get_sign(input));
+  }
+  return actual == expected;
+}
+
+int float_matches_bf16_conversion(uint16_t input, float actual) {
+  if (bf16_is_nan(input)) {
+    return is_nan(actual);
+  }
+
+  float_bits actual_bits;
+  actual_bits.f = actual;
+  return actual_bits.u == ((uint32_t)input << 16);
+}

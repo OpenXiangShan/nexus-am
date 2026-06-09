@@ -45,6 +45,7 @@ typedef union {
 
 // Function prototypes
 uint16_t float_to_bf16(float f);
+void set_rounding_mode(int rm);
 float bf16_to_float(uint16_t bf);
 void store_half(uint16_t *ptr, float val);
 float load_half(const uint16_t *ptr);
@@ -53,6 +54,7 @@ float fmv_h_x(uint32_t half_bits);
 
 // Software implementations
 uint16_t float_to_bf16_soft(float f);
+uint16_t float_to_bf16_soft_rm(float f, int rm);
 float bf16_to_float_soft(uint16_t bf);
 void store_half_soft(uint16_t *ptr, float val);
 float load_half_soft(const uint16_t *ptr);
@@ -84,6 +86,10 @@ int bf16_is_nan(uint16_t bf);
 
 /* Get sign bit of bf16 */
 int bf16_get_sign(uint16_t bf);
+
+int bf16_matches_float_conversion(float input, uint16_t actual,
+                                  uint16_t expected);
+int float_matches_bf16_conversion(uint16_t input, float actual);
 
 /* ------------------------------------------------------------------------- */
 /* Test functions */
