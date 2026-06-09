@@ -12,6 +12,10 @@ uint16_t float_to_bf16(float f) {
   return (uint16_t)bf;
 }
 
+void set_rounding_mode(int rm) {
+  asm volatile("csrw frm, %0" : : "r"(rm) : "memory");
+}
+
 float bf16_to_float(uint16_t bf) {
   float f;
   asm volatile("fmv.h.x ft0, %1\n"
@@ -58,9 +62,17 @@ float fmv_h_x(uint32_t half_bits) {
 
 // Software implementations
 uint16_t float_to_bf16_soft(float f) {
+  return float_to_bf16_soft_rm(f, 0);
+}
+
+uint16_t float_to_bf16_soft_rm(float f, int rm) {
   float_bits fb;
   fb.f = f;
   uint32_t abs = fb.u & 0x7FFFFFFF;
+  uint32_t hi = fb.u >> 16;
+  uint32_t lo = fb.u & 0xFFFF;
+  uint32_t sign = fb.u >> 31;
+  int increment = 0;
 
   if ((abs & 0x7F800000) == 0x7F800000) {
     uint16_t bf = (uint16_t)(fb.u >> 16);
@@ -70,7 +82,28 @@ uint16_t float_to_bf16_soft(float f) {
     return bf;
   }
 
-  return (uint16_t)((fb.u + 0x7FFF + ((fb.u >> 16) & 1)) >> 16);
+  switch (rm) {
+  case 0: // RNE: round to nearest, ties to even
+    increment = (lo > 0x8000) || ((lo == 0x8000) && (hi & 1));
+    break;
+  case 1: // RTZ: round toward zero
+    increment = 0;
+    break;
+  case 2: // RDN: round down toward -inf
+    increment = sign && (lo != 0);
+    break;
+  case 3: // RUP: round up toward +inf
+    increment = !sign && (lo != 0);
+    break;
+  case 4: // RMM: round to nearest, ties to max magnitude
+    increment = lo >= 0x8000;
+    break;
+  default:
+    increment = (lo > 0x8000) || ((lo == 0x8000) && (hi & 1));
+    break;
+  }
+
+  return (uint16_t)(hi + increment);
 }
 
 float bf16_to_float_soft(uint16_t bf) {

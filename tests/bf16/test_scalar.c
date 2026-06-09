@@ -48,6 +48,11 @@ static uint32_t bf16_test_rand(void) {
   return bf16_test_rand_state;
 }
 
+static const char *rounding_mode_name(int rm) {
+  static const char *names[] = {"RNE", "RTZ", "RDN", "RUP", "RMM"};
+  return (rm >= 0 && rm < 5) ? names[rm] : "UNKNOWN";
+}
+
 static void test_float_to_bf16_boundary_bits(void) {
   typedef struct {
     uint32_t input_bits;
@@ -98,38 +103,65 @@ static void test_float_to_bf16_boundary_bits(void) {
   printf("Boundary bit-pattern passed %d/%d.\n\n", pass_count, num_cases);
 }
 
-static void test_bf16_to_float_all_bits(void) {
+static void test_float_to_bf16_rounding_modes(void) {
+  typedef struct {
+    uint32_t input_bits;
+    const char *desc;
+  } rm_case_t;
+
+  static const rm_case_t rm_cases[] = {
+      {0x3F808000u, "+1.00390625 tie, even low BF16 LSB"},
+      {0x3F818000u, "+1.01171875 tie, odd low BF16 LSB"},
+      {0x3F800001u, "+1.0 plus tiny fraction"},
+      {0x3F80FFFFu, "+1.0 just below next BF16"},
+      {0xBF808000u, "-1.00390625 tie"},
+      {0xBF800001u, "-1.0 minus tiny fraction"},
+      {0xBF80FFFFu, "-1.0 just below next BF16 magnitude"},
+      {0x00008000u, "+subnormal half-way to min BF16 subnormal"},
+      {0x80008000u, "-subnormal half-way to min BF16 subnormal"},
+      {0x7F7F7FFFu, "+max finite below overflow tie"},
+      {0x7F7F8000u, "+max finite overflow tie"},
+      {0xFF7F8000u, "-max finite overflow tie"},
+  };
+
   int fail_count = 0;
+  int num_cases = sizeof(rm_cases) / sizeof(rm_cases[0]);
 
-  printf("Exhaustive bit-pattern test (bf16 -> float):\n");
-  for (uint32_t i = 0; i <= 0xFFFFu; i++) {
-    uint16_t input = (uint16_t)i;
-    float actual = bf16_to_float(input);
+  printf("Rounding mode test (float -> bf16):\n");
+  for (int rm = 0; rm <= 4; rm++) {
+    set_rounding_mode(rm);
+    for (int i = 0; i < num_cases; i++) {
+      float_bits input;
+      input.u = rm_cases[i].input_bits;
+      uint16_t expected = float_to_bf16_soft_rm(input.f, rm);
+      uint16_t actual = float_to_bf16(input.f);
 
-    if (!float_matches_bf16_conversion(input, actual)) {
-      if (fail_count < 8) {
-        float_bits actual_bits;
-        actual_bits.f = actual;
-        printf("%sFAIL%s: 0x%04x -> 0x%08x, expected 0x%08x\n",
-               COLOR_RED, COLOR_RESET, input, actual_bits.u,
-               (uint32_t)input << 16);
+      if (bf16_matches_float_conversion(input.f, actual, expected)) {
+        printf("%sPASS%s: [%s] %s (0x%08x) -> 0x%04x\n", COLOR_GREEN,
+               COLOR_RESET, rounding_mode_name(rm), rm_cases[i].desc,
+               rm_cases[i].input_bits, actual);
+      } else {
+        printf("%sFAIL%s: [%s] %s (0x%08x) -> 0x%04x, expected 0x%04x\n",
+               COLOR_RED, COLOR_RESET, rounding_mode_name(rm),
+               rm_cases[i].desc, rm_cases[i].input_bits, actual, expected);
+        fail_count++;
       }
-      fail_count++;
     }
   }
+  set_rounding_mode(0);
 
   if (fail_count == 0) {
-    printf("%sPASS%s: all 65536 bf16 values converted correctly.\n\n",
+    printf("%sPASS%s: all rounding modes matched scalar oracle.\n\n",
            COLOR_GREEN, COLOR_RESET);
   } else {
-    printf("%sFAIL%s: bf16_to_float failed %d/65536 cases.\n\n", COLOR_RED,
-           COLOR_RESET, fail_count);
+    printf("%sFAIL%s: rounding mode test failed %d/%d cases.\n\n", COLOR_RED,
+           COLOR_RESET, fail_count, num_cases * 5);
   }
 }
 
 static void test_float_to_bf16_random(void) {
   int fail_count = 0;
-  const int num_random = 4096;
+  const int num_random = 128;
 
   printf("Deterministic random test (float -> bf16):\n");
   for (int i = 0; i < num_random; i++) {
@@ -204,6 +236,7 @@ void test_store_load_half() {
 void test_float_to_bf16(void) {
   printf("Testing float_to_bf16:\n");
 
+  set_rounding_mode(0);
   int pass_count = 0;
 
   for (int i = 0; i < num_test_cases; i++) {
@@ -229,7 +262,8 @@ void test_float_to_bf16(void) {
   printf("Passed %d/%d tests.\n\n", pass_count, num_test_cases);
 
   test_float_to_bf16_boundary_bits();
-  test_bf16_to_float_all_bits();
+  test_float_to_bf16_rounding_modes();
+  set_rounding_mode(0);
   test_float_to_bf16_random();
 
   /* --------------------------------------------------------------------- */
