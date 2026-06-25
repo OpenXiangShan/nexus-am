@@ -1,0 +1,5 @@
+.cache/
+build/
+generated/
+__pycache__/
+scripts/__pycache__/
