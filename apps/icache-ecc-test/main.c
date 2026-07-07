@@ -1,6 +1,10 @@
 #include <klib.h>
 #include "./eccctrl.h"
 
+#define MSTATUS_MIE (1ul << 3)
+#define MCAUSE_ILLEGAL_INSTRUCTION 0x2
+#define MCAUSE_HARDWARE_ERROR 0x13
+
 #define TEST_LOG_LEVEL_ERROR 2
 #define TEST_LOG_LEVEL_INFO 1
 #define TEST_LOG_LEVEL_DEBUG 0
@@ -25,6 +29,36 @@
 #endif
 
 #define MAX_WAIT 100
+
+extern void icache_ecc_trap_entry(void);
+
+uintptr_t exception_handler(uint64_t mcause, uint64_t mtval, uint64_t mstatus, uintptr_t mepc) {
+    INFO("Exception caught @ 0x%lx: mcause=0x%lx, mtval=0x%lx, mstatus=0x%lx\n",
+           mepc, mcause, mtval, mstatus);
+
+    switch (mcause) {
+    case MCAUSE_HARDWARE_ERROR:
+        INFO("  is hardware error, do fence.i and return to mepc\n");
+        asm volatile("fence.i" ::: "memory");
+        return mepc;
+    case MCAUSE_ILLEGAL_INSTRUCTION:
+        ERROR("  is illegal instruction, can be a frontend bug or backend exception selection problem, fence.i and return to mepc anyway\n");
+        uint64_t mcycle = 0;
+        asm volatile("csrr %0, mcycle" : "=r"(mcycle));
+        ERROR("  HINT: mcycle=%lu, better dump and check the waveform\n", mcycle);
+        asm volatile("fence.i" ::: "memory");
+        return mepc;
+    default:
+        ERROR("  unexpected mcause, halt now\n");
+        _halt(1);
+    }
+}
+
+static inline void setup_mmode_exception(void) {
+    uintptr_t handler = (uintptr_t)icache_ecc_trap_entry;
+    asm volatile("csrw mtvec, %0" : : "r"(handler) : "memory");
+    asm volatile("csrc mstatus, %0" : : "r"(MSTATUS_MIE) : "memory");
+}
 
 int __attribute__((noinline)) target() {
     static int n = 0;
@@ -94,6 +128,8 @@ fail:
 
 int main() {
     int failed = 0;
+
+    setup_mmode_exception();
 
     failed += test(ITARGET_SET(ITARGET_META) | INJECT | ENABLE, target, ISTATUS_INJECTED, 0, "Inject metaArray");
     failed += test(ITARGET_SET(ITARGET_DATA) | INJECT | ENABLE, target, ISTATUS_INJECTED, 0, "Inject dataArray");
