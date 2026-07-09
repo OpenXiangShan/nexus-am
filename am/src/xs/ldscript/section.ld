@@ -23,6 +23,12 @@ SECTIONS {
     *(.scommon)
   }
 
+  /* ECC 测试数据段：与关键变量隔离，避免错误注入影响程序逻辑 */
+  .ecc_test_data : {
+    *(.ecc_test_data)
+  }
+  _ecc_test_data_end = .;
+
   /* stack && TLS, 128KB each */
   _stack_top = ALIGN(0x1000);
   . = _stack_top + 0x40000;

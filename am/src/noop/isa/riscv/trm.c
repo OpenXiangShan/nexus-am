@@ -9,6 +9,7 @@ void __am_init_uartlite(void);
 void __am_uartlite_putchar(char ch);
 void __am_init_16550(void);
 void __am_16550_putchar(char ch);
+void _slave_main();
 
 _Area _heap = {
   .start = &_heap_start,
@@ -39,6 +40,7 @@ void _trm_init() {
 #else
   __am_init_uartlite();
 #endif
+  // if(_cpu() != 0) _slave_main();
   extern const char __am_mainargs;
   int ret = main(&__am_mainargs);
   _halt(ret);

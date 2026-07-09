@@ -9,6 +9,8 @@ AM_SRCS := noop/isa/riscv/trm.c \
            noop/common/serial-16550.c \
            nemu/isa/riscv/cte.c \
            nemu/isa/riscv/trap.S \
+           nemu/isa/riscv/nmi_trap.S \
+           nemu/isa/riscv/nmi.c \
            nemu/isa/riscv/cte64.c \
            nemu/isa/riscv/mtime.S \
            nemu/isa/riscv/vme.c \
