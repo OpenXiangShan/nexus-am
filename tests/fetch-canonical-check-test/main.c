@@ -1,8 +1,8 @@
 // Test instruction fetch in the non-canonical address in Sv* modes.
 
-// Usage: `make ARCH=riscv64-xs MODE=sv{39,48,57,39x4,48x4} JUMP={0,1,2,3} HALF_RVI={0,1} LOG_LEVEL={0,1,2}`
+// Usage: `make ARCH=riscv64-xs MODE=sv{39,48,57,39x4,48x4} JUMP={0,1,2,3,4} HALF_RVI={0,1} LOG_LEVEL={0,1,2}`
 // MODE: Translation mode as RISC-V spec described.
-// JUMP: How to enter the non-canonical space: 0=fall-through, 1=beqz, 2=jal, 3=jalr.
+// JUMP: How to enter the non-canonical space: 0=fall-through, 1=beqz, 2=jal, 3=jalr, 4=mret.
 // HALF_RVI: Used with JUMP=0 to test the situation where a RVI (4B) instruction crosses the page boundary.
 
 // Acknowledgement: Inspired by https://github.com/OpenXiangShan/XiangShan/issues/6264
@@ -22,8 +22,8 @@
 #if (HALF_RVI != 0) && (HALF_RVI != 1)
 #error "HALF_RVI must be either 0 or 1"
 #endif
-#if (JUMP < 0) || (JUMP > 3)
-#error "JUMP must be 0 (fall-through), 1 (beqz), 2 (jal), or 3 (jalr)"
+#if (JUMP < 0) || (JUMP > 4)
+#error "JUMP must be 0 (fall-through), 1 (beqz), 2 (jal), 3 (jalr), or 4 (mret)"
 #endif
 #if HALF_RVI && JUMP
 #error "HALF_RVI=1 is valid only when JUMP=0"
@@ -140,10 +140,14 @@
 #define FAULT_ADDR         JUMP_TARGET_ADDR
 #define EXPECTED_MEPC      JUMP_TARGET_ADDR
 #define TRANSFER_NAME      "jal"
-#else
+#elif JUMP == 3
 #define FAULT_ADDR         JUMP_TARGET_ADDR
 #define EXPECTED_MEPC      JUMP_TARGET_ADDR
 #define TRANSFER_NAME      "jalr"
+#elif JUMP == 4
+#define FAULT_ADDR         JUMP_TARGET_ADDR
+#define EXPECTED_MEPC      JUMP_TARGET_ADDR
+#define TRANSFER_NAME      "mret"
 #endif
 
 #define PTE_V              (1UL << 0)
@@ -183,8 +187,10 @@ _Static_assert((TEST_ENTRY_ADDR & 3UL) == (HALF_RVI ? 2UL : 0UL),
                "The test entry has the wrong instruction alignment");
 _Static_assert(((JUMP_TARGET_ADDR - TEST_ENTRY_ADDR) & 1UL) == 0,
                "The direct-jump offset must be 2-byte aligned");
+#if JUMP != 4
 _Static_assert(JUMP_TARGET_ADDR - TEST_ENTRY_ADDR < 0x1000,
                "The beqz target is outside its immediate range");
+#endif
 
 #define read_csr(csr)                                           \
     ({                                                          \
@@ -429,7 +435,7 @@ static uint32_t encode_jalr(uint32_t rd, uint32_t rs1, int32_t imm) {
 
 static void install_test_code(void) {
     uint64_t off = HALF_RVI ? 2 : 0;
-#if JUMP != 0
+#if JUMP >= 1 && JUMP <= 3
     uint64_t entry_pa = BOUNDARY_CODE_PA + off;
 #endif
     for (uint64_t pa = BOUNDARY_CODE_PA + off; pa < BOUNDARY_CODE_PA + SLED_BYTES; pa += 4)
@@ -444,6 +450,11 @@ static void install_test_code(void) {
     write_insn(entry_pa + 0x04, encode_slli(5, 5, BOUNDARY_SHIFT)); // slli t0,t0,BOUNDARY_SHIFT
     write_insn(entry_pa + 0x08, encode_addi(5, 5, 0x66));           // addi t0,t0,0x66
     write_insn(entry_pa + 0x0C, encode_jalr(1, 5, 0));              // jalr ra,0(t0)
+#elif JUMP == 4
+    // For mret, no boundary code is needed. The mret is executed directly
+    // from M-mode in main() with mepc set to the non-canonical address.
+    // The canonical check is performed by the CSR module's AddrTransType
+    // pre-check on mepc.
 #endif
 
     // Set FLAG_PA to 0xFA, then ecall.  The shifts zero-extend the LUI result.
@@ -492,7 +503,13 @@ int main(void) {
     last_mcause = last_mtval = last_mtval2 = last_mepc = 0;
     ecall_mcause = 0;
     trap_resume = (uint64_t)test_lower_continue;
+#if JUMP == 4
+    // mret directly to the non-canonical address.
+    // MPP=S so translation is enabled and the CSR AddrTransType pre-check fires.
+    enter_lower_mode(FAULT_ADDR);
+#else
     enter_lower_mode((uint64_t)test_lower_entry);
+#endif
 
     uint32_t flag = *(volatile uint32_t *)FLAG_PA;
     INFO("Caught ecall=%lu, traps=%u, mcause=%lu, mepc=0x%lx, mtval=0x%lx, mtval2=0x%lx, alias=0x%x\n",
