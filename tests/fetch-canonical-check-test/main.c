@@ -1,8 +1,11 @@
-// Test fall-through fetch across the canonical address boundary in Sv39, Sv48, Sv57, Sv39x4, and Sv48x4 modes.
+// Test instruction fetch in the non-canonical address in Sv* modes.
 
-// Usage: `make ARCH=riscv64-xs MODE=sv{39,48,57,39x4,48x4} HALF_RVI={0,1} LOG_LEVEL={0,1,2}`
+// Usage: `make ARCH=riscv64-xs MODE=sv{39,48,57,39x4,48x4} JUMP={0,1,2,3} HALF_RVI={0,1} LOG_LEVEL={0,1,2}`
+// MODE: Translation mode as RISC-V spec described.
+// JUMP: How to enter the non-canonical space: 0=fall-through, 1=beqz, 2=jal, 3=jalr.
+// HALF_RVI: Used with JUMP=0 to test the situation where a RVI (4B) instruction crosses the page boundary.
 
-// Inspired by https://github.com/OpenXiangShan/XiangShan/issues/6264
+// Acknowledgement: Inspired by https://github.com/OpenXiangShan/XiangShan/issues/6264
 
 #include <klib.h>
 
@@ -12,9 +15,18 @@
 #ifndef HALF_RVI
 #define HALF_RVI 0
 #endif
+#ifndef JUMP
+#define JUMP 0
+#endif
 
 #if (HALF_RVI != 0) && (HALF_RVI != 1)
 #error "HALF_RVI must be either 0 or 1"
+#endif
+#if (JUMP < 0) || (JUMP > 3)
+#error "JUMP must be 0 (fall-through), 1 (beqz), 2 (jal), or 3 (jalr)"
+#endif
+#if HALF_RVI && JUMP
+#error "HALF_RVI=1 is valid only when JUMP=0"
 #endif
 
 #define STRINGIFY_IMPL(x) #x
@@ -34,6 +46,7 @@
 #define TEST_START         0x0000003FFFFFFFC0
 #define FIRST_BAD_ADDR     0x0000004000000000
 #define TRANSLATION_MODE   8
+#define BOUNDARY_SHIFT     38
 #define ROOT_PTE_COUNT     512
 #define EXPECTED_CAUSE     12
 #define VIRTUALIZED        0
@@ -42,6 +55,7 @@
 #define TEST_START         0x00007FFFFFFFFFC0
 #define FIRST_BAD_ADDR     0x0000800000000000
 #define TRANSLATION_MODE   9
+#define BOUNDARY_SHIFT     47
 #define ROOT_PTE_COUNT     512
 #define EXPECTED_CAUSE     12
 #define VIRTUALIZED        0
@@ -50,6 +64,7 @@
 #define TEST_START         0x00FFFFFFFFFFFFC0
 #define FIRST_BAD_ADDR     0x0100000000000000
 #define TRANSLATION_MODE   10
+#define BOUNDARY_SHIFT     56
 #define ROOT_PTE_COUNT     512
 #define EXPECTED_CAUSE     12
 #define VIRTUALIZED        0
@@ -58,6 +73,7 @@
 #define TEST_START         0x000001FFFFFFFFC0
 #define FIRST_BAD_ADDR     0x0000020000000000
 #define TRANSLATION_MODE   8
+#define BOUNDARY_SHIFT     41
 #define ROOT_PTE_COUNT     2048
 #define EXPECTED_CAUSE     20
 #define VIRTUALIZED        1
@@ -66,6 +82,7 @@
 #define TEST_START         0x0003FFFFFFFFFFC0
 #define FIRST_BAD_ADDR     0x0004000000000000
 #define TRANSLATION_MODE   9
+#define BOUNDARY_SHIFT     50
 #define ROOT_PTE_COUNT     2048
 #define EXPECTED_CAUSE     20
 #define VIRTUALIZED        1
@@ -109,7 +126,25 @@
 #define ALIAS_CODE_PA      0x81200000UL
 #define SLED_BYTES         0x40UL
 #define TEST_ENTRY_ADDR    (TEST_START + 2UL * HALF_RVI)
+#define JUMP_TARGET_ADDR   (FIRST_BAD_ADDR + 0x66UL)
+
+#if JUMP == 0
+#define FAULT_ADDR         FIRST_BAD_ADDR
 #define EXPECTED_MEPC      (FIRST_BAD_ADDR - 2UL * HALF_RVI)
+#define TRANSFER_NAME      "fall-through"
+#elif JUMP == 1
+#define FAULT_ADDR         JUMP_TARGET_ADDR
+#define EXPECTED_MEPC      JUMP_TARGET_ADDR
+#define TRANSFER_NAME      "beqz"
+#elif JUMP == 2
+#define FAULT_ADDR         JUMP_TARGET_ADDR
+#define EXPECTED_MEPC      JUMP_TARGET_ADDR
+#define TRANSFER_NAME      "jal"
+#else
+#define FAULT_ADDR         JUMP_TARGET_ADDR
+#define EXPECTED_MEPC      JUMP_TARGET_ADDR
+#define TRANSFER_NAME      "jalr"
+#endif
 
 #define PTE_V              (1UL << 0)
 #define PTE_R              (1UL << 1)
@@ -146,6 +181,10 @@ _Static_assert((ROOT_PA & (VIRTUALIZED ? 0x3FFFUL : 0xFFFUL)) == 0,
                "The root page table is not sufficiently aligned");
 _Static_assert((TEST_ENTRY_ADDR & 3UL) == (HALF_RVI ? 2UL : 0UL),
                "The test entry has the wrong instruction alignment");
+_Static_assert(((JUMP_TARGET_ADDR - TEST_ENTRY_ADDR) & 1UL) == 0,
+               "The direct-jump offset must be 2-byte aligned");
+_Static_assert(JUMP_TARGET_ADDR - TEST_ENTRY_ADDR < 0x1000,
+               "The beqz target is outside its immediate range");
 
 #define read_csr(csr)                                           \
     ({                                                          \
@@ -353,13 +392,62 @@ static void write_insn(uint64_t pa, uint32_t insn) {
     *(volatile uint16_t *)(pa + 2) = (uint16_t)(insn >> 16);
 }
 
+#if JUMP == 1
+static uint32_t encode_beqz(int32_t offset) {
+    uint32_t imm = (uint32_t)offset;
+    return ((imm & 0x1000U) << 19) |        // imm[12]
+           ((imm & 0x07E0U) << 20) |        // imm[10:5]
+           ((imm & 0x001EU) << 7)  |        // imm[4:1]
+           ((imm & 0x0800U) >> 4)  |        // imm[11]
+           0x00000063U;                     // beq x0,x0,offset
+}
+#elif JUMP == 2
+static uint32_t encode_jal(int32_t offset) {
+    uint32_t imm = (uint32_t)offset;
+    return ((imm & 0x100000U) << 11) |      // imm[20]
+           ((imm & 0x0007FEU) << 20) |      // imm[10:1]
+           ((imm & 0x000800U) << 9)  |      // imm[11]
+           (imm & 0x0FF000U)        |       // imm[19:12]
+           (1U << 7) | 0x6FU;               // jal ra,offset
+}
+#elif JUMP == 3
+static uint32_t encode_addi(uint32_t rd, uint32_t rs1, int32_t imm) {
+    return (((uint32_t)imm & 0xFFFU) << 20) |
+           (rs1 << 15) | (rd << 7) | 0x13U;
+}
+
+static uint32_t encode_slli(uint32_t rd, uint32_t rs1, uint32_t shamt) {
+    return ((shamt & 0x3FU) << 20) |
+           (rs1 << 15) | (1U << 12) | (rd << 7) | 0x13U;
+}
+
+static uint32_t encode_jalr(uint32_t rd, uint32_t rs1, int32_t imm) {
+    return (((uint32_t)imm & 0xFFFU) << 20) |
+           (rs1 << 15) | (rd << 7) | 0x67U;
+}
+#endif
+
 static void install_test_code(void) {
     uint64_t off = HALF_RVI ? 2 : 0;
+#if JUMP != 0
+    uint64_t entry_pa = BOUNDARY_CODE_PA + off;
+#endif
     for (uint64_t pa = BOUNDARY_CODE_PA + off; pa < BOUNDARY_CODE_PA + SLED_BYTES; pa += 4)
         write_insn(pa, 0x00000013U);             // nop
 
+#if JUMP == 1
+    write_insn(entry_pa, encode_beqz((int32_t)(FAULT_ADDR - TEST_ENTRY_ADDR)));
+#elif JUMP == 2
+    write_insn(entry_pa, encode_jal((int32_t)(FAULT_ADDR - TEST_ENTRY_ADDR)));
+#elif JUMP == 3
+    write_insn(entry_pa + 0x00, encode_addi(5, 0, 1));              // li t0,1
+    write_insn(entry_pa + 0x04, encode_slli(5, 5, BOUNDARY_SHIFT)); // slli t0,t0,BOUNDARY_SHIFT
+    write_insn(entry_pa + 0x08, encode_addi(5, 5, 0x66));           // addi t0,t0,0x66
+    write_insn(entry_pa + 0x0C, encode_jalr(1, 5, 0));              // jalr ra,0(t0)
+#endif
+
     // Set FLAG_PA to 0xFA, then ecall.  The shifts zero-extend the LUI result.
-    uint64_t alias_entry = ALIAS_CODE_PA + off;
+    uint64_t alias_entry = ALIAS_CODE_PA + (JUMP == 0 ? off : 0x66UL);
     write_insn(alias_entry + 0x00, 0x820102B7U); // lui t0,0x82010
     write_insn(alias_entry + 0x04, 0x02029293U); // slli t0,t0,32
     write_insn(alias_entry + 0x08, 0x0202D293U); // srli t0,t0,32
@@ -371,7 +459,7 @@ static void install_test_code(void) {
 }
 
 int main(void) {
-    CRITICAL("Test fall-through fetch across the %s canonical address boundary\n", MODE_NAME);
+    CRITICAL("Test %s to the %s non-canonical address\n", TRANSFER_NAME, MODE_NAME);
 
 #if VIRTUALIZED
     if ((read_csr(CSR_MISA) & MISA_H) == 0) {
@@ -410,18 +498,18 @@ int main(void) {
     INFO("Caught ecall=%lu, traps=%u, mcause=%lu, mepc=0x%lx, mtval=0x%lx, mtval2=0x%lx, alias=0x%x\n",
            ecall_mcause, trap_count, last_mcause, last_mepc, last_mtval, last_mtval2, flag);
 
-    int mtval_ok = last_mtval == 0 || last_mtval == FIRST_BAD_ADDR;
-    int mtval2_ok = !VIRTUALIZED || last_mtval2 == 0 || last_mtval2 == (FIRST_BAD_ADDR >> 2);
+    int mtval_ok = last_mtval == 0 || last_mtval == FAULT_ADDR;
+    int mtval2_ok = !VIRTUALIZED || last_mtval2 == 0 || last_mtval2 == (FAULT_ADDR >> 2);
     if (trap_count == 1 && last_mcause == EXPECTED_CAUSE && last_mepc == EXPECTED_MEPC && mtval_ok && mtval2_ok && flag == 0 && ecall_mcause == (VIRTUALIZED ? 10 : 9)) {
-        CRITICAL("PASS!\n", MODE_NAME);
+        CRITICAL("PASS!\n");
         return 0;
     }
 
     if (flag == 0xFA) {
-        CRITICAL("FAIL: fetch crossed the %s boundary and executed the alias\n", MODE_NAME);
+        CRITICAL("FAIL: fetch reached the %s alias for 0x%lx\n", MODE_NAME, (uint64_t)FAULT_ADDR);
         return 1;
     }
 
-    CRITICAL("FAIL: exception did not precisely identify the %s boundary\n", MODE_NAME);
+    CRITICAL("FAIL: exception did not precisely identify the %s fault\n", MODE_NAME);
     return 2;
 }
