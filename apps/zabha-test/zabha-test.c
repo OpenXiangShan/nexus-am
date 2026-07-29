@@ -376,38 +376,26 @@ static void test_x0_register_cases(void) {
               (uintptr_t)cell.word, (uintptr_t)expected);
 }
 
-_Context *alignment_exception_handler(_Event *event, _Context *ctx) {
+_Context *alignment_exception_handler(_Event event, _Context *ctx) {
   (void)event;
+  // ctx->scause = 6;	STORE/AMO addr unalign
   alignment_exception_cause = ctx->scause;
   ctx->sepc += 4;
   return ctx;
-}
-
-_Context *trap_handler(_Event *ev, _Context *ctx) {
-    asm volatile("fence iorw, iorw" ::: "memory");
-
-    alignment_exception_cause = 6;
-    ctx->sepc += 4;
-    
-    asm volatile("fence iorw, iorw" ::: "memory");
-
-    return ctx;
 }
 
 void test_halfword_alignment_exception(void) {
   volatile amo_cell_t cell;
   const uint64_t initial = 0x0123456789abcdefULL;
 
-  // _handler_init(trap_handler);
-  _cte_init(NULL);
+  _cte_init(alignment_exception_handler);
 
   cell.word = initial;
   alignment_exception_cause = 0;
   (void)amo_add_h(&cell.byte[1], 1);
 
   check_value("exception", "amoadd.h", 2, 1, 0,
-              alignment_exception_cause == 6 ||
-              alignment_exception_cause == 7,
+              alignment_exception_cause == 6,
               1);
   check_value("memory", "amoadd.h", 2, 1, 0,
               (uintptr_t)cell.word, (uintptr_t)initial);
