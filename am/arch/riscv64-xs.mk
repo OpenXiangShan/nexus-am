@@ -9,8 +9,6 @@ AM_SRCS := noop/isa/riscv/trm.c \
            noop/common/serial-16550.c \
            nemu/isa/riscv/cte.c \
            nemu/isa/riscv/trap.S \
-           nemu/isa/riscv/nmi_trap.S \
-           nemu/isa/riscv/nmi.c \
            nemu/isa/riscv/cte64.c \
            nemu/isa/riscv/mtime.S \
            nemu/isa/riscv/vme.c \
@@ -29,6 +27,7 @@ AM_SRCS := noop/isa/riscv/trm.c \
 CFLAGS  += -I$(AM_HOME)/am/src/nemu/include -I$(AM_HOME)/am/src/xs/include -DISA_H=\"riscv.h\"
 
 ASFLAGS += -DMAINARGS=\"$(mainargs)\"
+ASFLAGS += -Wa,-march=$(MARCH)_smrnmi
 .PHONY: $(AM_HOME)/am/src/nemu/common/mainargs.S
 
 LDFLAGS += -L $(AM_HOME)/am/src/nemu/ldscript

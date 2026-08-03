@@ -51,9 +51,30 @@ save_context:
   STORE t1, OFFSET_STATUS(sp)
   STORE t2, OFFSET_EPC(sp)
 
+  # NMI reaches the shared CTE entry through mtvec.  Detect it only after
+  # the complete interrupted context has been saved.
+  csrr t0, mnstatus
+  andi t0, t0, 0x8
+  beqz t0, nmi_handle
+
   mv a0, sp
   jal __am_irq_handle
+  j restore_s_trap
 
+nmi_handle:
+  csrr t0, mncause
+  csrr t1, mnstatus
+  csrr t2, mnepc
+
+  STORE t0, OFFSET_CAUSE(sp)
+  STORE t1, OFFSET_STATUS(sp)
+  STORE t2, OFFSET_EPC(sp)
+
+  mv a0, sp
+  jal __am_nmi_handle
+  j restore_nmi_trap
+
+restore_s_trap:
   mv sp, a0
 
   LOAD t1, OFFSET_STATUS(sp)
@@ -74,3 +95,22 @@ save_context:
 
 return:
   sret
+
+restore_nmi_trap:
+  mv sp, a0
+
+  LOAD t1, OFFSET_STATUS(sp)
+  LOAD t2, OFFSET_EPC(sp)
+  csrw mnstatus, t1
+  csrw mnepc, t2
+
+  MAP(REGS, POP)
+  addi sp, sp, CONTEXT_SIZE
+
+  csrw sscratch, sp
+  LOAD sp, (OFFSET_SP - CONTEXT_SIZE)(sp)
+  bnez sp, nmi_return
+  csrrw sp, sscratch, sp
+
+nmi_return:
+  mnret
