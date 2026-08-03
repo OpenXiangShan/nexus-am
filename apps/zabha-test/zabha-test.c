@@ -1,6 +1,9 @@
+#include "printf.h"
 #include <am.h>
 #include <klib.h>
 #include <xsextra.h>
+
+extern int g_config_disable_timer;
 
 /*
  * This test uses Zabha/Zacas mnemonics directly, so it requires a RISC-V
@@ -511,8 +514,8 @@ static volatile amo_cell_t message_flag __attribute__((aligned(64)));
 static volatile uint64_t message_payload __attribute__((aligned(64)));
 static volatile int smp_failures[2];
 
-static void run_smp_tests(void) {
-  int cpu = _cpu();
+static void run_smp_tests(int hartid) {
+  int cpu = hartid;
 
   if (cpu == 0) {
     shared_byte.word = 0;
@@ -583,16 +586,22 @@ static void run_functional_tests(void) {
 }
 
 int main(void) {
+  // disable timer
+  g_config_disable_timer = 1;
+  asm volatile("fence rw, rw" ::: "memory");
+
+  const int local_hartid = _cpu();
+
 #ifdef ZABHA_SMP
   _mpe_setncpu('2');
-  if (_cpu() == 0) {
+  if (local_hartid == 0) {
     _mpe_wakeup(1);
     printf("Zabha test: RV64, dual-core mode\n");
     run_functional_tests();
   }
   _barrier();
-  run_smp_tests();
-  if (_cpu() != 0) {
+  run_smp_tests(local_hartid);
+  if (local_hartid != 0) {
     while (1) {
       asm volatile("wfi");
     }
