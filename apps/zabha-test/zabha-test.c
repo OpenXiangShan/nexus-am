@@ -590,9 +590,8 @@ int main(void) {
   g_config_disable_timer = 1;
   asm volatile("fence rw, rw" ::: "memory");
 
+  #ifdef ZABHA_SMP
   const int local_hartid = _cpu();
-
-#ifdef ZABHA_SMP
   _mpe_setncpu('2');
   if (local_hartid == 0) {
     _mpe_wakeup(1);
