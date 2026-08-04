@@ -35,6 +35,7 @@
 // banks of DCache cacheline are not confirm
 // kmhv2 use BANK_8
 // kmhv3 use BANK_32
+// only support BANK_8 now. The code design has not yet been finalized for implementation in kmhv3.
 #define BANK_8
 
 #if defined (BANK_8)
