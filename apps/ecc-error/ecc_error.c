@@ -50,7 +50,7 @@ extern int g_config_disable_timer;
 extern void secall_handler_reg(_Context*(*handler)(_Event, _Context*));
 
 // Test data uses a dedicated section and 4 KB alignment to avoid sharing a cache set with critical variables.
-TEST_TYPE test_data_array[1024] __attribute__((section(".ecc_test_data"), aligned(4096))) = {0};
+TEST_TYPE test_data_array[1024] __attribute__((aligned(4096))) = {0};
 
 uint64_t save_beu_value[32] = {0};
 uint64_t save_mnepc[32] = {0};
@@ -100,8 +100,9 @@ void test_tag_ecc_error(int index) {
     int bank_num = 0;
 
     if(index == 0) {
-      write_reg(CTRLUNIT_BASE_ADDR + ECCADDRSTART_OFFSET, 0x80002000);
-      write_reg(CTRLUNIT_BASE_ADDR + ECCADDREND_OFFSET, 0x80004000);
+      // not achive in kmhv2
+      // write_reg(CTRLUNIT_BASE_ADDR + ECCADDRSTART_OFFSET, 0x80002000);
+      // write_reg(CTRLUNIT_BASE_ADDR + ECCADDREND_OFFSET, 0x80004000);
   
       // 1. set ECCMASK
       uint64_t tag_mask = 0x3f3f3f3f3f3f3f3f;  // reverse low 8 bits
@@ -159,8 +160,9 @@ void test_data_ecc_error(int index) {
 
     int bank_num = index;
 
-    write_reg(CTRLUNIT_BASE_ADDR + ECCADDRSTART_OFFSET, 0x80002000);
-    write_reg(CTRLUNIT_BASE_ADDR + ECCADDREND_OFFSET, 0x80004000);
+    // not achive in kmhv2
+    // write_reg(CTRLUNIT_BASE_ADDR + ECCADDRSTART_OFFSET, 0x80002000);
+    // write_reg(CTRLUNIT_BASE_ADDR + ECCADDREND_OFFSET, 0x80004000);
 
     // 1. set ECCMASK
     uint64_t data_mask = 0x3f3f3f3f3f3f3f3f; // hit ecc error

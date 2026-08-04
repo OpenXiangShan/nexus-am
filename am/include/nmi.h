@@ -23,9 +23,6 @@ void nmi_handler_reg(_Context*(*handler)(_Event, _Context*));
 
 // Note: NMI shares mtvec with M-mode, no separate mnvec
 
-// NMI cause codes (hardware-specific, adjust as needed)
-#define NMI_CAUSE_BUS_ERROR  0x1000  // Example: BEU NMI
-
 #ifdef __cplusplus
 }
 #endif
