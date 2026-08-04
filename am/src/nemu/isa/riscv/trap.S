@@ -62,9 +62,9 @@ save_context:
   j restore_s_trap
 
 nmi_handle:
-  csrr t0, mncause
-  csrr t1, mnstatus
-  csrr t2, mnepc
+  csrr t0, 0x742 # mncause
+  csrr t1, 0x744 # mnstatus
+  csrr t2, 0x741 # mnepc
 
   STORE t0, OFFSET_CAUSE(sp)
   STORE t1, OFFSET_STATUS(sp)
@@ -101,8 +101,8 @@ restore_nmi_trap:
 
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)
-  csrw mnstatus, t1
-  csrw mnepc, t2
+  csrw 0x744, t1 # mnstatus
+  csrw 0x741, t2 # mnepc
 
   MAP(REGS, POP)
   addi sp, sp, CONTEXT_SIZE
@@ -113,4 +113,4 @@ restore_nmi_trap:
   csrrw sp, sscratch, sp
 
 nmi_return:
-  mnret
+  .word 0x70200073 # mnret
