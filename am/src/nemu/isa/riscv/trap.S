@@ -53,7 +53,7 @@ save_context:
 
   # NMI reaches the shared CTE entry through mtvec.  Detect it only after
   # the complete interrupted context has been saved.
-  csrr t0, mnstatus
+  csrr t0, 0x744 # mnstatus
   andi t0, t0, 0x8
   beqz t0, nmi_handle
 
