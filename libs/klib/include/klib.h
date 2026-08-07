@@ -81,6 +81,8 @@ void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, co
 uint64_t compare_and_swap(volatile uint64_t*, uint64_t, uint64_t);
 void lock(volatile uint64_t *);
 void release(volatile uint64_t *);
+uintptr_t s_lock_irqsave(volatile uint64_t *);
+void s_release_irqrestore(volatile uint64_t *, uintptr_t);
 
 // assert.h
 #ifdef NDEBUG

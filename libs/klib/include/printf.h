@@ -66,6 +66,10 @@ int printf_(const char* format, ...);
 #define atomic_printf atomic_printf_
 int atomic_printf_(const char* format, ...);
 
+/* Use this variant after the AM CTE path has entered supervisor mode. */
+#define s_atomic_printf s_atomic_printf_
+int s_atomic_printf_(const char* format, ...);
+
 
 /**
  * Tiny sprintf implementation

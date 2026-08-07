@@ -871,6 +871,8 @@ int printf_(const char* format, ...)
 
 void lock(volatile uint64_t *);
 void release(volatile uint64_t *);
+uintptr_t s_lock_irqsave(volatile uint64_t *);
+void s_release_irqrestore(volatile uint64_t *, uintptr_t);
 volatile uint64_t print_lock = 0;
 int atomic_printf_(const char* format, ...)
 {
@@ -883,6 +885,18 @@ int atomic_printf_(const char* format, ...)
   release(&print_lock);
   return ret;
 }
+
+int s_atomic_printf_(const char* format, ...)
+{
+  va_list va;
+  uintptr_t irq_state = s_lock_irqsave(&print_lock);
+  va_start(va, format);
+  char buffer[1];
+  const int ret = _vsnprintf(_out_char, buffer, (size_t)-1, format, va);
+  va_end(va);
+  s_release_irqrestore(&print_lock, irq_state);
+  return ret;
+}
 #else
 int printf_(const char* format, ...)
 {
@@ -890,6 +904,11 @@ int printf_(const char* format, ...)
 }
 
 int atomic_printf_(const char *format, ...)
+{
+  return 0;
+}
+
+int s_atomic_printf_(const char *format, ...)
 {
   return 0;
 }
