@@ -28,9 +28,17 @@ is_timer:
         add a3, a3, a2
         sd a3, 0(a1)
 
-        # raise a supervisor timer interrupt.
-	li a3, 32
-        csrw mip, a3
+        # Tag a supervisor software interrupt as a timer tick. M-mode may
+        # set mip.SSIP and the S-mode handler clears sip.SSIP after dispatch.
+        la a1, __am_timer_ssip_pending
+        csrr a2, mhartid
+        slli a2, a2, 3
+        add a1, a1, a2
+        li a2, 1
+        sd a2, 0(a1)
+
+        li a3, 2
+        csrs mip, a3
         j end_of_intr
 
 is_ext:

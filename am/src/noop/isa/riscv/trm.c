@@ -9,6 +9,9 @@ void __am_init_uartlite(void);
 void __am_uartlite_putchar(char ch);
 void __am_init_16550(void);
 void __am_16550_putchar(char ch);
+#ifdef __ARCH_RISCV64_XS_DUAL
+void __am_mpe_secondary_entry(void);
+#endif
 
 _Area _heap = {
   .start = &_heap_start,
@@ -34,6 +37,11 @@ void _halt(int code) {
 }
 
 void _trm_init() {
+#ifdef __ARCH_RISCV64_XS_DUAL
+  if (_cpu() != 0) {
+    __am_mpe_secondary_entry();
+  }
+#endif
 #ifdef UART16550
   __am_init_16550();
 #else

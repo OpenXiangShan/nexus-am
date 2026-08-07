@@ -43,7 +43,11 @@ enum { MODE_U = 0, MODE_S, MODE_H, MODE_M };
 #define PTW_SV39 ((ptw_config) { .ptw_level = 3, .vpn_width = 9  })
 #define PTW_SV48 ((ptw_config) { .ptw_level = 4, .vpn_width = 9  })
 
-#define MAX_CPU 2
+/*
+ * The XiangShan MPE boot path reserves one 128 KiB stack/TLS region per
+ * hart.  Keep this in sync with am/src/xs/ldscript/section.ld.
+ */
+#define MAX_CPU 8
 
 #define INTERRUPT_CAUSE_SIZE 16
 #define EXCEPTION_CAUSE_SIZE 16

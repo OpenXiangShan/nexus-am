@@ -9,8 +9,10 @@ static void init_machine_exception() {
 }
 
 int g_config_disable_timer = 0; // dirty hack of __am_init_cte64(), to be refactored
+int g_config_disable_external_interrupt = 0;
 extern void init_timer();
 extern void enable_timer();
+extern void disable_timer();
 extern void init_pmp(); 
 extern void enable_pmp(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, uint8_t lock, uint8_t permission);
 extern void enable_pmp_TOR(uintptr_t pmp_reg, uintptr_t pmp_addr, uintptr_t pmp_size, bool lock, uint8_t permission);
@@ -24,7 +26,8 @@ static void init_eip() {
 
 void __am_init_cte64() {
   // set delegation (do not deleg illegal instruction exception)
-  asm volatile("csrw mideleg, %0" : : "r"(0xffff));
+  /* mtime.S injects SSIP for this XiangShan emulation platform. */
+  asm volatile("csrw mideleg, %0" : : "r"(0xffff & ~(1 << 7)));
   asm volatile("csrw medeleg, %0" : : "r"(0xfffb));
 
   // set PMP to access all memory in S-mode
@@ -55,11 +58,15 @@ void __am_init_cte64() {
 #endif
 
   init_machine_exception();
-  init_timer();
-  if(!g_config_disable_timer){
+  if (!g_config_disable_timer) {
+    init_timer();
     enable_timer();
+  } else {
+    disable_timer();
   }
-  init_eip();
+  if (!g_config_disable_external_interrupt) {
+    init_eip();
+  }
 
   // enter S-mode
   uintptr_t status = MSTATUS_SPP(MODE_S);

@@ -35,7 +35,9 @@ void _pma_set_cfg(int cfg_idx, uintptr_t val);
 
 // ================= Supplement MPE =================
 void _mpe_setncpu(char arg);
+int _mpe_start(void (*entry)());
 void _mpe_wakeup(int cpu);
+void _mpe_clear_ipi(int cpu);
 intptr_t _atomic_add(volatile intptr_t *addr, intptr_t adder);
 void _barrier();
 
@@ -59,6 +61,7 @@ void disable_pmp(uintptr_t pmp_reg);
 // =================== Timer driver =================
 void init_timer();
 void enable_timer();
+void disable_timer();
 void set_timer_inc(uintptr_t inc);
 
 // =========== Interrupt handler registration =======

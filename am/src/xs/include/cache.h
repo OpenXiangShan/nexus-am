@@ -79,6 +79,11 @@
 #define CACHE_CTRL_BASE 0x39000100
 #define CACHE_CMD_BASE 0x39000200
 #define HART_CTRL_RESET_REG_BASE 0x39001000
+#define HART_CTRL_RESET_REG_STRIDE 0x8
+
+/* CLINT software-interrupt registers are one 32-bit slot per hart. */
+#define CLINT_MSIP_BASE 0x38000000
+#define CLINT_MSIP_STRIDE 0x4
 #define CMD_CMO_INV (0 + 16)
 #define CMD_CMO_CLEAN (1 + 16)
 #define CMD_CMO_FLUSH (2 + 16)

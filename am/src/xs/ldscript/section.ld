@@ -23,21 +23,22 @@ SECTIONS {
     *(.scommon)
   }
 
-  /* stack && TLS, 128KB each */
+  /* Eight 128 KiB stack/TLS regions, one for each supported hart. */
   _stack_top = ALIGN(0x1000);
-  . = _stack_top + 0x40000;
+  . = _stack_top + 0x100000;
   _stack_pointer = .;
 
   /* thread-local data segment */
   .tdata :
   {
     _tdata_begin = .;
-    *(.tdata)
+    *(.tdata .tdata.*)
     _tdata_end = .;
   }
   .tbss :
   {
-    *(.tbss)
+    _tbss_begin = .;
+    *(.tbss .tbss.*)
     _tbss_end = .;
   }
 

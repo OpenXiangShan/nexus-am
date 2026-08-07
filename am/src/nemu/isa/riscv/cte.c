@@ -7,6 +7,10 @@ static _Context* (*custom_soft_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_timer_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_external_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_secall_handler)(_Event, _Context*) = NULL;
+static volatile intptr_t handler_tables_initialized;
+
+/* mtime.S tags supervisor software interrupts it raises as timer ticks. */
+volatile uintptr_t __am_timer_ssip_pending[MAX_CPU];
 
 void __am_get_cur_as(_Context *c);
 void __am_switch(_Context *c);
@@ -28,24 +32,29 @@ _Context* __am_irq_default_handler(_Event *ev, _Context *c) {
 }
 
 /*
- * default handler for Supervisor Software Interrupt
- * set event to IRQ_SOFT
- * may call custom soft handler if registered
+ * Supervisor software interrupts are ordinary soft events unless mtime.S has
+ * tagged the current hart's SSIP as a timer tick.
  */
 _Context* __am_irq_SSIP_handler(_Event *ev, _Context *c) {
+  int cpu = _cpu();
 #if __riscv_xlen == 64
   asm volatile ("csrwi sip, 0");
 #endif
-  // printf("inside irq SSIP handler\n");
-  ev->event = _EVENT_IRQ_SOFT;
-  if (custom_soft_handler != NULL) {
-    // printf("dive into custom soft handler");
-    custom_soft_handler(*ev, c);
+  int is_timer = cpu >= 0 && cpu < MAX_CPU &&
+                 __am_timer_ssip_pending[cpu] != 0;
+  if (is_timer) {
+    __am_timer_ssip_pending[cpu] = 0;
   }
-  // machine mode will clear stip
+  ev->event = is_timer ? _EVENT_IRQ_TIMER : _EVENT_IRQ_SOFT;
+  _Context *next = c;
+  if (is_timer && custom_timer_handler != NULL)
+    next = custom_timer_handler(*ev, c);
+  else if (custom_soft_handler != NULL)
+    next = custom_soft_handler(*ev, c);
+  // sip.SSIP was cleared before the callback.
   asm volatile("csrs mie, 0");
   // printf("SSIP handler finished\n");
-  return c;
+  return next;
 }
 
 /*
@@ -59,14 +68,13 @@ _Context* __am_irq_STIP_handler(_Event *ev, _Context *c) {
 #endif
   // printf("inside irq STIP handler\n");
   ev->event = _EVENT_IRQ_TIMER;
-  if (custom_timer_handler != NULL) {
-    // printf("dive into custom timer handler");
-    custom_timer_handler(*ev, c);
-  }
+  _Context *next = c;
+  if (custom_timer_handler != NULL)
+    next = custom_timer_handler(*ev, c);
   // machine mode will clear stip
   asm volatile("csrs mie, 0");
   // printf("STIP handler finished\n");
-  return c;
+  return next;
 }
 
 /*
@@ -81,7 +89,7 @@ _Context* __am_irq_SEIP_handler(_Event *ev, _Context *c) {
   ev->event = _EVENT_IRQ_IODEV;
   // printf("inside irq SEIP handler\n");
   if (custom_external_handler != NULL)
-    custom_external_handler(*ev, c);
+    return custom_external_handler(*ev, c);
   return c;
 }
 
@@ -96,9 +104,8 @@ _Context* __am_irq_SECALL_handler(_Event *ev, _Context *c) {
   //if (ev->event == _EVENT_YIELD)
   //  printf("SECALL: is YIELD\n");
   // printf("Inside secall handler\n");
-  if (custom_secall_handler != NULL) {
-    custom_secall_handler(*ev, c);
-  }
+  if (custom_secall_handler != NULL)
+    return custom_secall_handler(*ev, c);
   return c;
 }
 
@@ -112,13 +119,14 @@ _Context* __am_irq_handle(_Context *c) {
   if (c->scause & INTR_BIT) {
     assert(scause_code < INTERRUPT_CAUSE_SIZE);
     // printf("is an interrupt\n");
-    interrupt_handler[scause_code](&ev, c);
+    c = interrupt_handler[scause_code](&ev, c);
   } else {
     assert(scause_code < EXCEPTION_CAUSE_SIZE);
     // printf("is an exception\n");
-    exception_handler[scause_code](&ev, c);
+    c = exception_handler[scause_code](&ev, c);
   }
 
+  assert(c != NULL);
   __am_switch(c);
 
 #if __riscv_xlen == 64
@@ -218,20 +226,28 @@ int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
   extern void __am_init_cte64();
   __am_init_cte64();
 #endif
-  for (int i = 0; i < INTERRUPT_CAUSE_SIZE; i++) {
-    irq_handler_reg(INTR_BIT | i, __am_irq_default_handler);
-    // interrupt_handler[i] = __am_irq_default_handler;
-  }
-  for (int i = 0; i < EXCEPTION_CAUSE_SIZE; i++) {
-    exception_handler[i] = __am_irq_default_handler;
-  }
+  /*
+   * These tables are shared by all harts. CPU 0 completes this setup before
+   * it releases secondaries, so a later per-hart CTE setup must preserve any
+   * registered scheduler callback.
+   */
+  if (!handler_tables_initialized) {
+    for (int i = 0; i < INTERRUPT_CAUSE_SIZE; i++) {
+      irq_handler_reg(INTR_BIT | i, __am_irq_default_handler);
+    }
+    for (int i = 0; i < EXCEPTION_CAUSE_SIZE; i++) {
+      exception_handler[i] = __am_irq_default_handler;
+    }
 
 #if __riscv_xlen == 64
-  interrupt_handler[SCAUSE_SSIP] = __am_irq_SSIP_handler;
+    interrupt_handler[SCAUSE_SSIP] = __am_irq_SSIP_handler;
 #endif
-  interrupt_handler[SCAUSE_STIP] = __am_irq_STIP_handler;
-  interrupt_handler[SCAUSE_SEIP] = __am_irq_SEIP_handler;
-  exception_handler[SCAUSE_SECALL] = __am_irq_SECALL_handler;
+    interrupt_handler[SCAUSE_STIP] = __am_irq_STIP_handler;
+    interrupt_handler[SCAUSE_SEIP] = __am_irq_SEIP_handler;
+    exception_handler[SCAUSE_SECALL] = __am_irq_SECALL_handler;
+    asm volatile("fence rw, rw" ::: "memory");
+    handler_tables_initialized = 1;
+  }
 
   return 0;
 }
