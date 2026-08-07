@@ -1,5 +1,8 @@
 # The Abstract Machine (AM)
 
+The XiangShan AM thread-library documentation is maintained with the library:
+[English](libs/thread/README.md) and [中文](libs/thread/README.zh-CN.md).
+
 ## Get Started for Memory Images (Workloads)
 
 In this section, we demonstrate how to build memory images (`base_address = 0x80000000`) for simulation.
