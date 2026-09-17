@@ -2,6 +2,10 @@
 
 int __am_ncpu = 1;  // One core by default
 
+static inline void fence_rw(void) {
+  asm volatile("fence rw, rw" ::: "memory");
+}
+
 void _mpe_setncpu(char arg) {
   __am_ncpu = arg ? atoi(&arg) : 1;
   assert(0 < __am_ncpu && __am_ncpu <= MAX_CPU);
@@ -12,8 +16,9 @@ void _mpe_wakeup(int cpu) {
   assert(cpu == 1);
   uint64_t release_addr = 0x39001008;  // Hardware defined
   uint64_t release_val = 0;
+  fence_rw();
   asm volatile(
-    "sd %0, (%1);" : : "r"(release_val), "r"(release_addr)
+    "sd %0, (%1);" : : "r"(release_val), "r"(release_addr) : "memory"
   );
   return;
 }
@@ -51,9 +56,10 @@ int _cpu() {
 intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
   intptr_t result;
   asm volatile(
-    "amoswap.d %0, %1, (%2);"
+    "amoswap.d.aqrl %0, %1, (%2);"
     : "=r"(result) 
     : "r"(newval), "r"(addr)
+    : "memory"
   );
   return result;
 }
@@ -61,9 +67,10 @@ intptr_t _atomic_xchg(volatile intptr_t *addr, intptr_t newval) {
 intptr_t _atomic_add(volatile intptr_t *addr, intptr_t adder) {
   intptr_t result;
   asm volatile(
-    "amoadd.d %0, %1, (%2);"
+    "amoadd.d.aqrl %0, %1, (%2);"
     : "=r"(result)
     : "r"(adder), "r"(addr)
+    : "memory"
   );
   return result;
 }
@@ -73,15 +80,17 @@ void _barrier() {
   static volatile intptr_t count = 0;
   static __thread intptr_t threadsense;
 
-  asm volatile("fence;");
-
   threadsense = !threadsense;
+  fence_rw();
+
   if (_atomic_add(&count, 1) == _ncpu()-1) {
     count = 0;
+    // Publish the reset before releasing other harts into the next barrier round.
+    fence_rw();
     sense = threadsense;
   }
   else while(sense != threadsense)
     ;
 
-  asm volatile("fence;");
+  fence_rw();
 }
