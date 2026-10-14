@@ -65,8 +65,13 @@ void __am_init_16550(){
 
   outl(SERIAL_MMIO + IER, 0x00);
 
+#ifdef UART16550_NO_USR
+  while (!(inl(SERIAL_MMIO + LSR) & 0x40)) ;
+#endif
   outl(SERIAL_MMIO + LCR, 0x83); // enable DLAB
+#ifndef UART16550_NO_USR
 	while (inl(SERIAL_MMIO + USR) & 0x1) ;
+#endif
 
   outl(SERIAL_MMIO + DLH, 0x00); // 115200
   outl(SERIAL_MMIO + DLL, divisor); // 115200

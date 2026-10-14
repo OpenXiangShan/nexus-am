@@ -1,4 +1,10 @@
+MARCH ?= rv64imac_zicsr_zifencei
 include $(AM_HOME)/am/arch/isa/riscv64.mk
+
+CFLAGS += -mabi=lp64 -ffreestanding \
+          -DPRINTF_DISABLE_SUPPORT_FLOAT -DPRINTF_DISABLE_SUPPORT_EXPONENTIAL \
+          -DUART16550_NO_USR
+ASFLAGS += -mabi=lp64
 
 AM_SRCS := nutshell/isa/riscv/trm.c \
            nutshell/common/mainargs.S \

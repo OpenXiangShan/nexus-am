@@ -65,7 +65,14 @@
 #  include <sys/types.h>
 #else
 /* Include the standard compiler builtin headers we use functionality from. */
-#  include <limits.h>
+#  if defined(__STDC_HOSTED__) && !__STDC_HOSTED__
+/* A Linux compiler's limits.h can require libc headers for the selected ABI. */
+#    ifndef CHAR_BIT
+#      define CHAR_BIT __CHAR_BIT__
+#    endif
+#  else
+#    include <limits.h>
+#  endif
 #  include <stdint.h>
 #  include <stdbool.h>
 #  include <float.h>
