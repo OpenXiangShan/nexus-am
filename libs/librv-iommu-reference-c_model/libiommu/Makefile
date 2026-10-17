@@ -1,0 +1,1 @@
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += src/
