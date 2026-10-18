@@ -176,6 +176,7 @@ void _map(_AddressSpace *as, void *va, void *pa, int prot) {
  * A wrong map to test access fault, high bits of ppn is not zero
  * Only available for sv39 and paddr = 36! (ppnlen can not be changed)
  */
+#if __riscv_xlen == 64
 void _map_fault(_AddressSpace *as, void *va, void *pa, int prot) {
   assert((uintptr_t)va % PGSIZE == 0);
   assert((uintptr_t)pa % PGSIZE == 0);
@@ -202,6 +203,7 @@ void _map_fault(_AddressSpace *as, void *va, void *pa, int prot) {
     *pte = PTE_V | prot | (PN(pa) << 10) | (randnum << 34);
   }
 }
+#endif
 
 /*
  * map va to pa with prot permission with page table root as
