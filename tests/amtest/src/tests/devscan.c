@@ -12,12 +12,20 @@ static void timer_test() {
   _io_read(_DEV_TIMER, _DEVREG_TIMER_UPTIME, &uptime, sizeof(uptime));
   t0 = uptime.lo;
 
+#ifdef __ARCH_RISCV64_NUTSHELL
+  for (int volatile i = 0; i < 100000; i ++) ;
+#else
   for (int volatile i = 0; i < 10000000; i ++) ;
+#endif
 
   _io_read(_DEV_TIMER, _DEVREG_TIMER_UPTIME, &uptime, sizeof(uptime));
   t1 = uptime.lo;
 
+#ifdef __ARCH_RISCV64_NUTSHELL
+  printf("Loop 10^5 time elapse: %d ms\n", t1 - t0);
+#else
   printf("Loop 10^7 time elapse: %d ms\n", t1 - t0);
+#endif
 }
 
 static void video_test() {
@@ -38,6 +46,7 @@ static void video_test() {
   printf("You should see a purple square on the screen.\n");
 }
 
+#ifndef __ARCH_RISCV64_NUTSHELL
 static uint32_t pci_conf_read(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
   uint32_t res;
   int nread = _io_read(_DEV_PCICONF, _DEVREG_PCICONF(bus, slot, func, offset), &res, 4);
@@ -78,6 +87,7 @@ static void storage_test() {
     if ((i+2) % 32 == 0) printf("\n");
   }
 }
+#endif
 
 uint32_t devices[] = {
   _DEV_INPUT, _DEV_TIMER, _DEV_VIDEO, _DEV_PCICONF,
@@ -88,8 +98,10 @@ void devscan() {
   input_test();
   timer_test();
   video_test();
+#ifndef __ARCH_RISCV64_NUTSHELL
   storage_test();
   pciconf_test();
+#endif
   printf("Test End!\n");
   while (1);
 }
