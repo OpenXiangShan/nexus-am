@@ -2,7 +2,15 @@
 #include <riscv.h>
 #include <klib.h>
 
-// static _Context* (*user_handler)(_Event, _Context*) = NULL;
+// user_cte_handler: stores the handler passed to _cte_init().
+// AM API uses _Event by value; internal dispatch uses _Event* by pointer.
+// cte_wrapper() bridges the two calling conventions.
+static _Context* (*user_cte_handler)(_Event, _Context*) = NULL;
+
+static _Context* cte_wrapper(_Event *ev, _Context *c) {
+  return user_cte_handler(*ev, c);
+}
+
 static _Context* (*custom_soft_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_timer_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_external_handler)(_Event, _Context*) = NULL;
@@ -211,20 +219,30 @@ int _cte_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
 
   asm volatile("csrw sscratch, zero");
 
-  // cte init handler has no effect for now
+  // Store user handler and register the wrapper to bridge AM API
+  // (_Event by value) and internal dispatch (_Event* by pointer).
+  if (handler) {
+    user_cte_handler = handler;
+    for (int i = 0; i < INTERRUPT_CAUSE_SIZE; i++) {
+      interrupt_handler[i] = cte_wrapper;
+    }
+    for (int i = 0; i < EXCEPTION_CAUSE_SIZE; i++) {
+      exception_handler[i] = cte_wrapper;
+    }
+  } else {
+    for (int i = 0; i < INTERRUPT_CAUSE_SIZE; i++) {
+      irq_handler_reg(INTR_BIT | i, __am_irq_default_handler);
+    }
+    for (int i = 0; i < EXCEPTION_CAUSE_SIZE; i++) {
+      exception_handler[i] = __am_irq_default_handler;
+    }
+  }
 
 #if __riscv_xlen == 64
   // printf("CTE64 inited\n");
   extern void __am_init_cte64();
   __am_init_cte64();
 #endif
-  for (int i = 0; i < INTERRUPT_CAUSE_SIZE; i++) {
-    irq_handler_reg(INTR_BIT | i, __am_irq_default_handler);
-    // interrupt_handler[i] = __am_irq_default_handler;
-  }
-  for (int i = 0; i < EXCEPTION_CAUSE_SIZE; i++) {
-    exception_handler[i] = __am_irq_default_handler;
-  }
 
 #if __riscv_xlen == 64
   interrupt_handler[SCAUSE_SSIP] = __am_irq_SSIP_handler;
