@@ -22,18 +22,25 @@ static const char *tests[256] = {
 
 int main(const char *args) {
   switch (args[0]) {
+#ifndef __ARCH_RISCV64_NUTSHELL
     CASE('x', dma_test);
+#endif
     CASE('h', hello);
+#ifndef __ARCH_RISCV64_NUTSHELL
     CASE('i', hello_intr, IOE, CTE(simple_trap), REEH(simple_trap), RCEH(simple_trap), RTEH(simple_trap));
     CASE('z', soft_intr, IOE, CTE(soft_trap), RSEH(soft_trap), REEH(soft_trap), RCEH(soft_trap), RTEH(soft_trap));
     CASE('e', external_intr, IOE, NOTIMEINT(), CTE(external_trap), REEH(external_trap), RTEH(external_trap));
     CASE('u', test_BEU, IOE, NOTIMEINT(), CTE(handle_external_trap), REEH(handle_external_trap), RTEH(handle_external_trap));
+#endif
     CASE('d', devscan, IOE);
+#ifndef __ARCH_RISCV64_NUTSHELL
     CASE('m', finalize, PRE_MPE(args[1]), MPE(mp_print));
+#endif
     CASE('t', rtc_test, IOE);
     CASE('k', keyboard_test, IOE);
     CASE('v', video_test, IOE);
     CASE('a', audio_test, IOE);
+#ifndef __ARCH_RISCV64_NUTSHELL
     CASE('p', vm_test, CTE(vm_handler), VME(simple_pgalloc, simple_pgfree));
     CASE('c', pmp_test, CTE(simple_trap));
     CASE('s', sv39_test, IOE, CTE(simple_trap));
@@ -41,6 +48,7 @@ int main(const char *args) {
     CASE('g', sv39_ppn_af_test, IOE, CTE(simple_trap))
     CASE('b', cache_test);
     CASE('r', rtc_accuracy_test);
+#endif
     case 'H':
     default:
       printf("Usage: make run mainargs=*\n");
