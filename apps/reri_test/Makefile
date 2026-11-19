@@ -1,0 +1,12 @@
+NAME = reri_test
+SRCS = main.c
+
+ifneq ($(RERI_INJECTIONS),)
+CPPFLAGS += -DRERI_INJECTIONS=$(RERI_INJECTIONS)
+endif
+
+ifneq ($(RERI_PROGRESS_STEP),)
+CPPFLAGS += -DRERI_PROGRESS_STEP=$(RERI_PROGRESS_STEP)
+endif
+
+include $(AM_HOME)/Makefile.app

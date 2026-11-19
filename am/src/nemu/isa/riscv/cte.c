@@ -7,6 +7,7 @@ static _Context* (*custom_soft_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_timer_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_external_handler)(_Event, _Context*) = NULL;
 static _Context* (*custom_secall_handler)(_Event, _Context*) = NULL;
+static _Context* (*custom_nmi_handler)(_Event, _Context*) = NULL;
 
 void __am_get_cur_as(_Context *c);
 void __am_switch(_Context *c);
@@ -129,6 +130,37 @@ _Context* __am_irq_handle(_Context *c) {
 }
 
 extern void __am_asm_trap(void);
+
+_Context* __am_nmi_handle(_Context *c) {
+  __am_get_cur_as(c);
+
+  _Event ev = { .event = _EVENT_IRQ_IODEV };
+  if (custom_nmi_handler != NULL) {
+    custom_nmi_handler(ev, c);
+  } else {
+    printf("unregistered NMI detected, mncause=%llx, mnepc=%llx\n", c->scause, c->sepc);
+    _halt(2);
+  }
+
+  __am_switch(c);
+
+#if __riscv_xlen == 64
+  asm volatile("fence.i");
+#endif
+
+  return c;
+}
+
+void nmi_handler_reg(_Context*(*handler)(_Event, _Context*)) {
+  custom_nmi_handler = handler;
+}
+
+int _nmi_init(_Context *(*handler)(_Event ev, _Context *ctx)) {
+  asm volatile("csrw sscratch, zero");
+  custom_nmi_handler = handler;
+  asm volatile("csrw mtvec, %0" : : "r"(__am_asm_trap));
+  return 0;
+}
 
 /*
  * Supervisor soft interrupt custom handler register function
