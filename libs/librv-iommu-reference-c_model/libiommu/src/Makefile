@@ -1,0 +1,14 @@
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_atc.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_ats.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_command_queue.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_device_context.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_faults.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_hpm.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_interrupt.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_msi_trans.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_process_context.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_reg.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_second_stage_trans.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_translate.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_two_stage_trans.o
+lib-$(CONFIG_RV_IOMMU_REF_C_MODEL) += iommu_utils.o
